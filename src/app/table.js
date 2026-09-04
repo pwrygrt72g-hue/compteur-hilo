@@ -500,7 +500,7 @@ $("bReglagesTable").onclick = () => {
   ouvrirModale(`<h2>Réglages de la table</h2>
     <div class="demande" style="flex-direction:column;align-items:stretch;text-align:left">
       <label class="ch"><span class="grave">Cadence du croupier</span>
-        <input type="range" id="rgCadence" min="120" max="1400" step="40" value="${DB.cadence}">
+        <input type="range" id="rgCadence" min="120" max="1400" step="20" value="${DB.cadence}">
         <span class="muet" id="rgCadenceL">${fr1(DB.cadence / 1000)} s par carte</span></label>
       <label class="ch ligne"><input type="checkbox" id="rgConseil"${DB.conseil ? " checked" : ""}>
         Afficher la stratégie de base pendant mon tour</label>

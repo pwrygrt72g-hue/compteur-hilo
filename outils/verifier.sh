@@ -11,7 +11,7 @@ PY
 lsof -ti:8731 >/dev/null 2>&1 || (cd /tmp && python3 -m http.server 8731 >/dev/null 2>&1 &)
 sleep 1
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu --no-sandbox \
-  --virtual-time-budget=400000 --dump-dom http://127.0.0.1:8731/essai.html 2>/dev/null \
+  --virtual-time-budget=600000 --dump-dom http://127.0.0.1:8731/essai.html 2>/dev/null \
   | python3 -c "
 import sys,re,html,io
 sys.stdout=io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8')
@@ -25,5 +25,9 @@ for x in res.replace('RES ','').split(' ; '): print(('  ' if x.startswith('ok') 
 print()
 print(err)
 print()
-print(('ÉCHECS : '+str(len(ko))) if ko else 'TOUT PASSE')
+# Une sonde qui n'a pas écrit « RES » n'a PAS fini (budget de temps virtuel épuisé, ou
+# plantage avant la ligne finale) : c'est un ÉCHEC, jamais un « TOUT PASSE » sur du vide.
+if not res.startswith('RES'): print('SONDE INCOMPLÈTE : elle n\'a pas fini (budget de temps virtuel épuisé ?) — ÉCHEC'); sys.exit(1)
+if ko: print('ÉCHECS : '+str(len(ko))); sys.exit(1)
+print('TOUT PASSE')
 "

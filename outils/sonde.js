@@ -27,6 +27,13 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
   clic('#salon [data-asseoir="boulevard"]'); await dodo(2000);
   ok("assis au Boulevard", txt("#tNom").indexOf("Boulevard") >= 0, txt("#tNom"));
   ok("sabot de 6 jeux moins la brûlée", txt("#sabot") === "311", txt("#sabot"));
+  // La cadence par défaut est celle d'un vrai croupier (900 ms, Léo 04/09) ; on la
+  // vérifie, puis on la règle à 200 ms PAR LE RÉGLAGE DE LA TABLE — quatorze mains à
+  // 900 ms par carte ne tiendraient pas dans le budget de temps virtuel de Chrome.
+  clic("#bReglagesTable"); await dodo(150);
+  ok("cadence par défaut : 900 ms", q("#rgCadence") && q("#rgCadence").value === "900", q("#rgCadence") ? q("#rgCadence").value : "réglage absent");
+  if (q("#rgCadence")) { q("#rgCadence").value = "200"; q("#rgCadence").dispatchEvent(new Event("input")); }
+  clic("#modaleFermer"); await dodo(150);
   if (q("#bMontrer").getAttribute("aria-pressed") !== "true") q("#bMontrer").click();
   // Depuis le lot Jetons, « Distribuer » ne s'ouvre qu'avec une mise posée : on attend la
   // phase de mise (#v-table[data-phase]), on tape dans le rack des jetons qui couvrent le
@@ -42,7 +49,7 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
     await attendre(); await miser();
     clic("#bDonne"); await dodo(600);
     let g = 0;
-    while (g++ < 60 && phase() !== "mise") { await dodo(200);
+    while (g++ < 150 && phase() !== "mise") { await dodo(200);
       if (!q("#bTire").disabled) clic(tire && g % 4 === 0 ? "#bTire" : "#bReste");
       const a = q("#boiteAssurance .opts button:last-child"); if (a) a.click(); }
     await attendre();
