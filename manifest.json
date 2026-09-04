@@ -1,7 +1,7 @@
 {
-  "name": "Compteur Hi-Lo",
-  "short_name": "Hi-Lo",
-  "description": "Entraînement au comptage de cartes au blackjack, sans mise.",
+  "name": "Le Sabot — comptage au blackjack",
+  "short_name": "Le Sabot",
+  "description": "Entraînement au comptage de cartes au blackjack : neuf tables réelles, stratégie et écarts calculés, hasard prouvable.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
@@ -9,9 +9,26 @@
   "theme_color": "#082b1e",
   "lang": "fr",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
-    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ]
 }

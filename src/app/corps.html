@@ -1,0 +1,373 @@
+<header><div class="tete">
+  <button class="marque" data-vue="accueil"><span class="emb"></span>Le Sabot</button>
+  <nav id="nav">
+    <button data-vue="accueil" aria-current="page">Accueil</button>
+    <button data-vue="salon">Salon</button>
+    <button data-vue="table">Table</button>
+    <button data-vue="exercices">Exercices</button>
+    <button data-vue="strategie">Stratégie</button>
+    <button data-vue="concentration">Concentration</button>
+    <button data-vue="ensemble">À plusieurs</button>
+    <button data-vue="progres">Progression</button>
+  </nav>
+  <div class="outils">
+    <select id="sys" title="Système de comptage" aria-label="Système de comptage"></select>
+    <button class="icone" id="theme" title="Thème clair ou sombre" aria-label="Changer de thème">◐</button>
+    <button class="icone" id="son" title="Sons" aria-label="Activer ou couper les sons">♪</button>
+  </div>
+</div></header>
+
+<main>
+
+<!-- ════════════════════ ACCUEIL ════════════════════ -->
+<section class="vue" id="v-accueil">
+  <div class="heros">
+    <div>
+      <span class="grave">Entraînement au comptage de cartes</span>
+      <h1 style="margin:8px 0 12px">On ne compte pas des cartes.<br>On compte ce qui reste.</h1>
+      <p>Neuf tables de casino réelles, avec leurs vraies règles et leur vrai avantage maison — mesuré ici, pas recopié. Une stratégie de base <em>calculée</em> pour chaque table. Un sabot dont tu peux vérifier le mélange. Et de quoi t'entraîner jusqu'à ce que le compte devienne un réflexe.</p>
+      <div class="champs" style="margin-top:14px">
+        <label class="ch"><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" style="min-width:150px"></label>
+        <button class="btn" data-vue="salon">Entrer dans le salon</button>
+      </div>
+    </div>
+    <div class="eventail" id="eventail" aria-hidden="true"></div>
+  </div>
+
+  <div class="modes" id="modes"></div>
+
+  <div class="duo">
+    <div class="laque pad">
+      <span class="grave">Le système sélectionné</span>
+      <h3 id="sysNom" style="margin:4px 0 2px">Hi-Lo</h3>
+      <p class="muet" id="sysNote" style="font-size:var(--t-petit)"></p>
+      <div class="regles" id="sysTable" style="margin-top:8px"></div>
+    </div>
+    <div class="laque pad">
+      <span class="grave">Ce qu'il faut avoir compris</span>
+      <p style="margin-top:6px">Le <b>compte courant</b> additionne la valeur de chaque carte sortie. Le <b>compte vrai</b> le divise par le nombre de jeux qui restent à distribuer : c'est lui, et lui seul, qui dit si la table t'est favorable.</p>
+      <p class="muet" style="font-size:var(--t-petit);margin:0">Un bon compteur ne se trompe jamais sur le compte courant, estime les jeux restants à un demi-jeu près, et ne laisse rien paraître. Les trois se travaillent séparément — c'est ce que font les exercices.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ SALON ════════════════════ -->
+<section class="vue" id="v-salon" hidden>
+  <span class="grave">Le salon</span>
+  <h2 style="margin:4px 0 6px">Choisis ta table</h2>
+  <p class="muet" style="max-width:66ch">Pour un compteur, une table <em>est</em> son règlement. La pénétration et le paiement du blackjack décident si elle se bat ; le reste se joue en dixièmes de point. Deux de ces tables sont imbattables quoi que tu fasses : elles sont là pour que tu apprennes à les refuser.</p>
+  <div class="onglets" id="filtreSalon" role="tablist" style="margin-top:12px">
+    <button role="tab" aria-selected="true" data-f="tout">Toutes</button>
+    <button role="tab" aria-selected="false" data-f="battable">Battables</button>
+    <button role="tab" aria-selected="false" data-f="fuir">À fuir</button>
+  </div>
+  <div class="salon" id="salon"></div>
+</section>
+
+<!-- ════════════════════ TABLE ════════════════════ -->
+<section class="vue" id="v-table" hidden>
+  <div class="laque pad" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+      <div><span class="grave">Table en cours</span><h3 id="tNom" style="margin:2px 0 0">—</h3></div>
+      <div class="regles" id="tRegles"></div>
+    </div>
+    <div class="rail" id="rail" style="margin-top:12px">
+      <div class="zero"></div><div class="coupe" id="tCoupe"></div>
+      <div class="index cadran" id="tIndex">0</div>
+    </div>
+    <div class="bandeau">
+      <div><span class="grave">Compte courant</span><b id="tRC">0</b></div>
+      <div><span class="grave">Compte vrai</span><b id="tTC">—</b></div>
+      <div><span class="grave">Jeux restants</span><b id="tJeux">—</b></div>
+      <div><span class="grave">Mise conseillée</span><b id="tMise">1</b></div>
+      <div><span class="grave">Solde</span><b id="tSolde">0</b></div>
+    </div>
+    <p class="muet" style="font-size:var(--t-fin);margin:8px 0 0" id="tAide">Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.</p>
+  </div>
+
+  <div class="tapis plateau" id="plateau">
+    <div class="defausse" id="defausse"><i></i><span id="defausseN">0</span></div>
+    <div class="sabot" id="sabot">312</div>
+    <p class="devise" id="devise"></p>
+    <div class="croupier"><div class="qui">Croupier <b id="dScore">·</b></div><div class="main" id="dMain"></div></div>
+    <p class="annonce" id="annonce"></p>
+    <div class="sieges" id="sieges"></div>
+    <p class="conseil" id="conseil"></p>
+    <div class="rang-btn" style="margin-top:8px">
+      <button class="btn" id="bDonne">Distribuer<kbd>D</kbd></button>
+      <button class="btn creux" id="bTire" disabled>Tirer<kbd>T</kbd></button>
+      <button class="btn creux" id="bReste" disabled>Rester<kbd>R</kbd></button>
+      <button class="btn creux" id="bDouble" disabled>Doubler<kbd>B</kbd></button>
+      <button class="btn creux" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
+      <button class="btn creux" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
+    </div>
+    <div id="boiteAssurance"></div>
+  </div>
+
+  <div class="barre">
+    <span>mains <b id="tMains">0</b> · cartes vues <b id="tVues">0</b></span>
+    <span><label class="ch ligne"><input type="checkbox" id="tConseil"> aide stratégie</label>
+      <label class="ch ligne"><input type="checkbox" id="tCompteVisible"> montrer le compte</label></span>
+    <span>cadence <input type="range" id="tVitesse" min="120" max="1000" step="40" value="400" style="width:96px;vertical-align:middle"></span>
+    <span><button class="btn creux" id="bMonCompte">Donner mon compte</button>
+      <button class="btn creux" id="bNouveauSabot">Nouveau sabot</button></span>
+  </div>
+
+  <details class="laque pad" style="margin-top:12px">
+    <summary style="cursor:pointer"><span class="grave" style="display:inline">Le reçu du sabot — vérifier le mélange</span></summary>
+    <p class="muet" style="font-size:var(--t-petit);margin-top:8px">Avant de distribuer, l'application publie l'empreinte d'une graine. À la fin du sabot, elle révèle la graine. N'importe qui peut alors recalculer l'ordre exact des cartes et vérifier qu'il n'a pas été choisi après coup.</p>
+    <dl class="recu" id="recu"></dl>
+    <div class="rang-btn" style="margin-top:10px;justify-content:flex-start">
+      <button class="btn creux" id="bVerifier">Vérifier ce sabot</button>
+      <button class="btn creux" id="bCopierVerif">Copier le vérificateur</button>
+    </div>
+    <p class="muet" id="verifResultat" style="font-size:var(--t-petit);margin-top:8px"></p>
+  </details>
+</section>
+
+<!-- ════════════════════ EXERCICES ════════════════════ -->
+<section class="vue" id="v-exercices" hidden>
+  <div class="onglets" id="ongletsEx" role="tablist">
+    <button role="tab" aria-selected="true" data-ex="defilement">Défilement</button>
+    <button role="tab" aria-selected="false" data-ex="chrono">Sabot chrono</button>
+    <button role="tab" aria-selected="false" data-ex="estimation">Estimation</button>
+  </div>
+
+  <div class="laque pad" id="exReglages">
+    <div class="champs" id="opDefilement">
+      <label class="ch"><span class="grave">Jeux</span><select id="eJeux"><option>1</option><option>2</option><option selected>6</option><option>8</option></select></label>
+      <label class="ch"><span class="grave">Cartes</span><select id="eNb"><option>20</option><option selected>52</option><option>104</option><option>208</option><option value="tout">Tout le sabot</option></select></label>
+      <label class="ch"><span class="grave">Vitesse <em id="eVitesseL" class="cadran" style="font-style:normal;font-size:var(--t-petit);color:var(--os)">1,2 s</em></span><input type="range" id="eVitesse" min="200" max="3000" step="50" value="1200"></label>
+      <label class="ch"><span class="grave">Mode</span><select id="eMode"><option value="clic">Je clique la valeur</option><option value="silence">Silencieux</option></select></label>
+      <label class="ch"><span class="grave">Cartes à la fois</span><select id="eParVue"><option selected>1</option><option>2</option><option>3</option></select></label>
+      <label class="ch"><span class="grave">Contrôle surprise</span><select id="eControle"><option value="0">jamais</option><option value="10">toutes les 10</option><option value="20">toutes les 20</option><option value="alea">aléatoire</option></select></label>
+      <label class="ch ligne"><input type="checkbox" id="eAvance"> Passer dès mon clic</label>
+      <label class="ch ligne"><input type="checkbox" id="eMontre"> Montrer la bonne valeur</label>
+    </div>
+    <div class="champs" id="opChrono" hidden>
+      <label class="ch"><span class="grave">Jeux</span><select id="cJeux"><option selected>1</option><option>2</option></select></label>
+      <label class="ch"><span class="grave">Cartes à la fois</span><select id="cParVue"><option>1</option><option selected>2</option><option>3</option></select></label>
+      <p class="muet" style="margin:0;align-self:center;font-size:var(--t-petit);max-width:44ch">Tu avances toi-même : espace, clic, ou flèche droite. Le chrono part à la première carte. Un jeu complet doit retomber sur <b id="cCible">0</b>.</p>
+    </div>
+    <div class="champs" id="opEstimation" hidden>
+      <label class="ch"><span class="grave">Sabot</span><select id="sJeux"><option>4</option><option selected>6</option><option>8</option></select></label>
+      <label class="ch"><span class="grave">Manches</span><select id="sManches"><option selected>10</option><option>20</option></select></label>
+      <p class="muet" style="margin:0;align-self:center;font-size:var(--t-petit);max-width:48ch">Tu regardes le tas de défausse et tu annonces combien de jeux y sont passés. C'est ce coup d'œil qui transforme un compte courant en compte vrai. Tolérance : un demi-jeu.</p>
+    </div>
+    <div class="champs" style="margin-top:14px">
+      <button class="btn" id="eDemarrer">Commencer</button>
+      <p class="muet" style="margin:0;align-self:center;font-size:var(--t-fin)">Clavier : ← −1 · ↓ ou espace 0 · → +1 · 1…5 les boutons de gauche à droite.</p>
+    </div>
+  </div>
+
+  <div class="laque pad" id="exPiste" hidden style="position:relative">
+    <div class="voile" id="exControle" hidden><div style="text-align:center">
+      <h3 style="color:var(--laiton)">Contrôle surprise</h3><span class="grave">compte courant ?</span>
+      <div class="demande"><input type="number" id="ctrlSaisie" placeholder="0"><button class="btn" id="ctrlOk">Valider</button></div>
+      <p class="cadran" id="ctrlRetour" style="min-height:30px;font-size:var(--t-titre)"></p></div></div>
+    <div class="scene" id="scene"></div>
+    <p class="chrono cadran" id="chronoL" hidden>0,0 s</p>
+    <div class="progres"><i id="exBarre"></i></div>
+    <div class="meta"><span id="exPos">0 / 52</span><span id="exReste"></span></div>
+    <div class="reponses" id="reponses"></div>
+    <div class="trace" id="trace"></div>
+    <div class="rang-btn" style="margin-top:14px"><button class="btn creux" id="eStop">Terminer maintenant</button></div>
+  </div>
+
+  <div class="laque pad bilan" id="exBilan" hidden>
+    <div id="exDemande">
+      <h2>Ton compte</h2>
+      <div class="demande">
+        <label class="ch"><span class="grave">Compte courant</span><input type="number" id="rCompte" placeholder="0"></label>
+        <label class="ch" id="boiteJeux"><span class="grave">Jeux restants</span><input type="number" id="rJeux" step="0.5" placeholder="4,5"></label>
+        <label class="ch" id="boiteTC"><span class="grave">Compte vrai</span><input type="number" id="rTC" placeholder="0"></label>
+        <button class="btn" id="rVerifier">Vérifier</button>
+      </div>
+    </div>
+    <div id="exVerdict" hidden>
+      <span class="grave">Compte courant réel</span>
+      <p class="cadran" id="rReel"></p>
+      <p id="rTexte" style="max-width:60ch;margin:0 auto"></p>
+      <div class="tuiles" id="rTuiles"></div>
+      <p class="muet" id="rMise" style="margin:14px auto 0"></p>
+      <div class="rang-btn" style="margin-top:18px">
+        <button class="btn" id="rRejouer">Rejouer</button>
+        <button class="btn creux" id="rReglages">Réglages</button>
+        <button class="btn creux" data-vue="progres">Ma progression</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- estimation -->
+  <div class="laque pad bilan" id="estPiste" hidden>
+    <span class="grave" id="estPos">Manche 1 sur 10</span>
+    <h2 style="margin:4px 0 14px">Combien de jeux dans le tas ?</h2>
+    <div class="bac"><div class="pile" id="estPile"></div><div class="reflet"></div><div class="levre"></div></div>
+    <div class="rapide" id="estBoutons"></div>
+    <div class="retour" id="estRetour"></div>
+    <div class="score"><span>Justes <b id="estJustes">0</b></span><span>Écart moyen <b id="estEcart">—</b></span></div>
+    <div class="rang-btn" style="margin-top:10px"><button class="btn creux" id="estStop">Terminer</button></div>
+  </div>
+  <div class="laque pad bilan" id="estBilan" hidden>
+    <span class="grave">Estimation du sabot</span>
+    <p class="cadran" id="estNote"></p>
+    <p id="estTexte" style="max-width:60ch;margin:0 auto"></p>
+    <div class="tuiles" id="estTuiles"></div>
+    <div class="rang-btn" style="margin-top:18px"><button class="btn" id="estRejouer">Rejouer</button><button class="btn creux" id="estRetourReglages">Réglages</button></div>
+  </div>
+</section>
+
+<!-- ════════════════════ STRATÉGIE ════════════════════ -->
+<section class="vue" id="v-strategie" hidden>
+  <div class="onglets" id="ongletsStrat" role="tablist">
+    <button role="tab" aria-selected="true" data-s="base">Stratégie de base</button>
+    <button role="tab" aria-selected="false" data-s="ecarts">Écarts au compte</button>
+    <button role="tab" aria-selected="false" data-s="grille">La grille</button>
+  </div>
+  <div class="laque pad" id="stratDrill">
+    <p class="muet" id="stratIntro" style="margin:0 0 10px;font-size:var(--t-petit)"></p>
+    <div class="duel">
+      <div class="voie"><span class="grave">Croupier</span><div class="main" id="sUp"></div></div>
+      <div class="tcbadge cadran" id="sTC" hidden>compte vrai<b>+0</b></div>
+      <div class="voie"><div class="main" id="sMain"></div><div class="tot cadran" id="sTotal"></div></div>
+    </div>
+    <div class="rang-btn" id="sBoutons" style="margin-top:12px"></div>
+    <div class="retour" id="sRetour"></div>
+    <div class="score"><span>Série <b id="sSerie">0</b></span><span>Session <b id="sSession">0/0</b></span><span>Total <b id="sTotalGen">—</b></span></div>
+  </div>
+  <div class="laque pad" id="stratGrille" hidden>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+      <div><span class="grave">Stratégie calculée pour</span><h3 id="grilleTable" style="margin:2px 0 0">—</h3></div>
+      <p class="muet" style="font-size:var(--t-fin);margin:0">Tirer · Rester · Doubler · Séparer · Abandonner</p>
+    </div>
+    <div class="defile" id="grilleHote" style="margin-top:12px"></div>
+    <p class="muet" style="font-size:var(--t-fin);margin-top:10px">Cette grille n'est copiée de nulle part : elle est résolue depuis les règles de la table, à la construction du fichier. Change de table dans le salon et elle change avec.</p>
+  </div>
+  <div class="laque pad" id="stratListe" hidden style="margin-top:12px">
+    <span class="grave">Les écarts de cette table</span>
+    <p class="muet" id="listeEcarts" style="font-size:var(--t-petit);margin-top:6px"></p>
+  </div>
+</section>
+
+<!-- ════════════════════ CONCENTRATION ════════════════════ -->
+<section class="vue" id="v-concentration" hidden>
+  <div class="laque pad" id="coReglages">
+    <span class="grave">Concentration</span>
+    <h2 style="margin:4px 0 10px">Compte sans te faire griller</h2>
+    <p class="muet" style="margin:0 0 14px;max-width:70ch">Les cartes défilent et tu comptes en silence. Pendant ce temps la table vit : un voisin te parle, le chef de table te fixe, un calcul te tombe dessus. Chaque hésitation fait monter la <b>jauge de suspicion</b>. À cent, on t'invite à quitter la table. Et il faudra quand même annoncer le compte.</p>
+    <div class="champs">
+      <label class="ch"><span class="grave">Jeux</span><select id="coJeux"><option>2</option><option selected>6</option><option>8</option></select></label>
+      <label class="ch"><span class="grave">Cartes</span><select id="coNb"><option>40</option><option selected>80</option><option>160</option></select></label>
+      <label class="ch"><span class="grave">Vitesse <em id="coVitesseL" class="cadran" style="font-style:normal;font-size:var(--t-petit);color:var(--os)">1,5 s</em></span><input type="range" id="coVitesse" min="600" max="3000" step="100" value="1500"></label>
+      <label class="ch"><span class="grave">Pression</span><select id="coNiveau"><option value="1">Tranquille</option><option value="2" selected>Normale</option><option value="3">Chef de table nerveux</option></select></label>
+      <label class="ch ligne"><input type="checkbox" id="coCam"> Utiliser la caméra</label>
+      <button class="btn" id="coDemarrer">Prendre place</button>
+    </div>
+    <p class="muet" style="font-size:var(--t-fin);margin-top:12px">La caméra ne quitte jamais ton appareil : aucune image n'est envoyée nulle part. Le détecteur regarde deux choses, des lèvres qui bougent et un visage figé trop longtemps.</p>
+  </div>
+
+  <div id="coPiste" hidden>
+    <div class="concentration">
+      <div class="laque pad" style="position:relative">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span class="oeil" id="coOeil">◉</span>
+          <div style="flex:1"><span class="grave">Suspicion du chef de table</span><div class="suspicion" id="coJauge"><i></i></div></div>
+          <b class="cadran" id="coJaugeN">0</b>
+        </div>
+        <div class="scene" id="coScene"></div>
+        <div class="progres"><i id="coBarre"></i></div>
+        <div class="meta"><span id="coPos">0 / 80</span><span id="coReste"></span></div>
+        <button class="detendu" id="coDetendu">Rester détendu <kbd style="opacity:.6">espace</kbd></button>
+        <div class="rang-btn" style="margin-top:10px"><button class="btn creux" id="coStop">Quitter la table</button></div>
+        <div id="coBulle"></div>
+      </div>
+      <div class="laque pad">
+        <span class="grave">Détecteur</span>
+        <div class="cam" id="coCamBoite"><video id="coVideo" playsinline muted></video><canvas id="coCanvas"></canvas><div class="hors" id="coCamHors">Caméra désactivée</div></div>
+        <p class="cadran muet" id="coCamEtat" style="font-size:var(--t-fin);margin-top:7px"></p>
+        <span class="grave" style="margin-top:10px">Ce qui t'a trahi</span>
+        <ul class="indices" id="coIndices"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="laque pad bilan" id="coBilan" hidden>
+    <div id="coDemande">
+      <h2 id="coTitre">Fin de session</h2>
+      <p class="muet" id="coSous" style="margin:4px auto 0"></p>
+      <div class="demande"><label class="ch"><span class="grave">Compte courant</span><input type="number" id="coSaisie" placeholder="0"></label><button class="btn" id="coVerifier">Annoncer</button></div>
+    </div>
+    <div id="coVerdict" hidden>
+      <span class="grave">Compte courant réel</span>
+      <p class="cadran" id="coReel"></p>
+      <p id="coTexte" style="max-width:60ch;margin:0 auto"></p>
+      <div class="tuiles" id="coTuiles"></div>
+      <div class="rang-btn" style="margin-top:18px"><button class="btn" id="coRejouer">Reprendre place</button><button class="btn creux" id="coRetour">Réglages</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ À PLUSIEURS ════════════════════ -->
+<section class="vue" id="v-ensemble" hidden>
+  <div class="laque pad" id="mpAccueil">
+    <span class="grave">À plusieurs</span>
+    <h2 style="margin:4px 0 10px">Le même sabot, chacun son compte</h2>
+    <p class="muet" style="max-width:70ch">Vous vous asseyez à la même table, les cartes sortent du même sabot, et à la fin chacun annonce son compte. Celui qui tombe juste gagne — pas celui qui a le plus de chance.</p>
+    <div class="champs" style="margin-top:14px">
+      <button class="btn" id="mpCreer">Ouvrir une table</button>
+      <span class="muet">ou</span>
+      <label class="ch"><span class="grave">Code du salon</span><input type="text" id="mpCode" placeholder="A7K2M" maxlength="6" style="text-transform:uppercase;width:130px;font-size:20px;letter-spacing:.14em"></label>
+      <button class="btn creux" id="mpRejoindre">Rejoindre</button>
+    </div>
+    <p class="muet" id="mpEtat" style="font-size:var(--t-petit);margin-top:12px"></p>
+    <p class="muet" style="font-size:var(--t-fin);margin-top:4px">Sans serveur : les messages transitent par un courtier public, en clair. N'y écris rien de personnel. Si le réseau est bloqué — c'est le cas dans un Artifact publié — l'application te le dira au lieu de tourner dans le vide.</p>
+  </div>
+
+  <div id="mpSalon" hidden>
+    <div class="duo">
+      <div class="laque pad">
+        <span class="grave">Code à partager</span>
+        <p class="codesalon" id="mpCodeAff">—</p>
+        <div class="rang-btn" style="margin-top:10px"><button class="btn creux" id="mpCopier">Copier le lien</button><button class="btn creux" id="mpQuitter">Quitter</button></div>
+        <span class="grave" style="margin-top:14px">À cette table</span>
+        <div class="pairs" id="mpPairs"></div>
+        <p class="muet" id="mpRelais" style="font-size:var(--t-fin);margin-top:8px"></p>
+      </div>
+      <div class="laque pad">
+        <span class="grave">Défi de comptage</span>
+        <h3 style="margin:3px 0 8px" id="mpTitreDefi">En attente</h3>
+        <p class="muet" id="mpExplique" style="font-size:var(--t-petit)"></p>
+        <div class="rang-btn" style="margin-top:10px;justify-content:flex-start">
+          <button class="btn" id="mpLancer">Lancer un sabot</button>
+          <button class="btn creux" id="mpAnnoncer" disabled>Annoncer mon compte</button>
+        </div>
+        <table class="classement" id="mpClassement"></table>
+      </div>
+    </div>
+    <div class="laque pad" style="margin-top:12px;position:relative">
+      <div class="scene" id="mpScene" style="min-height:200px"></div>
+      <div class="progres"><i id="mpBarre"></i></div>
+      <div class="meta"><span id="mpPos">—</span><span id="mpReste"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ PROGRESSION ════════════════════ -->
+<section class="vue" id="v-progres" hidden>
+  <span class="grave">Progression</span>
+  <h2 id="progTitre" style="margin:4px 0 14px">Tes sessions</h2>
+  <div class="pave" id="progPave"></div>
+  <div class="laque pad" style="margin-top:12px">
+    <span class="grave">Écart au compte réel, trente dernières sessions</span>
+    <canvas id="courbe" height="216"></canvas>
+  </div>
+  <div class="laque pad defile" style="margin-top:12px">
+    <span class="grave">Journal</span>
+    <table class="journal" id="progJournal"></table>
+  </div>
+  <div class="rang-btn" style="margin-top:14px;justify-content:flex-start"><button class="btn creux" id="progEffacer">Effacer l'historique</button></div>
+</section>
+
+</main>
+
+<div class="modale" id="modale" hidden><div class="laque boite" id="modaleBoite"></div></div>

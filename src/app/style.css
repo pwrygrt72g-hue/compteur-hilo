@@ -1,0 +1,590 @@
+/* ══════════════════════════════════════════════════════════════════════
+   « Laque & filament »
+   On ne dessine pas une salle, on dessine un INSTRUMENT posé sur du feutre.
+   Vegas donne la lumière (un seul filament chaud, jamais un arc-en-ciel).
+   Macao donne la matière (la laque profonde, montée en couches, et le jade).
+   Le sujet n'est ni l'une ni l'autre : c'est le COMPTE, cette chose invisible
+   que la salle passe son temps à essayer de te faire perdre.
+
+   Règle de couleur du comptage, valable dans TOUTE l'application :
+     +  jade      ·  0  os      ·  −  cinabre
+   La couleur n'est jamais le premier canal : glyphe d'abord, position ensuite,
+   couleur en troisième. En deutéranopie le jade et le cinabre s'effondrent à
+   des luminances voisines, donc un exercice à 250 ms ne peut pas en dépendre.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Palette CLAIRE sur :root nu — aucune variable ne peut être indéfinie.
+   Ce n'est pas un thème papier crème : c'est l'envers du tapis, la toile de
+   lin écrue qu'on voit quand on retourne le feutre. Et le feutre, lui, reste
+   vert foncé dans les deux thèmes : une table de blackjack ne devient pas
+   blanche parce qu'il fait jour. */
+:root{
+  color-scheme:light dark;
+  --encre:#E6E4DD; --laque:#F4F2EC; --relief:#FBFAF6;
+  --tapis:#245043; --tapis-clair:#2F6353;
+  --os:#131C1A; --os-eteint:#55605C;
+  --laiton:#8A5C0B; --filet:#C9A227; --bord:#6F6A5C;
+  --jade:#0D735F; --cinabre:#B33F22; --nacre:#FFFDF7;
+  --ardoise:rgba(19,28,26,.07); --ombre:rgba(19,28,26,.20); --halo:rgba(138,92,11,.22);
+  --trame-clair:rgba(255,255,255,.55); --trame-sombre:rgba(19,28,26,.055);
+  --cuir:#3B2A1C;
+
+  --t-micro:11px; --t-fin:12px; --t-petit:13px; --t-corps:15px; --t-fort:17px;
+  --t-titre:22px; --t-section:28px; --t-ecran:38px;
+  /* Le trou entre 38 et 64 est LA décision typographique : quand le compte
+     apparaît, il n'a aucun voisin de taille comparable. Rien à comparer,
+     rien à chercher. C'est ce qui remplace le clignotement. */
+  --t-cadran:64px; --t-verdict:96px;
+
+  --gap:16px; --r:14px;
+  --ressort:cubic-bezier(.22,.72,.24,1);
+  --sec:cubic-bezier(.3,0,.2,1);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="clair"]){
+    --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+    --tapis:#1B4238; --tapis-clair:#245247;
+    --os:#EDE7D9; --os-eteint:#A3AAA4;
+    --laiton:#E0A83C; --filet:#7A5F24; --bord:#6B7F75;
+    --jade:#4FD8C0; --cinabre:#F4876C; --nacre:#F6F2E8;
+    --ardoise:rgba(255,255,255,.06); --ombre:rgba(0,0,0,.55); --halo:rgba(224,168,60,.34);
+    --trame-clair:rgba(255,255,255,.020); --trame-sombre:rgba(0,0,0,.055);
+    --cuir:#241812;
+  }
+}
+:root[data-theme="sombre"]{
+  --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+  --tapis:#1B4238; --tapis-clair:#245247;
+  --os:#EDE7D9; --os-eteint:#A3AAA4;
+  --laiton:#E0A83C; --filet:#7A5F24; --bord:#6B7F75;
+  --jade:#4FD8C0; --cinabre:#F4876C; --nacre:#F6F2E8;
+  --ardoise:rgba(255,255,255,.06); --ombre:rgba(0,0,0,.55); --halo:rgba(224,168,60,.34);
+  --trame-clair:rgba(255,255,255,.020); --trame-sombre:rgba(0,0,0,.055);
+  --cuir:#241812;
+}
+@media (min-width:900px){ :root{ --gap:20px } }
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--encre); color:var(--os);   /* fond explicite : obligatoire en Artifact */
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;
+  font-size:var(--t-corps); line-height:1.5; font-variant-numeric:tabular-nums;
+  -webkit-text-size-adjust:100%;
+}
+h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:var(--t-ecran)} h2{font-size:var(--t-section)} h3{font-size:var(--t-titre)}
+p{margin:0 0 .8em}
+a{color:var(--laiton)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:where(a,button,input,select,summary,[tabindex]):focus-visible{
+  outline:2px solid var(--laiton); outline-offset:3px; border-radius:4px;
+  box-shadow:0 0 0 5px var(--halo);
+}
+::selection{background:var(--laiton);color:var(--encre)}
+.cadran{font-family:"Martian Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;
+  font-stretch:87.5%;letter-spacing:-.02em;font-weight:600}
+.grave{font-size:var(--t-micro);letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  font-stretch:96%;color:var(--os-eteint);display:block}
+.serre{font-stretch:82%}
+.muet{color:var(--os-eteint)}
+.jade{color:var(--jade)} .cinabre{color:var(--cinabre)}
+[hidden]{display:none!important}
+
+/* ── La laque : les panneaux ────────────────────────────────────────────
+   Un vernis se monte en couches transparentes ; c'est exactement ce que fait
+   une pile de dégradés. Trois signes : l'arête haute qui capte la lumière,
+   le fond qui s'assombrit, et un balayage de vernis très plat en travers. */
+.laque{
+  position:relative;border-radius:var(--r);isolation:isolate;
+  background:linear-gradient(178deg,
+    color-mix(in oklab, var(--relief) 88%, transparent) 0%, var(--laque) 44%,
+    color-mix(in oklab, var(--laque) 90%, #000) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--trame-clair), inset 0 -1px 0 var(--trame-sombre),
+    inset 0 0 0 1px color-mix(in oklab, var(--filet) 26%, transparent),
+    0 1px 2px -1px var(--ombre), 0 14px 30px -18px var(--ombre);
+}
+.laque::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(103deg, rgba(255,255,255,.075) 0 20%, rgba(255,255,255,.018) 34%, transparent 52%);
+  mix-blend-mode:screen;
+}
+.pad{padding:18px 20px}
+
+/* ── Le feutre ─────────────────────────────────────────────────────────
+   Le vert plat est ce qui rend un tapis CSS faux. Un vrai feutre a une trame
+   croisée (27° et −63°, perpendiculaires comme chaîne et trame), un plafonnier
+   décentré, et un creux sombre sur les bords. */
+.tapis{
+  position:relative;background-color:var(--tapis);
+  background-image:
+    repeating-linear-gradient( 27deg, var(--trame-clair)  0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-63deg, var(--trame-sombre) 0 1px, transparent 1px 3px),
+    radial-gradient(118% 76% at 50% -14%, var(--tapis-clair) 0%, transparent 60%),
+    radial-gradient(132% 104% at 50% 48%, transparent 40%, rgba(0,0,0,.44) 100%);
+  box-shadow:inset 0 0 90px rgba(0,0,0,.30), inset 0 2px 0 rgba(255,255,255,.05);
+  border-radius:190px 190px 20px 20px;
+  border:10px solid var(--cuir);
+  outline:1px solid rgba(0,0,0,.55);outline-offset:-11px;
+}
+
+/* ── La denture : le motif signature ───────────────────────────────────
+   Une arête entaillée à pas régulier, chaque entaille en DEUX tons : le creux
+   sombre puis la bavure claire. Un seul ton donne une impression, pas une
+   gravure. Le même geste engendre la réglette, le jeton, le reçu de sabot,
+   le tas de défausse, la barre d'intervalle et l'emblème. */
+.denture{
+  --pas:12px;--dent:1px;
+  background-image:repeating-linear-gradient(90deg,
+    var(--trame-sombre) 0 var(--dent), var(--trame-clair) var(--dent) calc(var(--dent)*2),
+    transparent calc(var(--dent)*2) var(--pas));
+}
+
+/* ── Le jeton d'argile ─────────────────────────────────────────────── */
+.jeton{
+  --face:var(--cinabre);--w:56px;
+  width:var(--w);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;flex:none;
+  color:#0b0b0b;font-family:"Martian Mono",monospace;font-size:calc(var(--w)*.26);font-weight:700;
+  background:
+    radial-gradient(circle at 50% 50%, var(--nacre) 0 29%, transparent 29.6%),
+    radial-gradient(circle at 50% 50%, var(--face) 0 37%, transparent 37.6%),
+    repeating-conic-gradient(from 9deg, var(--face) 0 15deg, var(--nacre) 15deg 22.5deg);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.18), inset 0 3px 7px rgba(255,255,255,.24),
+    inset 0 -5px 9px rgba(0,0,0,.34), 0 6px 12px -5px var(--ombre);
+}
+
+/* ── Le filament : la lumière unique.
+   Ni néon ni contour fluo : une incandescence. Règle dure : une seule
+   occurrence de .filament dans le DOM à un instant donné. Deux choses qui
+   brillent, c'est zéro chose qui compte. */
+.filament{
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--laiton) 58%, transparent),
+    0 0 12px -2px color-mix(in oklab, var(--laiton) 62%, transparent),
+    0 0 48px -14px var(--laiton);
+}
+
+/* ── Les cartes ────────────────────────────────────────────────────── */
+.carte{
+  --w:104px;width:var(--w);aspect-ratio:1/1.4;border-radius:calc(var(--w)*.07);
+  position:relative;flex:none;user-select:none;
+  background:linear-gradient(168deg,#FFFFFF 0%, var(--nacre) 38%, #EDE6D4 100%);
+  color:#141110;font-family:"Instrument Serif",Georgia,serif;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.10), inset 0 1px 0 #fff,
+    inset 0 -2px 3px rgba(120,100,70,.16), 0 1px 1px rgba(0,0,0,.30),
+    0 10px 20px -10px rgba(0,0,0,.55);
+}
+.carte.rouge{color:#A8281C}
+.carte .rang{position:absolute;top:6%;left:7%;line-height:.95;text-align:center;
+  font-family:Archivo,sans-serif;font-weight:600;font-size:calc(var(--w)*.22)}
+.carte .rang i{display:block;font-style:normal;font-size:calc(var(--w)*.17)}
+.carte .pip{position:absolute;inset:0;display:grid;place-items:center;
+  font-size:calc(var(--w)*.46);opacity:.22}
+.carte .bas{position:absolute;bottom:6%;right:7%;transform:rotate(180deg);line-height:.95;
+  text-align:center;font-family:Archivo,sans-serif;font-weight:600;font-size:calc(var(--w)*.22)}
+.carte .bas i{display:block;font-style:normal;font-size:calc(var(--w)*.17)}
+/* Le dos : un treillis losangé à pas LARGE. Un soleil à rayons convergents
+   scintille et moire à quatre cartes par seconde — mesuré, donc écarté. */
+.carte--dos{
+  background:
+    repeating-linear-gradient(45deg, rgba(0,0,0,.22) 0 2px, transparent 2px 11px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.22) 0 2px, transparent 2px 11px),
+    linear-gradient(160deg,#8A2420,#601513);
+  box-shadow:inset 0 0 0 5px var(--nacre), inset 0 0 0 6px rgba(0,0,0,.25), 0 10px 20px -10px rgba(0,0,0,.6);
+}
+.carte--dos .rang,.carte--dos .pip,.carte--dos .bas{display:none}
+
+/* ── Chrome ────────────────────────────────────────────────────────── */
+header{position:sticky;top:0;z-index:40;background:color-mix(in oklab, var(--encre) 88%, transparent);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--ardoise)}
+.tete{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:10px 0;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.marque{display:flex;align-items:center;gap:9px;font-family:"Instrument Serif",serif;font-size:21px}
+.marque .emb{width:26px;height:26px;border-radius:5px;flex:none;
+  background:linear-gradient(180deg,#F3C866,#C08E22 62%,#8A6416);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 6px -2px var(--ombre);
+  position:relative;overflow:hidden}
+.marque .emb::after{content:"";position:absolute;inset:auto 0 0 0;height:9px;
+  background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 1px, rgba(255,255,255,.35) 1px 2px, transparent 2px 5px)}
+nav{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+nav button{padding:7px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);
+  border:1px solid transparent;transition:color .15s,background .15s}
+nav button:hover{color:var(--os)}
+nav button[aria-current="page"]{background:var(--laiton);color:var(--encre);font-weight:600}
+.outils{display:flex;gap:6px;align-items:center}
+.icone{width:34px;height:34px;border-radius:50%;border:1px solid var(--bord);display:grid;place-items:center;font-size:14px}
+.icone.eteint{opacity:.45}
+main{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:var(--gap) 0 56px}
+.vue[hidden]{display:none}
+.vue{animation:paraitre .22s var(--sec)}
+@keyframes paraitre{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* ── Contrôles ─────────────────────────────────────────────────────── */
+.btn{background:var(--laiton);color:var(--encre);border-radius:10px;padding:11px 18px;
+  font-weight:600;font-size:var(--t-fort);transition:filter .15s,transform .08s;display:inline-flex;
+  align-items:center;gap:8px;justify-content:center}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:scale(.975)}
+.btn.creux{background:transparent;color:var(--os);border:1px solid var(--bord)}
+.btn.creux:hover{border-color:var(--laiton);filter:none}
+.btn[disabled]{opacity:.42;cursor:not-allowed;transform:none;filter:none}
+/* Sur le tapis, un bouton éteint garde son contour : effacé, il ferait croire
+   que l'écran est cassé plutôt que le geste indisponible. */
+.tapis .btn[disabled]{opacity:1;background:transparent;color:color-mix(in oklab,var(--nacre) 78%,transparent);
+  box-shadow:0 0 0 1px color-mix(in oklab,var(--nacre) 34%,transparent) inset;text-shadow:none}
+.tapis .btn[disabled] kbd{opacity:.6}
+.btn kbd{font-family:"Martian Mono",monospace;font-size:10px;opacity:.6}
+.rang-btn{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+label.ch{display:flex;flex-direction:column;gap:5px}
+label.ch.ligne{flex-direction:row;align-items:center;gap:8px}
+select,input[type=text],input[type=number]{background:var(--relief);border:1px solid var(--bord);
+  color:var(--os);padding:8px 10px;border-radius:9px;font-family:"Martian Mono",monospace;font-size:var(--t-petit)}
+input[type=range]{accent-color:var(--laiton);width:170px}
+.champs{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-end}
+.onglets{display:inline-flex;border:1px solid var(--bord);border-radius:999px;padding:3px;gap:2px;margin-bottom:14px}
+.onglets button{padding:7px 15px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint)}
+.onglets button[aria-selected="true"]{background:var(--ardoise);color:var(--os);font-weight:600}
+
+/* ── Accueil ───────────────────────────────────────────────────────── */
+.heros{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:center;margin:8px 0 26px}
+.heros p{color:var(--os-eteint);max-width:52ch}
+.eventail{position:relative;height:210px}
+.eventail .carte{position:absolute;left:50%;top:16px;--w:112px;transform-origin:50% 132%;
+  animation:eventer .6s var(--ressort) both}
+@keyframes eventer{from{transform:translateX(-50%) rotate(0) translateY(50px);opacity:0}}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:14px}
+.mode{text-align:left;padding:17px;display:flex;flex-direction:column;gap:7px;transition:transform .16s}
+.mode:hover{transform:translateY(-2px)}
+.mode h3{font-size:21px}
+.mode p{margin:0;color:var(--os-eteint);font-size:var(--t-petit)}
+.mode .fleche{margin-top:auto;color:var(--laiton);font-size:var(--t-fin);letter-spacing:.08em;text-transform:uppercase}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-top:22px}
+
+/* ── Le salon : une grille de RÈGLES, pas une galerie de salles ──────
+   Pour un compteur, la table EST son règlement. La pénétration et le 3:2
+   décident si elle est comptable, et savoir refuser une table est une
+   compétence que personne n'entraîne. */
+.salon{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
+.tbl{padding:16px;display:flex;flex-direction:column;gap:10px;text-align:left}
+.tbl .num{order:-3;font-size:var(--t-micro);letter-spacing:.14em;text-transform:uppercase;color:var(--os-eteint)}
+.tbl h3{order:-2;font-size:24px}
+.tbl .lieu{font-size:var(--t-fin);color:var(--os-eteint);margin-top:-4px}
+.jauge{height:22px;border-radius:6px;overflow:hidden;position:relative;
+  background:linear-gradient(180deg,#2A2114 0%,#1A1409 52%,#241B0F 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 -2px 6px rgba(0,0,0,.55)}
+.jauge i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#8A6416,#E0A83C);opacity:.85}
+.jauge b{position:absolute;inset:0;display:grid;place-items:center;font-family:"Martian Mono",monospace;
+  font-size:var(--t-fin);color:#FFF3D8;text-shadow:0 1px 2px rgba(0,0,0,.8);font-weight:700}
+.jauge::after{content:"";position:absolute;inset:auto 0 0 0;height:8px;
+  background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.6) 0 1px, rgba(224,168,60,.3) 1px 2px, transparent 2px 8px)}
+.regles{display:flex;flex-wrap:wrap;gap:5px}
+.regle{font-size:var(--t-micro);letter-spacing:.06em;padding:3px 8px;border-radius:999px;
+  border:1px solid var(--bord);color:var(--os-eteint);white-space:nowrap;font-weight:600}
+.regle.bien{border-color:var(--jade);color:var(--jade)}
+.regle.mal{border-color:var(--cinabre);color:var(--cinabre)}
+.tbl .lecon{font-family:"Instrument Serif",serif;font-size:var(--t-fort);line-height:1.25}
+.tbl .chiffres{display:flex;gap:14px;font-size:var(--t-fin);color:var(--os-eteint)}
+.tbl .chiffres b{display:block;font-family:"Martian Mono",monospace;font-size:var(--t-fort);color:var(--os);font-weight:600;white-space:nowrap}
+.tbl .chiffres>div{flex:1;min-width:0}
+.tbl .pied{margin-top:auto;display:flex;gap:8px}
+.tbl .pied .btn{padding:9px 12px;font-size:var(--t-petit);white-space:nowrap}
+/* Une table brûlée : laque désaturée et tampon en travers. Enseigner par le
+   refus marche mieux qu'un paragraphe. */
+.tbl.brulee{filter:saturate(.62)}
+/* Le refus est une BANDE dans le flux, pas un tampon en travers : posé sur la
+   carte, il recouvrait l'avantage maison et le nombre d'écarts — les deux
+   chiffres qui justifient précisément le refus. */
+.tbl.brulee::before{
+  content:attr(data-tampon);display:block;order:-1;margin-top:2px;
+  font-family:"Instrument Serif",serif;font-size:19px;line-height:1.2;letter-spacing:.02em;
+  color:var(--cinabre);padding:8px 11px;border-radius:9px;
+  background:color-mix(in oklab, var(--cinabre) 13%, transparent);
+  box-shadow:0 0 0 1px color-mix(in oklab, var(--cinabre) 42%, transparent) inset;
+}
+
+/* ── La réglette : le compte, matérialisé sur une échelle graduée ───── */
+.rail{position:relative;height:58px;border-radius:9px;overflow:hidden;
+  background:linear-gradient(180deg,#2A2114 0%,#1A1409 52%,#241B0F 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 -2px 6px rgba(0,0,0,.55), 0 1px 2px -1px var(--ombre)}
+.rail::before{content:"";position:absolute;inset:auto 0 0 0;height:15px;
+  background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.60) 0 1px, rgba(224,168,60,.22) 1px 2px, transparent 2px 8px)}
+.rail::after{content:"";position:absolute;inset:auto 0 0 0;height:25px;
+  background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.72) 0 1px, rgba(224,168,60,.34) 1px 2px, transparent 2px 40px)}
+.rail .coupe{position:absolute;top:0;bottom:0;width:2px;left:var(--penetration,75%);
+  background:var(--cinabre);box-shadow:0 0 8px -1px var(--cinabre)}
+.rail .zero{position:absolute;top:4px;bottom:4px;width:1px;left:50%;background:rgba(255,255,255,.22)}
+/* Dimensionné au pire cas : un sabot de six jeux produit couramment des comptes
+   au-delà de ±20, et Martian Mono est une chasse large. Un compte qui déborde
+   à l'instant où il devient intéressant annule tout le bénéfice de la réglette. */
+.rail .index{position:absolute;top:6px;bottom:6px;left:50%;min-width:5ch;padding-inline:8px;
+  transform:translateX(-50%);border-radius:5px;display:grid;place-items:center;
+  background:linear-gradient(180deg,#F3C866,#C08E22 62%,#8A6416);
+  color:#1A1409;font-family:"Martian Mono",monospace;font-size:15px;font-weight:700;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), inset 0 -2px 3px rgba(0,0,0,.35), 0 2px 6px -2px rgba(0,0,0,.7);
+  transition:left 240ms var(--ressort), background 140ms linear}
+.rail .index.plus{background:linear-gradient(180deg,#8FF0DC,#2FBFA6 62%,#137A66);color:#04201B}
+.rail .index.moins{background:linear-gradient(180deg,#FFB49F,#E86A4E 62%,#9B3A22);color:#2A0C05}
+.bandeau{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px;margin-top:10px}
+.bandeau div{text-align:center}
+.bandeau b{display:block;font-family:"Martian Mono",monospace;font-size:var(--t-titre);font-weight:600}
+
+/* ── La table de jeu ───────────────────────────────────────────────── */
+.plateau{padding:18px 20px 20px;min-height:400px;overflow:hidden}
+.plateau .devise{position:absolute;top:150px;left:0;right:0;text-align:center;pointer-events:none;
+  font-family:"Instrument Serif",serif;font-size:var(--t-petit);letter-spacing:.2em;
+  color:color-mix(in oklab, var(--nacre) 40%, transparent)}
+.sabot,.defausse{position:absolute;top:20px;width:60px;height:86px;border-radius:6px;
+  display:grid;place-items:end center;padding-bottom:4px;font-family:"Martian Mono",monospace;
+  font-size:var(--t-micro);color:color-mix(in oklab, var(--nacre) 66%, transparent)}
+.sabot{right:24px;background:#1B120D;border:2px solid var(--filet)}
+.sabot::before{content:"";position:absolute;top:6px;left:6px;right:6px;height:48px;border-radius:2px;
+  background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px)}
+.defausse{left:24px;border:2px dashed color-mix(in oklab, var(--filet) 60%, transparent)}
+.defausse i{position:absolute;top:6px;left:6px;right:6px;bottom:20px;border-radius:3px;opacity:0;
+  transition:opacity .3s;background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px)}
+.defausse.pleine i{opacity:1}
+.croupier{display:flex;flex-direction:column;align-items:center;gap:5px}
+.main{display:flex;justify-content:center;min-height:0;perspective:900px}
+.main .carte{--w:88px;margin-left:-50px}
+.main .carte:first-child{margin-left:0}
+.qui{display:flex;align-items:baseline;gap:9px;font-size:var(--t-micro);letter-spacing:.14em;
+  text-transform:uppercase;color:color-mix(in oklab, var(--nacre) 72%, transparent)}
+.qui b{font-family:"Martian Mono",monospace;font-size:var(--t-fort);color:var(--nacre);letter-spacing:0}
+.annonce{text-align:center;font-family:"Instrument Serif",serif;font-size:var(--t-titre);
+  min-height:32px;margin:10px 0 2px;color:var(--nacre)}
+.sieges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;align-items:flex-start;min-height:170px;margin-top:4px}
+.siege{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 8px 7px;border-radius:12px;min-width:126px;transition:box-shadow .2s}
+.siege.toi{background:rgba(0,0,0,.16);box-shadow:0 0 0 1px color-mix(in oklab, var(--filet) 50%, transparent) inset}
+.siege.actif{box-shadow:0 0 0 2px var(--filet) inset}
+.siege .mains{display:flex;gap:10px}
+.siege .m{display:flex;flex-direction:column;align-items:center;gap:3px}
+.siege .m.encours .main{outline:2px dashed color-mix(in oklab, var(--filet) 70%, transparent);outline-offset:5px;border-radius:8px}
+.siege .main .carte{--w:66px;margin-left:-37px}
+.siege .main .carte:first-child{margin-left:0}
+.siege .score{font-family:"Martian Mono",monospace;font-size:var(--t-petit);color:var(--nacre);min-height:18px}
+.siege .issue{font-size:var(--t-micro);letter-spacing:.07em;text-transform:uppercase;min-height:14px;padding:1px 7px;border-radius:999px;font-weight:600}
+.issue.g{background:color-mix(in oklab,var(--jade) 26%,transparent);color:var(--jade)}
+.issue.p{background:color-mix(in oklab,var(--cinabre) 24%,transparent);color:var(--cinabre)}
+.issue.n{background:rgba(255,255,255,.12);color:var(--nacre)}
+.issue.bj{background:var(--filet);color:#1A1409}
+.siege .nom{font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;
+  color:color-mix(in oklab, var(--nacre) 90%, transparent)}
+.siege.toi .nom{color:var(--filet)}
+.conseil{text-align:center;font-size:var(--t-petit);min-height:20px;margin-top:6px;
+  color:color-mix(in oklab, var(--nacre) 88%, transparent)}
+.conseil b{color:var(--filet)}
+.barre{display:flex;justify-content:space-between;align-items:center;gap:10px 18px;flex-wrap:wrap;
+  margin-top:12px;font-family:"Martian Mono",monospace;font-size:var(--t-fin);color:var(--os-eteint)}
+.barre b{color:var(--os)}
+
+/* ── Exercices ─────────────────────────────────────────────────────── */
+.scene{display:grid;place-items:center;min-height:238px;padding:16px 0 4px;perspective:900px;position:relative}
+.scene .groupe{display:flex;gap:34px}
+.scene .carte{--w:148px}
+.eclair{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  font-family:"Martian Mono",monospace;font-size:var(--t-titre);font-weight:700;
+  padding:2px 13px;border-radius:999px;background:var(--ardoise)}
+.progres{height:4px;background:var(--ardoise);border-radius:2px;overflow:hidden;margin:18px auto 0;max-width:460px}
+.progres i{display:block;height:100%;background:var(--laiton);width:0}
+.meta{display:flex;justify-content:space-between;max-width:460px;margin:7px auto 0;
+  font-family:"Martian Mono",monospace;font-size:var(--t-fin);color:var(--os-eteint)}
+.reponses{display:flex;justify-content:center;gap:11px;margin:16px 0 4px;flex-wrap:wrap}
+.reponses button{width:110px;height:70px;border-radius:13px;border:2px solid var(--bord);
+  background:var(--ardoise);font-family:"Martian Mono",monospace;font-size:26px;font-weight:700;
+  transition:border-color .15s,transform .08s}
+.reponses button:hover{border-color:var(--laiton)}
+.reponses button:active{transform:scale(.96)}
+.reponses button i{display:block;font-family:Archivo,sans-serif;font-style:normal;font-size:var(--t-micro);
+  letter-spacing:.07em;text-transform:uppercase;color:var(--os-eteint);font-weight:600;margin-top:1px}
+.reponses button.plus{color:var(--jade)} .reponses button.moins{color:var(--cinabre)}
+/* Pas de secousse sur l'erreur : 400 ms de secousse, c'est 400 ms volés à la
+   carte suivante, et ça apprend à craindre l'erreur, pas à corriger le compte. */
+@keyframes verdict{0%{box-shadow:0 0 0 0 var(--teinte)}40%{box-shadow:0 0 0 6px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.juste{--teinte:var(--jade);animation:verdict 200ms var(--sec)}
+.faux{--teinte:var(--cinabre);animation:verdict 200ms var(--sec)}
+.trace{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:560px;margin:11px auto 0}
+.trace i{width:8px;height:8px;border-radius:2px;background:var(--ardoise)}
+.trace i.ok{background:var(--jade)} .trace i.ko{background:var(--cinabre)} .trace i.rate{background:var(--filet)}
+.voile{position:absolute;inset:0;display:grid;place-items:center;border-radius:var(--r);z-index:3;
+  background:color-mix(in oklab, var(--encre) 94%, transparent);animation:paraitre .18s}
+.demande{display:flex;gap:12px;justify-content:center;align-items:flex-end;margin-top:13px;flex-wrap:wrap}
+.demande input{width:118px;font-size:23px;text-align:center}
+.bilan{text-align:center}
+.bilan .cadran{font-size:var(--t-verdict);line-height:1;margin:2px 0}
+.tuiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px;max-width:780px;margin:16px auto 0}
+.tuiles div{padding:11px 10px;border:1px solid var(--ardoise);border-radius:10px}
+.tuiles b{display:block;font-family:"Martian Mono",monospace;font-size:var(--t-titre);font-weight:600}
+.chrono{font-family:"Martian Mono",monospace;font-size:26px;text-align:center;margin-top:8px;color:var(--laiton)}
+
+/* ── Estimation : le tas de défausse ───────────────────────────────── */
+.bac{position:relative;width:206px;height:258px;margin:0 auto;border-radius:8px;overflow:hidden;
+  border:3px solid var(--cuir);background:linear-gradient(180deg,#12100E,#1C1713);
+  box-shadow:inset 0 0 24px rgba(0,0,0,.7)}
+.bac .pile{position:absolute;left:8px;right:8px;bottom:8px;border-radius:2px;height:0;
+  background-image:repeating-linear-gradient(0deg,#EFE7D0 0 1px,#B9AD8E 1px 2px,#EFE7D0 2px 3px);
+  box-shadow:0 -2px 6px rgba(0,0,0,.5);transition:height .5s var(--ressort)}
+.bac .reflet{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,rgba(255,255,255,.09) 0 30%,transparent 55%)}
+.bac .levre{position:absolute;inset:auto 0 0 0;height:24px;pointer-events:none;
+  background:linear-gradient(180deg,transparent,var(--cuir) 65%)}
+.rapide{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:520px;margin:13px auto 0}
+.rapide button{border:1px solid var(--bord);background:var(--ardoise);border-radius:9px;padding:8px 11px;
+  font-family:"Martian Mono",monospace;font-size:var(--t-petit);min-width:54px}
+.rapide button:hover{border-color:var(--laiton)}
+
+/* ── Stratégie ─────────────────────────────────────────────────────── */
+.duel{display:grid;place-items:center;gap:5px;padding:4px 0}
+.duel .voie{display:flex;flex-direction:column;align-items:center;gap:5px}
+.duel .main .carte{--w:92px;margin-left:-44px}
+.duel .main .carte:first-child{margin-left:0}
+.duel .tot{font-family:"Martian Mono",monospace;font-size:var(--t-fort)}
+.tcbadge{font-family:"Martian Mono",monospace;font-size:var(--t-petit);border:1px solid var(--laiton);
+  border-radius:999px;padding:5px 14px;background:var(--halo)}
+.tcbadge b{font-size:var(--t-fort);margin-left:6px}
+.retour{min-height:50px;text-align:center;margin-top:11px;max-width:62ch;margin-inline:auto}
+.retour .dit{font-family:"Instrument Serif",serif;font-size:var(--t-titre);display:block}
+.score{display:flex;gap:17px;justify-content:center;font-family:"Martian Mono",monospace;
+  font-size:var(--t-fin);color:var(--os-eteint);margin-top:5px}
+.score b{color:var(--os)}
+table.grille{border-collapse:collapse;font-family:"Martian Mono",monospace;font-size:var(--t-fin);width:100%}
+table.grille th,table.grille td{padding:3px 4px;text-align:center;border:1px solid var(--ardoise)}
+table.grille th{color:var(--os-eteint);font-weight:600;font-size:var(--t-micro)}
+td.H{background:color-mix(in oklab,var(--cinabre) 16%,transparent)}
+td.S{background:color-mix(in oklab,var(--jade) 16%,transparent)}
+td.D{background:color-mix(in oklab,var(--laiton) 22%,transparent)}
+td.P{background:color-mix(in oklab,var(--filet) 26%,transparent)}
+td.U{background:var(--ardoise)}
+
+/* ── Concentration ─────────────────────────────────────────────────── */
+.concentration{display:grid;grid-template-columns:1fr 296px;gap:14px;align-items:start}
+.suspicion{height:12px;border-radius:6px;overflow:hidden;border:1px solid var(--bord);background:rgba(0,0,0,.35)}
+.suspicion i{display:block;height:100%;width:0;transition:width .4s;
+  background:linear-gradient(90deg,var(--jade),var(--filet) 55%,var(--cinabre))}
+/* La SEULE animation en boucle de toute l'application, et seulement au-dessus
+   du seuil d'alerte. C'est parce que rien d'autre ne bouge en continu qu'elle
+   fonctionne comme une alarme périphérique. */
+@keyframes respire{from{opacity:.72}to{opacity:1}}
+.suspicion.chaude i{animation:respire 1.6s ease-in-out infinite alternate}
+.oeil{font-size:24px;filter:grayscale(1);opacity:.45;transition:.2s}
+.oeil.on{filter:none;opacity:1}
+.bulle{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:4;
+  background:var(--relief);border:1px solid var(--laiton);border-radius:14px;padding:12px 16px;
+  max-width:420px;width:calc(100% - 36px);box-shadow:0 14px 40px -10px var(--ombre);animation:surgir .2s var(--ressort)}
+@keyframes surgir{from{transform:translate(-50%,12px);opacity:0}to{transform:translateX(-50%);opacity:1}}
+.bulle .de{font-size:var(--t-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--laiton)}
+.bulle .q{font-size:var(--t-corps);margin:3px 0 8px}
+.bulle .opts{display:flex;gap:7px;flex-wrap:wrap}
+.bulle .opts button{border:1px solid var(--bord);border-radius:999px;padding:7px 13px;font-size:var(--t-petit)}
+.bulle .opts button:hover{border-color:var(--laiton)}
+.bulle .sablier{height:3px;background:var(--laiton);margin-top:9px;border-radius:2px;animation:vider linear forwards}
+@keyframes vider{from{width:100%}to{width:0}}
+.bulle.regard{text-align:center;border-color:var(--cinabre)}
+.bulle.regard .q{font-family:"Instrument Serif",serif;font-size:var(--t-titre);color:var(--cinabre)}
+.cam{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:4/3}
+.cam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+.cam canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cam .hors{position:absolute;inset:0;display:grid;place-items:center;color:var(--os-eteint);
+  font-size:var(--t-petit);text-align:center;padding:14px}
+.indices{list-style:none;margin:7px 0 0;padding:0;font-size:var(--t-fin);color:var(--os-eteint);max-height:172px;overflow:auto}
+.indices li{padding:4px 0;border-bottom:1px solid var(--ardoise)}
+.indices li b{color:var(--cinabre);font-family:"Martian Mono",monospace;margin-right:6px}
+.detendu{margin-top:9px;width:100%;height:52px;border-radius:12px;border:2px solid var(--bord);
+  background:var(--ardoise);font-size:var(--t-corps)}
+.detendu.on{border-color:var(--cinabre)}
+
+/* ── Multijoueur ───────────────────────────────────────────────────── */
+.codesalon{font-family:"Martian Mono",monospace;font-size:40px;letter-spacing:.16em;text-align:center;
+  padding:14px;border-radius:12px;background:var(--ardoise);border:1px dashed var(--bord);user-select:all}
+.pairs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pair{display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;border:1px solid var(--bord);font-size:var(--t-petit)}
+.pair .point{width:8px;height:8px;border-radius:50%;background:var(--jade)}
+.pair.moi{border-color:var(--laiton)}
+.pair.croupier .point{background:var(--filet)}
+.classement{width:100%;border-collapse:collapse;font-size:var(--t-petit);margin-top:8px}
+.classement th,.classement td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--ardoise)}
+.classement th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--os-eteint);font-weight:600}
+.classement td.n{font-family:"Martian Mono",monospace}
+
+/* ── Le reçu de sabot : le hasard, prouvé ──────────────────────────── */
+.recu{border:1px dashed var(--bord);border-radius:10px;padding:13px 15px;font-family:"Martian Mono",monospace;
+  font-size:var(--t-fin);position:relative;background:var(--ardoise);word-break:break-all}
+.recu::before,.recu::after{content:"";position:absolute;left:10px;right:10px;height:6px;
+  background-image:repeating-linear-gradient(90deg,transparent 0 4px,var(--encre) 4px 8px)}
+.recu::before{top:-3px} .recu::after{bottom:-3px}
+.recu dt{font-family:Archivo,sans-serif;font-size:var(--t-micro);letter-spacing:.12em;
+  text-transform:uppercase;color:var(--os-eteint);margin-top:7px}
+.recu dd{margin:2px 0 0}
+.sceau{display:inline-flex;align-items:center;gap:7px;font-family:Archivo,sans-serif;font-size:var(--t-petit)}
+/* Sceau PLEIN = scellé, imprévisible. Sceau CREUX cerclé de cinabre = jumelé,
+   donc entièrement reproductible par quiconque a la graine. La différence doit
+   se reconnaître d'un coup d'œil, jamais dans une ligne de texte qu'on ne lit pas. */
+.sceau .rond{width:19px;height:19px;border-radius:50%;background:var(--laiton);box-shadow:inset 0 -2px 3px rgba(0,0,0,.35)}
+.sceau.revele .rond{background:transparent;border:2px solid var(--cinabre)}
+
+/* ── Progression ───────────────────────────────────────────────────── */
+.pave{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:11px}
+.pave .t{padding:13px}
+.pave b{display:block;font-family:"Instrument Serif",serif;font-size:34px;line-height:1.1}
+canvas#courbe{width:100%;height:216px;display:block;margin-top:6px}
+table.journal{width:100%;border-collapse:collapse;font-size:var(--t-petit);margin-top:6px}
+table.journal th,table.journal td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--ardoise)}
+table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--os-eteint);font-weight:600}
+.defile{overflow-x:auto}
+
+/* ── Fenêtre modale et bandeau ─────────────────────────────────────── */
+.modale{position:fixed;inset:0;background:rgba(0,0,0,.62);display:grid;place-items:center;padding:20px;z-index:60;animation:paraitre .2s}
+.modale .boite{max-width:520px;width:100%;padding:24px 26px;text-align:center}
+.bandeau-bas{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:70;
+  background:var(--relief);border:1px solid var(--laiton);border-radius:999px;padding:10px 18px;
+  font-size:var(--t-petit);box-shadow:0 10px 30px -8px var(--ombre);animation:paraitre .2s;max-width:min(90vw,520px)}
+
+/* ── Mouvement ─────────────────────────────────────────────────────── */
+@keyframes donne{
+  from{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(9deg) scale(.94);opacity:0}
+  to{transform:none;opacity:1}
+}
+/* LA ligne importante : la durée de la donne est une FRACTION de l'intervalle
+   de l'exercice. À 250 ms par carte, une donne de 300 ms dure plus longtemps
+   que l'exercice, et on compte une carte qu'on n'a jamais vue immobile. */
+.scene,.plateau{--don:clamp(80ms, calc(var(--intervalle,1200ms) * .16), 165ms)}
+.carte--entre{animation:donne var(--don,150ms) var(--ressort) both}
+@keyframes retourne{from{transform:rotateY(-92deg)}to{transform:none}}
+.carte--revele{animation:retourne 220ms var(--sec) both;backface-visibility:hidden}
+@keyframes bascule{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.bascule{animation:bascule 120ms var(--sec)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;
+    transition-duration:1ms!important;scroll-behavior:auto!important}
+  /* On coupe le TRAJET, jamais le VERDICT : la couleur reste une information. */
+  .juste,.faux,.rail .index{transition-duration:130ms!important}
+}
+
+/* ── Téléphone ─────────────────────────────────────────────────────── */
+@media (max-width:860px){
+  .concentration{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+  :root{--t-ecran:31px;--t-section:24px;--t-cadran:50px;--t-verdict:72px}
+  .heros{grid-template-columns:1fr;gap:16px}
+  .eventail{height:160px}.eventail .carte{--w:88px}
+  .duo{grid-template-columns:1fr}
+  nav{margin-left:0;width:100%;justify-content:flex-start;overflow-x:auto}
+  nav button{padding:7px 10px;font-size:var(--t-fin);white-space:nowrap}
+  .tete{padding:8px 0}
+  .scene .carte{--w:116px}.scene .groupe{gap:18px}
+  .reponses button{width:92px;height:62px;font-size:23px}
+  .plateau{padding:14px 8px 16px;border-radius:120px 120px 16px 16px;min-height:0}
+  .plateau .devise{top:114px;font-size:var(--t-micro);letter-spacing:.12em}
+  .main .carte{--w:66px;margin-left:-38px}
+  .siege{min-width:104px;padding:7px 3px}
+  .siege .main .carte{--w:52px;margin-left:-30px}
+  .sabot,.defausse{width:42px;height:60px;font-size:10px;top:14px}
+  .sabot{right:10px}.defausse{left:10px}
+  .sabot::before{height:32px}
+  .salon{grid-template-columns:1fr}
+  .codesalon{font-size:30px}
+  .bac{width:170px;height:214px}
+}
