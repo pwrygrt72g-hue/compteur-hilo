@@ -21,6 +21,15 @@
                             montant en unités de mise (négatif = perdu). Un bust et un abandon
                             sont émis À L'INSTANT, les autres au règlement.
      sabot:manche-fin       { issues, toi, net, solde } issues[siege][main] ; toi = tes issues
+     sabot:sieges           { sieges }                les sièges viennent d'être redessinés (les
+                            cercles de mise sont NEUFS : jetons.js y repose ses piles)
+     sabot:assurance-offre  { siege, main, toi, cout, possible }  AVANT la question : un écouteur
+                            peut poser possible=false (pas de quoi payer) — la question est sautée
+     sabot:assurance        { siege, main, toi, prise, montant }  la réponse, montant en jetons
+     sabot:assurance-fin    { siege, main, toi, gagne, montant }  l'assurance est réglée (+mise si
+                            le croupier avait blackjack, −moitié sinon), avant les main-fin
+     Les montants sont en JETONS : hand.bet porte la vraie mise depuis le lot Jetons.
+     remelange porte aussi pendantDonne:true quand le sabot est renouvelé au milieu d'une donne.
    ══════════════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 const emettre = (nom, detail) => document.dispatchEvent(new CustomEvent("sabot:" + nom, { detail: detail || {} }));
@@ -36,7 +45,10 @@ const echap = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt
 
 /* ── Mémoire locale ─────────────────────────────────────────────────── */
 const DB = { prenom: "", son: true, sys: "hilo", theme: "", table: "boulevard", sessions: [],
-  strat: { base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }, fautes: [], solde: 0 };
+  strat: { base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }, fautes: [],
+  // Le tapis : tes jetons en main. Tout le monde s'assoit avec 1 000 ; `engage` est
+  // ce qui est posé sur le feutre (rendu au chargement si une main a été interrompue).
+  tapis: 1000, rachats: 0, engage: 0 };
 // La clé s'appelle « sabot ». L'ancienne (« laque_v1 ») est relue une fois pour
 // ne perdre ni prénom ni historique, puis tout s'écrit sous le nouveau nom.
 try { Object.assign(DB, JSON.parse(localStorage.getItem("sabot") || localStorage.getItem("laque_v1") || "{}")); } catch (e) {}
@@ -67,6 +79,20 @@ function son(genre) {
     const s = a.createBufferSource(); s.buffer = n;
     const f = a.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 2500; f.Q.value = .8;
     const g = a.createGain(); g.gain.value = .3; s.connect(f).connect(g).connect(a.destination); s.start(t); return;
+  }
+  if (genre === "jetons" || genre === "raclement") {
+    // Jetons : deux claquements d'argile très brefs. Raclement : le souffle grave des
+    // cartes qu'on rassemble au remélange. Du bruit filtré, jamais un fichier.
+    const j = genre === "jetons", dur = j ? .05 : .32;
+    for (const dt of (j ? [0, .055] : [0])) {
+      const n = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate), d = n.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, j ? 3.2 : 1.6);
+      const s = a.createBufferSource(); s.buffer = n;
+      const f = a.createBiquadFilter(); f.type = j ? "bandpass" : "lowpass"; f.frequency.value = j ? 3800 : 900; f.Q.value = j ? 1.4 : .5;
+      const g = a.createGain(); g.gain.value = j ? .22 : .16;
+      s.connect(f).connect(g).connect(a.destination); s.start(t + dt);
+    }
+    return;
   }
   const o = a.createOscillator(), g = a.createGain(); o.type = "sine";
   o.frequency.setValueAtTime(genre === "ok" ? 880 : genre === "ko" ? 220 : genre === "alerte" ? 440 : 560, t);

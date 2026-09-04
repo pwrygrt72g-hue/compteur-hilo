@@ -18,7 +18,8 @@ function rendreProgres() {
     [S.length, "Sessions"], [Math.round(100 * ex / S.length) + " %", "Comptes exacts"],
     [Math.round(100 * ex10 / d10.length) + " %", "Sur les 10 dernières"], [serie, "Série en cours"],
     [rt !== null ? fr1(rt) + " s" : "—", "Réaction moyenne"], [best !== null ? fr1(best) + " s" : "—", "Meilleur jeu de 52"],
-    [pctDe(DB.strat.base), "Stratégie de base"], [pctDe(DB.strat.ecarts), "Écarts au compte"], [pctDe(DB.strat.assurance), "Assurance"]
+    [pctDe(DB.strat.base), "Stratégie de base"], [pctDe(DB.strat.ecarts), "Écarts au compte"], [pctDe(DB.strat.assurance), "Assurance"],
+    [DB.rachats || 0, "Rachats de tapis"]
   ].map(([b, l]) => `<div class="laque t"><b>${b}</b><span class="grave">${l}</span></div>`).join("");
   const lignes = S.slice(-45).reverse().map(s => { const d = new Date(s.t);
     return `<tr><td>${d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })} ${d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</td>
@@ -59,7 +60,7 @@ function dessinerCourbe(S) {
 }
 $("progEffacer").onclick = () => {
   if (!confirm("Effacer tout l'historique ?")) return;
-  DB.sessions = []; DB.strat = { base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }; DB.fautes = [];
+  DB.sessions = []; DB.strat = { base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }; DB.fautes = []; DB.rachats = 0;
   garder(); rendreProgres(); bandeau("Historique effacé.");
 };
 window.addEventListener("resize", () => { if (vue === "progres") dessinerCourbe(DB.sessions.filter(x => x.genre !== "estimation").slice(-30)); });

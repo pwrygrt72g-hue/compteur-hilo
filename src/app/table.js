@@ -32,7 +32,7 @@ async function remelanger() {
   T.sabot = s.cartes; T.graine = s.graine; T.empreinte = s.empreinte; T.revele = false;
   T.rc = CT.compteInitial(DB.sys, t.jeux); T.vues = 0;
   T.sabot.pop(); T.defausse = 0;
-  rafraichirBarre(); rendreRecu(); emettre("remelange", { table: t.id, cartes: T.sabot.length });
+  rafraichirBarre(); rendreRecu(); emettre("remelange", { table: t.id, cartes: T.sabot.length, pendantDonne: true });
 }
 // `pendantDonne` : le sabot est renouvelé au milieu d'une donne (carte de coupe).
 // Dans ce cas le verrou appartient à l'appelant — le relâcher ici laisserait une
@@ -55,7 +55,7 @@ async function nouveauSabot(o) {
   rafraichirBarre(); rendreRecu();
   if (!o.pendantDonne) { $("annonce").textContent = "Sabot neuf, mélangé, carte brûlée."; boutons({ donne: true }); }
   $("plateau").style.setProperty("--intervalle", vitesse() + "ms");
-  emettre("remelange", { table: t.id, cartes: T.sabot.length });
+  emettre("remelange", { table: t.id, cartes: T.sabot.length, pendantDonne: !!o.pendantDonne });
 }
 /* ── Le lieu ─────────────────────────────────────────────────────────────
    L'identifiant de la table EST l'identifiant du décor : [data-lieu] sur la
@@ -192,6 +192,8 @@ function rendreSieges() {
   if (vedette && el.scrollWidth > el.clientWidth + 4) vedette.scrollIntoView({
     inline: "center", block: "nearest",
     behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" });
+  // Les cercles de mise viennent d'être recréés : les piles de jetons (jetons.js) s'y reposent.
+  emettre("sieges", { sieges: T.sieges });
 }
 function rafraichirBarre() {
   const t = tableCourante(), total = t.jeux * 52;
@@ -207,8 +209,9 @@ function rafraichirBarre() {
   $("tJeux").textContent = visible ? fr1(jeuxRestants) : "—";
   const tc = sys().equilibre ? CT.compteVrai(T.rc, jeuxRestants) : null;
   $("tTC").textContent = visible ? (tc === null ? "n/a" : fr1(tc)) : "—";
-  $("tMise").textContent = visible && tc !== null ? CT.misesUnites(tc, 12) : "—";
-  $("tSolde").textContent = (T.solde >= 0 ? "+" : "") + fr1(T.solde);
+  // La mise conseillée est la rampe de référence 2(TC−1), en UNITÉS de mise minimum
+  // (misesUnites ne bat pas sa table — cf. counting.mjs). Le tapis, lui, est rendu par jetons.js.
+  $("tMise").textContent = visible && tc !== null ? CT.miseRampe(tc) : "—";
   const hc = $("hudCompte"); hc.classList.toggle("masque", !visible);
   hc.firstElementChild.className = visible ? (T.rc > 0 ? "plus" : T.rc < 0 ? "moins" : "") : "";
   hc.title = visible
@@ -225,6 +228,8 @@ $("bMontrer").onclick = () => {
 function boutons(o) {
   [["donne", "bDonne"], ["tire", "bTire"], ["reste", "bReste"], ["double", "bDouble"], ["separe", "bSepare"], ["abandon", "bAbandon"]]
     .forEach(([k, id]) => { $(id).disabled = !o[k]; });
+  // Pas de donne sans mise : jetons.js pose T.miseOk (false tant que la mise est sous le minimum).
+  if (o.donne && T.miseOk === false) $("bDonne").disabled = true;
 }
 function animerDepuisSabot(e, hote) {
   const s = $("sabot").getBoundingClientRect(), c = hote.getBoundingClientRect();
@@ -237,7 +242,7 @@ async function tirer(main, hote, cachee, qui) {
   if (!T.sabot.length) { const t = tableCourante(); const s = await sabotProuvable(t.jeux);
     T.sabot = s.cartes; T.graine = s.graine; T.empreinte = s.empreinte; T.revele = false;
     T.rc = CT.compteInitial(DB.sys, t.jeux); T.vues = 0; T.sabot.pop(); rendreRecu();
-    emettre("remelange", { table: t.id, cartes: T.sabot.length });
+    emettre("remelange", { table: t.id, cartes: T.sabot.length, pendantDonne: true });
   }
   const c = T.sabot.pop(); c.cachee = !!cachee; main.push(c);
   const e = carteEl(c, cachee); hote.appendChild(e);
@@ -273,8 +278,10 @@ async function revelerCachee() {
   emettre("croupier-revele", { carte: c, total: E.handTotal(T.croupier), el: e });
   await dodo(matchMedia("(prefers-reduced-motion:reduce)").matches ? 60 : 420);
 }
-const peutSeparer = (h, st) => E.canSplit(h, st.mains, reglesTable());
-const peutDoubler = (h, st) => E.canDouble(h, st.mains, reglesTable());
+// Doubler et séparer engagent une seconde mise : il faut l'avoir en main (DB.tapis, lot Jetons).
+const peutPayer = (h, st) => !st.toi || typeof DB.tapis !== "number" || DB.tapis >= h.bet;
+const peutSeparer = (h, st) => E.canSplit(h, st.mains, reglesTable()) && peutPayer(h, st);
+const peutDoubler = (h, st) => E.canDouble(h, st.mains, reglesTable()) && peutPayer(h, st);
 const peutAbandonner = (h, st) => E.canSurrender(h, st.mains, reglesTable()) && !h.fromSplit;
 
 function actionBase(cards, up, st, h) {
@@ -319,7 +326,8 @@ async function distribuer() {
   }
   for (const st of T.sieges) for (const h of st.mains) T.defausse += h.cards.length;
   T.defausse += T.croupier.length; T.croupier = []; T.actif = null;
-  for (const st of T.sieges) st.mains = [E.newHand([], 1)];
+  // Chaque siège joue la mise qu'il a posée dans son cercle (st.mise, lot Jetons) ; `|| 1` = sans jetons, une unité.
+  for (const st of T.sieges) st.mains = [E.newHand([], st.mise || 1)];
   rendreSieges(); $("dMain").innerHTML = ""; $("dScore").textContent = "·";
   $("annonce").textContent = ""; $("conseil").textContent = ""; rafraichirBarre();
   T.enJeu = true;
@@ -331,7 +339,18 @@ async function distribuer() {
     if (tour === 0) { await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.cardValue(T.croupier[0]); }
     else if (r.holeCard) await tirer(T.croupier, $("dMain"), true, CROUPIER);
   }
-  if (r.holeCard && E.cardValue(T.croupier[0]) === 11) await demanderAssurance();
+  if (r.holeCard && E.cardValue(T.croupier[0]) === 11 && T.toi) {
+    // L'assurance coûte la moitié de la mise : on s'assure d'abord qu'elle est payable
+    // (un écouteur peut refuser), puis la réponse devient une vraie mise sur la main.
+    const si = T.sieges.indexOf(T.toi), h = T.toi.mains[0];
+    const offre = { siege: si, main: 0, toi: true, cout: h.bet / 2, possible: true };
+    emettre("assurance-offre", offre);
+    if (offre.possible) {
+      const prise = await demanderAssurance();
+      if (prise) h.assurance = h.bet / 2;
+      emettre("assurance", { siege: si, main: 0, toi: true, prise, montant: prise ? h.bet / 2 : 0 });
+    }
+  }
   if (r.holeCard && r.peek && E.cardValue(T.croupier[0]) >= 10) {
     $("annonce").textContent = "Le croupier vérifie sa carte…"; await dodo(vitesse() * 1.4);
     if (E.handTotal(T.croupier) === 21) { await revelerCachee(); $("annonce").textContent = "Blackjack du croupier."; T.occupe = false; return regler(); }
@@ -452,18 +471,23 @@ async function jouerCroupier() {
 }
 async function regler() {
   const r = reglesTable(), dt = E.handTotal(T.croupier);
-  let miennes = [], net = 0; const issues = [], fins = [];
+  const dBJ = r.holeCard && T.croupier.length === 2 && dt === 21;
+  let miennes = [], net = 0; const issues = [], fins = [], assurances = [];
   T.sieges.forEach((st, si) => { issues[si] = []; st.mains.forEach((h, hi) => {
+    // L'assurance se règle avant la main : 2 contre 1 si le croupier avait blackjack.
+    if (h.assurance) { const ni = E.settleInsurance(h.bet, dBJ); if (st.toi) net += ni;
+      assurances.push({ siege: si, main: hi, toi: st.toi, gagne: dBJ, montant: ni }); }
     const res = r.holeCard ? E.settleHand(h, T.croupier, r) : E.settleNoHoleCard(h, T.croupier, r);
     h.result = res.result; issues[si][hi] = ISSUE_BUS[res.result] || res.result;
     if (st.toi) { miennes.push(res.result); net += res.net; }
     if (!h.emis) fins.push({ siege: si, main: hi, toi: st.toi, issue: issues[si][hi], montant: res.net });
   }); });
-  T.solde += net; DB.solde = T.solde;
+  T.solde += net;
   T.actif = null; rendreSieges(); T.mains++; T.enJeu = false; T.occupe = false; rafraichirBarre(); garder();
   $("annonce").textContent = `Croupier ${dt > 21 ? "saute à " + dt : dt}. Toi : ${miennes.join(" · ")}.`;
   // Les mains d'abord, une par une, puis la manche : un écouteur peut compter
   // sur cet ordre pour faire glisser les jetons avant de tirer un bilan.
+  assurances.forEach(a => emettre("assurance-fin", a));
   fins.forEach(f => emettre("main-fin", f));
   emettre("manche-fin", { issues, toi: T.toi ? issues[T.sieges.indexOf(T.toi)] : [], net, solde: T.solde, croupier: dt });
   boutons({ donne: true });
@@ -517,7 +541,13 @@ function demanderMonCompte(finSabot) {
     let txt = bon ? "Exact. " : `Tu as dit ${sgn(dit)}, c'était ${sgn(rc)}. `;
     txt += `${vues} cartes vues, ${restantes} restantes, soit ${fr1(jeuxRestants)} jeux.`;
     if (!isNaN(dj)) txt += ` Tu as estimé ${fr1(dj)}${Math.abs(dj - jeuxRestants) <= .5 ? " ✓" : " ✗"}.`;
-    if (sys().equilibre) txt += ` Compte vrai ${fr1(tc)} · mise théorique ${CT.misesUnites(tc, 12)} unité${CT.misesUnites(tc, 12) > 1 ? "s" : ""}.`;
+    if (sys().equilibre) txt += ` Compte vrai ${fr1(tc)} · la rampe dit ${CT.miseRampe(tc)} unité${CT.miseRampe(tc) > 1 ? "s" : ""}.`;
+    // Le vrai enseignement : la mise posée AVANT la donne, comparée au compte qu'on avait alors
+    // (T.tcMise et T.miseDonne sont figés par jetons.js à la fermeture des mises).
+    if (sys().equilibre && typeof T.tcMise === "number" && T.miseDonne > 0) {
+      const u = T.miseDonne / tableCourante().mise_min, ref = CT.miseRampe(T.tcMise);
+      txt += ` À la donne, tu as misé ${fr1(u)} unité${u > 1 ? "s" : ""} pour un compte vrai de ${fr1(T.tcMise)} : ${Math.abs(u - ref) <= 1 ? "cohérent" : "incohérent — la rampe disait " + ref}.`;
+    }
     $("mcRes").textContent = txt;
     DB.sessions.push({ t: Date.now(), genre: "table", sys: sys().nom, n: vues, exact: bon, ecart: Math.abs(dit - rc) });
     while (DB.sessions.length > 240) DB.sessions.shift(); garder();

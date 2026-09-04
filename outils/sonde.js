@@ -28,11 +28,21 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
   ok("assis au Boulevard", txt("#tNom").indexOf("Boulevard") >= 0, txt("#tNom"));
   ok("sabot de 6 jeux moins la brûlée", txt("#sabot") === "311", txt("#sabot"));
   if (q("#bMontrer").getAttribute("aria-pressed") !== "true") q("#bMontrer").click();
-  const attendre = async () => { let g = 0; while (q("#bDonne").disabled && g++ < 400) await dodo(120); };
+  // Depuis le lot Jetons, « Distribuer » ne s'ouvre qu'avec une mise posée : on attend la
+  // phase de mise (#v-table[data-phase]), on tape dans le rack des jetons qui couvrent le
+  // minimum, puis seulement on distribue.
+  const phase = () => (document.getElementById("v-table").dataset.phase || "");
+  const attendre = async () => { let g = 0; while (phase() !== "mise" && g++ < 400) await dodo(120); };
+  const miser = async () => { let g = 0;
+    while (q("#bDonne").disabled && g++ < 30) {
+      const min = +(q("#rackJetons").dataset.min || 5), libres = qa("#rjJetons button:not([disabled])");
+      const j = libres.find(b => +b.dataset.v >= min) || libres[libres.length - 1];
+      if (!j) break; j.click(); await dodo(90); } };
   const jouerUneMain = async (tire) => {
+    await attendre(); await miser();
     clic("#bDonne"); await dodo(600);
     let g = 0;
-    while (g++ < 60 && q("#bDonne").disabled) { await dodo(200);
+    while (g++ < 60 && phase() !== "mise") { await dodo(200);
       if (!q("#bTire").disabled) clic(tire && g % 4 === 0 ? "#bTire" : "#bReste");
       const a = q("#boiteAssurance .opts button:last-child"); if (a) a.click(); }
     await attendre();
@@ -42,6 +52,20 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
       clic("#modaleFermer"); await dodo(150);
     }
   };
+  // ── Jetons : la mise part au cercle, le tapis descend, le rack se referme à la donne
+  await attendre();
+  const tap = () => txt("#tTapis").replace(/[^0-9,]/g, ""), tapisAvant = tap();
+  ok("jetons : rack de six jetons", qa("#rjJetons button").length === 6, qa("#rjJetons button").length + " jetons");
+  ok("jetons : sans mise, pas de donne", q("#bDonne").disabled, "Distribuer ouvert sans mise");
+  await miser(); await dodo(700);
+  const moi = qa("#sieges .siege").findIndex(s => s.classList.contains("toi"));
+  ok("jetons : la mise est dans mon cercle", qa("#cercle_" + moi + " .jt").length >= 1, "cercle vide");
+  ok("jetons : mise chiffrée, en unités", /\d/.test(txt("#rjMise")) && /unité/.test(txt("#rjUnites")), txt("#rjMise") + " / " + txt("#rjUnites"));
+  ok("jetons : le tapis a baissé", tap() !== tapisAvant, tapisAvant + " → " + tap());
+  ok("jetons : les voisins ont misé", qa("#sieges .siege:not(.toi) .jt").length >= 2, qa("#sieges .siege:not(.toi) .jt").length + " jetons voisins");
+  ok("jetons : avec une mise, la donne s'ouvre", !q("#bDonne").disabled, "Distribuer fermé");
+  clic("#bRetirer"); await dodo(500);
+  ok("jetons : retirer reprend le jeton", q("#bDonne").disabled || +txt("#rjMise").replace(/\D/g, "") < +(q("#rackJetons").dataset.min), "mise " + txt("#rjMise"));
   const trace = [];
   for (let k = 0; k < 10; k++) { await jouerUneMain(true);
     trace.push("m" + k + "[sabot=" + txt("#sabot") +
@@ -58,6 +82,10 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
   ok("mise recommandée chiffrée", entier(txt("#tMise")), txt("#tMise"));
   ok("issues affichées", qa("#sieges .issue").filter(e => e.textContent.trim()).length >= 3, "aucune");
   ok("défausse alimentée", +txt("#defausseN") > 5, txt("#defausseN"));
+  ok("jetons : tapis chiffré après dix mains", /^\d[\d\u202f ]*(,\d+)?$/.test(txt("#tTapis")), txt("#tTapis"));
+  ok("jetons : le rack est rouvert entre deux mains", phase() === "mise" && q("#rackJetons").classList.contains("ouvert"), "phase " + phase());
+  { let t = {}; try { t = JSON.parse(localStorage.getItem("sabot") || "{}"); } catch (e) {}
+    ok("mémoire : tapis écrit, rien d'engagé", typeof t.tapis === "number" && (t.engage || 0) === 0, "tapis=" + t.tapis + " engage=" + t.engage); }
   ok("aucune erreur en jeu", __err.length === 0, __err.join(" / "));
 
   // ── Mélangeuse continue : le compte ne doit jamais s'accumuler
@@ -129,7 +157,7 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
 
   // ── Progression
   clic('nav [data-vue="progres"]'); await dodo(500);
-  ok("progression : 9 tuiles", qa("#progPave .t").length === 9, qa("#progPave .t").length + " tuiles");
+  ok("progression : 10 tuiles (rachats compris)", qa("#progPave .t").length === 10 && /Rachats/.test(q("#progPave").textContent), qa("#progPave .t").length + " tuiles");
   { let m=""; try{m=(JSON.parse(localStorage.getItem("sabot")||"{}").sessions||[]).map(x=>x.genre+":"+x.ecart).join(",")}catch(e){m="illisible"}
     ok("mémoire : session de table écrite", /table/.test(m), "sessions = " + m); }
   ok("progression : journal (table incluse)", qa("#progJournal tr").length >= 6 && /Table/.test(q("#progJournal").textContent), qa("#progJournal tr").length + " lignes : " + qa("#progJournal tr").slice(1).map(r => r.children[1].textContent).join(","));

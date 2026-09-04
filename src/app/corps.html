@@ -85,7 +85,7 @@
       <span><i>Vrai</i><b id="tTC">—</b></span>
       <span><i>Jeux</i><b id="tJeux">—</b></span>
       <span><i>Mise</i><b id="tMise">—</b></span>
-      <span class="solde"><i>Solde</i><b id="tSolde">+0,0</b></span>
+      <span class="solde" id="hudTapis" title="Tes jetons en main"><i>Tapis</i><b id="tTapis">1 000</b><em id="tNet" hidden></em></span>
     </div>
     <button class="icone" id="bReglagesTable" title="Réglages de la table" aria-label="Réglages de la table">⚙</button>
   </div>
@@ -121,6 +121,16 @@
       </div>
     </div>
     <div id="jetonsCalque" aria-hidden="true"></div>
+    <!-- Le rack du joueur (lot Jetons) : tes jetons, posés sur le rail devant toi. Visible pendant
+         la phase de mise seulement ; il glisse sous le rail dès que la donne commence. -->
+    <div class="rack-jetons" id="rackJetons" data-min="10" data-max="1000">
+      <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b><span class="rj-sous" id="rjLimites">min 10 · max 1 000</span></div>
+      <div class="rj-jetons" id="rjJetons" role="group" aria-label="Jetons à miser"></div>
+      <div class="rj-bloc"><span class="grave">Mise</span><b class="cadran" id="rjMise">0</b><span class="rj-sous" id="rjUnites">—</span></div>
+      <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier jeton (Retour arrière)" aria-label="Retirer le dernier jeton">&#8630;</button>
+      <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
+    </div>
+    <p class="coach-mise" id="coachMise" aria-live="polite"></p>
   </div>
 
   <!-- BANDE 3 — les coups, en verre teinté sur la scène. Le principal est en or. -->

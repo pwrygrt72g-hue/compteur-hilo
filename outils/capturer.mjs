@@ -1,6 +1,10 @@
 // Capture d'écran d'une vue, à une taille, dans un thème — pour REGARDER son travail.
 //
-//   node outils/capturer.mjs <vue> [LxH] [sortie.png] [--donne] [--sombre|--clair] [--table=id] [--attendre=ms] [--puis=idBouton] [--attendre2=ms]
+//   node outils/capturer.mjs <vue> [LxH] [sortie.png] [--donne] [--sombre|--clair] [--table=id] [--attendre=ms] [--puis=idBouton] [--attendre2=ms] [--mise] [--sansmise]
+//
+//   --mise      : pose une mise (un jeton qui couvre le minimum) sans distribuer — la phase de mise.
+//   --donne     : pose la mise PUIS distribue (la donne exige une mise depuis le lot Jetons).
+//   --sansmise  : avec --donne, ne pose rien (pour voir le bouton fermé).
 //
 //   node outils/capturer.mjs table 1280x800 /tmp/table.png --donne
 //   node outils/capturer.mjs table 375x667 /tmp/tel.png --donne --table=cotai
@@ -48,6 +52,14 @@ if (opt.table) await evaluer(`(() => { try { const d = JSON.parse(localStorage.g
 if (opt.table) { await cdp("Page.reload"); await dodo(1500); }
 await evaluer(`(document.querySelector('[data-vue="${vue}"]')||{click(){}}).click()`);
 await dodo(700);
+const MISER = `(async () => { const q = s => document.querySelector(s), dodo = ms => new Promise(r => setTimeout(r, ms));
+  for (let g = 0; g < 30 && q("#bDonne") && q("#bDonne").disabled; g++) {
+    const rack = q("#rackJetons"), min = rack ? +(rack.dataset.min || 5) : 5;
+    const libres = [...document.querySelectorAll("#rjJetons button:not([disabled])")];
+    const j = libres.find(b => +b.dataset.v >= min) || libres[libres.length - 1];
+    if (!j) break; j.click(); await dodo(90);
+  } })()`;
+if ((opt.donne && !opt.sansmise) || opt.mise) { await evaluer(MISER); await dodo(opt.donne ? 350 : +(opt.attendre || 900)); }
 if (opt.donne) { await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(+(opt.attendre || 3200)); }
 // --puis=bReste : un coup après la donne (pour voir le croupier retourner sa carte, un bust, un gain…).
 if (opt.puis) { await evaluer(`(document.getElementById(${JSON.stringify(opt.puis)})||{click(){}}).click()`); await dodo(+(opt.attendre2 || 2500)); }
