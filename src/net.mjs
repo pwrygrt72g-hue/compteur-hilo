@@ -102,10 +102,14 @@ export function connecterAvecRepli(opts, i = 0) {
 }
 export const nomCourtier = url => url.replace(/^wss:\/\//, "").split(/[:/]/)[0];
 
-// Un code de salon lisible au téléphone : pas de 0/O, pas de 1/I.
+// Un code de salon lisible au téléphone : huit caractères, pas de 0/O, pas de 1/I.
+// Il s'écrit groupé par quatre (A7K2-M9PQ) ; le tiret n'en fait pas partie.
 const ALPHA = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 export function codeSalon() {
-  const a = new Uint8Array(5); crypto.getRandomValues(a);
+  const a = new Uint8Array(8); crypto.getRandomValues(a);
   return [...a].map(x => ALPHA[x % ALPHA.length]).join("");
 }
 export const sujet = code => `compteur-hilo/v1/${code}`;
+// La table de blackjack à plusieurs parle sur son propre sujet : un code de course
+// et un code de table ne se croisent jamais.
+export const sujetTable = code => `compteur-hilo/table/v1/${code}`;

@@ -203,6 +203,36 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
 
   clic('nav [data-vue="ensemble"]'); await dodo(200);
   ok("multijoueur : écran d'accueil", !q("#mpAccueil").hidden, "caché");
+  ok("multijoueur : deux modes, la table et la course", qa("#mpModes [role=tab]").length === 2, qa("#mpModes [role=tab]").length + " onglets");
+  clic('#mpModes [data-mode="course"]'); await dodo(80);
+  ok("multijoueur : la course reste accessible", /course/i.test(txt("#mpCreer")), txt("#mpCreer"));
+  clic('#mpModes [data-mode="table"]'); await dodo(80);
+  ok("multijoueur : le code se tape groupé", (q("#mpCode").value = "a7k2m9pq", q("#mpCode").dispatchEvent(new Event("input")), q("#mpCode").value === "A7K2-M9PQ"), q("#mpCode").value);
+  // ── La table réseau, sans courtier : un transport muet injecté par la sonde. L'hôte
+  // est seul, la table s'ouvre sur la scène et attend des joueurs sans une erreur.
+  window.__reseauTransport = () => ({ publier() {}, fermer() {} });
+  clic("#mpCreer"); await dodo(1500);
+  ok("table réseau : ouverte sur la scène, en attente", !q("#v-table").hidden && q("#v-table").dataset.reseau === "1" && /attente|code/i.test(txt("#annonce")), "hidden=" + q("#v-table").hidden + " reseau=" + q("#v-table").dataset.reseau + " annonce=" + txt("#annonce"));
+  ok("table réseau : cinq sièges libres, un code de huit", qa("#sieges .siege.vide").length === 5 && /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(txt("#tCode")), qa("#sieges .siege.vide").length + " libres · " + txt("#tCode"));
+  clic("#sieges .siege.vide .asseoir"); await dodo(600);
+  ok("table réseau : assis, les mises s'ouvrent", !!q("#sieges .siege.toi") && phase() === "mise" && q("#rackJetons").classList.contains("ouvert"), "toi=" + !!q("#sieges .siege.toi") + " phase=" + phase());
+  await miser(); await dodo(500);
+  ok("table réseau : ma mise est dans mon cercle, l'hôte peut distribuer", qa("#sieges .siege.toi .jt").length >= 1 && !q("#bDonne").disabled, "jt=" + qa("#sieges .siege.toi .jt").length + " donne=" + q("#bDonne").disabled);
+  clic("#bDonne"); await dodo(400);
+  { let g = 0; while (g++ < 200 && phase() !== "reglement" && !(phase() === "mise" && g > 30)) { await dodo(200);
+      if (!q("#bTire").disabled) clic("#bReste"); const a = q("#boiteAssurance .opts button:last-child"); if (a) a.click(); } }
+  ok("table réseau : la manche est réglée par l'hôte", phase() === "reglement" || phase() === "mise", "phase " + phase());
+  ok("table réseau : le croupier a joué, ma main a une issue", qa("#dMain .carte").length >= 2 && !!q("#sieges .siege.toi .issue") && q("#sieges .siege.toi .issue").textContent.trim().length > 0, "croupier=" + qa("#dMain .carte").length + " issue=" + (q("#sieges .siege.toi .issue") || {}).textContent);
+  clic("#bNouveauSabot"); await dodo(200);
+  ok("table réseau : le journal a la manche", !q("#modale").hidden && /Manche/.test(q("#modaleBoite").textContent) && qa("#modaleBoite table tr").length >= 3, qa("#modaleBoite table tr").length + " lignes");
+  clic("#modaleFermer"); await dodo(120);
+  clic("#bRecu"); await dodo(200);
+  ok("table réseau : le reçu montre l'empreinte scellée", /Empreinte/.test(q("#modaleBoite").textContent) && /Scellé/.test(q("#modaleBoite").textContent), q("#modaleBoite").textContent.slice(0, 80));
+  clic("#modaleFermer"); await dodo(120);
+  clic("#bReseau"); await dodo(200);
+  ok("table réseau : la fiche de la table (code, joueurs, bots)", /À cette table/.test(q("#modaleBoite").textContent) && !!q("#rsBots"), q("#modaleBoite").textContent.slice(0, 80));
+  clic("#rsQuitter"); await dodo(1500);
+  ok("table réseau : quitter rend la table solo", !q("#v-table").dataset.reseau && q("#bReseau").hidden && txt("#bNouveauSabot") === "Nouveau sabot" && phase() === "mise", "reseau=" + q("#v-table").dataset.reseau + " phase=" + phase());
   ok("BILAN : aucune erreur", __err.length === 0, __err.join(" / "));
  } catch (e) { R.push("KO la sonde a planté >> " + e.message + " @ " + (e.stack || "").split("\n")[1]); }
  document.getElementById("SONDE").textContent = "RES " + R.join(" ; ") + " || ERR " + (__err.join(" / ") || "aucune");

@@ -58,7 +58,8 @@ if (!donnees) {
 }
 
 // ---- 2. mini-empaqueteur : des modules ES vers une seule portée ----
-const ORDRE = ["engine", "solver", "shuffle", "counting", "net"];
+// table-reseau (la table à plusieurs, hôte autoritaire) dépend d'engine : il vient après.
+const ORDRE = ["engine", "solver", "shuffle", "counting", "net", "table-reseau"];
 const exportsDe = src => {
   const n = new Set();
   for (const m of src.matchAll(/^export\s+(?:async\s+)?(?:const|let|function)\s+([A-Za-z_$][\w$]*)/gm)) n.add(m[1]);
@@ -69,10 +70,10 @@ let bundle = "const M={};\n";
 for (const nom of ORDRE) {
   let src = readFileSync(`src/${nom}.mjs`, "utf8");
   const noms = exportsDe(src);
-  src = src.replace(/^import\s*\{([^}]*)\}\s*from\s*["']\.\/(\w+)\.mjs["'];?\s*$/gm, (_, ids, mod) => `const {${ids}} = M.${mod};`);
+  src = src.replace(/^import\s*\{([^}]*)\}\s*from\s*["']\.\/([\w-]+)\.mjs["'];?\s*$/gm, (_, ids, mod) => `const {${ids}} = M[${JSON.stringify(mod)}];`);
   src = src.replace(/^export\s+\{[^}]*\};?\s*$/gm, "");
   src = src.replace(/^export\s+/gm, "");
-  bundle += `M.${nom} = (function(){\n${src}\nreturn {${noms.join(",")}};\n})();\n`;
+  bundle += `M[${JSON.stringify(nom)}] = (function(){\n${src}\nreturn {${noms.join(",")}};\n})();\n`;
 }
 
 // ---- 3. assemblage ----
@@ -86,8 +87,10 @@ const corps = readFileSync("src/app/corps.html", "utf8");
 // ne remontent pas. Intervertir deux morceaux casse en zone morte temporelle.
 // cartes.js (le dessin des cartes) doit précéder le salon, qui en affiche ;
 // jetons.js et croupier.js écoutent le bus émis par table.js, ils viennent juste après.
+// reseau.js (la table à plusieurs) se greffe sur la table, les jetons et le croupier :
+// il vient après eux trois, et après ensemble.js dont il complète l'écran d'accueil.
 const MORCEAUX = ["socle.js","cartes.js","salon.js","table.js","jetons.js","croupier.js",
-  "exercices.js","strategie.js","concentration.js","ensemble.js","progres.js","clavier.js","demarrage.js"];
+  "exercices.js","strategie.js","concentration.js","ensemble.js","reseau.js","progres.js","clavier.js","demarrage.js"];
 const app = MORCEAUX.map(f => {
   try { return `\n/* ═══ ${f} ═══ */\n` + readFileSync(`src/app/${f}`, "utf8"); }
   catch (e) { throw new Error(`morceau d'interface manquant : src/app/${f}`); }

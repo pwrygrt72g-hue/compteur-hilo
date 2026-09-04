@@ -21,6 +21,7 @@ document.addEventListener("keydown", e => {
     else if (k === "a") $("bAbandon").click(); else if (k === "d" || e.key === "Enter") $("bDonne").click();
     // Les jetons : 1 à 6 de gauche à droite dans le rack, Retour arrière reprend le dernier posé.
     else if (/^[1-6]$/.test(e.key)) poserJetonRang(+e.key);
-    else if (e.key === "Backspace") { retirerJeton(); e.preventDefault(); }
+    // Par le BOUTON, pas la fonction : à plusieurs (reseau.js), reprendre un jeton passe par l'hôte.
+    else if (e.key === "Backspace") { $("bRetirer").click(); e.preventDefault(); }
   }
 });

@@ -604,6 +604,31 @@ td.U{background:var(--ardoise)}
 .classement th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--os-eteint);font-weight:600}
 .classement td.n{font-family:"Martian Mono",monospace}
 
+/* ── À plusieurs : la table partagée (reseau.js) ─────────────────────
+   Le siège vide invite (un bouton en pointillé d'or), le joueur porte sa couleur
+   (une pastille devant son nom) et son tapis (sous le nom, en mono : tout le
+   monde voit les jetons de tout le monde). Rien de gris : l'or et le lieu. */
+#mpNom{ min-height:44px }
+.couleurs{ display:flex; gap:4px; align-items:center; min-height:44px }
+.couleur{ width:44px; height:44px; border-radius:50%; position:relative; cursor:pointer; background:transparent }
+.couleur::before{ content:""; position:absolute; inset:7px; border-radius:50%; background:var(--c);
+  box-shadow:0 0 0 1px rgba(0,0,0,.3) inset, 0 2px 6px -2px rgba(0,0,0,.5); transition:transform .14s var(--ressort) }
+.couleur:hover::before{ transform:scale(1.1) }
+.couleur.on::before{ transform:scale(1.12); box-shadow:0 0 0 2px var(--laque), 0 0 0 4px var(--c), 0 0 0 1px rgba(0,0,0,.3) inset }
+.siege .nom .pastille{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--c); margin-right:6px; vertical-align:1px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 0 6px -1px var(--c) }
+.siege .tapis-siege{ font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:0; color:color-mix(in oklab, var(--ivoire) 62%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.5) }
+.siege.toi .tapis-siege{ color:color-mix(in oklab, var(--or) 85%, transparent) }
+.siege.vide .cercle{ opacity:.4 }
+.siege.vide .nom{ color:color-mix(in oklab, var(--ivoire) 45%, transparent) }
+.siege .asseoir{ min-height:44px; padding:0 14px; border-radius:999px; border:1px dashed color-mix(in oklab, var(--or) 75%, transparent); color:var(--or);
+  background:rgba(0,0,0,.2); font-size:var(--t-fin); letter-spacing:.06em; cursor:pointer; transition:background .15s, transform .15s var(--ressort) }
+.siege .asseoir:hover{ background:color-mix(in oklab, var(--or) 22%, transparent); transform:translateY(-2px) }
+.siege.absent .nom, .siege.passe .mains, .siege.passe .cercle{ opacity:.45 }
+.siege.absent{ filter:saturate(.4) }
+.regle.code{ border-color:var(--or); color:var(--or); font-family:"Martian Mono",monospace; letter-spacing:.14em; font-weight:600 }
+.classement .croupier-ligne td{ background:var(--ardoise) }
+
 /* ── Le reçu de sabot : le hasard, prouvé ──────────────────────────── */
 .recu{border:1px dashed var(--bord);border-radius:10px;padding:13px 15px;font-family:"Martian Mono",monospace;
   font-size:var(--t-fin);position:relative;background:var(--ardoise);word-break:break-all}
@@ -1199,6 +1224,8 @@ body.a-table main{ padding-bottom:0 }
       <button class="btn verre mini" id="bMonCompte">Mon compte</button>
       <button class="btn verre mini" id="bNouveauSabot">Nouveau sabot</button>
       <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
+      <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
+      <button class="btn verre mini" id="bReseau" hidden>Table</button>
     </div>
     <div id="boiteAssurance"></div>
   </div>
@@ -1391,18 +1418,30 @@ body.a-table main{ padding-bottom:0 }
 
 <!-- ════════════════════ À PLUSIEURS ════════════════════ -->
 <section class="vue" id="v-ensemble" hidden>
+  <!-- Deux façons de jouer à plusieurs : une VRAIE table de blackjack (jusqu'à cinq, des
+       mises, un croupier, l'hôte tient le sabot) — et la course au comptage, le mode
+       historique (le même sabot défile, chacun annonce son compte). Même code de huit
+       caractères, mais un code de table et un code de course ne se croisent jamais. -->
   <div class="laque pad" id="mpAccueil">
     <span class="grave">À plusieurs</span>
-    <h2 style="margin:4px 0 10px">Le même sabot, chacun son compte</h2>
-    <p class="muet" style="max-width:70ch">Vous vous asseyez à la même table, les cartes sortent du même sabot, et à la fin chacun annonce son compte. Celui qui tombe juste gagne — pas celui qui a le plus de chance.</p>
+    <h2 style="margin:4px 0 10px" id="mpTitre">Une vraie table, jusqu'à cinq</h2>
+    <div class="onglets" id="mpModes" role="tablist">
+      <button role="tab" aria-selected="true" data-mode="table">Table de blackjack</button>
+      <button role="tab" aria-selected="false" data-mode="course">Course au comptage</button>
+    </div>
+    <p class="muet" id="mpModeTexte" style="max-width:72ch;margin-top:0">Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de 1 000 jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.</p>
+    <div class="champs" style="margin-top:14px">
+      <label class="ch"><span class="grave">Ton nom</span><input type="text" id="mpNom" placeholder="Léo" maxlength="18" style="width:150px"></label>
+      <div class="ch" id="mpCouleurs"><span class="grave">Ta couleur</span><div class="couleurs" id="mpCouleurBoite" role="radiogroup" aria-label="Ta couleur"></div></div>
+    </div>
     <div class="champs" style="margin-top:14px">
       <button class="btn" id="mpCreer">Ouvrir une table</button>
       <span class="muet">ou</span>
-      <label class="ch"><span class="grave">Code du salon</span><input type="text" id="mpCode" placeholder="A7K2M" maxlength="6" style="text-transform:uppercase;width:130px;font-size:20px;letter-spacing:.14em"></label>
+      <label class="ch"><span class="grave">Code de la table</span><input type="text" id="mpCode" placeholder="A7K2-M9PQ" maxlength="9" autocomplete="off" spellcheck="false" style="text-transform:uppercase;width:176px;font-size:20px;letter-spacing:.12em"></label>
       <button class="btn creux" id="mpRejoindre">Rejoindre</button>
     </div>
     <p class="muet" id="mpEtat" style="font-size:var(--t-petit);margin-top:12px"></p>
-    <p class="muet" style="font-size:var(--t-fin);margin-top:4px">Sans serveur : les messages transitent par un courtier public, en clair. N'y écris rien de personnel. Si le réseau est bloqué — c'est le cas dans un Artifact publié — l'application te le dira au lieu de tourner dans le vide.</p>
+    <p class="muet" style="font-size:var(--t-fin);margin-top:4px">Sans serveur : les messages transitent par un courtier public, en clair. N'y écris rien de personnel. Dans un Artifact publié, les connexions WebSocket sont bloquées : la table à plusieurs se joue sur <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">pwrygrt72g-hue.github.io/compteur-hilo</a> — le reste de l'application marche partout.</p>
   </div>
 
   <div id="mpSalon" hidden>
@@ -1454,12 +1493,13 @@ body.a-table main{ padding-bottom:0 }
 
 <div class="modale" id="modale" hidden><div class="laque boite" id="modaleBoite"></div></div>
 
+<script>window.PHOTOS={"hall":"static/photos/hall.webp","boulevard":"static/photos/boulevard.webp","neon":"static/photos/neon.webp","frontdemer":"static/photos/frontdemer.webp","cotai":"static/photos/cotai.webp","cercle":"static/photos/cercle.webp","mainchaude":"static/photos/mainchaude.webp","salonprive":"static/photos/salonprive.webp","reno":"static/photos/reno.webp","aquarium":"static/photos/aquarium.webp","macao":"static/photos/macao.webp","entrainement":"static/photos/entrainement.webp","strategie":"static/photos/strategie.webp","concentration":"static/photos/concentration.webp","prive":"static/photos/prive.webp","jetons":"static/photos/jetons.webp","cartes":"static/photos/cartes.webp"};window.PHOTOS_CREDITS=[{"cle":"hall","titre":"Le Strip de Las Vegas la nuit : Paris Las Vegas et son lac","titre_original":null,"auteur":"Tom Podmore","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/las-vegas-strip-hotels-illuminated-at-night-oXN5TKXgmsg","fichier":"static/photos/hall.webp","fichier_petit":"static/photos/hall-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"boulevard","titre":"Las Vegas Boulevard vu d'en haut, la nuit","titre_original":"Las Vegas Strip at night, 2012.jpg","auteur":"Clément Bardot","licence":"CC BY-SA 3.0","licence_url":"https://creativecommons.org/licenses/by-sa/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Las_Vegas_Strip_at_night,_2012.jpg","fichier":"static/photos/boulevard.webp","fichier_petit":"static/photos/boulevard-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"neon","titre":"La canopée de Fremont Street, Downtown Las Vegas","titre_original":"Fremont Street Experience, Las Vegas NV.jpg","auteur":"John Phelan","licence":"CC BY-SA 3.0","licence_url":"https://creativecommons.org/licenses/by-sa/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Fremont_Street_Experience,_Las_Vegas_NV.jpg","fichier":"static/photos/neon.webp","fichier_petit":"static/photos/neon-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"frontdemer","titre":"Atlantic City à la tombée de la nuit, les casinos à l'horizon","titre_original":"Atlantic City NJ night.jpg","auteur":"Ron Miguel","licence":"CC BY 2.0","licence_url":"https://creativecommons.org/licenses/by/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Atlantic_City_NJ_night.jpg","fichier":"static/photos/frontdemer.webp","fichier_petit":"static/photos/frontdemer-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"cotai","titre":"Le Venetian Macao sur le Cotai Strip, la nuit","titre_original":"The Venetian Macao Night View 201104.jpg","auteur":"soeperbaby","licence":"CC BY 2.0","licence_url":"https://creativecommons.org/licenses/by/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:The_Venetian_Macao_Night_View_201104.jpg","fichier":"static/photos/cotai.webp","fichier_petit":"static/photos/cotai-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"cercle","titre":"La façade du Casino de Monte-Carlo, la nuit","titre_original":"Real Monte Carlo Casino.jpg","auteur":"sam garza from Los Angeles, USA","licence":"CC BY 2.0","licence_url":"https://creativecommons.org/licenses/by/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Real_Monte_Carlo_Casino.jpg","fichier":"static/photos/cercle.webp","fichier_petit":"static/photos/cercle-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"mainchaude","titre":"Une table de blackjack sur la moquette d'un casino","titre_original":"DelLagoCasinoBlackjackTable.jpg","auteur":"DanielPenfield","licence":"CC BY-SA 4.0","licence_url":"https://creativecommons.org/licenses/by-sa/4.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:DelLagoCasinoBlackjackTable.jpg","fichier":"static/photos/mainchaude.webp","fichier_petit":"static/photos/mainchaude-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"salonprive","titre":"Le salon rouge du Casino de Baden-Baden : lustres, dorures, tables","titre_original":"Baden-Baden 10-2015 img63 Casino.jpg","auteur":"A.Savin","licence":"CC BY-SA 3.0","licence_url":"https://creativecommons.org/licenses/by-sa/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Baden-Baden_10-2015_img63_Casino.jpg","fichier":"static/photos/salonprive.webp","fichier_petit":"static/photos/salonprive-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"reno","titre":"L'arche de Reno, « The Biggest Little City in the World », la nuit","titre_original":"Reno, Big, Little - panoramio.jpg","auteur":"Bohao Zhao","licence":"CC BY 3.0","licence_url":"https://creativecommons.org/licenses/by/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Reno,_Big,_Little_-_panoramio.jpg","fichier":"static/photos/reno.webp","fichier_petit":"static/photos/reno-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"aquarium","titre":"Un sol de machines à sous sous les lustres, Las Vegas","titre_original":null,"auteur":"Kvnga","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/slot-machines-in-a-casino-vBWsG91aR_U","fichier":"static/photos/aquarium.webp","fichier_petit":"static/photos/aquarium-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"macao","titre":"Wynn Macau et Grand Lisboa, Macao, la nuit","titre_original":"Macau Night 2.jpg","auteur":"Philip Nalangan","licence":"CC BY 4.0","licence_url":"https://creativecommons.org/licenses/by/4.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Macau_Night_2.jpg","fichier":"static/photos/macao.webp","fichier_petit":"static/photos/macao-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"entrainement","titre":"Cartes et jetons sur le feutre d'une table de blackjack","titre_original":"Blackjack board.JPG","auteur":"Ppntori (Wikimedia Commons)","licence":"Public domain","licence_url":"https://commons.wikimedia.org/wiki/Commons:Licensing#Public_domain","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Blackjack_board.JPG","fichier":"static/photos/entrainement.webp","fichier_petit":"static/photos/entrainement-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"strategie","titre":"Un jeu de cartes en éventail, en gros plan","titre_original":null,"auteur":"Klim Musalimov","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/a-close-up-of-a-playing-card-on-a-table-P9BtSqfwZNU","fichier":"static/photos/strategie.webp","fichier_petit":"static/photos/strategie-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"concentration","titre":"Le croupier distribue : mains en mouvement sur le feutre","titre_original":"Blurry blackjack table.jpg","auteur":"Frerk Meyer","licence":"CC BY-SA 2.0","licence_url":"https://creativecommons.org/licenses/by-sa/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Blurry_blackjack_table.jpg","fichier":"static/photos/concentration.webp","fichier_petit":"static/photos/concentration-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"prive","titre":"Des amis autour d'une table, cartes en main","titre_original":null,"auteur":"Sidral Mundet","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/friends-play-cards-sharing-snacks-and-drinks-nzSd8jiIbGc","fichier":"static/photos/prive.webp","fichier_petit":"static/photos/prive-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"jetons","titre":"Jetons de casino alignés sur une table de craps","titre_original":null,"auteur":"Leo_Visions","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/a-close-up-of-many-different-colored-poker-chips-_FU9NK_t6A8","fichier":"static/photos/jetons.webp","fichier_petit":"static/photos/jetons-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"cartes","titre":"Le valet de pique, en gros plan","titre_original":null,"auteur":"Tom M","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/a-close-up-of-a-playing-card-on-a-table-UWh8vs4ZMMM","fichier":"static/photos/cartes.webp","fichier_petit":"static/photos/cartes-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"}];</script>
 <script>
 (function(){
 "use strict";
 const DONNEES = {"tables":{"boulevard":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["U","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["U","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","D","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","D","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["U","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,2,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,-1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-4,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-5,"S"],["hard",13,4,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,5,"S"],["hard",15,9,4,"S"],["hard",16,0,3,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["hard",17,0,-5,"S"],["soft",13,2,6,"D"],["soft",13,3,2,"D"],["soft",13,4,-1,"D"],["soft",13,5,-4,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,1,-1,"D"],["soft",18,2,-4,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,-1,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,3,"D"],["pair",1,1,-4,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-5,"P"],["pair",2,7,3,"P"],["pair",3,2,6,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-5,"P"],["pair",4,0,2,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",7,0,-2,"P"],["pair",8,0,1,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,4],["hard",14,8,6],["hard",14,9,3],["hard",15,0,-1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-6],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-3],["pair",6,0,3],["pair",6,8,5],["pair",6,9,2],["pair",7,0,-5],["pair",7,9,2]],"assurance":3,"avantage":0.583},"neon":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","D","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","H","H","H","H","H"],"14":["H","H","H","H","H","H","H","H","H","H"],"15":["H","H","H","H","H","H","H","H","H","H"],"16":["H","H","H","H","H","H","H","H","H","H"],"17":["H","H","H","H","H","H","H","H","H","H"],"18":["H","S","S","S","S","S","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","H","H","P","P","P","P","H","H","H"],"2":["H","H","H","P","P","P","P","H","H","H"],"3":["H","H","H","H","H","H","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",9,1,-2,"D"],["hard",9,2,-4,"D"],["hard",9,3,-6,"D"],["hard",9,6,1,"D"],["hard",9,7,5,"D"],["hard",10,0,2,"D"],["hard",10,7,-6,"D"],["hard",10,8,-3,"D"],["hard",10,9,2,"D"],["hard",11,0,-3,"D"],["hard",11,8,-5,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-2,"S"],["hard",12,4,-3,"S"],["hard",12,5,-5,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,4,"S"],["hard",15,9,4,"S"],["hard",16,0,4,"S"],["hard",16,9,4,"S"],["hard",17,0,-5,"S"],["pair",1,1,5,"P"],["pair",1,2,2,"P"],["pair",1,3,-4,"P"],["pair",2,1,5,"P"],["pair",2,2,0,"P"],["pair",2,3,-5,"P"],["pair",3,4,4,"P"],["pair",3,5,4,"P"],["pair",4,0,1,"D"],["pair",4,8,-4,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-5,"P"],["pair",5,6,-5,"H"],["pair",6,0,3,"S"],["pair",6,9,0,"S"],["pair",7,0,-3,"P"],["pair",7,9,6,"S"],["pair",8,0,0,"P"],["pair",8,1,-3,"P"],["pair",8,2,-3,"P"],["pair",8,3,-4,"P"],["pair",8,4,-6,"P"],["pair",8,6,5,"P"],["pair",9,4,5,"P"],["pair",9,5,5,"P"]],"abandons":[],"assurance":3,"avantage":1.85},"frontdemer":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,3,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,4,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,0,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-2,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,1,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,3,"P"],["pair",2,1,-1,"P"],["pair",2,2,-5,"P"],["pair",2,7,4,"P"],["pair",3,3,2,"P"],["pair",3,4,-1,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-2,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-5,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,6],["hard",14,8,6],["hard",14,9,3],["hard",15,0,1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-2],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-4],["pair",6,0,5],["pair",6,8,5],["pair",6,9,2],["pair",7,9,1]],"assurance":3,"avantage":0.379},"cotai":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,-1,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":0.463},"cercle":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","H"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","H","H","H","H","H"],"14":["H","H","H","H","H","H","H","H","H","H"],"15":["H","H","H","H","H","H","H","H","H","H"],"16":["H","H","H","H","H","H","H","H","H","H"],"17":["H","H","H","H","H","H","H","H","H","H"],"18":["H","S","S","S","S","S","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["H","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["H","P","P","P","P","P","P","P","P","H"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",11,8,-6,"D"],["hard",11,9,0,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,5,"S"],["hard",16,8,5,"S"],["hard",16,9,1,"S"],["hard",17,0,-4,"S"],["pair",0,0,0,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",7,9,1,"S"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":0.601},"mainchaude":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","D","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","D","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","D","D","D","D","D","H","H","H","H"],"18":["H","D","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","D","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,4,"D"],["hard",8,4,1,"D"],["hard",8,5,0,"D"],["hard",9,1,-1,"D"],["hard",9,2,-3,"D"],["hard",9,3,-5,"D"],["hard",9,4,-6,"D"],["hard",9,6,2,"D"],["hard",9,7,6,"D"],["hard",10,0,2,"D"],["hard",10,7,-5,"D"],["hard",10,8,-3,"D"],["hard",10,9,3,"D"],["hard",11,0,-2,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-1,"S"],["hard",12,4,-3,"S"],["hard",12,5,-5,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-5,"S"],["hard",13,4,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,5,"S"],["hard",15,9,4,"S"],["hard",16,0,4,"S"],["hard",16,8,6,"S"],["hard",16,9,2,"S"],["hard",17,0,-5,"S"],["soft",13,2,5,"D"],["soft",13,3,1,"D"],["soft",13,4,-2,"D"],["soft",13,5,-5,"D"],["soft",14,2,5,"D"],["soft",14,3,-1,"D"],["soft",14,4,-4,"D"],["soft",15,2,5,"D"],["soft",15,3,-3,"D"],["soft",16,2,3,"D"],["soft",16,3,-5,"D"],["soft",17,1,-1,"D"],["soft",17,2,-6,"D"],["soft",18,1,-1,"D"],["soft",18,2,-3,"D"],["soft",19,2,4,"D"],["soft",19,3,2,"D"],["soft",19,4,0,"D"],["soft",19,5,-1,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",1,1,-5,"P"],["pair",1,7,5,"P"],["pair",2,1,-2,"P"],["pair",2,7,1,"P"],["pair",3,2,5,"P"],["pair",3,3,0,"P"],["pair",3,4,-3,"P"],["pair",3,5,-6,"P"],["pair",4,0,2,"D"],["pair",4,7,-6,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-5,"P"],["pair",6,0,6,"S"],["pair",6,7,1,"P"],["pair",6,9,5,"S"],["pair",7,0,-2,"P"],["pair",8,0,1,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,5,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":0.381},"salonprive":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,-1,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,6],["hard",14,8,6],["hard",14,9,3],["hard",15,0,1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-2],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-3],["pair",6,0,5],["pair",6,8,5],["pair",6,9,2],["pair",7,9,2]],"assurance":3,"avantage":0.384},"reno":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","H","H","H","H","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","H","H","H","H","H"],"14":["H","H","H","H","H","H","H","H","H","H"],"15":["H","H","H","H","H","H","H","H","H","H"],"16":["H","H","H","H","H","H","H","H","H","H"],"17":["H","H","H","H","H","H","H","H","H","H"],"18":["H","S","S","S","S","S","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","H","H","P","P","P","P","H","H","H"],"2":["H","H","H","P","P","P","P","H","H","H"],"3":["H","H","H","H","H","H","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",10,0,2,"D"],["hard",10,7,-6,"D"],["hard",10,8,-3,"D"],["hard",10,9,2,"D"],["hard",11,0,-3,"D"],["hard",11,8,-5,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-2,"S"],["hard",12,4,-3,"S"],["hard",12,5,-5,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,4,"S"],["hard",15,9,4,"S"],["hard",16,0,4,"S"],["hard",16,9,4,"S"],["hard",17,0,-5,"S"],["pair",1,1,5,"P"],["pair",1,2,2,"P"],["pair",1,3,-4,"P"],["pair",2,1,5,"P"],["pair",2,2,0,"P"],["pair",2,3,-5,"P"],["pair",3,4,4,"P"],["pair",3,5,4,"P"],["pair",4,0,1,"D"],["pair",4,8,-4,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-5,"P"],["pair",5,6,-5,"H"],["pair",6,0,3,"S"],["pair",6,9,0,"S"],["pair",7,0,-3,"P"],["pair",7,9,6,"S"],["pair",8,0,0,"P"],["pair",8,1,-3,"P"],["pair",8,2,-3,"P"],["pair",8,3,-4,"P"],["pair",8,4,-6,"P"],["pair",8,6,5,"P"],["pair",9,4,5,"P"],["pair",9,5,5,"P"]],"abandons":[],"assurance":3,"avantage":0.631},"aquarium":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","D","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","D","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,3,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,2,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,-1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-4,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-5,"S"],["hard",13,4,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,5,"S"],["hard",15,9,4,"S"],["hard",16,0,3,"S"],["hard",16,8,4,"S"],["hard",16,9,0,"S"],["hard",17,0,-5,"S"],["soft",13,3,2,"D"],["soft",13,4,0,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-2,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,1,"D"],["soft",17,2,-5,"D"],["soft",18,1,-1,"D"],["soft",18,2,-4,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,-1,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,3,"D"],["pair",1,1,-4,"P"],["pair",1,7,3,"P"],["pair",2,1,-1,"P"],["pair",2,2,-5,"P"],["pair",2,7,4,"P"],["pair",3,2,6,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-5,"P"],["pair",4,0,2,"D"],["pair",4,7,-5,"D"],["pair",4,8,-2,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",7,0,-2,"P"],["pair",8,0,1,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":2.073}},"systemes":{"hilo":{"nom":"Hi-Lo","equilibre":true,"niveau":1,"v":[-1,1,1,1,1,1,0,0,0,-1],"note":"Le standard. Un seul niveau, équilibré, et c'est celui pour lequel tous les écarts publiés existent."},"ko":{"nom":"KO","equilibre":false,"niveau":1,"v":[-1,1,1,1,1,1,1,0,0,-1],"note":"Déséquilibré : pas de division par les sabots restants, donc pas de compte vrai à tenir. On perd un peu de précision, on gagne beaucoup de charge mentale."},"hiopt1":{"nom":"Hi-Opt I","equilibre":true,"niveau":1,"v":[0,0,1,1,1,1,0,0,0,-1],"note":"L'as est neutre : plus précis pour les décisions de jeu, mais il faut compter les as à part pour la mise."},"omega2":{"nom":"Omega II","equilibre":true,"niveau":2,"v":[0,1,1,2,2,2,1,0,-1,-2],"note":"Deux niveaux. Nettement plus précis, nettement plus fatigant. À ne prendre que quand Hi-Lo est devenu automatique."}},"genere":"2026-09-04","catalogue":[{"id":"boulevard","nom":"Le Boulevard","lieu":"Las Vegas Strip","jeux":6,"h17":true,"blackjackPays":1.5,"penetration":0.75,"sieges":5,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":70,"mise_min":10,"mise_max":1000,"lecon":"Voilà à quoi ressemble un travail.","detail":"La table étalon. Un demi-point d'avantage par heure de jeu parfait : une session de trois heures qui finit en dessous de zéro est parfaitement normale. Toutes les autres tables se lisent par rapport à celle-ci."},{"id":"neon","nom":"Le Néon","lieu":"Downtown, Fremont Street","jeux":1,"h17":true,"blackjackPays":1.2,"penetration":0.5,"sieges":5,"das":false,"surrender":"none","doubleOn":[9,10,11],"maxHands":2,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"main","cadence":209,"mise_min":5,"mise_max":500,"piege":"6:5","lecon":"Peu de jeux ne veut pas dire bon jeu.","detail":"Un seul jeu donne les meilleures fréquences de comptes forts du catalogue. Et pourtant tu perds : le blackjack payé 6:5 repousse ton point d'équilibre bien au-delà de ce que le compte atteint jamais. Le paiement du blackjack se lit AVANT le nombre de jeux."},{"id":"frontdemer","nom":"Le Front de Mer","lieu":"Atlantic City","jeux":8,"h17":false,"blackjackPays":1.5,"penetration":0.7,"sieges":7,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":52,"mise_min":15,"mise_max":1500,"lecon":"Les meilleures règles ne compensent pas la lenteur.","detail":"Le meilleur jeu à sabot du catalogue pour la stratégie de base. Mais huit jeux coupés à 70 %, et sept joueurs autour de la table, ne produisent presque jamais de compte fort. Le rendement d'un compteur, c'est l'espérance multipliée par la cadence."},{"id":"cotai","nom":"Le Cotai","lieu":"Macao, Cotai Strip","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0,"sieges":6,"das":true,"surrender":"none","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"melangeuse_continue","cadence":84,"mise_min":25,"mise_max":2500,"piege":"csm","lecon":"La mélangeuse continue tue le comptage, pas les règles.","detail":"Objectivement le meilleur jeu du catalogue : un joueur de stratégie de base doit s'y précipiter. Un compteur n'a rien à y faire. Les cartes jouées retournent dans le sabot, le compte vrai reste collé à zéro, et la machine te fait perdre ton désavantage plus vite. Une bonne table et une table battable sont deux questions différentes."},{"id":"cercle","nom":"Le Cercle","lieu":"Londres · Monte-Carlo","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0.75,"sieges":7,"das":true,"surrender":"none","doubleOn":[9,10,11],"maxHands":4,"hitSplitAces":false,"holeCard":false,"peek":false,"enhcLosesAll":true,"melange":"sabot","cadence":60,"mise_min":20,"mise_max":2000,"piege":"enhc","lecon":"Sans carte cachée, tu perds aussi tes doublements.","detail":"Le croupier ne prend qu'une carte. Tu doubles ton 11 contre son 10, il retourne un valet à la fin : tu perds deux unités, pas une. Ta table de stratégie appartient à la table de jeu, pas à toi."},{"id":"mainchaude","nom":"La Main Chaude","lieu":"double jeu, Vegas","jeux":2,"h17":true,"blackjackPays":1.5,"penetration":0.65,"sieges":5,"das":true,"surrender":"none","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":95,"mise_min":25,"mise_max":1000,"lecon":"La géométrie bat les règles.","detail":"Avantage maison moins bon que Le Front de Mer, et pourtant bien plus rentable à compter : deux jeux, ça bouge. Le compte vrai grimpe et redescend sans arrêt. Pour un compteur, la variance du compte vaut plus qu'un dixième de point d'avantage maison."},{"id":"salonprive","nom":"Le Salon Privé","lieu":"high limit","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0.85,"sieges":3,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":104,"mise_min":100,"mise_max":10000,"lecon":"La carte de coupe est le seul chiffre qui compte.","detail":"Les mêmes six jeux que Le Boulevard, presque les mêmes règles. Une seule différence décisive : la coupe est plantée à 85 % au lieu de 75 %. C'est la seule information qu'aucun panneau n'affiche, et elle vaut plus que toutes les autres réunies."},{"id":"reno","nom":"Le Vieux Reno","lieu":"jeu unique, bridé","jeux":1,"h17":true,"blackjackPays":1.5,"penetration":0.6,"sieges":4,"das":false,"surrender":"none","doubleOn":[10,11],"maxHands":2,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"main","cadence":150,"mise_min":5,"mise_max":200,"lecon":"Une table bridée peut être excellente.","detail":"Pas d'abandon, pas de doublement après séparation, doubler seulement sur 10 et 11 : sur le papier c'est mesquin. Et pourtant c'est l'une des meilleures tables du catalogue à compter, et celle qui demande la plus petite caisse. Les restrictions coûtent des dixièmes, la géométrie du sabot rapporte des unités."},{"id":"aquarium","nom":"L'Aquarium","lieu":"zone touristes","jeux":8,"h17":true,"blackjackPays":1.2,"penetration":0.65,"sieges":7,"das":true,"surrender":"none","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":60,"mise_min":10,"mise_max":500,"piege":"6:5","lecon":"Il y a des tables qu'on ne bat pas.","detail":"Huit jeux et un blackjack payé 6:5. Le point d'équilibre est si haut que la rampe de mise ne s'ouvre jamais, quel que soit l'écart. Cette table existe pour qu'on apprenne à la refuser, pas pour qu'on la joue. Savoir se lever est la compétence la moins spectaculaire et la plus rentable."}]};
 const M={};
-M.engine = (function(){
+M["engine"] = (function(){
 // Moteur de blackjack pur : aucune dépendance au DOM, entièrement piloté par les règles de la table.
 // Mêmes entrées, mêmes sorties : c'est ce qui permet de rejouer une main à l'identique et de la tester.
 
@@ -1560,7 +1600,7 @@ const makeRules = o => Object.assign({}, DEFAULT_RULES, o || {});
 
 return {RANKS,SUITS,cardValue,isAce,handTotal,isSoft,isBust,isBlackjack,newHand,canSplit,canDouble,canSurrender,playDealer,settleHand,settleInsurance,settleNoHoleCard,DEFAULT_RULES,makeRules};
 })();
-M.solver = (function(){
+M["solver"] = (function(){
 // Solveur exact de stratégie de base, sensible à la composition du sabot.
 // La stratégie n'est PAS recopiée d'un tableau : elle est CALCULÉE depuis les règles de la table.
 // Conséquence : chaque table du lobby a sa propre stratégie, forcément cohérente avec ses règles,
@@ -1788,7 +1828,7 @@ function actionFor(chart, ctx) {
 
 return {shoeCounts,solve,actionFor};
 })();
-M.shuffle = (function(){
+M["shuffle"] = (function(){
 // Mélange prouvable : graine -> flux HMAC-SHA-256 en compteur -> entiers non biaisés -> Fisher-Yates.
 // Tout via Web Crypto, donc identique dans le navigateur et dans Node.
 const enc = new TextEncoder();
@@ -1839,7 +1879,7 @@ async function combine(seeds) {
 
 return {hex,unhex,sha256,shuffle,randomSeed,commit,combine};
 })();
-M.counting = (function(){
+M["counting"] = (function(){
 // Les systèmes de comptage. index 0 = as, 1 = deux … 9 = dix.
 const SYSTEMES = {
   hilo:   { nom: "Hi-Lo",    equilibre: true,  niveau: 1, v: [-1, 1, 1, 1, 1, 1, 0, 0, 0, -1],
@@ -1870,7 +1910,7 @@ const miseRampe = (tc, plafond) =>
 
 return {SYSTEMES,compteInitial,compteVrai,misesUnites,miseRampe};
 })();
-M.net = (function(){
+M["net"] = (function(){
 // Transport multijoueur : MQTT 3.1.1 sur WebSocket, écrit à la main, SANS AUCUNE DÉPENDANCE.
 // Pourquoi pas une bibliothèque : la seule voie sérieuse sans serveur pesait 420 Ko répartis
 // sur trois modules de CDN, pour un jeu au tour par tour où cent millisecondes ne changent rien.
@@ -1975,15 +2015,554 @@ function connecterAvecRepli(opts, i = 0) {
 }
 const nomCourtier = url => url.replace(/^wss:\/\//, "").split(/[:/]/)[0];
 
-// Un code de salon lisible au téléphone : pas de 0/O, pas de 1/I.
+// Un code de salon lisible au téléphone : huit caractères, pas de 0/O, pas de 1/I.
+// Il s'écrit groupé par quatre (A7K2-M9PQ) ; le tiret n'en fait pas partie.
 const ALPHA = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 function codeSalon() {
-  const a = new Uint8Array(5); crypto.getRandomValues(a);
+  const a = new Uint8Array(8); crypto.getRandomValues(a);
   return [...a].map(x => ALPHA[x % ALPHA.length]).join("");
 }
 const sujet = code => `compteur-hilo/v1/${code}`;
+// La table de blackjack à plusieurs parle sur son propre sujet : un code de course
+// et un code de table ne se croisent jamais.
+const sujetTable = code => `compteur-hilo/table/v1/${code}`;
 
-return {COURTIERS,connecter,connecterAvecRepli,nomCourtier,codeSalon,sujet};
+return {COURTIERS,connecter,connecterAvecRepli,nomCourtier,codeSalon,sujet,sujetTable};
+})();
+M["table-reseau"] = (function(){
+// La table de blackjack À PLUSIEURS : l'HÔTE est autoritaire, et rien ici ne touche le DOM.
+//
+// Deux objets, testables sans navigateur (src/table-reseau.test.mjs) :
+//   · la PARTIE (creerPartie) — l'état d'une table : sièges, mises, mains, sabot,
+//     règlement. Une machine à étapes que l'hôte fait avancer (etape) et à laquelle
+//     les joueurs soumettent des actions (action). Le règlement passe par engine.mjs,
+//     jamais par une copie : mêmes mains, mêmes gains, à l'unité près.
+//   · la SALLE (creerSalle) — le protocole autour d'un transport quelconque (MQTT en
+//     vrai, une file en mémoire dans les tests) : présence des pairs, diffusion de
+//     l'état versionné, actions vers l'hôte, élection quand l'hôte tombe.
+//
+// Ce qu'un invité reçoit est un ÉTAT complet, idempotent, versionné : il l'affiche
+// tel quel et ne calcule jamais une issue de son côté. La carte cachée du croupier
+// n'y figure pas tant qu'elle n'est pas retournée — on ne peut pas lire ce qu'on
+// n'a pas reçu. Le sabot (l'ordre des cartes) ne quitte JAMAIS l'hôte : quand un
+// nouvel hôte reprend l'état, il ne connaît pas les cartes à venir, donc la manche
+// en cours est annulée, les mises rendues, et un sabot neuf est scellé — l'écran le dit.
+const { newHand, handTotal, isSoft, isBust, isBlackjack, canSplit, canDouble, canSurrender,
+  cardValue, isAce, settleHand, settleNoHoleCard, settleInsurance, makeRules } = M["engine"];
+const TAPIS_DEPART = 1000;          // tout le monde s'assoit avec le même tapis
+const MISE_DELAI = 20000;           // la phase de mise, bornée
+const TOUR_DELAI = 30000;           // un joueur qui ne joue pas : il reste
+const ASSURANCE_DELAI = 12000;      // sans réponse : pas d'assurance
+const REGLEMENT_DELAI = 3200;       // les jetons glissent, puis on remet ça
+const ABSENCE_DELAI = 15000;        // un siège dont le joueur a disparu reste tenu ce temps-là
+const ELECTION_DELAI = 3000;        // un nouvel arrivant sans hôte connu attend avant d'en devenir un
+const NB_SIEGES = 5;
+const ACTIONS = ["asseoir", "lever", "mise", "rachat", "clore", "bots", "tirer", "rester", "doubler", "separer", "abandon", "assurance"];
+const NOMS_BOTS = ["Marc", "Sonia", "Karim", "Léa", "Paul"];
+const arr = x => Math.round(x * 100) / 100;
+const carteTxt = c => c.r + c.suit;
+
+/* ── La partie ─────────────────────────────────────────────────────────── */
+function creerPartie(o) {
+  o = o || {};
+  const regles = makeRules(o.regles || {});
+  const P = {
+    v: 0, hote: o.hote || "", table: o.table || "boulevard", sys: o.sys || "hilo", jeux: o.jeux || regles.decks,
+    phase: "attente", manche: 0, sieges: Array.from({ length: o.nbSieges || NB_SIEGES }, () => null),
+    croupier: [], cachee: false, actif: null, message: "", evenement: null,
+    cartes: (o.cartes || []).slice(), empreinte: o.empreinte || "", graine: o.graine || null, prochain: null,
+    coupe: 0, defausse: 0, rc: 0, vues: 0, bots: !!o.bots, csm: !!o.csm,
+    miseMin: o.miseMin || 10, miseMax: o.miseMax || 1000, par5: !!o.par5, tapisDepart: o.tapis || TAPIS_DEPART,
+    miseFin: 0, tourFin: 0, assuranceFin: 0, reglementFin: 0, prochaineEtape: 0, cadence: o.cadence || 900,
+    journal: [], sabots: [], besoinRemelange: false, regenere: false,
+    donne: [],                // les cartes de la donne initiale qui restent à distribuer
+  };
+  const valeur = o.valeur || (() => 0), rcInitial = o.rcInitial || (() => 0);
+  const strategie = o.strategie || ((cards) => handTotal(cards) < 17 ? "H" : "S");
+  const changer = () => { P.v++; return true; };
+  const humain = st => st && !st.bot;
+  const siegeDe = id => P.sieges.findIndex(s => s && s.id === id);
+  const idHote = () => P.hote;
+
+  function installerSabot(s, pendant) {
+    if (P.empreinte) { const d = P.sabots.find(x => x.empreinte === P.empreinte); if (d && P.graine) d.graine = P.graine; }
+    P.cartes = s.cartes.slice(); P.empreinte = s.empreinte; P.graine = s.graine || null;
+    P.sabots.push({ empreinte: s.empreinte, graine: null, manche: P.manche + 1 }); if (P.sabots.length > 12) P.sabots.shift();
+    P.coupe = P.csm ? Math.floor(P.cartes.length * .02) : Math.floor(P.cartes.length * (o.penetration || regles.penetration || .75));
+    P.cartes.pop(); P.defausse = 1;               // la carte brûlée
+    P.rc = rcInitial(P.jeux); P.vues = 0; P.besoinRemelange = false; P.pendantDonne = !!pendant;
+    P.evenement = { t: "remelange", pendantDonne: !!pendant };
+  }
+  // Une nouvelle graine est révélée quand le sabot qu'elle a produit est fini : le
+  // reçu montre alors empreinte ET graine, et n'importe qui peut rejouer le mélange.
+  // Un sabot qui arrive pendant une manche interrompue (phase « sabot ») la REPREND là où
+  // elle s'est arrêtée : la carte manquante sera tirée au prochain pas.
+  function remelanger(s, pendant) {
+    const reprise = P.phase === "sabot";
+    installerSabot(s, pendant || reprise);
+    if (reprise) { P.phase = P.phaseAvantSabot || "attente"; P.phaseAvantSabot = ""; P.message = ""; }
+    return changer();
+  }
+  function piocher() {
+    if (!P.cartes.length) {
+      if (P.prochain) { const s = P.prochain; P.prochain = null; installerSabot(s, true); }
+      else { P.phaseAvantSabot = P.phase; P.phase = "sabot"; P.message = "Le sabot est vide : en attente d'un sabot neuf."; return null; }
+    }
+    return P.cartes.pop();
+  }
+  const assezDeCartes = n => P.cartes.length >= n || !!P.prochain;
+  const voir = c => { P.rc += valeur(c); P.vues++; };
+
+  /* ── Les sièges ── */
+  function asseoir(id, nom, couleur, k, bot) {
+    if (k < 0 || k >= P.sieges.length) return "Ce siège n'existe pas.";
+    const deja = siegeDe(id);
+    if (deja === k) return null;
+    const occ = P.sieges[k];
+    if (occ && !(occ.bot && !bot)) return "Ce siège est pris.";
+    if (occ && occ.bot && P.phase !== "attente" && P.phase !== "mise") return "Attends la fin de la manche pour prendre ce siège.";
+    if (deja >= 0) { if (P.phase !== "attente" && P.phase !== "mise") return "Tu ne changes pas de siège en pleine manche."; P.sieges[deja] = null; }
+    P.sieges[k] = { id, nom: (nom || "Joueur").slice(0, 18), couleur: couleur || "", bot: !!bot, tapis: P.tapisDepart, mise: 0, rachats: 0, mains: [], passe: false, absent: 0 };
+    // Un siège pris pendant les mises entre tout de suite dans la manche (il a le temps de miser).
+    if (bot && P.phase === "mise") miserBot(P.sieges[k]);
+    return null;
+  }
+  function lever(id) {
+    const k = siegeDe(id); if (k < 0) return "Tu n'es pas assis.";
+    const st = P.sieges[k];
+    if (st.mise && P.phase === "mise") { st.tapis = arr(st.tapis + st.mise); st.mise = 0; }
+    if (P.phase === "attente" || P.phase === "mise" || !st.mains.length) P.sieges[k] = null;
+    else st.absent = 1;                            // la main se joue toute seule, le siège se libère après
+    return null;
+  }
+  function quitter(id, now) { const k = siegeDe(id); if (k < 0) return false; P.sieges[k].absent = now || 1; return changer(); }
+  function revenir(id) { const k = siegeDe(id); if (k < 0 || !P.sieges[k].absent) return false; P.sieges[k].absent = 0; return changer(); }
+  function completerBots() {
+    if (!P.bots) return;
+    P.sieges.forEach((st, k) => { if (!st) asseoir("bot-" + k, NOMS_BOTS[k % NOMS_BOTS.length], "", k, true); });
+  }
+  function retirerBots() { P.sieges.forEach((st, k) => { if (st && st.bot) P.sieges[k] = null; }); }
+  function libererAbsents(now) {
+    let ch = false;
+    P.sieges.forEach((st, k) => { if (st && st.absent && !st.mains.length && (!now || now - st.absent >= ABSENCE_DELAI)) { P.sieges[k] = null; ch = true; } });
+    return ch;
+  }
+
+  /* ── Les mises ── */
+  function miserBot(st) {
+    if (st.tapis < P.miseMin) { st.tapis = P.tapisDepart; st.rachats++; }
+    let m = Math.max(P.miseMin, Math.min(P.miseMax, st.tapis, P.miseMin * (1 + (P.manche % 3 === 0 ? 1 : 0))));
+    if (P.par5) m = Math.max(P.miseMin, Math.floor(m / 5) * 5);
+    st.tapis = arr(st.tapis + st.mise - m); st.mise = m;
+  }
+  function ouvrirMises(now) {
+    if (P.besoinRemelange || !P.cartes.length) { P.phase = "sabot"; P.message = "Sabot fini : on remélange."; return;
+    }
+    P.sieges.forEach(st => { if (!st) return; st.mains = []; st.passe = false; st.assurance = undefined; if (st.absent) st.mise = 0; });
+    libererAbsents(now);
+    completerBots();
+    P.phase = "mise"; P.miseFin = now + MISE_DELAI; P.croupier = []; P.cachee = false; P.actif = null;
+    P.message = ""; P.evenement = { t: "mises" };
+    P.sieges.forEach(st => { if (st && st.bot) miserBot(st); });
+  }
+  function miseValide(st, v) {
+    if (typeof v !== "number" || isNaN(v) || v < 0) return "Mise illisible.";
+    if (v > 0 && v < P.miseMin) return `Le minimum ici est de ${P.miseMin}.`;
+    if (v > P.miseMax) return `Le maximum de la table est de ${P.miseMax}.`;
+    if (P.par5 && v % 5 !== 0) return "Ici les mises vont par 5.";
+    if (v > st.tapis + st.mise) return "Il ne te reste pas ça en main.";
+    return null;
+  }
+  function clore(now) {
+    if (P.phase !== "mise") return false;
+    const joueurs = P.sieges.filter(st => st && st.mise >= P.miseMin && !st.absent);
+    if (!joueurs.length) { P.miseFin = now + MISE_DELAI; P.message = "Personne n'a misé : les mises restent ouvertes."; return true; }
+    P.sieges.forEach(st => { if (!st) return; st.passe = !(st.mise >= P.miseMin) || !!st.absent; st.mains = st.passe ? [] : [newHand([], st.mise)]; st.assurance = undefined; });
+    P.phase = "donne"; P.manche++; P.message = ""; P.regenere = false;
+    // L'ordre d'une vraie donne : un tour de table, la carte visible du croupier,
+    // un second tour, puis la carte cachée (sauf table sans carte cachée).
+    P.donne = [];
+    for (let tour = 0; tour < 2; tour++) {
+      P.sieges.forEach((st, k) => { if (st && !st.passe) P.donne.push({ siege: k, main: 0 }); });
+      if (tour === 0) P.donne.push({ siege: "croupier", cachee: false });
+      else if (regles.holeCard) P.donne.push({ siege: "croupier", cachee: true });
+    }
+    P.evenement = { t: "donne-debut" }; P.prochaineEtape = now;
+    return true;
+  }
+
+  /* ── La donne, carte par carte ── */
+  function etapeDonne(now) {
+    const d = P.donne[0];
+    if (d) {
+      const c = piocher(); if (!c) return true;
+      P.donne.shift();
+      if (d.siege === "croupier") { c.cachee = !!d.cachee; P.croupier.push(c); P.cachee = P.cachee || !!d.cachee; if (!d.cachee) voir(c); }
+      else { const st = P.sieges[d.siege]; if (st) { st.mains[d.main].cards.push(c); voir(c); } }
+      P.evenement = { t: "carte", siege: d.siege, main: d.main || 0, cachee: !!d.cachee };
+      P.prochaineEtape = now + P.cadence;
+      return true;
+    }
+    // Donne finie : assurance si le croupier montre un as, puis il regarde sa carte.
+    const up = P.croupier[0];
+    if (regles.holeCard && up && cardValue(up) === 11 && P.sieges.some(st => st && !st.passe && !st.bot && !st.absent)) {
+      P.phase = "assurance"; P.assuranceFin = now + ASSURANCE_DELAI; P.message = "Le croupier montre un as. Assurance ?";
+      P.sieges.forEach(st => { if (st && !st.passe) st.assurance = st.bot || st.absent ? false : undefined; });
+      P.evenement = { t: "assurance-offre" };
+      return true;
+    }
+    return apresDonne(now);
+  }
+  function apresDonne(now) {
+    const up = P.croupier[0];
+    if (regles.holeCard && regles.peek && up && cardValue(up) >= 10) {
+      if (handTotal(P.croupier) === 21) { reveler(); P.message = "Blackjack du croupier."; P.phase = "reglement"; regler(now); return true; }
+    }
+    P.phase = "jeu"; P.actif = null; P.message = "";
+    avancer(now);
+    return true;
+  }
+  function reveler() {
+    const c = P.croupier.find(x => x.cachee); if (!c) return;
+    c.cachee = false; P.cachee = false; voir(c); P.evenement = { t: "croupier-revele" };
+  }
+  function etapeAssurance(now) {
+    const attend = P.sieges.some(st => st && !st.passe && st.assurance === undefined);
+    if (attend && now < P.assuranceFin) return false;
+    P.sieges.forEach(st => { if (st && !st.passe) { if (st.assurance === undefined) st.assurance = false; if (st.assurance) { const h = st.mains[0]; h.assurance = h.bet / 2; st.tapis = arr(st.tapis - h.assurance); } } });
+    P.evenement = { t: "assurance-fin-offre" };
+    return apresDonne(now);
+  }
+
+  /* ── Le jeu : le tour passe de siège en siège ── */
+  function avancer(now) {
+    let k = 0, hi = 0;
+    if (P.actif) { k = P.actif.siege; hi = P.actif.main + 1; }
+    for (; k < P.sieges.length; k++, hi = 0) {
+      const st = P.sieges[k]; if (!st || st.passe) continue;
+      for (; hi < st.mains.length; hi++) {
+        const h = st.mains[hi];
+        if (h.surrendered || h.result) continue;
+        if (isBlackjack(h) && st.mains.length === 1) { h.result = "blackjack"; continue; }
+        if (h.fromSplitAces && !regles.hitSplitAces && h.cards.length === 2) continue;
+        if (handTotal(h.cards) >= 21) { if (isBust(h.cards)) sauter(h, k, hi); continue; }
+        P.actif = { siege: k, main: hi }; P.tourFin = now + TOUR_DELAI; P.prochaineEtape = now + P.cadence;
+        P.evenement = { t: "tour", siege: k, main: hi }; P.message = "";
+        return;
+      }
+    }
+    P.actif = null; P.phase = "croupier"; P.prochaineEtape = now + P.cadence * .6;
+    P.evenement = { t: "tour", siege: "croupier", main: 0 };
+  }
+  function sauter(h, k, hi) { h.result = "sauté"; h.emis = true; P.evenement = { t: "main-fin", siege: k, main: hi, issue: "bust", montant: -h.bet * (h.doubled ? 2 : 1) }; }
+  function mainActive() { if (!P.actif) return null; const st = P.sieges[P.actif.siege]; return st ? { st, h: st.mains[P.actif.main], k: P.actif.siege, hi: P.actif.main } : null; }
+  const peutPayer = (st, h) => st.tapis >= h.bet;
+  function jouer(a, now) {
+    const m = mainActive(); if (!m) return "Ce n'est le tour de personne.";
+    const { st, h, k, hi } = m;
+    if (a === "tirer") { const c = piocher(); if (!c) return null; h.cards.push(c); voir(c); P.evenement = { t: "carte", siege: k, main: hi }; P.tourFin = now + TOUR_DELAI;
+      if (isBust(h.cards)) { sauter(h, k, hi); avancer(now); } else if (handTotal(h.cards) >= 21) avancer(now); return null; }
+    if (a === "rester") { avancer(now); return null; }
+    if (a === "doubler") { if (!canDouble(h, st.mains, regles)) return "Tu ne peux pas doubler ici."; if (!peutPayer(st, h)) return "Il ne te reste pas de quoi doubler.";
+      st.tapis = arr(st.tapis - h.bet); h.doubled = true; const c = piocher(); if (!c) return null; h.cards.push(c); voir(c);
+      P.evenement = { t: "carte", siege: k, main: hi, double: true }; if (isBust(h.cards)) sauter(h, k, hi); avancer(now); return null; }
+    if (a === "separer") { if (!canSplit(h, st.mains, regles)) return "Tu ne peux pas séparer ici."; if (!peutPayer(st, h)) return "Il ne te reste pas de quoi séparer.";
+      if (!assezDeCartes(2)) { P.phaseAvantSabot = P.phase; P.phase = "sabot"; P.message = "Le sabot est vide : en attente d'un sabot neuf."; return null; }
+      st.tapis = arr(st.tapis - h.bet); const c2 = h.cards.pop(), as = isAce(h.cards[0]);
+      const nh = newHand([c2], h.bet, { fromSplit: true, fromSplitAces: as }); h.fromSplit = true; h.fromSplitAces = as;
+      st.mains.splice(hi + 1, 0, nh);
+      const a1 = piocher(), a2 = piocher(); if (!a1 || !a2) return null; h.cards.push(a1); nh.cards.push(a2); voir(a1); voir(a2);
+      P.evenement = { t: "separe", siege: k, main: hi }; P.tourFin = now + TOUR_DELAI;
+      if (as && !regles.hitSplitAces) avancer(now); else if (handTotal(h.cards) >= 21) avancer(now);
+      return null; }
+    if (a === "abandon") { if (!canSurrender(h, st.mains, regles)) return "Pas d'abandon ici."; h.surrendered = true; h.result = "abandon"; h.emis = true;
+      P.evenement = { t: "main-fin", siege: k, main: hi, issue: "abandon", montant: -h.bet / 2 }; avancer(now); return null; }
+    return "Action inconnue.";
+  }
+  function etapeJeu(now) {
+    const m = mainActive(); if (!m) { avancer(now); return true; }
+    const { st, h } = m;
+    if (st.bot || st.absent) {
+      if (now < P.prochaineEtape) return false;
+      const a = st.absent ? "S" : strategie(h.cards, P.croupier[0], { mains: st.mains, main: h, regles, tapis: st.tapis, peutDoubler: canDouble(h, st.mains, regles) && peutPayer(st, h), peutSeparer: canSplit(h, st.mains, regles) && peutPayer(st, h), peutAbandonner: canSurrender(h, st.mains, regles) });
+      const err = jouer({ H: "tirer", S: "rester", D: "doubler", P: "separer", U: "abandon" }[a] || "rester", now);
+      if (err) jouer("rester", now);
+      P.prochaineEtape = now + P.cadence; return true;
+    }
+    if (now >= P.tourFin) { P.message = `${st.nom} n'a pas joué : ${st.nom} reste.`; jouer("rester", now); return true; }
+    return false;
+  }
+  function etapeCroupier(now) {
+    if (now < P.prochaineEtape) return false;
+    P.prochaineEtape = now + P.cadence;
+    if (P.cachee) { reveler(); return true; }
+    if (!regles.holeCard && P.croupier.length === 1) { const c = piocher(); if (!c) return true; P.croupier.push(c); voir(c); P.evenement = { t: "carte", siege: "croupier", main: 0 }; return true; }
+    const vivants = P.sieges.some(st => st && !st.passe && st.mains.some(h => !h.surrendered && !isBust(h.cards) && !(isBlackjack(h) && st.mains.length === 1)));
+    if (vivants) {
+      const t = handTotal(P.croupier), soft = isSoft(P.croupier);
+      if (!(t > 21 || t > 17 || (t === 17 && !(regles.h17 && soft)))) { const c = piocher(); if (!c) return true; P.croupier.push(c); voir(c); P.evenement = { t: "carte", siege: "croupier", main: 0 }; return true; }
+    }
+    P.phase = "reglement"; regler(now); return true;
+  }
+
+  /* ── Le règlement : engine.mjs tranche, la partie ne fait qu'encaisser ── */
+  function regler(now) {
+    const dt = handTotal(P.croupier), dBJ = regles.holeCard && P.croupier.length === 2 && dt === 21;
+    const fins = [], entree = { manche: P.manche, empreinte: P.empreinte, croupier: P.croupier.map(carteTxt), total: dt, sieges: [] };
+    P.sieges.forEach((st, k) => {
+      if (!st || st.passe) return;
+      let net = 0; const mains = [];
+      st.mains.forEach((h, hi) => {
+        if (h.assurance) { const ni = settleInsurance(h.bet, dBJ); net += ni; st.tapis = arr(st.tapis + h.assurance + ni); fins.push({ t: "assurance-fin", siege: k, main: hi, gagne: dBJ, montant: ni }); }
+        const res = regles.holeCard ? settleHand(h, P.croupier, regles) : settleNoHoleCard(h, P.croupier, regles);
+        h.result = res.result; h.net = res.net; net += res.net;
+        const engage = h.surrendered ? h.bet : h.bet * (h.doubled ? 2 : 1);
+        st.tapis = arr(st.tapis + engage + res.net);
+        mains.push({ cartes: h.cards.map(carteTxt), issue: res.result, mise: h.bet * (h.doubled ? 2 : 1), net: res.net });
+        if (!h.emis) fins.push({ t: "main-fin", siege: k, main: hi, issue: res.result, montant: res.net });
+      });
+      st.dernierNet = net; st.mise = 0;
+      entree.sieges.push({ siege: k, id: st.id, nom: st.nom, bot: st.bot, mains, net: arr(net), tapis: st.tapis });
+    });
+    P.defausse += P.croupier.length + P.sieges.reduce((s, st) => s + (st ? st.mains.reduce((a, h) => a + h.cards.length, 0) : 0), 0);
+    P.journal.push(entree); if (P.journal.length > 40) P.journal.shift();
+    P.actif = null; P.reglementFin = now + REGLEMENT_DELAI;
+    P.message = `Croupier ${dt > 21 ? "saute à " + dt : dt}.`;
+    P.evenement = { t: "manche-fin", fins, croupier: dt };
+    if (P.csm || P.cartes.length <= P.coupe) P.besoinRemelange = true;
+  }
+  function etapeReglement(now) {
+    if (now < P.reglementFin) return false;
+    // Ce qui est sur le feutre part à la défausse ; les mains restent visibles jusqu'aux prochaines mises.
+    ouvrirMises(now);
+    return true;
+  }
+
+  /* ── L'entrée unique des actions ── */
+  function action(m, now) {
+    now = now || 0;
+    const a = m.a, id = m.id;
+    if (!ACTIONS.includes(a)) return { ok: false, erreur: "Action inconnue." };
+    if (a === "asseoir") { const err = asseoir(id, m.nom, m.couleur, +m.v, false); if (err) return { ok: false, erreur: err }; if (P.phase === "attente" && !P.besoinRemelange && P.cartes.length) ouvrirMises(now); return { ok: changer() }; }
+    if (a === "lever") { const err = lever(id); if (err) return { ok: false, erreur: err }; return { ok: changer() }; }
+    if (a === "clore") { if (id !== idHote()) return { ok: false, erreur: "Seul l'hôte clôt les mises." }; if (!clore(now)) return { ok: false, erreur: "Les mises ne sont pas ouvertes." }; return { ok: changer() }; }
+    if (a === "bots") { if (id !== idHote()) return { ok: false, erreur: "Seul l'hôte décide des bots." }; P.bots = !!m.v; if (P.bots) { if (P.phase === "attente" || P.phase === "mise") completerBots(); } else if (P.phase === "attente" || P.phase === "mise") retirerBots(); return { ok: changer() }; }
+    const k = siegeDe(id); if (k < 0) return { ok: false, erreur: "Prends d'abord un siège." };
+    const st = P.sieges[k];
+    if (a === "mise") { if (P.phase !== "mise") return { ok: false, erreur: "Les mises sont fermées." }; const v = arr(+m.v); const err = miseValide(st, v); if (err) return { ok: false, erreur: err };
+      st.tapis = arr(st.tapis + st.mise - v); st.mise = v; return { ok: changer() }; }
+    if (a === "rachat") { if (P.phase !== "mise" && P.phase !== "attente") return { ok: false, erreur: "Pas maintenant." }; if (st.mise || st.tapis >= P.miseMin) return { ok: false, erreur: "Tu as encore de quoi jouer." };
+      st.tapis = P.tapisDepart; st.rachats++; P.evenement = { t: "rachat", siege: k }; return { ok: changer() }; }
+    if (a === "assurance") { if (P.phase !== "assurance" || st.passe) return { ok: false, erreur: "Pas d'assurance à prendre." }; if (st.assurance !== undefined) return { ok: false, erreur: "Tu as déjà répondu." };
+      if (m.v && st.tapis < st.mains[0].bet / 2) return { ok: false, erreur: "Tu n'as pas de quoi t'assurer." }; st.assurance = !!m.v; changer(); etapeAssurance(now); return { ok: true }; }
+    if (P.phase !== "jeu") return { ok: false, erreur: "Ce n'est pas le moment de jouer." };
+    if (!P.actif || P.actif.siege !== k) return { ok: false, erreur: "Ce n'est pas ton tour." };
+    const err = jouer(a, now); if (err) return { ok: false, erreur: err };
+    return { ok: changer() };
+  }
+
+  /* ── Une étape automatique : appelée par l'hôte à intervalle court ── */
+  function etape(now) {
+    now = now || 0;
+    let ch = false;
+    if (P.phase === "attente") { if (libererAbsents(now)) ch = true; if (P.cartes.length && !P.besoinRemelange && (P.bots || P.sieges.some(st => st && !st.absent))) { ouvrirMises(now); ch = true; } }
+    else if (P.phase === "mise") { if (libererAbsents(now)) ch = true; if (now >= P.miseFin) ch = clore(now) || ch; }
+    else if (P.phase === "donne") { if (now >= P.prochaineEtape) ch = etapeDonne(now); }
+    else if (P.phase === "assurance") ch = etapeAssurance(now);
+    else if (P.phase === "jeu") ch = etapeJeu(now);
+    else if (P.phase === "croupier") ch = etapeCroupier(now);
+    else if (P.phase === "reglement") ch = etapeReglement(now);
+    return ch ? changer() : false;
+  }
+
+  /* ── L'état PUBLIC : ce qu'un invité reçoit, et rien de plus ── */
+  function etatPublic(now) {
+    now = now || 0;
+    const croupier = P.croupier.map(c => c.cachee ? { cachee: true } : { r: c.r, i: c.i, suit: c.suit, col: c.col });
+    return {
+      v: P.v, hote: P.hote, table: P.table, sys: P.sys, jeux: P.jeux, phase: P.phase, manche: P.manche, bots: P.bots, message: P.message,
+      evenement: P.evenement, regenere: P.regenere,
+      miseMin: P.miseMin, miseMax: P.miseMax, par5: P.par5, tapisDepart: P.tapisDepart,
+      miseRestant: P.phase === "mise" ? Math.max(0, Math.ceil((P.miseFin - now) / 1000)) : 0,
+      tourRestant: P.phase === "jeu" && P.actif ? Math.max(0, Math.ceil((P.tourFin - now) / 1000)) : 0,
+      assuranceRestant: P.phase === "assurance" ? Math.max(0, Math.ceil((P.assuranceFin - now) / 1000)) : 0,
+      sieges: P.sieges.map(st => st && {
+        id: st.id, nom: st.nom, couleur: st.couleur, bot: st.bot, tapis: st.tapis, mise: st.mise, rachats: st.rachats, passe: st.passe, absent: !!st.absent,
+        assurance: st.assurance, dernierNet: st.dernierNet,
+        mains: st.mains.map(h => ({ cards: h.cards.map(c => ({ r: c.r, i: c.i, suit: c.suit, col: c.col })), bet: h.bet, doubled: h.doubled, surrendered: h.surrendered,
+          fromSplit: h.fromSplit, fromSplitAces: h.fromSplitAces, result: h.result, net: h.net, assurance: h.assurance || 0 })) }),
+      croupier, cachee: P.cachee, actif: P.actif,
+      sabot: { empreinte: P.empreinte, restantes: P.cartes.length, coupe: P.coupe, defausse: P.defausse, jeux: P.jeux, sabots: P.sabots.slice() },
+      rc: P.rc, vues: P.vues, journal: P.journal.slice(-30),
+    };
+  }
+  // Reprendre un état diffusé : nouvel hôte. La manche en cours est annulée (on ne connaît pas
+  // le sabot), les mises rendues, les tapis et le journal conservés, la version continue.
+  function reprendre(e, nouvelHote) {
+    P.v = (e.v || 0) + 1; P.hote = nouvelHote; P.table = e.table; P.sys = e.sys || P.sys; P.jeux = e.jeux || P.jeux; P.bots = !!e.bots;
+    P.manche = e.manche || 0; P.journal = (e.journal || []).slice(); P.sabots = ((e.sabot && e.sabot.sabots) || []).slice();
+    P.miseMin = e.miseMin || P.miseMin; P.miseMax = e.miseMax || P.miseMax; P.par5 = !!e.par5; P.tapisDepart = e.tapisDepart || P.tapisDepart;
+    P.sieges = (e.sieges || []).map(st => {
+      if (!st || st.bot) return null;
+      // Ce qui était sur le feutre revient en main : la mise posée (phase de mise), ou
+      // l'engagement des mains non réglées (mise, doublement, assurance). Une main réglée
+      // (net connu) a déjà été payée dans le tapis.
+      const rendu = st.mains.length
+        ? st.mains.reduce((s, h) => s + (h.net === undefined && h.net !== null ? h.bet * (h.doubled ? 2 : 1) + (h.assurance || 0) : 0), 0)
+        : (st.mise || 0);
+      return { id: st.id, nom: st.nom, couleur: st.couleur, bot: false, tapis: arr(st.tapis + rendu), mise: 0, rachats: st.rachats || 0, mains: [], passe: false, absent: st.absent ? 1 : 0 };
+    });
+    while (P.sieges.length < NB_SIEGES) P.sieges.push(null);
+    P.croupier = []; P.cachee = false; P.actif = null; P.cartes = []; P.empreinte = ""; P.graine = null; P.prochain = null;
+    P.phase = "sabot"; P.besoinRemelange = true; P.regenere = true;
+    P.message = "L'hôte a quitté la table : manche annulée, mises rendues, sabot neuf.";
+    P.evenement = { t: "reprise" };
+    return P;
+  }
+
+  return {
+    get etat() { return P; }, etatPublic, action, etape, remelanger, quitter, revenir, reprendre,
+    fournirProchain(s) { P.prochain = s; },
+    get besoinSabot() { return P.phase === "sabot" || !P.cartes.length || (P.besoinRemelange && (P.phase === "reglement" || P.phase === "attente")); },
+    // Le sabot suivant, préparé d'avance, sert dès qu'il en faut un : pas d'attente à la table.
+    remelangerAvecProchain() { if (!P.prochain) return false; const s = P.prochain; P.prochain = null; return remelanger(s, false); },
+    get prochainManque() { return !P.prochain && P.cartes.length > 0 && P.cartes.length <= P.coupe + 8; },
+    set cadence(ms) { P.cadence = ms; }, get cadence() { return P.cadence; },
+    set hote(id) { P.hote = id; }, get hote() { return P.hote; },
+  };
+}
+
+/* ── Le code de salon : huit caractères, groupés par quatre, lisibles au téléphone ── */
+const ALPHA = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+function codeSalon(random) {
+  const a = new Uint8Array(8); (random || (b => crypto.getRandomValues(b)))(a);
+  return [...a].map(x => ALPHA[x % ALPHA.length]).join("");
+}
+const normaliserCode = s => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+const formaterCode = c => { const n = normaliserCode(c); return n.length > 4 ? n.slice(0, 4) + "-" + n.slice(4) : n; };
+const codeValide = c => normaliserCode(c).length === 8;
+
+/* ── La salle : le protocole autour d'un transport ─────────────────────────
+   transport.publier(objet) envoie à tous les autres ; la salle reçoit par recevoir(m).
+   Les messages :
+     salut   { id, nom, couleur }          je suis là (réponse : un salut, et l'état si je suis l'hôte)
+     demande { id }                        renvoyez-moi l'état
+     etat    { id, etat }                  l'état complet, versionné, publié par l'hôte
+     action  { id, a, v, … }               un joueur vers l'hôte
+     refus   { id, pour, raison }          l'hôte refuse une action (à celui qui l'a demandée)
+     adieu   { id }                        départ (explicite, ou testament posé chez le courtier)
+   ────────────────────────────────────────────────────────────────────────── */
+function creerSalle(o) {
+  const S = {
+    moi: o.moi, nom: o.nom || "Joueur", couleur: o.couleur || "", createur: !!o.createur,
+    pairs: new Map(), hote: o.createur ? o.moi : null, partie: null, etat: null, attenteDepuis: 0, entre: false,
+    sabotEnCours: false, prochainEnCours: false, cadence: o.cadence || 900,
+  };
+  S.pairs.set(S.moi, { id: S.moi, nom: S.nom, couleur: S.couleur });
+  const pub = m => { try { o.transport.publier(m); } catch (e) { o.onErreur && o.onErreur(e); } };
+  const info = t => o.onInfo && o.onInfo(t);
+  const estHote = () => S.hote === S.moi && !!S.partie;
+  // Les options de la partie peuvent être une FONCTION : un invité élu hôte plus tard lit
+  // alors les règles de la table adoptée, pas celles qu'il avait au moment d'entrer.
+  const optionsPartie = () => Object.assign({}, (typeof o.partie === "function" ? o.partie() : o.partie) || {}, { hote: S.moi, cadence: S.cadence });
+
+  function diffuser(now) {
+    if (!S.partie) return;
+    const e = S.partie.etatPublic(now);
+    S.etat = e; pub({ t: "etat", id: S.moi, etat: e });
+    o.onEtat && o.onEtat(e, true);
+  }
+  // Un sabot neuf est demandé à l'appelant (scellé : empreinte publiée avant, graine révélée après).
+  function assurerSabot(now) {
+    if (!S.partie || S.sabotEnCours) return;
+    if (S.partie.besoinSabot) {
+      if (S.partie.remelangerAvecProchain()) { diffuser(now); return; }
+      S.sabotEnCours = true;
+      Promise.resolve(o.cartesNeuves()).then(s => { S.sabotEnCours = false; if (!S.partie) return; S.partie.remelanger(s, false); diffuser(o.horloge ? o.horloge() : now); }, () => { S.sabotEnCours = false; });
+    } else if (S.partie.prochainManque && !S.prochainEnCours) {
+      S.prochainEnCours = true;
+      Promise.resolve(o.cartesNeuves()).then(s => { S.prochainEnCours = false; if (S.partie) S.partie.fournirProchain(s); }, () => { S.prochainEnCours = false; });
+    }
+  }
+  function devenirHote(now, repris) {
+    S.hote = S.moi;
+    S.partie = creerPartie(optionsPartie());
+    if (repris) S.partie.reprendre(repris, S.moi);
+    // Les pairs présents sont bien là ; les sièges dont le joueur a disparu (l'ancien hôte) se libèrent.
+    for (const id of S.pairs.keys()) S.partie.revenir(id);
+    for (const st of S.partie.etat.sieges) if (st && !st.bot && !S.pairs.has(st.id)) S.partie.quitter(st.id, 1);
+    info(repris ? "L'hôte a quitté la table : tu reprends la main. Manche annulée, mises rendues, sabot neuf scellé." : "Tu ouvres la table.");
+    assurerSabot(now); diffuser(now);
+  }
+  function elire(now) {
+    const ids = [...S.pairs.keys()].sort();
+    const nouveau = ids[0];
+    if (nouveau === S.moi) devenirHote(now, S.etat);
+    else { S.hote = nouveau; info("L'hôte a quitté la table : " + ((S.pairs.get(nouveau) || {}).nom || nouveau) + " reprend la main."); }
+  }
+
+  S.entrer = now => {
+    S.entre = true; S.attenteDepuis = now;
+    pub({ t: "salut", id: S.moi, nom: S.nom, couleur: S.couleur });
+    if (S.createur) devenirHote(now, null); else pub({ t: "demande", id: S.moi });
+  };
+  S.recevoir = (m, now) => {
+    if (!m || !m.id || m.id === S.moi) return;
+    if (m.t === "salut") {
+      const nouveau = !S.pairs.has(m.id);
+      S.pairs.set(m.id, { id: m.id, nom: m.nom || "Joueur", couleur: m.couleur || "" });
+      if (nouveau) pub({ t: "salut", id: S.moi, nom: S.nom, couleur: S.couleur });
+      if (estHote()) { S.partie.revenir(m.id); diffuser(now); }
+      o.onPairs && o.onPairs(S.pairs);
+      return;
+    }
+    if (m.t === "demande") { if (estHote()) diffuser(now); return; }
+    if (m.t === "etat") {
+      if (!m.etat) return;
+      // Deux hôtes (une élection croisée) : le plus petit identifiant garde la main, l'autre se range.
+      if (estHote()) { if (m.id >= S.moi) return; S.partie = null; S.hote = m.id; info("Deux hôtes : " + ((S.pairs.get(m.id) || {}).nom || "l'autre") + " garde la main."); }
+      if (S.hote !== m.id) {
+        // Un autre expéditeur que l'hôte connu : accepté s'il a été élu (l'ancien hôte n'est plus
+        // là, ou le nouveau a un identifiant plus petit) — jamais un simple pair qui s'inventerait hôte.
+        if (S.hote && S.pairs.has(S.hote) && m.id > S.hote) return;
+        S.hote = m.id;
+      } else if (S.etat && m.etat.v < S.etat.v) return;   // la même version peut revenir : c'est le compte à rebours qui bouge
+      S.etat = m.etat; o.onEtat && o.onEtat(m.etat, false);
+      return;
+    }
+    if (m.t === "action") { if (!estHote()) return; const r = S.partie.action(m, now); if (r.ok) diffuser(now); else if (r.erreur) pub({ t: "refus", id: S.moi, pour: m.id, raison: r.erreur }); return; }
+    if (m.t === "refus") { if (m.pour === S.moi) info(m.raison); return; }
+    if (m.t === "adieu") {
+      S.pairs.delete(m.id); o.onPairs && o.onPairs(S.pairs);
+      if (estHote()) { if (S.partie.quitter(m.id, now)) diffuser(now); }
+      if (m.id === S.hote) elire(now);
+      return;
+    }
+  };
+  S.agir = (a, v, extra, now) => {
+    const m = Object.assign({ t: "action", id: S.moi, a, v }, extra || {});
+    if (estHote()) { const r = S.partie.action(m, now); if (r.ok) diffuser(now); else if (r.erreur) info(r.erreur); return r; }
+    pub(m); return { ok: true, envoye: true };
+  };
+  S.tic = now => {
+    if (S.entre && !S.hote && now - S.attenteDepuis >= ELECTION_DELAI) {
+      if (S.pairs.size === 1) devenirHote(now, null); else elire(now);
+    }
+    if (!estHote()) return;
+    S.partie.cadence = S.cadence;
+    assurerSabot(now);
+    if (S.partie.etape(now)) { diffuser(now); return; }
+    // Les comptes à rebours : une diffusion par seconde, pour que chacun voie le temps passer.
+    const e = S.partie.etat;
+    const compte = e.phase === "mise" ? Math.ceil((e.miseFin - now) / 1000) : e.phase === "jeu" && e.actif ? Math.ceil((e.tourFin - now) / 1000) : e.phase === "assurance" ? Math.ceil((e.assuranceFin - now) / 1000) : -1;
+    if (compte >= 0 && compte !== S.dernierCompte) { S.dernierCompte = compte; diffuser(now); }
+  };
+  S.quitter = () => { pub({ t: "adieu", id: S.moi }); S.partie = null; S.entre = false; };
+  S.estHote = estHote;
+  return S;
+}
+
+return {TAPIS_DEPART,MISE_DELAI,TOUR_DELAI,ASSURANCE_DELAI,REGLEMENT_DELAI,ABSENCE_DELAI,ELECTION_DELAI,NB_SIEGES,ACTIONS,NOMS_BOTS,creerPartie,codeSalon,normaliserCode,formaterCode,codeValide,creerSalle};
 })();
 
 
@@ -2027,7 +2606,7 @@ return {COURTIERS,connecter,connecterAvecRepli,nomCourtier,codeSalon,sujet};
    ══════════════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 const emettre = (nom, detail) => document.dispatchEvent(new CustomEvent("sabot:" + nom, { detail: detail || {} }));
-const E = M.engine, SOL = M.solver, SH = M.shuffle, CT = M.counting, NET = M.net;
+const E = M.engine, SOL = M.solver, SH = M.shuffle, CT = M.counting, NET = M.net, TR = M["table-reseau"];
 const RANKS = E.RANKS, SUITS = E.SUITS;
 const sgn = n => (n > 0 ? "+" : "") + n;
 const fr1 = x => x.toFixed(1).replace(".", ",");
@@ -4860,7 +5439,7 @@ async function ouvrirSalon(code) {
     api.souscrire(NET.sujet(code));
     setTimeout(() => messageMP({ t: "salut", id: MP.moi, nom: MP.nom }), 220);
     $("mpAccueil").hidden = true; $("mpSalon").hidden = false;
-    $("mpCodeAff").textContent = code;
+    $("mpCodeAff").textContent = TR.formaterCode(code);
     $("mpRelais").textContent = "Relié par " + url.replace("wss://", "").split(":")[0] + ". Les messages passent en clair par un courtier public.";
     rendrePairs(); rendreClassement();
   } catch (e) {
@@ -4883,18 +5462,39 @@ function recevoirMP(m) {
   if (m.t === "reveal") { MP.rcReel = m.rc; MP.graineHex = m.graine; rendreClassement(true); return; }
   if (m.t === "adieu") { MP.pairs.delete(m.id); rendrePairs(); return; }
 }
-$("mpCreer").onclick = () => ouvrirSalon(NET.codeSalon());
-$("mpRejoindre").onclick = () => {
-  const c = ($("mpCode").value || "").trim().toUpperCase();
-  if (c.length < 4) { $("mpEtat").textContent = "Il faut le code complet, cinq caractères."; return; }
-  ouvrirSalon(c);
+/* ── Deux modes derrière les mêmes boutons : la TABLE (reseau.js) et la COURSE (ici).
+   Le code est le même format partout — huit caractères, écrits A7K2-M9PQ. ── */
+MP.mode = "table";
+const MP_TEXTES = {
+  table: ["Une vraie table, jusqu'à cinq", "Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de 1 000 jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.", "Ouvrir une table", "Code de la table"],
+  course: ["Le même sabot, chacun son compte", "Les cartes sortent du même sabot, chacun compte en silence, et à la fin chacun annonce son compte. Celui qui tombe juste gagne — pas celui qui a le plus de chance.", "Ouvrir une course", "Code de la course"],
 };
+function rendreModeMP() {
+  const [titre, texte, bouton, code] = MP_TEXTES[MP.mode];
+  $("mpTitre").textContent = titre; $("mpModeTexte").textContent = texte; $("mpCreer").textContent = bouton;
+  $("mpCode").previousElementSibling.textContent = code;
+  $("mpCouleurs").hidden = MP.mode !== "table";
+  $("mpModes").querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", b.dataset.mode === MP.mode ? "true" : "false"));
+  $("mpEtat").textContent = "";
+}
+$("mpModes").querySelectorAll("button").forEach(b => b.onclick = () => { MP.mode = b.dataset.mode; rendreModeMP(); });
+$("mpNom").value = prenom(); $("mpNom").oninput = () => { DB.prenom = $("mpNom").value; garder(); $("prenom").value = DB.prenom; };
+// Le code se tape comme on veut (minuscules, tiret, espaces) et s'affiche groupé.
+$("mpCode").addEventListener("input", () => { const p = $("mpCode").selectionStart; $("mpCode").value = TR.formaterCode($("mpCode").value); if (p !== null) $("mpCode").setSelectionRange(p, p); });
+$("mpCode").addEventListener("keydown", e => { if (e.key === "Enter") $("mpRejoindre").click(); });
+$("mpCreer").onclick = () => { const code = TR.codeSalon(); MP.mode === "table" ? ouvrirTable(code, true) : ouvrirSalon(code); };
+$("mpRejoindre").onclick = () => {
+  const c = TR.normaliserCode($("mpCode").value);
+  if (!TR.codeValide(c)) { $("mpEtat").textContent = "Il faut le code complet : huit caractères, comme A7K2-M9PQ."; son("ko"); return; }
+  MP.mode === "table" ? ouvrirTable(c, false) : ouvrirSalon(c);
+};
+rendreModeMP();
 $("mpQuitter").onclick = () => {
   messageMP({ t: "adieu", id: MP.moi }); if (MP.api) MP.api.fermer();
   MP.api = null; $("mpSalon").hidden = true; $("mpAccueil").hidden = false; $("mpEtat").textContent = "";
 };
 $("mpCopier").onclick = () => {
-  const lien = location.origin + location.pathname + "#salon=" + MP.code;
+  const lien = location.origin + location.pathname + "#course=" + MP.code;
   navigator.clipboard && navigator.clipboard.writeText(lien).then(() => bandeau("Lien copié : envoie-le à tes amis."), () => bandeau("Code : " + MP.code));
 };
 $("mpLancer").onclick = async () => {
@@ -4960,9 +5560,589 @@ function rendreClassement(revele) {
      <td class="n" style="color:${l.ecart === 0 ? "var(--jade)" : l.ecart ? "var(--cinabre)" : "inherit"}">${l.ecart === null ? "—" : l.ecart === 0 ? "exact" : l.ecart}</td></tr>`).join("")
     + (revele && MP.rcReel !== null ? `<tr><td colspan="3" class="muet" style="padding-top:10px">Compte réel : <b class="cadran">${sgn(MP.rcReel)}</b>. Graine du mélange : <span class="cadran" style="font-size:11px;word-break:break-all">${echap(MP.graineHex || "")}</span></td></tr>` : "");
 }
-if (location.hash.startsWith("#salon=")) {
-  const c = location.hash.slice(7).toUpperCase();
-  if (c.length >= 4) { aller("ensemble"); setTimeout(() => ouvrirSalon(c), 300); }
+// Un lien reçu : #course=CODE ouvre la course (l'ancien #salon= aussi), #table=CODE la table (reseau.js).
+if (/^#(course|salon)=/.test(location.hash)) {
+  const c = TR.normaliserCode(location.hash.split("=")[1]);
+  if (c.length >= 4) { MP.mode = "course"; rendreModeMP(); aller("ensemble"); setTimeout(() => ouvrirSalon(c), 300); }
+}
+
+
+/* ═══ reseau.js ═══ */
+/* ══════════════════════ À PLUSIEURS — LA TABLE ══════════════════════
+   LA TABLE DE BLACKJACK À PLUSIEURS (lot Réseau). Concaténé après ensemble.js.
+   Jusqu'à cinq humains autour de LA scène (#v-table), pas d'un écran à part :
+   ton siège est `.toi`, les autres sont nommés, et tout ce qui existe déjà —
+   cartes.js, jetons.js (le règlement animé), croupier.js (les humeurs), le bus
+   « sabot:* » — sert tel quel.
+
+   Le modèle (src/table-reseau.mjs) : l'HÔTE est autoritaire. Il tient le sabot
+   prouvable, distribue, tranche. Chaque client — l'hôte compris — reçoit un ÉTAT
+   complet, versionné, et l'affiche tel quel : rendreReseau() compare l'état reçu
+   au précédent et n'en déduit que des GESTES (une carte qui arrive, une mise qui
+   vole, une main réglée), jamais une issue.
+
+   Comment on se greffe sans dupliquer le rendu :
+   · T.reseau = { code, moi, hote, phase } : la scène sait qu'elle est partagée.
+   · T.enJeu reste VRAI tant qu'on est en réseau : c'est ce qui tient fermées la
+     donne solo (distribuer), la phase de mise solo (ouvrirMises) et le rachat solo.
+   · Nos mains portent les drapeaux de jetons.js (jRegle, jEngage, jDouble…) déjà
+     posés : ses écouteurs les considèrent réglées et n'y touchent pas l'argent —
+     DB.tapis, le tapis SOLO, ne bouge jamais ici. Les jetons de la table à
+     plusieurs sont ceux de l'état ; on les fait voler avec ses outils (vol,
+     glisser, lueur, garnirCercles).
+   · Les boutons de table.js sont ENVELOPPÉS (l'ancien onclick est gardé) : en
+     réseau ils envoient une action à l'hôte, en solo ils font ce qu'ils faisaient.
+   ═══════════════════════════════════════════════════════════════════ */
+const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, tableSolo: "", ticker: null, abandon: false,
+  mise: 0, poses: [], miseVue: {}, enVol: {}, emis: new Set(), partis: new Set(), assurPartie: new Set(), vus: new Set(),
+  vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, panneauOuvert: false };
+const PAGES_URL = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
+const COULEURS = [["#E24B4B", "rouge"], ["#E2B857", "or"], ["#4FD8C0", "jade"], ["#4F8FE0", "bleu"], ["#A66BE0", "violet"], ["#E27AA8", "rose"]];
+if (!DB.couleur || !COULEURS.some(c => c[0] === DB.couleur)) DB.couleur = COULEURS[alea(COULEURS.length)][0];
+
+/* ── Qui je suis : un identifiant par onglet, qui survit à un rechargement ──
+   C'est ce qui permet de retrouver son siège : l'hôte garde un siège dont le joueur
+   a disparu quinze secondes (ABSENCE_DELAI), le temps qu'il revienne avec le même id. */
+function rsIdentite() {
+  const neuf = () => "j" + SH.hex(crypto.getRandomValues(new Uint8Array(5)));
+  try { let id = sessionStorage.getItem("sabot-id"); if (!id) { id = neuf(); sessionStorage.setItem("sabot-id", id); } return id; } catch (e) { return neuf(); }
+}
+function rendreCouleurs() {
+  const b = $("mpCouleurBoite"); if (!b) return;
+  b.innerHTML = COULEURS.map(([c, n]) => `<button type="button" class="couleur${DB.couleur === c ? " on" : ""}" style="--c:${c}" role="radio" aria-checked="${DB.couleur === c}" aria-label="${n}" title="${n}" data-c="${c}"></button>`).join("");
+  b.querySelectorAll("button").forEach(x => x.onclick = () => { DB.couleur = x.dataset.c; garder(); rendreCouleurs(); });
+}
+rendreCouleurs();
+
+/* ── Le transport : MQTT en vrai ; une usine injectée (window.__reseauTransport)
+   pour la sonde et les captures, qui n'ont pas de courtier. ─────────────── */
+async function rsConnecter(code) {
+  const sujet = NET.sujetTable(code);
+  if (window.__reseauTransport) {
+    const t = window.__reseauTransport({ sujet, id: RS.moi, onMessage: m => rsRecevoir(m) });
+    return { publier: o => t.publier(JSON.stringify(o)), fermer: () => t.fermer && t.fermer(), nom: "transport local" };
+  }
+  const { api, url } = await NET.connecterAvecRepli({
+    clientId: "hilo-" + RS.moi + "-" + Date.now().toString(36).slice(-4),
+    // Le testament : si l'onglet ferme sans dire au revoir, le courtier le dit pour lui.
+    testament: { sujet, message: JSON.stringify({ t: "adieu", id: RS.moi }) },
+    onEssai: (n, total, nom) => rsEtatTexte(`Essai ${n} sur ${total} — ${nom}…`),
+    onMessage: (_, brut) => { try { rsRecevoir(JSON.parse(brut)); } catch (e) {} },
+    onClose: () => rsDeconnecte(),
+  });
+  api.souscrire(sujet);
+  return { publier: o => api.publier(sujet, JSON.stringify(o)), fermer: () => api.fermer(), nom: NET.nomCourtier(url) };
+}
+function rsRecevoir(m) { if (RS.salle) RS.salle.recevoir(m, Date.now()); }
+function rsEtatTexte(t) { const e = $("mpEtat"); if (e) e.textContent = t; }
+function rsEchec() {
+  $("mpEtat").innerHTML = `Aucun courtier joignable en trois secondes. Dans un Artifact publié, les connexions WebSocket sont bloquées sans un mot : la table à plusieurs se joue sur <a href="${PAGES_URL}" target="_blank" rel="noopener">pwrygrt72g-hue.github.io/compteur-hilo</a>. <b>Le reste de l'application marche normalement.</b>`;
+  son("ko");
+}
+function rsDeconnecte() {
+  if (!T.reseau) return;
+  $("annonce").textContent = "Connexion perdue. Quitte la table et rejoins-la avec le même code.";
+  bandeau("Connexion au courtier perdue.");
+}
+
+/* ── Les options de la partie : la table où l'on est assis, ses limites, la
+   stratégie des bots (celle du solveur), le compte (ton système). Lues au moment
+   de devenir hôte — un invité élu joue la table adoptée, pas la sienne. ── */
+function rsStrategie(cards, up, ctx) {
+  const d = donneesTable();
+  const total = E.handTotal(cards), soft = E.isSoft(cards);
+  const paire = cards.length === 2 && E.cardValue(cards[0]) === E.cardValue(cards[1]) ? rg(cards[0]) : null;
+  return SOL.actionFor(d.chart, { total, soft, pairIdx: paire, upIdx: rg(up), canD: !!ctx.peutDoubler, canP: paire !== null && !!ctx.peutSeparer, canU: !!ctx.peutAbandonner });
+}
+function rsOptionsPartie() {
+  const t = tableCourante();
+  return { regles: reglesTable(), table: t.id, jeux: t.jeux, miseMin: t.mise_min || 10, miseMax: t.mise_max || 1000,
+    par5: t.blackjackPays < 1.5, csm: t.melange === "melangeuse_continue", penetration: t.penetration, tapis: TAPIS_DEPART,
+    sys: DB.sys, valeur: valeurCompte, rcInitial: jeux => CT.compteInitial(DB.sys, jeux), strategie: rsStrategie };
+}
+async function rsCartesNeuves() {
+  const jeux = (RS.etat && RS.etat.jeux) || tableCourante().jeux;
+  const s = await sabotProuvable(jeux);
+  return { cartes: s.cartes, empreinte: s.empreinte, graine: SH.hex(s.graine) };
+}
+
+/* ── Ouvrir ou rejoindre ─────────────────────────────────────────────── */
+async function ouvrirTable(code, createur) {
+  if (RS.salle) quitterTable(true);
+  RS.moi = rsIdentite(); RS.code = code; RS.abandon = false; RS.api = null;
+  $("mpCreer").disabled = $("mpRejoindre").disabled = true;
+  rsEtatTexte("Recherche d'un courtier…");
+  // Trois secondes, pas vingt-sept : un refus silencieux (CSP d'un Artifact) doit être dit tout de suite.
+  const garde = setTimeout(() => { if (!RS.api) { RS.abandon = true; rsEchec(); $("mpCreer").disabled = $("mpRejoindre").disabled = false; } }, 3000);
+  let api;
+  try { api = await rsConnecter(code); }
+  catch (e) { clearTimeout(garde); if (!RS.abandon) rsEchec(); $("mpCreer").disabled = $("mpRejoindre").disabled = false; return; }
+  clearTimeout(garde);
+  if (RS.abandon) { try { api.fermer(); } catch (e) {} return; }
+  RS.api = api; $("mpCreer").disabled = $("mpRejoindre").disabled = false; rsEtatTexte("");
+  RS.salle = TR.creerSalle({
+    moi: RS.moi, nom: prenom() || "Joueur", couleur: DB.couleur, createur, cadence: vitesse(), horloge: Date.now,
+    transport: { publier: o => api.publier(o) },
+    cartesNeuves: rsCartesNeuves, partie: rsOptionsPartie,
+    onEtat: e => rendreReseau(e),
+    onInfo: txt => { bandeau(txt, 3200); if (RS.etat) { rsResyncMise(); rsBoutons(RS.etat); } },
+    onPairs: () => { if (rsPanneauVisible()) rsPanneau(); },
+  });
+  entrerModeReseau();
+  RS.salle.entrer(Date.now());
+  RS.ticker = setInterval(() => { if (!RS.salle) return; RS.salle.cadence = vitesse(); RS.salle.tic(Date.now()); }, 200);
+  aller("table");
+  bandeau(createur ? "Table ouverte — partage le code " + TR.formaterCode(code) : "Tu rejoins la table " + TR.formaterCode(code), 3600);
+}
+function entrerModeReseau() {
+  RS.tableSolo = DB.table;
+  T.reseau = { code: RS.code, moi: RS.moi, hote: "", phase: "attente" };
+  T.enJeu = true; T.occupe = false; T.actif = null; T.toi = null; T.croupier = [];
+  J.phase = "attente"; J.donnee = false;
+  RS.prec = null; RS.etat = null; RS.mise = 0; RS.poses = []; RS.miseVue = {}; RS.enVol = {};
+  RS.emis = new Set(); RS.partis = new Set(); RS.assurPartie = new Set(); RS.vus = new Set();
+  RS.vuCroupier = 0; RS.vuCachee = false; RS.signature = ""; RS.bulleAssurance = false; RS.rachatPropose = 0;
+  $("v-table").dataset.reseau = "1"; $("v-table").dataset.phase = "attente";
+  $("bReseau").hidden = false; $("bReseau").textContent = "Table " + TR.formaterCode(RS.code);
+  $("bNouveauSabot").textContent = "Journal";
+  $("dMain").innerHTML = ""; $("dScore").textContent = "·"; $("conseil").textContent = ""; $("boiteAssurance").innerHTML = "";
+  T.sieges = Array.from({ length: TR.NB_SIEGES }, () => ({ nom: "Libre", vide: true, mains: [], mise: 0, miseVue: 0, reseau: true }));
+  poserLieu(tableCourante()); rsChipCode();
+  rsRendreSieges(); boutons({}); $("bDonne").disabled = true;
+  $("annonce").textContent = "Connexion à la table…";
+  rsRendreRack();
+}
+function quitterTable(silencieux) {
+  if (RS.salle) { try { RS.salle.quitter(); } catch (e) {} } RS.salle = null;
+  if (RS.api) { try { RS.api.fermer(); } catch (e) {} } RS.api = null;
+  clearInterval(RS.ticker); RS.ticker = null;
+  if (!T.reseau) return;
+  T.reseau = null; RS.etat = null; RS.prec = null;
+  delete $("v-table").dataset.reseau; $("bReseau").hidden = true; $("bNouveauSabot").textContent = "Nouveau sabot";
+  $("boiteAssurance").innerHTML = ""; $("jetonsCalque").innerHTML = "";
+  if (RS.tableSolo) { DB.table = RS.tableSolo; garder(); }
+  T.enJeu = false; T.occupe = false; T.actif = null; T.toi = null; J.phase = "attente"; J.donnee = false;
+  nouveauSabotSolo();               // la table solo repart : sabot neuf, sièges, mises ouvertes
+  if (!silencieux) bandeau("Tu as quitté la table à plusieurs.");
+}
+function rsAgir(a, v, extra) { if (!RS.salle) return null; return RS.salle.agir(a, v, extra, Date.now()); }
+const rsMonSiege = () => T.toi ? T.sieges.indexOf(T.toi) : -1;
+const rsHote = () => !!(RS.etat && RS.etat.hote === RS.moi);
+
+/* ── Le rendu d'un état : on compare, on redessine, on joue les gestes ───── */
+const rsCle = (e, k, hi) => e.manche + ":" + k + ":" + hi;
+const rsCarteCle = c => c.cachee ? "?" : c.r + c.suit;
+function rsSignature(e) {
+  return JSON.stringify([e.manche, e.phase, e.actif, e.sieges.map(st => st && [st.id, st.nom, st.absent, st.passe, st.bot, st.mise,
+    st.mains.map(h => [h.cards.map(rsCarteCle).join(""), h.result || "", h.doubled, h.assurance])])]);
+}
+function rendreReseau(e) {
+  if (!T.reseau || !e) return;
+  const prec = RS.prec; RS.etat = e;
+  T.reseau.hote = e.hote; T.reseau.phase = e.phase;
+  // La table de l'hôte devient la mienne : le lieu, les règles, les limites la suivent.
+  if (DB.table !== e.table) { DB.table = e.table; garder(); poserLieu(tableCourante()); rsChipCode(); }
+  if (!$("tCode")) rsChipCode();
+  const memeManche = !!prec && prec.manche === e.manche && prec.phase !== "reglement" || !!prec && prec.phase === e.phase && e.phase === "reglement";
+  if (e.phase === "mise" && (!prec || prec.phase !== "mise")) {
+    RS.mise = 0; RS.poses = []; RS.miseVue = {}; RS.enVol = {}; RS.emis = new Set(); RS.partis = new Set(); RS.assurPartie = new Set(); RS.vus = new Set();
+    J.phase = "attente"; J.donnee = false; $("v-table").dataset.phase = "mise"; $("boiteAssurance").innerHTML = ""; RS.bulleAssurance = false; RS.rachatPropose = 0;
+  }
+  if (e.phase !== "mise" && e.phase !== "attente" && e.phase !== "sabot") { J.donnee = true; if (J.phase === "attente" || J.phase === "mise") J.phase = "jeu"; if (e.phase !== "reglement") $("v-table").dataset.phase = "jeu"; }
+  if (e.phase === "attente" || e.phase === "sabot") { J.donnee = false; $("v-table").dataset.phase = "attente"; }
+
+  /* ── Les sièges de la scène, reconstruits depuis l'état ── */
+  const effets = [];
+  T.sieges = e.sieges.map((st, k) => {
+    if (!st) return { nom: "Libre", vide: true, toi: false, mains: [], mise: 0, miseVue: 0, reseau: true };
+    const s = { nom: st.nom, toi: st.id === RS.moi, id: st.id, couleur: st.couleur, bot: st.bot, absent: st.absent, tapis: st.tapis, mise: st.mise,
+      rachats: st.rachats, passe: st.passe, dernierNet: st.dernierNet, reseau: true, miseVue: RS.miseVue[k] || 0, mains: [] };
+    s.mains = st.mains.map((h, hi) => {
+      const cle = rsCle(e, k, hi);
+      return Object.assign(E.newHand(h.cards.map(c => Object.assign({}, c)), h.bet), {
+        doubled: h.doubled, surrendered: h.surrendered, fromSplit: h.fromSplit, fromSplitAces: h.fromSplitAces, result: h.result, net: h.net, assurance: h.assurance || 0,
+        // Les drapeaux de jetons.js : réglée (il n'y touche pas), vue (la pile est dessinée)…
+        jRegle: true, jEngage: true, jDouble: true, jVu: !h.fromSplit || hi === 0 || RS.vus.has(cle + ":v"),
+        jDoubleVu: RS.vus.has(cle + ":d"), jAssuranceVu: RS.vus.has(cle + ":a"), jParti: RS.partis.has(cle), jAssurancePartie: RS.assurPartie.has(cle) });
+    });
+    return s;
+  });
+  T.toi = T.sieges.find(s => s.toi) || null;
+  T.actif = e.actif && T.sieges[e.actif.siege] && !T.sieges[e.actif.siege].vide ? e.actif : null;
+  T.croupier = e.croupier.map(c => c.cachee ? { cachee: true } : Object.assign({}, c));
+  T.sabot = new Array(e.sabot.restantes); T.coupe = e.sabot.coupe; T.defausse = e.sabot.defausse;
+  T.rc = e.rc; T.vues = e.vues; T.empreinte = e.sabot.empreinte; T.mains = e.manche;
+
+  /* ── Ce qui a changé : cartes nouvelles, mains réglées, mises, doublements ── */
+  if (memeManche) {
+    e.sieges.forEach((st, k) => {
+      if (!st) return;
+      const ps = prec.sieges[k], meme = ps && ps.id === st.id;
+      // Multi-ensemble des cartes déjà vues sur ce siège : une séparation déplace les
+      // cartes d'une main à l'autre, on ne compare donc pas main par main mais carte par carte.
+      const deja = new Map();
+      if (meme) ps.mains.forEach(h => h.cards.forEach(c => { const q = rsCarteCle(c); deja.set(q, (deja.get(q) || 0) + 1); }));
+      st.mains.forEach((h, hi) => {
+        const cle = rsCle(e, k, hi), ph = meme ? ps.mains[hi] : null;
+        h.cards.forEach((c, ci) => { const q = rsCarteCle(c); if (deja.get(q)) deja.set(q, deja.get(q) - 1); else effets.push({ t: "carte", siege: k, main: hi, index: ci, carte: c }); });
+        if (h.doubled && !(ph && ph.doubled)) effets.push({ t: "jetons", siege: k, montant: h.bet, cle: cle + ":d" });
+        if (h.fromSplit && hi > 0 && !(ph && ph.fromSplit)) effets.push({ t: "jetons", siege: k, montant: h.bet, cle: cle + ":v" });
+        if (h.assurance && !(ph && ph.assurance)) effets.push({ t: "jetons", siege: k, montant: h.assurance, cle: cle + ":a" });
+        const finie = h.result && (h.net !== undefined || h.result === "sauté" || h.result === "abandon");
+        if (finie && !RS.emis.has(cle)) { RS.emis.add(cle);
+          const montant = h.net !== undefined ? h.net : h.result === "sauté" ? -h.bet * (h.doubled ? 2 : 1) : -h.bet / 2;
+          effets.push({ t: "fin", siege: k, main: hi, issue: h.result, montant, toi: st.id === RS.moi, h: T.sieges[k].mains[hi], cle }); }
+        if (h.assurance && h.net !== undefined && !RS.assurPartie.has(cle)) effets.push({ t: "assurance-fin", siege: k, main: hi, cle, toi: st.id === RS.moi, gagne: e.croupier.length === 2 && !e.cachee && E.handTotal(e.croupier) === 21, mise: h.assurance });
+      });
+    });
+    e.croupier.forEach((c, ci) => { if (ci >= RS.vuCroupier) effets.push({ t: "carte", siege: "croupier", main: 0, index: ci, carte: c, cachee: !!c.cachee }); });
+  } else if (prec) {
+    // Nouvelle manche : rien à animer sur ce qui vient d'être remis à zéro.
+    RS.vuCroupier = 0;
+    if (e.croupier.length) e.croupier.forEach((c, ci) => effets.push({ t: "carte", siege: "croupier", main: 0, index: ci, carte: c, cachee: !!c.cachee }));
+  } else {
+    // Premier état reçu (ou reconnexion) : tout apparaît, sans vol — on n'a pas vu la donne.
+    RS.vuCroupier = e.croupier.length;
+    e.sieges.forEach((st, k) => st && st.mains.forEach((h, hi) => { if (h.result) RS.emis.add(rsCle(e, k, hi)); if (h.net !== undefined) { RS.partis.add(rsCle(e, k, hi)); RS.assurPartie.add(rsCle(e, k, hi)); } if (h.doubled) RS.vus.add(rsCle(e, k, hi) + ":d"); if (h.assurance) RS.vus.add(rsCle(e, k, hi) + ":a"); RS.vus.add(rsCle(e, k, hi) + ":v"); }));
+    T.sieges.forEach(s => s.mains.forEach((h, hi) => { h.jDoubleVu = h.doubled; h.jAssuranceVu = !!h.assurance; h.jVu = true; h.jParti = h.net !== undefined; }));
+  }
+  const revele = !!prec && prec.cachee && !e.cachee && e.croupier.length >= 2;
+  const tourChange = JSON.stringify(e.actif) !== JSON.stringify(prec ? prec.actif : null) || (prec && prec.phase !== e.phase);
+  const remelange = e.evenement && e.evenement.t === "remelange" && (!prec || prec.sabot.empreinte !== e.sabot.empreinte);
+  const donneDebut = !!prec && prec.phase === "mise" && e.phase !== "mise" && e.phase !== "attente" && e.phase !== "sabot";
+  const reglementDebut = e.phase === "reglement" && (!prec || prec.phase !== "reglement");
+
+  /* ── Le dessin ── */
+  const sig = rsSignature(e);
+  if (sig !== RS.signature) { RS.signature = sig; rsRendreSieges(); }
+  rsRendreCroupier(e, prec);
+  rafraichirBarre(); rsRendreRack(); rsBoutons(e); rsAnnonce(e); rsAssurance(e); rsMisesDesAutres(e);
+  if (rsPanneauVisible()) rsPanneau();
+
+  /* ── Les gestes, dans l'ordre d'une vraie table ── */
+  if (remelange) { emettre("remelange", { table: e.table, cartes: e.sabot.restantes, pendantDonne: !!e.evenement.pendantDonne }); if (!e.evenement.pendantDonne) bandeau("Sabot neuf, scellé : empreinte publiée, graine révélée à la fin."); }
+  if (e.evenement && e.evenement.t === "reprise" && (!prec || prec.hote !== e.hote)) bandeau(e.message, 4200);
+  if (e.evenement && e.evenement.t === "rachat" && prec && prec.v < e.v) { const st = e.sieges[e.evenement.siege]; if (st && st.id !== RS.moi) bandeau(st.nom + " reprend 1 000 jetons."); }
+  if (donneDebut) {
+    const moi = T.toi, jetons = moi && moi.mains.length ? moi.mains[0].bet : 0, l = limites();
+    const tc = sys().equilibre ? CT.compteVrai(e.rc, e.sabot.restantes / 52) : null;
+    emettre("donne-debut", { table: e.table, sieges: e.sieges.filter(st => st && !st.passe).length, mise: jetons ? jetons / l.min : undefined, jetons: jetons || undefined, tc });
+    rsRendreRack();
+  }
+  let delai = 0;
+  effets.filter(f => f.t === "carte").forEach(f => { rsEffetCarte(f, delai); delai += 120; });
+  if (revele) { const el = $("dMain").children[1] || $("dMain").lastElementChild; son("carte"); emettre("croupier-revele", { carte: e.croupier[1], total: E.handTotal(e.croupier), el }); }
+  effets.filter(f => f.t === "jetons").forEach(f => rsEffetJetons(f));
+  if (tourChange && e.phase === "jeu" && e.actif) emettre("tour", { siege: e.actif.siege, main: e.actif.main, toi: !!(T.toi && T.sieges[e.actif.siege] === T.toi) });
+  if (tourChange && e.phase === "croupier") emettre("tour", { siege: "croupier", main: 0, toi: false });
+  effets.filter(f => f.t === "assurance-fin").forEach(f => rsEffetAssuranceFin(f));
+  effets.filter(f => f.t === "fin").forEach(f => rsEffetFin(f));
+  if (reglementDebut) {
+    const issues = e.sieges.map(st => st ? st.mains.map(h => ISSUE_BUS[h.result] || h.result) : []);
+    const moi = T.toi, k = rsMonSiege();
+    const net = moi ? moi.mains.reduce((s, h) => s + (h.net || 0) + (h.assurance ? (E.handTotal(e.croupier) === 21 && e.croupier.length === 2 ? h.assurance * 2 : -h.assurance) : 0), 0) : 0;
+    emettre("manche-fin", { issues, toi: k >= 0 ? issues[k] : [], net, solde: moi ? arr(moi.tapis - TAPIS_DEPART * (1 + (moi.rachats || 0))) : 0, croupier: E.handTotal(e.croupier) });
+    rsRendreRack();
+  }
+  if (e.phase === "mise" && T.toi && T.toi.tapis < e.miseMin && !T.toi.mise && RS.rachatPropose !== e.manche && vue === "table" && $("modale").hidden) { RS.rachatPropose = e.manche; setTimeout(() => { if (RS.etat === e && T.toi && T.toi.tapis < e.miseMin) rsRachat(); }, 500); }
+  RS.prec = e;
+}
+
+/* ── Les sièges : le rendu de table.js, puis ce que le réseau ajoute ─────── */
+function rsRendreSieges() {
+  rendreSieges();
+  const e = RS.etat;
+  document.querySelectorAll("#sieges .siege").forEach((d, k) => {
+    const st = T.sieges[k], nm = d.querySelector(".nom"); if (!st || !nm) return;
+    d.classList.toggle("vide", !!st.vide); d.classList.toggle("absent", !!st.absent); d.classList.toggle("bot", !!st.bot);
+    d.classList.toggle("passe", !!(st.passe && !st.vide && e && e.phase !== "mise" && e.phase !== "attente"));
+    if (st.vide) {
+      if (!T.toi && e && e.phase !== "sabot") {
+        const b = document.createElement("button"); b.type = "button"; b.className = "asseoir"; b.textContent = "S'asseoir";
+        b.onclick = () => rsAgir("asseoir", k, { nom: prenom() || "Joueur", couleur: DB.couleur }); nm.replaceWith(b);
+      } else nm.textContent = "Libre";
+      return;
+    }
+    nm.innerHTML = `<i class="pastille" style="--c:${echap(st.couleur || "#8a8f8b")}"></i>${echap(st.nom)}${st.bot ? " · bot" : ""}${st.absent ? " · parti" : ""}`;
+    const tp = document.createElement("span"); tp.className = "tapis-siege"; tp.textContent = fmtJ(st.tapis) + (st.rachats ? " · " + st.rachats + " rachat" + (st.rachats > 1 ? "s" : "") : "");
+    nm.after(tp);
+  });
+}
+function rsChipCode() {
+  const r = $("tRegles"); if (!r || !RS.code) return;
+  let c = $("tCode"); if (!c) { c = document.createElement("span"); c.id = "tCode"; c.className = "regle code"; c.title = "Le code de cette table : partage-le"; r.prepend(c); }
+  c.textContent = TR.formaterCode(RS.code);
+}
+/* Le croupier : on n'y touche que quand ses cartes changent — la carte cachée est un
+   DOS qu'on RETOURNE (cartes.js), il ne faut pas le recréer entre-temps. */
+function rsRendreCroupier(e, prec) {
+  const dm = $("dMain");
+  // On repart de zéro quand sa main repart (nouvelle manche) ou quand le dessin ne
+  // correspond plus à ce qu'on croit avoir dessiné ; sinon on n'ajoute que le manquant.
+  if (!prec || prec.manche !== e.manche || e.croupier.length < RS.vuCroupier || dm.children.length !== RS.vuCroupier) { dm.innerHTML = ""; RS.vuCroupier = 0; }
+  for (let i = RS.vuCroupier; i < e.croupier.length; i++) { const c = e.croupier[i]; dm.appendChild(carteEl(c.cachee ? { r: "A", i: 0, suit: "♠", col: "n" } : c, !!c.cachee)); }
+  RS.vuCroupier = e.croupier.length; RS.vuCachee = e.cachee;
+  const visibles = e.croupier.filter(c => !c.cachee);
+  $("dScore").textContent = !visibles.length ? "·" : e.cachee ? E.cardValue(visibles[0]) : E.handTotal(visibles);
+}
+function rsEffetCarte(f, delai) {
+  setTimeout(() => {
+    if (!T.reseau) return;
+    const hote = f.siege === "croupier" ? $("dMain") : $(`m_${f.siege}_${f.main}`); if (!hote) return;
+    const el = hote.children[f.index]; if (!el || el.classList.contains("carte--entre")) return;
+    const cr = el.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
+    animerDepuisSabot(el, hote); son("carte");
+    emettre("carte", { siege: f.siege, main: f.main, index: f.index, carte: f.carte, cachee: !!f.cachee, el,
+      depuis: { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 }, vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
+  }, delai);
+}
+// Une seconde mise (doublement, séparation, assurance) part de chez son propriétaire.
+function rsEffetJetons(f) {
+  const st = T.sieges[f.siege], toi = !!(st && st.toi);
+  vol({ montant: f.montant, w: toi ? 40 : 36, depuis: toi ? ancreRack(25) : ancreMaison(f.siege), vers: ancreCercle(f.siege), duree: 360, apparait: !toi,
+    fin: () => { RS.vus.add(f.cle); const [m, k, hi] = f.cle.split(":"); const h = T.sieges[k] && T.sieges[k].mains[+hi]; if (h) { if (f.cle.endsWith(":d")) h.jDoubleVu = true; if (f.cle.endsWith(":v")) h.jVu = true; if (f.cle.endsWith(":a")) h.jAssuranceVu = true; } garnirCercles(); if (toi) son("jetons"); } });
+}
+// Une main réglée : le bus pour le croupier (ses humeurs) et cartes.js ; les jetons,
+// nous-mêmes, avec les outils de jetons.js — il ne touche pas nos mains.
+function rsEffetFin(f) {
+  const issue = ISSUE_BUS[f.issue] || f.issue, h = f.h, engage = h.bet * (h.doubled ? 2 : 1), retour = arr(engage + f.montant), si = f.siege, toi = f.toi;
+  emettre("main-fin", { siege: si, main: f.main, toi, issue, montant: f.montant });
+  enfiler(() => {
+    RS.partis.add(f.cle); const st = T.sieges[si], hh = st && st.mains[f.main]; if (hh) hh.jParti = true; garnirCercles();
+    if ($("v-table").hidden) return;
+    const ce = ancreCercle(si), croupier = ancreCroupier(), maison = ancreMaison(si);
+    if (issue === "bust" || issue === "perd") glisser(engage, ce, croupier, { fondu: true });
+    else if (issue === "abandon") { glisser(engage / 2, ce, croupier, { fondu: true }); glisser(retour, ce, maison, { fondu: !toi }); }
+    else if (issue === "egalite") glisser(engage, ce, maison, { fondu: !toi });
+    else { glisser(f.montant, croupier, ce, { fin: () => { if (toi) { lueur(si); son("jetons"); } glisser(retour, ce, maison, { fondu: !toi, duree: 460, fin: () => rsRendreTapis() }); } }); return; }
+    if (toi) { rsRendreTapis(); son("jetons"); }
+  });
+}
+function rsEffetAssuranceFin(f) {
+  enfiler(() => {
+    RS.assurPartie.add(f.cle); const st = T.sieges[f.siege], h = st && st.mains[f.main]; if (h) h.jAssurancePartie = true; garnirCercles();
+    if ($("v-table").hidden) return;
+    const ce = ancreCercle(f.siege);
+    if (f.gagne) glisser(f.mise * 2, ancreCroupier(), ce, { fin: () => { glisser(f.mise * 3, ce, ancreMaison(f.siege), { fondu: !f.toi }); if (f.toi) { lueur(f.siege); son("jetons"); } } });
+    else glisser(f.mise, ce, ancreCroupier(), { fondu: true });
+  });
+}
+// Les mises des autres arrivent dans leur cercle en volant ; la mienne part du rack au clic.
+function rsMisesDesAutres(e) {
+  if (e.phase !== "mise") return;
+  e.sieges.forEach((st, k) => {
+    if (!st) return;
+    const vue = RS.miseVue[k] || 0, enVol = RS.enVol[k];
+    if (st.mise > vue && (enVol === undefined || enVol < st.mise)) {
+      const moi = st.id === RS.moi, cible = st.mise, m = arr(st.mise - Math.max(vue, enVol || 0)); RS.enVol[k] = cible;
+      vol({ montant: m, w: moi ? 40 : 36, depuis: moi ? ancreRack(25) : ancreMaison(k), vers: ancreCercle(k), duree: 380, apparait: !moi,
+        fin: () => { RS.miseVue[k] = Math.max(RS.miseVue[k] || 0, cible); if (RS.enVol[k] === cible) delete RS.enVol[k]; rsGarnir(); } });
+    } else if (st.mise < vue) { RS.miseVue[k] = st.mise; rsGarnir(); }
+  });
+}
+function rsGarnir() { T.sieges.forEach((s, k) => { s.miseVue = RS.miseVue[k] || 0; }); garnirCercles(); }
+
+/* ── L'annonce, les boutons, le rack ─────────────────────────────────── */
+function rsAnnonce(e) {
+  const moi = T.toi; let txt = "";
+  if (e.phase === "attente") txt = rsHote() ? `En attente de joueurs — partage le code ${TR.formaterCode(RS.code)}` : "En attente de l'hôte…";
+  else if (e.phase === "sabot") txt = e.message || "Le croupier mélange un sabot neuf…";
+  else if (e.phase === "mise") txt = !moi ? "Choisis un siège libre pour jouer" : (moi.mise >= e.miseMin ? "Mise posée" : "Faites vos jeux") + ` — ${e.miseRestant} s` + (rsHote() ? " · « Distribuer » clôt les mises" : "");
+  else if (e.phase === "assurance") txt = "Le croupier montre un as. Assurance ?";
+  else if (e.phase === "jeu") { const st = e.actif && e.sieges[e.actif.siege]; txt = st ? (st.id === RS.moi ? "À toi de jouer" : `À ${st.nom} de jouer`) + (e.tourRestant > 0 && e.tourRestant <= 10 ? ` — ${e.tourRestant} s` : "") : ""; }
+  else if (e.phase === "croupier") txt = "Le croupier joue.";
+  else if (e.phase === "reglement") txt = (e.message || "") + (moi && moi.mains.length ? " Toi : " + moi.mains.map(h => h.result).join(" · ") + "." : "");
+  if (e.message && e.phase !== "reglement" && e.phase !== "sabot") txt = e.message + (txt ? " " + txt : "");
+  $("annonce").textContent = txt;
+}
+function rsBoutons(e) {
+  const moi = T.toi, r = reglesTable();
+  const monTour = e.phase === "jeu" && e.actif && moi && T.sieges[e.actif.siege] === moi && moi.mains[e.actif.main];
+  if (monTour) {
+    const h = moi.mains[e.actif.main];
+    boutons({ tire: true, reste: true, double: E.canDouble(h, moi.mains, r) && moi.tapis >= h.bet, separe: E.canSplit(h, moi.mains, r) && moi.tapis >= h.bet, abandon: E.canSurrender(h, moi.mains, r) });
+    if (DB.conseil && e.croupier[0]) {
+      const tc = sys().equilibre ? CT.compteVrai(e.rc, e.sabot.restantes / 52) : null;
+      const { a, ecart } = actionAvecEcart(h.cards, e.croupier[0], moi, h, tc);
+      $("conseil").innerHTML = `Stratégie : <b>${MOT[a]}</b>` + (ecart !== null ? ` <span class="muet">— écart au compte, à partir de ${sgn(ecart)}</span>` : "");
+    } else $("conseil").textContent = "";
+  } else { boutons({}); $("conseil").textContent = ""; }
+  const b = $("bDonne");
+  if (e.phase === "mise" && rsHote()) { const prets = e.sieges.some(st => st && st.mise >= e.miseMin && !st.absent); b.disabled = !prets; b.title = prets ? "Clore les mises et distribuer" : "Personne n'a encore misé"; }
+  else { b.disabled = true; b.title = e.phase === "mise" ? "L'hôte distribue quand il clôt les mises" : ""; }
+}
+function rsRendreRack() {
+  rendreRack();                                          // le squelette de jetons.js ; on repasse sur ce qui est à nous
+  const e = RS.etat, moi = T.toi, l = limites();
+  const ouvert = !!(e && e.phase === "mise" && moi && !moi.absent);
+  $("rackJetons").classList.toggle("ouvert", ouvert);
+  $("rjJetons").querySelectorAll("button").forEach(b => { const v = +b.dataset.v; b.disabled = !ouvert || v > moi.tapis || RS.mise + v > l.max || (l.par5 && v % 5 !== 0); });
+  $("rjTapis").textContent = moi ? fmtJ(moi.tapis) : "—";
+  $("rjMise").textContent = fmtJ(RS.mise);
+  const u = RS.mise / l.min;
+  $("rjUnites").textContent = RS.mise ? `${fr1(u)} unité${u > 1 ? "s" : ""}` : (moi && moi.tapis >= l.min ? "pose ta mise" : "—");
+  $("bRetirer").disabled = !ouvert || !RS.poses.length;
+  $("bRachat").hidden = !(ouvert && moi.tapis < l.min && RS.mise === 0);
+  $("coachMise").innerHTML = "";
+  rsRendreTapis();
+}
+function rsRendreTapis() {
+  const moi = T.toi, e = RS.etat;
+  $("tTapis").textContent = moi ? fmtJ(moi.tapis) : "—";
+  const n = $("tNet"); if (!moi || !e) { n.hidden = true; return; }
+  const engage = e.phase === "mise" ? moi.mise : moi.mains.reduce((s, h) => s + (h.net === undefined ? h.bet * (h.doubled ? 2 : 1) + (h.assurance || 0) : 0), 0);
+  const s = arr(moi.tapis + engage - TAPIS_DEPART * (1 + (moi.rachats || 0)));
+  n.hidden = !s; n.textContent = (s > 0 ? "+" : "") + fmtJ(s); n.className = s > 0 ? "plus" : s < 0 ? "moins" : "";
+}
+// Ma mise, jeton par jeton : le vol est immédiat, l'hôte confirme le total.
+function rsPoser(v) {
+  const e = RS.etat, moi = T.toi; if (!e || e.phase !== "mise" || !moi) return;
+  const l = limites(), k = rsMonSiege();
+  if (l.par5 && v % 5 !== 0) return bandeau("Ici les mises vont par 5.");
+  if (v > moi.tapis) return bandeau("Il ne te reste pas ça en main.");
+  if (RS.mise + v > l.max) return bandeau(`Maximum de la table : ${fmtJ(l.max)}.`);
+  RS.mise = arr(RS.mise + v); RS.poses.push(v); moi.tapis = arr(moi.tapis - v); RS.enVol[k] = RS.mise;
+  const cible = RS.mise;
+  rsRendreRack();
+  vol({ v, w: 40, depuis: ancreRack(v), vers: ancreCercle(k), fin: () => { if (!RS.etat || RS.etat.phase !== "mise") return; RS.miseVue[k] = Math.max(RS.miseVue[k] || 0, Math.min(cible, RS.mise)); if (RS.enVol[k] === cible) delete RS.enVol[k]; rsGarnir(); son("jetons"); } });
+  rsAgir("mise", RS.mise);
+}
+function rsRetirer() {
+  const e = RS.etat, moi = T.toi; if (!e || e.phase !== "mise" || !moi || !RS.poses.length) return;
+  const v = RS.poses.pop(), k = rsMonSiege();
+  RS.mise = arr(RS.mise - v); moi.tapis = arr(moi.tapis + v); RS.miseVue[k] = Math.min(RS.miseVue[k] || 0, RS.mise); delete RS.enVol[k];
+  rsGarnir(); rsRendreRack();
+  vol({ v, w: 40, depuis: ancreCercle(k), vers: ancreRack(v), fin: () => son("jetons") });
+  rsAgir("mise", RS.mise);
+}
+// L'hôte a refusé (ou l'état diverge) : on se recale sur ce qu'il dit.
+function rsResyncMise() {
+  const e = RS.etat, moi = T.toi; if (!e || e.phase !== "mise" || !moi) return;
+  const st = e.sieges[rsMonSiege()]; if (!st || st.mise === RS.mise) return;
+  RS.mise = st.mise; RS.poses = decoupe(st.mise); RS.miseVue[rsMonSiege()] = st.mise; delete RS.enVol[rsMonSiege()]; rsGarnir(); rsRendreRack();
+}
+function rsRachat() {
+  const e = RS.etat, moi = T.toi; if (!e || !moi || !$("modale").hidden) return;
+  ouvrirModale(`<h2>Plus un jeton</h2>
+    <p>Il te reste <b class="cadran">${fmtJ(moi.tapis)}</b> en main et le minimum ici est de <b>${fmtJ(e.miseMin)}</b>.</p>
+    <p class="muet" style="font-size:var(--t-petit)">Un rachat remet ton tapis à 1 000 — tout le monde le voit, et il se compte. ${moi.rachats ? `Tu en es à ${moi.rachats}.` : "Ce serait le premier."}</p>
+    <div class="rang-btn" style="justify-content:center;margin-top:12px"><button class="btn" id="rsRachatOui">Reprendre 1 000 jetons</button></div>`);
+  $("rsRachatOui").onclick = () => { $("modale").hidden = true; rsAgir("rachat"); son("jetons"); };
+}
+function rsCoup(a) { if (!RS.etat || !T.toi) return; boutons({}); rsAgir(a); }
+/* L'assurance : la bulle du croupier, la réponse part chez l'hôte. Le coach note
+   la décision contre le seuil de la table, comme en solo. */
+function rsAssurance(e) {
+  const boite = $("boiteAssurance"), moi = T.toi, k = rsMonSiege();
+  const st = k >= 0 ? e.sieges[k] : null;
+  const attend = e.phase === "assurance" && moi && moi.mains.length && st && st.assurance === undefined;
+  if (!attend) { if (RS.bulleAssurance) { boite.innerHTML = ""; RS.bulleAssurance = false; } return; }
+  if (RS.bulleAssurance) return;
+  RS.bulleAssurance = true;
+  const h = moi.mains[0], b = document.createElement("div"); b.className = "bulle";
+  b.innerHTML = `<div class="de">Croupier</div><div class="q">Le croupier montre un as. Assurance ? (${fmtJ(h.bet / 2)})</div>
+    <div class="opts"><button data-o="1"${moi.tapis < h.bet / 2 ? " disabled" : ""}>Oui</button><button data-o="0">Non</button></div>`;
+  b.querySelectorAll("button").forEach(bt => bt.onclick = () => {
+    const prise = bt.dataset.o === "1"; boite.innerHTML = ""; RS.bulleAssurance = false;
+    if (sys().equilibre) {
+      const seuil = donneesTable().assurance, tc = CT.compteVrai(e.rc, e.sabot.restantes / 52);
+      const devrait = seuil !== null && tc >= seuil, bon = prise === devrait;
+      DB.strat.assurance[bon ? 0 : 1]++; garder(); son(bon ? "ok" : "ko");
+      bandeau(`${bon ? "✓" : "✗"} compte vrai ${fr1(tc)} · ${devrait ? "l'assurance est rentable dès " + sgn(seuil) : "pas d'assurance sous " + sgn(seuil)}`, 3400);
+    }
+    rsAgir("assurance", prise);
+  });
+  boite.appendChild(b); son("alerte");
+}
+
+/* ── Les fiches : la table, le journal, le reçu ────────────────────────── */
+const rsPanneauVisible = () => RS.panneauOuvert && !$("modale").hidden;
+function rsPanneau() {
+  const e = RS.etat, hote = rsHote(), pairs = RS.salle ? [...RS.salle.pairs.values()] : [];
+  const siegeDe = id => e ? e.sieges.findIndex(st => st && st.id === id) : -1;
+  const nomHote = e && e.hote ? ((RS.salle && RS.salle.pairs.get(e.hote)) || {}).nom || "l'hôte" : "l'hôte";
+  const lien = location.origin + location.pathname + "#table=" + RS.code;
+  ouvrirModale(`<span class="grave">À plusieurs</span><h2 style="margin:4px 0 8px">${echap(tableCourante().nom)} · ${echap(tableCourante().lieu)}</h2>
+    <p class="codesalon">${TR.formaterCode(RS.code)}</p>
+    <div class="rang-btn" style="margin-top:10px"><button class="btn creux" id="rsCopier">Copier le lien</button><button class="btn creux" id="rsQuitter">Quitter la table</button></div>
+    <span class="grave" style="display:block;margin-top:14px">À cette table</span>
+    <div class="pairs">${pairs.sort((a, b) => a.id.localeCompare(b.id)).map(p => { const k = siegeDe(p.id);
+      return `<span class="pair ${p.id === RS.moi ? "moi" : ""} ${e && p.id === e.hote ? "croupier" : ""}"><span class="point" style="${p.couleur ? "background:" + echap(p.couleur) : ""}"></span>${echap(p.nom)}${e && p.id === e.hote ? " · tient le sabot" : ""}${p.id === RS.moi ? " · toi" : ""}${k >= 0 ? " · siège " + (k + 1) : " · debout"}</span>`; }).join("")}</div>
+    ${hote ? `<label class="ch ligne" style="margin-top:14px"><input type="checkbox" id="rsBots"${e && e.bots ? " checked" : ""}> Compléter les sièges vides avec des bots</label>
+      <p class="muet" style="font-size:var(--t-fin)">Tu tiens le sabot : tu distribues, tu clos les mises (« Distribuer »). Si tu fermes l'onglet, le plus ancien des autres reprend la main avec un sabot neuf.</p>`
+      : `<p class="muet" style="font-size:var(--t-fin);margin-top:12px">${echap(nomHote)} tient le sabot et distribue. Les sièges vides restent vides, sauf si l'hôte les complète avec des bots.</p>`}
+    <p class="muet" style="font-size:var(--t-fin)">Relié par ${echap(RS.api ? RS.api.nom : "—")}. Les messages passent en clair par un courtier public.</p>`);
+  RS.panneauOuvert = true;
+  const fermer = $("modaleFermer").onclick; $("modaleFermer").onclick = () => { RS.panneauOuvert = false; fermer(); };
+  $("rsCopier").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(lien).then(() => bandeau("Lien copié : envoie-le à tes amis."), () => bandeau("Code : " + TR.formaterCode(RS.code))); };
+  $("rsQuitter").onclick = () => { RS.panneauOuvert = false; $("modale").hidden = true; quitterTable(); };
+  if ($("rsBots")) $("rsBots").onchange = () => rsAgir("bots", $("rsBots").checked);
+}
+$("modale").addEventListener("click", ev => { if (ev.target === $("modale")) RS.panneauOuvert = false; });
+function rsJournal() {
+  const e = RS.etat, j = ((e && e.journal) || []).slice().reverse();
+  const ligne = (m, s) => `<tr><td class="n">${m.manche}</td><td>${echap(s.nom)}${s.id === RS.moi ? " <span class=\"muet\">· toi</span>" : ""}</td>
+    <td class="n">${fmtJ(s.mains.reduce((a, h) => a + h.mise, 0))}</td><td>${s.mains.map(h => echap(h.cartes.join(" "))).join("<br>")}</td>
+    <td>${s.mains.map(h => h.issue).join(" · ")}</td><td class="n" style="color:${s.net > 0 ? "var(--jade)" : s.net < 0 ? "var(--cinabre)" : "inherit"}">${s.net > 0 ? "+" : ""}${fmtJ(s.net)}</td><td class="n">${fmtJ(s.tapis)}</td></tr>`;
+  ouvrirModale(`<h2>Journal des manches</h2><p class="muet" style="font-size:var(--t-petit)">Ce que l'hôte a diffusé, manche par manche : les mises, les cartes, l'issue, le tapis. Le même journal chez tout le monde.</p>` +
+    (j.length ? `<div class="defile" style="max-height:52svh;overflow:auto"><table class="classement"><tr><th>Manche</th><th>Joueur</th><th>Mise</th><th>Cartes</th><th>Issue</th><th>Net</th><th>Tapis</th></tr>` +
+      j.map(m => `<tr class="croupier-ligne"><td class="n">${m.manche}</td><td class="muet">Croupier</td><td></td><td>${echap(m.croupier.join(" "))}</td><td>${m.total > 21 ? "saute à " + m.total : m.total}</td><td></td><td class="muet" style="font-size:var(--t-micro)">${echap(m.empreinte.slice(0, 10))}…</td></tr>` + m.sieges.map(s => ligne(m, s)).join("")).join("") + `</table></div>`
+      : `<p class="muet">Aucune manche jouée pour l'instant.</p>`));
+}
+function rsRecu() {
+  const e = RS.etat, sabots = ((e && e.sabot && e.sabot.sabots) || []).slice().reverse();
+  ouvrirModale(`<h2>Le reçu du sabot</h2>
+    <p class="muet" style="font-size:var(--t-petit);text-align:left">L'hôte publie l'empreinte de la graine avant la première carte. Quand le sabot est fini, il révèle la graine : n'importe qui à la table peut alors rejouer le mélange et vérifier qu'il n'a pas été choisi après coup.</p>
+    ${sabots.length ? sabots.map((s, i) => `<dl class="recu" style="margin-top:10px;text-align:left">
+      <div class="sceau ${s.graine ? "revele" : ""}"><span class="rond"></span>${s.graine ? "Révélé — n'importe qui peut refaire ce mélange" : "Scellé — l'ordre des cartes est fixé et seul l'hôte le connaît"}</div>
+      <dt>Sabot</dt><dd>depuis la manche ${s.manche} · ${e.jeux} jeux${i === 0 ? ` · ${e.sabot.restantes} cartes restantes` : ""}</dd>
+      <dt>Empreinte publiée avant la donne</dt><dd>${echap(s.empreinte)}</dd>
+      <dt>Graine</dt><dd>${s.graine ? echap(s.graine) : "révélée quand ce sabot sera fini"}</dd>
+      ${s.graine ? `<div class="rang-btn" style="margin-top:8px;justify-content:flex-start"><button class="btn creux mini" data-verif="${i}">Vérifier ce sabot</button></div><p class="muet" id="rsVerif${i}" style="font-size:var(--t-petit);font-family:Archivo,sans-serif"></p>` : ""}
+    </dl>`).join("") : `<p class="muet">Pas encore de sabot : l'hôte le scelle à l'ouverture des mises.</p>`}`);
+  $("modaleBoite").querySelectorAll("[data-verif]").forEach(b => b.onclick = async () => {
+    const s = sabots[+b.dataset.verif], graine = SH.unhex(s.graine);
+    const recalc = await SH.shuffle(sabotNeuf(e.jeux), graine), meme = (await SH.commit(graine)) === s.empreinte;
+    $("rsVerif" + b.dataset.verif).innerHTML = meme
+      ? `✓ L'empreinte publiée correspond à cette graine, et le mélange se rejoue à l'identique. Première carte (brûlée) : <b>${recalc[recalc.length - 1].r}${recalc[recalc.length - 1].suit}</b>.`
+      : `✗ L'empreinte ne correspond pas. Quelque chose ne va pas.`;
+    son(meme ? "ok" : "ko");
+  });
+}
+
+/* ── Les branchements : on ENVELOPPE, on ne réécrit pas ───────────────── */
+const rsSolo = {};
+["bDonne", "bTire", "bReste", "bDouble", "bSepare", "bAbandon", "bNouveauSabot", "bRecu", "bRetirer", "bRachat"].forEach(id => { rsSolo[id] = $(id).onclick; });
+$("bDonne").onclick = ev => T.reseau ? rsAgir("clore") : rsSolo.bDonne(ev);
+$("bTire").onclick = ev => T.reseau ? rsCoup("tirer") : rsSolo.bTire(ev);
+$("bReste").onclick = ev => T.reseau ? rsCoup("rester") : rsSolo.bReste(ev);
+$("bDouble").onclick = ev => T.reseau ? rsCoup("doubler") : rsSolo.bDouble(ev);
+$("bSepare").onclick = ev => T.reseau ? rsCoup("separer") : rsSolo.bSepare(ev);
+$("bAbandon").onclick = ev => T.reseau ? rsCoup("abandon") : rsSolo.bAbandon(ev);
+$("bNouveauSabot").onclick = ev => T.reseau ? rsJournal() : rsSolo.bNouveauSabot(ev);
+$("bRecu").onclick = ev => T.reseau ? rsRecu() : rsSolo.bRecu(ev);
+$("bRetirer").onclick = ev => T.reseau ? rsRetirer() : rsSolo.bRetirer(ev);
+$("bRachat").onclick = ev => T.reseau ? rsRachat() : rsSolo.bRachat(ev);
+$("bReseau").onclick = () => rsPanneau();
+// Le rack : en capture, AVANT le bouton de jetons.js — en réseau le jeton part vers l'hôte, pas vers DB.tapis.
+$("rjJetons").addEventListener("click", ev => {
+  if (!T.reseau) return; const b = ev.target.closest("button"); if (!b || b.disabled) return;
+  ev.stopPropagation(); ev.preventDefault(); rsPoser(+b.dataset.v);
+}, true);
+// Changer de table dans le salon, c'est quitter celle-ci : on quitte, puis le clic suit son cours.
+$("salon").addEventListener("click", ev => {
+  if (!T.reseau) return; const b = ev.target.closest("[data-asseoir]"); if (!b) return;
+  ev.stopPropagation(); ev.preventDefault(); quitterTable(); b.click();
+}, true);
+// nouveauSabot() est appelé par le changement de système de comptage (socle.js) : en
+// réseau, le sabot est celui de l'hôte — on redessine l'état, on ne remélange rien.
+// Une déclaration de fonction est un lien réassignable : c'est ce qu'on fait ici, une fois.
+const nouveauSabotSolo = nouveauSabot;
+nouveauSabot = function (o) { if (T.reseau) { if (RS.etat) { RS.prec = null; rendreReseau(RS.etat); } return Promise.resolve(); } return nouveauSabotSolo(o); };
+// Un lien reçu : #table=CODE rejoint la table directement.
+if (/^#table=/.test(location.hash)) {
+  const c = TR.normaliserCode(location.hash.slice(7));
+  if (TR.codeValide(c)) { MP.mode = "table"; rendreModeMP(); aller("ensemble"); setTimeout(() => ouvrirTable(c, false), 300); }
 }
 
 
@@ -5059,7 +6239,8 @@ document.addEventListener("keydown", e => {
     else if (k === "a") $("bAbandon").click(); else if (k === "d" || e.key === "Enter") $("bDonne").click();
     // Les jetons : 1 à 6 de gauche à droite dans le rack, Retour arrière reprend le dernier posé.
     else if (/^[1-6]$/.test(e.key)) poserJetonRang(+e.key);
-    else if (e.key === "Backspace") { retirerJeton(); e.preventDefault(); }
+    // Par le BOUTON, pas la fonction : à plusieurs (reseau.js), reprendre un jeton passe par l'hôte.
+    else if (e.key === "Backspace") { $("bRetirer").click(); e.preventDefault(); }
   }
 });
 

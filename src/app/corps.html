@@ -148,6 +148,8 @@
       <button class="btn verre mini" id="bMonCompte">Mon compte</button>
       <button class="btn verre mini" id="bNouveauSabot">Nouveau sabot</button>
       <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
+      <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
+      <button class="btn verre mini" id="bReseau" hidden>Table</button>
     </div>
     <div id="boiteAssurance"></div>
   </div>
@@ -340,18 +342,30 @@
 
 <!-- ════════════════════ À PLUSIEURS ════════════════════ -->
 <section class="vue" id="v-ensemble" hidden>
+  <!-- Deux façons de jouer à plusieurs : une VRAIE table de blackjack (jusqu'à cinq, des
+       mises, un croupier, l'hôte tient le sabot) — et la course au comptage, le mode
+       historique (le même sabot défile, chacun annonce son compte). Même code de huit
+       caractères, mais un code de table et un code de course ne se croisent jamais. -->
   <div class="laque pad" id="mpAccueil">
     <span class="grave">À plusieurs</span>
-    <h2 style="margin:4px 0 10px">Le même sabot, chacun son compte</h2>
-    <p class="muet" style="max-width:70ch">Vous vous asseyez à la même table, les cartes sortent du même sabot, et à la fin chacun annonce son compte. Celui qui tombe juste gagne — pas celui qui a le plus de chance.</p>
+    <h2 style="margin:4px 0 10px" id="mpTitre">Une vraie table, jusqu'à cinq</h2>
+    <div class="onglets" id="mpModes" role="tablist">
+      <button role="tab" aria-selected="true" data-mode="table">Table de blackjack</button>
+      <button role="tab" aria-selected="false" data-mode="course">Course au comptage</button>
+    </div>
+    <p class="muet" id="mpModeTexte" style="max-width:72ch;margin-top:0">Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de 1 000 jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.</p>
+    <div class="champs" style="margin-top:14px">
+      <label class="ch"><span class="grave">Ton nom</span><input type="text" id="mpNom" placeholder="Léo" maxlength="18" style="width:150px"></label>
+      <div class="ch" id="mpCouleurs"><span class="grave">Ta couleur</span><div class="couleurs" id="mpCouleurBoite" role="radiogroup" aria-label="Ta couleur"></div></div>
+    </div>
     <div class="champs" style="margin-top:14px">
       <button class="btn" id="mpCreer">Ouvrir une table</button>
       <span class="muet">ou</span>
-      <label class="ch"><span class="grave">Code du salon</span><input type="text" id="mpCode" placeholder="A7K2M" maxlength="6" style="text-transform:uppercase;width:130px;font-size:20px;letter-spacing:.14em"></label>
+      <label class="ch"><span class="grave">Code de la table</span><input type="text" id="mpCode" placeholder="A7K2-M9PQ" maxlength="9" autocomplete="off" spellcheck="false" style="text-transform:uppercase;width:176px;font-size:20px;letter-spacing:.12em"></label>
       <button class="btn creux" id="mpRejoindre">Rejoindre</button>
     </div>
     <p class="muet" id="mpEtat" style="font-size:var(--t-petit);margin-top:12px"></p>
-    <p class="muet" style="font-size:var(--t-fin);margin-top:4px">Sans serveur : les messages transitent par un courtier public, en clair. N'y écris rien de personnel. Si le réseau est bloqué — c'est le cas dans un Artifact publié — l'application te le dira au lieu de tourner dans le vide.</p>
+    <p class="muet" style="font-size:var(--t-fin);margin-top:4px">Sans serveur : les messages transitent par un courtier public, en clair. N'y écris rien de personnel. Dans un Artifact publié, les connexions WebSocket sont bloquées : la table à plusieurs se joue sur <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">pwrygrt72g-hue.github.io/compteur-hilo</a> — le reste de l'application marche partout.</p>
   </div>
 
   <div id="mpSalon" hidden>

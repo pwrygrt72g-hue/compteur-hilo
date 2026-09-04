@@ -42,7 +42,7 @@ Chaque table est un règlement réel et une leçon. Deux d'entre elles sont imba
 | **Table** | Croupier, jusqu'à six autres joueurs en stratégie de base, carte brûlée, carte cachée, assurance, doubler, séparer, abandon, carte de coupe. Le compte est masqué : c'est à toi de le tenir, et la carte de coupe te le demande. |
 | **Stratégie** | La stratégie de base main par main, puis les écarts au compte, calculés pour la table où tu es assis. Les mains ratées reviennent plus souvent. |
 | **Concentration** | Le chef de table te surveille pendant que tu comptes. Questions des voisins, calculs, regards. Détecteur caméra optionnel pour les lèvres qui bougent et le regard figé. |
-| **À plusieurs** | Tes amis rejoignent la même table avec un code, voient les mêmes cartes, et annoncent leur compte à la fin. |
+| **À plusieurs** | Deux modes. **La table** : jusqu'à cinq joueurs sur la même table de blackjack, chacun sur son siège avec 1 000 jetons, des mises, un croupier qui donne pour tous et règle tout le monde. **La course** : tes amis voient les mêmes cartes et annoncent leur compte à la fin. |
 | **Progression** | Historique, courbe de l'écart au compte réel, taux de réussite par exercice. |
 
 Quatre systèmes de comptage : Hi-Lo, KO, Hi-Opt I et Omega II. Le KO est déséquilibré, donc sans compte vrai à tenir — l'application ajuste son point de départ et masque la division.
@@ -58,6 +58,8 @@ En multijoueur, chaque joueur apporte sa graine et le sabot est tiré de leur co
 ## À plusieurs, sans serveur
 
 Le mode « À plusieurs » parle MQTT sur WebSocket vers un courtier public, avec un client écrit à la main (quarante lignes, aucune dépendance). Il n'y a pas de serveur à héberger et rien n'est stocké : le code de salon vit le temps de la session.
+
+À la table de blackjack, celui qui ouvre la table est l'**hôte** : il tient le sabot scellé, distribue et règle ; les autres n'envoient que leurs gestes (miser, tirer, rester, doubler, séparer, abandonner, s'assurer) et affichent l'état qu'il diffuse — personne ne calcule une issue de son côté. Chacun peut vérifier le sabot (empreinte publiée avant la première carte, graine révélée quand le sabot est remplacé) et relire le journal des manches. Si l'hôte disparaît, le plus petit identifiant restant prend le relais : la manche en cours est annulée, les mises rendues, et un sabot neuf est scellé — l'écran le dit. Dans un Artifact publié, les WebSockets sont bloquées : la table se joue sur la version GitHub Pages.
 
 ⚠️ Les messages passent en clair par un courtier public. C'est un jeu d'entraînement, pas un canal privé.
 

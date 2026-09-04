@@ -37,7 +37,7 @@
    ══════════════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 const emettre = (nom, detail) => document.dispatchEvent(new CustomEvent("sabot:" + nom, { detail: detail || {} }));
-const E = M.engine, SOL = M.solver, SH = M.shuffle, CT = M.counting, NET = M.net;
+const E = M.engine, SOL = M.solver, SH = M.shuffle, CT = M.counting, NET = M.net, TR = M["table-reseau"];
 const RANKS = E.RANKS, SUITS = E.SUITS;
 const sgn = n => (n > 0 ? "+" : "") + n;
 const fr1 = x => x.toFixed(1).replace(".", ",");

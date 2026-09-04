@@ -587,6 +587,31 @@ td.U{background:var(--ardoise)}
 .classement th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--os-eteint);font-weight:600}
 .classement td.n{font-family:"Martian Mono",monospace}
 
+/* ── À plusieurs : la table partagée (reseau.js) ─────────────────────
+   Le siège vide invite (un bouton en pointillé d'or), le joueur porte sa couleur
+   (une pastille devant son nom) et son tapis (sous le nom, en mono : tout le
+   monde voit les jetons de tout le monde). Rien de gris : l'or et le lieu. */
+#mpNom{ min-height:44px }
+.couleurs{ display:flex; gap:4px; align-items:center; min-height:44px }
+.couleur{ width:44px; height:44px; border-radius:50%; position:relative; cursor:pointer; background:transparent }
+.couleur::before{ content:""; position:absolute; inset:7px; border-radius:50%; background:var(--c);
+  box-shadow:0 0 0 1px rgba(0,0,0,.3) inset, 0 2px 6px -2px rgba(0,0,0,.5); transition:transform .14s var(--ressort) }
+.couleur:hover::before{ transform:scale(1.1) }
+.couleur.on::before{ transform:scale(1.12); box-shadow:0 0 0 2px var(--laque), 0 0 0 4px var(--c), 0 0 0 1px rgba(0,0,0,.3) inset }
+.siege .nom .pastille{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--c); margin-right:6px; vertical-align:1px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 0 6px -1px var(--c) }
+.siege .tapis-siege{ font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:0; color:color-mix(in oklab, var(--ivoire) 62%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.5) }
+.siege.toi .tapis-siege{ color:color-mix(in oklab, var(--or) 85%, transparent) }
+.siege.vide .cercle{ opacity:.4 }
+.siege.vide .nom{ color:color-mix(in oklab, var(--ivoire) 45%, transparent) }
+.siege .asseoir{ min-height:44px; padding:0 14px; border-radius:999px; border:1px dashed color-mix(in oklab, var(--or) 75%, transparent); color:var(--or);
+  background:rgba(0,0,0,.2); font-size:var(--t-fin); letter-spacing:.06em; cursor:pointer; transition:background .15s, transform .15s var(--ressort) }
+.siege .asseoir:hover{ background:color-mix(in oklab, var(--or) 22%, transparent); transform:translateY(-2px) }
+.siege.absent .nom, .siege.passe .mains, .siege.passe .cercle{ opacity:.45 }
+.siege.absent{ filter:saturate(.4) }
+.regle.code{ border-color:var(--or); color:var(--or); font-family:"Martian Mono",monospace; letter-spacing:.14em; font-weight:600 }
+.classement .croupier-ligne td{ background:var(--ardoise) }
+
 /* ── Le reçu de sabot : le hasard, prouvé ──────────────────────────── */
 .recu{border:1px dashed var(--bord);border-radius:10px;padding:13px 15px;font-family:"Martian Mono",monospace;
   font-size:var(--t-fin);position:relative;background:var(--ardoise);word-break:break-all}

@@ -29,7 +29,7 @@ async function ouvrirSalon(code) {
     api.souscrire(NET.sujet(code));
     setTimeout(() => messageMP({ t: "salut", id: MP.moi, nom: MP.nom }), 220);
     $("mpAccueil").hidden = true; $("mpSalon").hidden = false;
-    $("mpCodeAff").textContent = code;
+    $("mpCodeAff").textContent = TR.formaterCode(code);
     $("mpRelais").textContent = "Relié par " + url.replace("wss://", "").split(":")[0] + ". Les messages passent en clair par un courtier public.";
     rendrePairs(); rendreClassement();
   } catch (e) {
@@ -52,18 +52,39 @@ function recevoirMP(m) {
   if (m.t === "reveal") { MP.rcReel = m.rc; MP.graineHex = m.graine; rendreClassement(true); return; }
   if (m.t === "adieu") { MP.pairs.delete(m.id); rendrePairs(); return; }
 }
-$("mpCreer").onclick = () => ouvrirSalon(NET.codeSalon());
-$("mpRejoindre").onclick = () => {
-  const c = ($("mpCode").value || "").trim().toUpperCase();
-  if (c.length < 4) { $("mpEtat").textContent = "Il faut le code complet, cinq caractères."; return; }
-  ouvrirSalon(c);
+/* ── Deux modes derrière les mêmes boutons : la TABLE (reseau.js) et la COURSE (ici).
+   Le code est le même format partout — huit caractères, écrits A7K2-M9PQ. ── */
+MP.mode = "table";
+const MP_TEXTES = {
+  table: ["Une vraie table, jusqu'à cinq", "Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de 1 000 jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.", "Ouvrir une table", "Code de la table"],
+  course: ["Le même sabot, chacun son compte", "Les cartes sortent du même sabot, chacun compte en silence, et à la fin chacun annonce son compte. Celui qui tombe juste gagne — pas celui qui a le plus de chance.", "Ouvrir une course", "Code de la course"],
 };
+function rendreModeMP() {
+  const [titre, texte, bouton, code] = MP_TEXTES[MP.mode];
+  $("mpTitre").textContent = titre; $("mpModeTexte").textContent = texte; $("mpCreer").textContent = bouton;
+  $("mpCode").previousElementSibling.textContent = code;
+  $("mpCouleurs").hidden = MP.mode !== "table";
+  $("mpModes").querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", b.dataset.mode === MP.mode ? "true" : "false"));
+  $("mpEtat").textContent = "";
+}
+$("mpModes").querySelectorAll("button").forEach(b => b.onclick = () => { MP.mode = b.dataset.mode; rendreModeMP(); });
+$("mpNom").value = prenom(); $("mpNom").oninput = () => { DB.prenom = $("mpNom").value; garder(); $("prenom").value = DB.prenom; };
+// Le code se tape comme on veut (minuscules, tiret, espaces) et s'affiche groupé.
+$("mpCode").addEventListener("input", () => { const p = $("mpCode").selectionStart; $("mpCode").value = TR.formaterCode($("mpCode").value); if (p !== null) $("mpCode").setSelectionRange(p, p); });
+$("mpCode").addEventListener("keydown", e => { if (e.key === "Enter") $("mpRejoindre").click(); });
+$("mpCreer").onclick = () => { const code = TR.codeSalon(); MP.mode === "table" ? ouvrirTable(code, true) : ouvrirSalon(code); };
+$("mpRejoindre").onclick = () => {
+  const c = TR.normaliserCode($("mpCode").value);
+  if (!TR.codeValide(c)) { $("mpEtat").textContent = "Il faut le code complet : huit caractères, comme A7K2-M9PQ."; son("ko"); return; }
+  MP.mode === "table" ? ouvrirTable(c, false) : ouvrirSalon(c);
+};
+rendreModeMP();
 $("mpQuitter").onclick = () => {
   messageMP({ t: "adieu", id: MP.moi }); if (MP.api) MP.api.fermer();
   MP.api = null; $("mpSalon").hidden = true; $("mpAccueil").hidden = false; $("mpEtat").textContent = "";
 };
 $("mpCopier").onclick = () => {
-  const lien = location.origin + location.pathname + "#salon=" + MP.code;
+  const lien = location.origin + location.pathname + "#course=" + MP.code;
   navigator.clipboard && navigator.clipboard.writeText(lien).then(() => bandeau("Lien copié : envoie-le à tes amis."), () => bandeau("Code : " + MP.code));
 };
 $("mpLancer").onclick = async () => {
@@ -129,7 +150,8 @@ function rendreClassement(revele) {
      <td class="n" style="color:${l.ecart === 0 ? "var(--jade)" : l.ecart ? "var(--cinabre)" : "inherit"}">${l.ecart === null ? "—" : l.ecart === 0 ? "exact" : l.ecart}</td></tr>`).join("")
     + (revele && MP.rcReel !== null ? `<tr><td colspan="3" class="muet" style="padding-top:10px">Compte réel : <b class="cadran">${sgn(MP.rcReel)}</b>. Graine du mélange : <span class="cadran" style="font-size:11px;word-break:break-all">${echap(MP.graineHex || "")}</span></td></tr>` : "");
 }
-if (location.hash.startsWith("#salon=")) {
-  const c = location.hash.slice(7).toUpperCase();
-  if (c.length >= 4) { aller("ensemble"); setTimeout(() => ouvrirSalon(c), 300); }
+// Un lien reçu : #course=CODE ouvre la course (l'ancien #salon= aussi), #table=CODE la table (reseau.js).
+if (/^#(course|salon)=/.test(location.hash)) {
+  const c = TR.normaliserCode(location.hash.split("=")[1]);
+  if (c.length >= 4) { MP.mode = "course"; rendreModeMP(); aller("ensemble"); setTimeout(() => ouvrirSalon(c), 300); }
 }

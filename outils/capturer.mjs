@@ -5,6 +5,8 @@
 //   --mise      : pose une mise (un jeton qui couvre le minimum) sans distribuer — la phase de mise.
 //   --donne     : pose la mise PUIS distribue (la donne exige une mise depuis le lot Jetons).
 //   --sansmise  : avec --donne, ne pose rien (pour voir le bouton fermé).
+//   --reseau    : ouvre une table À PLUSIEURS (transport muet, sans courtier), s'assoit et mise.
+//   --reseau=attente : la même, avant de s'asseoir — la table qui attend des joueurs.
 //
 //   node outils/capturer.mjs table 1280x800 /tmp/table.png --donne
 //   node outils/capturer.mjs table 375x667 /tmp/tel.png --donne --table=cotai
@@ -52,6 +54,11 @@ if (opt.table) await evaluer(`(() => { try { const d = JSON.parse(localStorage.g
 if (opt.table) { await cdp("Page.reload"); await dodo(1500); }
 await evaluer(`(document.querySelector('[data-vue="${vue}"]')||{click(){}}).click()`);
 await dodo(700);
+if (opt.reseau) {
+  await evaluer(`(document.querySelector('nav [data-vue="ensemble"]')||{click(){}}).click()`); await dodo(300);
+  await evaluer(`window.__reseauTransport = () => ({ publier() {}, fermer() {} }); document.getElementById("mpCreer").click()`); await dodo(1600);
+  if (opt.reseau !== "attente") { await evaluer(`(document.querySelector("#sieges .siege.vide .asseoir")||{click(){}}).click()`); await dodo(500); }
+}
 const MISER = `(async () => { const q = s => document.querySelector(s), dodo = ms => new Promise(r => setTimeout(r, ms));
   for (let g = 0; g < 30 && q("#bDonne") && q("#bDonne").disabled; g++) {
     const rack = q("#rackJetons"), min = rack ? +(rack.dataset.min || 5) : 5;
