@@ -888,6 +888,11 @@ body.a-table main{ padding-bottom:0 }
 .carte .face{ position:absolute; inset:0; border-radius:inherit; backface-visibility:hidden; -webkit-backface-visibility:hidden }
 .carte .face.ar{ transform:rotateY(180deg) }
 
+/* ── Cartes retirées face cachée (bilan d'exercice) ─────────────────── */
+.cachees{margin:14px auto 0;max-width:60ch;display:flex;flex-direction:column;align-items:center;gap:8px}
+.cachees .groupe{display:flex;gap:8px;justify-content:center}
+.cachees .carte{--w:58px}
+
 </style>
 <header><div class="tete">
   <button class="marque" data-vue="accueil"><span class="emb"></span><span class="nom">Le Sabot</span></button>
@@ -1045,7 +1050,8 @@ body.a-table main{ padding-bottom:0 }
   <div class="laque pad" id="exReglages">
     <div class="champs" id="opDefilement">
       <label class="ch"><span class="grave">Jeux</span><select id="eJeux"><option>1</option><option>2</option><option selected>6</option><option>8</option></select></label>
-      <label class="ch"><span class="grave">Cartes</span><select id="eNb"><option>20</option><option selected>52</option><option>104</option><option>208</option><option value="tout">Tout le sabot</option></select></label>
+      <label class="ch"><span class="grave">Cartes</span><select id="eNb"><option value="alea" selected>Au hasard (30 à 45)</option><option>20</option><option>52</option><option>104</option><option>208</option><option value="coupe">Jusqu'à la coupe</option></select></label>
+      <label class="ch"><span class="grave">Retirées face cachée</span><select id="eCachees" title="Sur un nombre entier de jeux, le compte final serait connu d'avance : on retire des cartes, ton compte dit ce qu'elles valent"><option>0</option><option>1</option><option selected>2</option><option>3</option></select></label>
       <label class="ch"><span class="grave">Vitesse <em id="eVitesseL" class="cadran" style="font-style:normal;font-size:var(--t-petit);color:var(--os)">1,2 s</em></span><input type="range" id="eVitesse" min="200" max="3000" step="50" value="1200"></label>
       <label class="ch"><span class="grave">Mode</span><select id="eMode"><option value="clic">Je clique la valeur</option><option value="silence">Silencieux</option></select></label>
       <label class="ch"><span class="grave">Cartes à la fois</span><select id="eParVue"><option selected>1</option><option>2</option><option>3</option></select></label>
@@ -1056,7 +1062,8 @@ body.a-table main{ padding-bottom:0 }
     <div class="champs" id="opChrono" hidden>
       <label class="ch"><span class="grave">Jeux</span><select id="cJeux"><option selected>1</option><option>2</option></select></label>
       <label class="ch"><span class="grave">Cartes à la fois</span><select id="cParVue"><option>1</option><option selected>2</option><option>3</option></select></label>
-      <p class="muet" style="margin:0;align-self:center;font-size:var(--t-petit);max-width:44ch">Tu avances toi-même : espace, clic, ou flèche droite. Le chrono part à la première carte. Un jeu complet doit retomber sur <b id="cCible">0</b>.</p>
+      <label class="ch"><span class="grave">Retirées face cachée</span><select id="cCachees"><option>1</option><option selected>2</option><option>3</option></select></label>
+      <p class="muet" style="margin:0;align-self:center;font-size:var(--t-petit);max-width:48ch">Tu avances toi-même : espace, clic, ou flèche droite. Le chrono part à la première carte. Un jeu complet retombe sur <b id="cCible">0</b>, mais <b id="cCacheesL">2</b> cartes sont retirées face cachée : ton compte final dit ce qu'elles valent — c'est l'exercice des pros.</p>
     </div>
     <div class="champs" id="opEstimation" hidden>
       <label class="ch"><span class="grave">Sabot</span><select id="sJeux"><option>4</option><option selected>6</option><option>8</option></select></label>
@@ -1097,6 +1104,7 @@ body.a-table main{ padding-bottom:0 }
       <span class="grave">Compte courant réel</span>
       <p class="cadran" id="rReel"></p>
       <p id="rTexte" style="max-width:60ch;margin:0 auto"></p>
+      <div id="rCachees" class="cachees" hidden></div>
       <div class="tuiles" id="rTuiles"></div>
       <p class="muet" id="rMise" style="margin:14px auto 0"></p>
       <div class="rang-btn" style="margin-top:18px">
@@ -1852,7 +1860,8 @@ DB.strat = Object.assign({ base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }, DB
 DB.fautes = DB.fautes || []; DB.sessions = DB.sessions || [];
 const garder = () => { try { localStorage.setItem("sabot", JSON.stringify(DB)); } catch (e) {} };
 const sys = () => DONNEES.systemes[DB.sys] || DONNEES.systemes.hilo;
-if (DB.cadence === undefined) DB.cadence = 400;
+// 900 ms par carte : le rythme d'un vrai croupier. À 400 les cartes tombaient trop vite (Léo, 04/09).
+if (DB.cadence === undefined || DB.cadence === 400) DB.cadence = 900;
 if (DB.conseil === undefined) DB.conseil = false;
 // Les cartes ont 13 rangs à l'écran, mais 10 en mathématiques : 10, V, D et R
 // sont une seule et même colonne. Tout ce qui parle au solveur ou au comptage
@@ -2943,7 +2952,7 @@ $("bRecu").onclick = () => {
 
 /* ═══ exercices.js ═══ */
 /* ══════════════════════ EXERCICES ══════════════════════ */
-const X = { genre: "defilement", sabot: [], cartes: [], i: -1, minuteur: null, rc: 0, rep: [], encours: false,
+const X = { genre: "defilement", sabot: [], cartes: [], cachees: [], i: -1, minuteur: null, rc: 0, rep: [], encours: false,
   jeux: 6, t0: 0, delais: [], controles: [], prochainControle: 0, pause: false, depart: 0, chrono: null, silence: false, par: 1 };
 function ongletEx(g) {
   X.genre = g;
@@ -2980,12 +2989,19 @@ async function demarrerExercice() {
     X.jeux = +$("eJeux").value;
     const s = await sabotProuvable(X.jeux);
     X.sabot = s.cartes;
-    const n = $("eNb").value === "tout" ? X.sabot.length : Math.min(+$("eNb").value, X.sabot.length);
+    // Un nombre ENTIER de jeux retombe toujours sur le même compte (0 en Hi-Lo) :
+    // la réponse serait connue d'avance. D'où « au hasard », « jusqu'à la coupe »
+    // (on ne voit jamais la fin d'un sabot en salle), et des cartes retirées.
+    const choix = $("eNb").value;
+    const n = choix === "coupe" ? Math.floor(X.sabot.length * (.65 + Math.random() * .15))
+      : choix === "alea" ? 30 + alea(16) : Math.min(+choix, X.sabot.length);
     X.cartes = X.sabot.slice(0, n); X.silence = $("eMode").value === "silence"; X.par = X.silence ? +$("eParVue").value : 1;
+    retirerCachees(n % 52 === 0 ? +$("eCachees").value : 0);
   } else {
     X.jeux = +$("cJeux").value;
     const s = await sabotProuvable(X.jeux);
     X.sabot = s.cartes; X.cartes = X.sabot.slice(); X.silence = true; X.par = +$("cParVue").value;
+    retirerCachees(+$("cCachees").value);
   }
   X.i = -1; X.rc = CT.compteInitial(DB.sys, X.jeux); X.rep = new Array(X.cartes.length).fill(null);
   X.encours = true; X.delais = []; X.controles = []; X.pause = false; X.prochainControle = prochainControle(0); X.depart = 0;
@@ -3000,6 +3016,13 @@ async function demarrerExercice() {
   $("exPiste").style.setProperty("--intervalle", (X.genre === "chrono" ? 600 : +$("eVitesse").value) + "ms");
   suivante();
 }
+// Les cartes retirées sortent de la séquence montrée mais restent dans le sabot :
+// ton compte final, sur un paquet entier, révèle ce qu'elles valaient.
+function retirerCachees(k) {
+  X.cachees = [];
+  for (let i = 0; i < k && X.cartes.length > 5; i++) X.cachees.push(X.cartes.splice(alea(X.cartes.length), 1)[0]);
+}
+$("cCachees").onchange = () => { $("cCacheesL").textContent = $("cCachees").value; };
 function suivante() {
   clearTimeout(X.minuteur);
   if (X.i >= 0 && X.i + 1 >= X.prochainControle && X.i + 1 < X.cartes.length) return controle();
@@ -3080,6 +3103,17 @@ function verifierExercice() {
   if (!isNaN(dj)) txt += ` Jeux restants estimés ${fr1(dj)} contre ${fr1(jeuxRestants)} réels${Math.abs(dj - jeuxRestants) <= .5 ? " ✓" : ""}.`;
   if (sys().equilibre && !isNaN(dtc)) txt += ` Compte vrai annoncé ${sgn(dtc)}, réel ${fr1(tc)}${Math.abs(dtc - tc) <= .5 ? " ✓" : ""}.`;
   $("rTexte").textContent = txt;
+  const rc = $("rCachees"); rc.hidden = !X.cachees.length;
+  if (X.cachees.length) {
+    const somme = X.cachees.reduce((a, c) => a + valeurCompte(c), 0);
+    const cible = CT.compteInitial(DB.sys, X.jeux) + (sys().equilibre ? 0 : 4 * X.jeux);
+    const entier = (X.cartes.length + X.cachees.length) % 52 === 0;
+    rc.innerHTML = `<p class="grave">Retirées face cachée</p><div class="groupe"></div><p></p>`;
+    const g = rc.querySelector(".groupe"); X.cachees.forEach(c => g.appendChild(carteEl(c)));
+    rc.querySelector("p:last-child").textContent = entier
+      ? `Elles valent ${sgn(somme)}. Le paquet entier retombe sur ${sgn(cible)} : un compte juste de ${sgn(X.rc)} les révélait${exact ? " — et tu l'as fait." : "."}`
+      : `Elles valent ${sgn(somme)}.`;
+  }
   const moy = X.delais.length ? X.delais.reduce((a, b) => a + b, 0) / X.delais.length / 1000 : null;
   const tuiles = [[sgn(dit), "Ta réponse"], [vues, "Cartes vues"]];
   if (!X.silence) tuiles.push([bons, "Clics justes"], [faux, "Clics faux"], [rates, "Ratées"], [moy !== null ? fr1(moy) + " s" : "—", "Réaction"]);

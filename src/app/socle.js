@@ -44,7 +44,8 @@ DB.strat = Object.assign({ base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }, DB
 DB.fautes = DB.fautes || []; DB.sessions = DB.sessions || [];
 const garder = () => { try { localStorage.setItem("sabot", JSON.stringify(DB)); } catch (e) {} };
 const sys = () => DONNEES.systemes[DB.sys] || DONNEES.systemes.hilo;
-if (DB.cadence === undefined) DB.cadence = 400;
+// 900 ms par carte : le rythme d'un vrai croupier. À 400 les cartes tombaient trop vite (Léo, 04/09).
+if (DB.cadence === undefined || DB.cadence === 400) DB.cadence = 900;
 if (DB.conseil === undefined) DB.conseil = false;
 // Les cartes ont 13 rangs à l'écran, mais 10 en mathématiques : 10, V, D et R
 // sont une seule et même colonne. Tout ce qui parle au solveur ou au comptage

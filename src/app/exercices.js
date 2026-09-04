@@ -1,5 +1,5 @@
 /* ══════════════════════ EXERCICES ══════════════════════ */
-const X = { genre: "defilement", sabot: [], cartes: [], i: -1, minuteur: null, rc: 0, rep: [], encours: false,
+const X = { genre: "defilement", sabot: [], cartes: [], cachees: [], i: -1, minuteur: null, rc: 0, rep: [], encours: false,
   jeux: 6, t0: 0, delais: [], controles: [], prochainControle: 0, pause: false, depart: 0, chrono: null, silence: false, par: 1 };
 function ongletEx(g) {
   X.genre = g;
@@ -36,12 +36,19 @@ async function demarrerExercice() {
     X.jeux = +$("eJeux").value;
     const s = await sabotProuvable(X.jeux);
     X.sabot = s.cartes;
-    const n = $("eNb").value === "tout" ? X.sabot.length : Math.min(+$("eNb").value, X.sabot.length);
+    // Un nombre ENTIER de jeux retombe toujours sur le même compte (0 en Hi-Lo) :
+    // la réponse serait connue d'avance. D'où « au hasard », « jusqu'à la coupe »
+    // (on ne voit jamais la fin d'un sabot en salle), et des cartes retirées.
+    const choix = $("eNb").value;
+    const n = choix === "coupe" ? Math.floor(X.sabot.length * (.65 + Math.random() * .15))
+      : choix === "alea" ? 30 + alea(16) : Math.min(+choix, X.sabot.length);
     X.cartes = X.sabot.slice(0, n); X.silence = $("eMode").value === "silence"; X.par = X.silence ? +$("eParVue").value : 1;
+    retirerCachees(n % 52 === 0 ? +$("eCachees").value : 0);
   } else {
     X.jeux = +$("cJeux").value;
     const s = await sabotProuvable(X.jeux);
     X.sabot = s.cartes; X.cartes = X.sabot.slice(); X.silence = true; X.par = +$("cParVue").value;
+    retirerCachees(+$("cCachees").value);
   }
   X.i = -1; X.rc = CT.compteInitial(DB.sys, X.jeux); X.rep = new Array(X.cartes.length).fill(null);
   X.encours = true; X.delais = []; X.controles = []; X.pause = false; X.prochainControle = prochainControle(0); X.depart = 0;
@@ -56,6 +63,13 @@ async function demarrerExercice() {
   $("exPiste").style.setProperty("--intervalle", (X.genre === "chrono" ? 600 : +$("eVitesse").value) + "ms");
   suivante();
 }
+// Les cartes retirées sortent de la séquence montrée mais restent dans le sabot :
+// ton compte final, sur un paquet entier, révèle ce qu'elles valaient.
+function retirerCachees(k) {
+  X.cachees = [];
+  for (let i = 0; i < k && X.cartes.length > 5; i++) X.cachees.push(X.cartes.splice(alea(X.cartes.length), 1)[0]);
+}
+$("cCachees").onchange = () => { $("cCacheesL").textContent = $("cCachees").value; };
 function suivante() {
   clearTimeout(X.minuteur);
   if (X.i >= 0 && X.i + 1 >= X.prochainControle && X.i + 1 < X.cartes.length) return controle();
@@ -136,6 +150,17 @@ function verifierExercice() {
   if (!isNaN(dj)) txt += ` Jeux restants estimés ${fr1(dj)} contre ${fr1(jeuxRestants)} réels${Math.abs(dj - jeuxRestants) <= .5 ? " ✓" : ""}.`;
   if (sys().equilibre && !isNaN(dtc)) txt += ` Compte vrai annoncé ${sgn(dtc)}, réel ${fr1(tc)}${Math.abs(dtc - tc) <= .5 ? " ✓" : ""}.`;
   $("rTexte").textContent = txt;
+  const rc = $("rCachees"); rc.hidden = !X.cachees.length;
+  if (X.cachees.length) {
+    const somme = X.cachees.reduce((a, c) => a + valeurCompte(c), 0);
+    const cible = CT.compteInitial(DB.sys, X.jeux) + (sys().equilibre ? 0 : 4 * X.jeux);
+    const entier = (X.cartes.length + X.cachees.length) % 52 === 0;
+    rc.innerHTML = `<p class="grave">Retirées face cachée</p><div class="groupe"></div><p></p>`;
+    const g = rc.querySelector(".groupe"); X.cachees.forEach(c => g.appendChild(carteEl(c)));
+    rc.querySelector("p:last-child").textContent = entier
+      ? `Elles valent ${sgn(somme)}. Le paquet entier retombe sur ${sgn(cible)} : un compte juste de ${sgn(X.rc)} les révélait${exact ? " — et tu l'as fait." : "."}`
+      : `Elles valent ${sgn(somme)}.`;
+  }
   const moy = X.delais.length ? X.delais.reduce((a, b) => a + b, 0) / X.delais.length / 1000 : null;
   const tuiles = [[sgn(dit), "Ta réponse"], [vues, "Cartes vues"]];
   if (!X.silence) tuiles.push([bons, "Clics justes"], [faux, "Clics faux"], [rates, "Ratées"], [moy !== null ? fr1(moy) + " s" : "—", "Réaction"]);

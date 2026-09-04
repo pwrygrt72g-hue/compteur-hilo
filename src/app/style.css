@@ -870,3 +870,8 @@ body.a-table main{ padding-bottom:0 }
 .carte--pivot.cachee .pivot{ transform:perspective(700px) rotateY(180deg) }
 .carte .face{ position:absolute; inset:0; border-radius:inherit; backface-visibility:hidden; -webkit-backface-visibility:hidden }
 .carte .face.ar{ transform:rotateY(180deg) }
+
+/* ── Cartes retirées face cachée (bilan d'exercice) ─────────────────── */
+.cachees{margin:14px auto 0;max-width:60ch;display:flex;flex-direction:column;align-items:center;gap:8px}
+.cachees .groupe{display:flex;gap:8px;justify-content:center}
+.cachees .carte{--w:58px}

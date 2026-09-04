@@ -154,7 +154,8 @@
   <div class="laque pad" id="exReglages">
     <div class="champs" id="opDefilement">
       <label class="ch"><span class="grave">Jeux</span><select id="eJeux"><option>1</option><option>2</option><option selected>6</option><option>8</option></select></label>
-      <label class="ch"><span class="grave">Cartes</span><select id="eNb"><option>20</option><option selected>52</option><option>104</option><option>208</option><option value="tout">Tout le sabot</option></select></label>
+      <label class="ch"><span class="grave">Cartes</span><select id="eNb"><option value="alea" selected>Au hasard (30 à 45)</option><option>20</option><option>52</option><option>104</option><option>208</option><option value="coupe">Jusqu'à la coupe</option></select></label>
+      <label class="ch"><span class="grave">Retirées face cachée</span><select id="eCachees" title="Sur un nombre entier de jeux, le compte final serait connu d'avance : on retire des cartes, ton compte dit ce qu'elles valent"><option>0</option><option>1</option><option selected>2</option><option>3</option></select></label>
       <label class="ch"><span class="grave">Vitesse <em id="eVitesseL" class="cadran" style="font-style:normal;font-size:var(--t-petit);color:var(--os)">1,2 s</em></span><input type="range" id="eVitesse" min="200" max="3000" step="50" value="1200"></label>
       <label class="ch"><span class="grave">Mode</span><select id="eMode"><option value="clic">Je clique la valeur</option><option value="silence">Silencieux</option></select></label>
       <label class="ch"><span class="grave">Cartes à la fois</span><select id="eParVue"><option selected>1</option><option>2</option><option>3</option></select></label>
@@ -165,7 +166,8 @@
     <div class="champs" id="opChrono" hidden>
       <label class="ch"><span class="grave">Jeux</span><select id="cJeux"><option selected>1</option><option>2</option></select></label>
       <label class="ch"><span class="grave">Cartes à la fois</span><select id="cParVue"><option>1</option><option selected>2</option><option>3</option></select></label>
-      <p class="muet" style="margin:0;align-self:center;font-size:var(--t-petit);max-width:44ch">Tu avances toi-même : espace, clic, ou flèche droite. Le chrono part à la première carte. Un jeu complet doit retomber sur <b id="cCible">0</b>.</p>
+      <label class="ch"><span class="grave">Retirées face cachée</span><select id="cCachees"><option>1</option><option selected>2</option><option>3</option></select></label>
+      <p class="muet" style="margin:0;align-self:center;font-size:var(--t-petit);max-width:48ch">Tu avances toi-même : espace, clic, ou flèche droite. Le chrono part à la première carte. Un jeu complet retombe sur <b id="cCible">0</b>, mais <b id="cCacheesL">2</b> cartes sont retirées face cachée : ton compte final dit ce qu'elles valent — c'est l'exercice des pros.</p>
     </div>
     <div class="champs" id="opEstimation" hidden>
       <label class="ch"><span class="grave">Sabot</span><select id="sJeux"><option>4</option><option selected>6</option><option>8</option></select></label>
@@ -206,6 +208,7 @@
       <span class="grave">Compte courant réel</span>
       <p class="cadran" id="rReel"></p>
       <p id="rTexte" style="max-width:60ch;margin:0 auto"></p>
+      <div id="rCachees" class="cachees" hidden></div>
       <div class="tuiles" id="rTuiles"></div>
       <p class="muet" id="rMise" style="margin:14px auto 0"></p>
       <div class="rang-btn" style="margin-top:18px">
