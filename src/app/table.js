@@ -184,6 +184,7 @@ function rendreSieges() {
     d.style.setProperty("--ecart", Math.abs(si - (T.sieges.length - 1) / 2).toFixed(1));
     d.append(hs, ce, nm); el.appendChild(d);
   });
+  dimensionnerCartes();
   rendreLettrage();
   // Sur téléphone les sièges défilent horizontalement : sans ce recentrage, le
   // siège qui joue peut être hors écran au moment précis où c'est son tour.
@@ -240,6 +241,8 @@ async function tirer(main, hote, cachee, qui) {
   }
   const c = T.sabot.pop(); c.cachee = !!cachee; main.push(c);
   const e = carteEl(c, cachee); hote.appendChild(e);
+  // Une carte de plus dans un siège : l'éventail se resserre pour qu'elle tienne.
+  if (qui) dimensionnerCartes();
   // Mesurée AVANT l'animation : pendant le vol, le rect de la carte est celui
   // du sabot, pas celui de son point d'arrivée.
   const cr = e.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
@@ -258,15 +261,17 @@ async function tirerSiege(si, hi) {
   const w = $(`m_${si}_${hi}`);
   if (w && w.parentNode) w.parentNode.querySelector(".score").textContent = E.handTotal(h.cards) + (h.doubled ? " ×2" : "");
 }
+// La carte cachée est un DOS posé dans la main : on ne la remplace pas, on la
+// RETOURNE. C'est cartes.js qui dessine la face et fait tourner le pivot, sur
+// l'événement « sabot:croupier-revele » (el = la carte elle-même).
 async function revelerCachee() {
   const c = T.croupier.find(x => x.cachee); if (!c) return;
   c.cachee = false; T.rc += valeurCompte(c); T.vues++;
-  const vieux = $("dMain").children[1];
-  const e = carteEl(c); e.classList.add("carte--revele");
-  $("dMain").replaceChild(e, vieux); son("carte");
+  const e = $("dMain").children[1] || $("dMain").lastElementChild;
+  son("carte");
   rafraichirBarre(); $("dScore").textContent = E.handTotal(T.croupier);
   emettre("croupier-revele", { carte: c, total: E.handTotal(T.croupier), el: e });
-  await dodo(240);
+  await dodo(matchMedia("(prefers-reduced-motion:reduce)").matches ? 60 : 420);
 }
 const peutSeparer = (h, st) => E.canSplit(h, st.mains, reglesTable());
 const peutDoubler = (h, st) => E.canDouble(h, st.mains, reglesTable());

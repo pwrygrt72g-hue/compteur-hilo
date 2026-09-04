@@ -1,6 +1,6 @@
 // Capture d'écran d'une vue, à une taille, dans un thème — pour REGARDER son travail.
 //
-//   node outils/capturer.mjs <vue> [LxH] [sortie.png] [--donne] [--sombre|--clair] [--table=id] [--attendre=ms]
+//   node outils/capturer.mjs <vue> [LxH] [sortie.png] [--donne] [--sombre|--clair] [--table=id] [--attendre=ms] [--puis=idBouton] [--attendre2=ms]
 //
 //   node outils/capturer.mjs table 1280x800 /tmp/table.png --donne
 //   node outils/capturer.mjs table 375x667 /tmp/tel.png --donne --table=cotai
@@ -49,6 +49,8 @@ if (opt.table) { await cdp("Page.reload"); await dodo(1500); }
 await evaluer(`(document.querySelector('[data-vue="${vue}"]')||{click(){}}).click()`);
 await dodo(700);
 if (opt.donne) { await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(+(opt.attendre || 3200)); }
+// --puis=bReste : un coup après la donne (pour voir le croupier retourner sa carte, un bust, un gain…).
+if (opt.puis) { await evaluer(`(document.getElementById(${JSON.stringify(opt.puis)})||{click(){}}).click()`); await dodo(+(opt.attendre2 || 2500)); }
 else await dodo(+(opt.attendre || 400));
 const erreurs = await evaluer(`(window.__err || []).join(" / ")`);
 const shot = await cdp("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });

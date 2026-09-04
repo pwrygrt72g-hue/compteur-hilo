@@ -81,12 +81,8 @@ function bandeau(msg, ms) {
 }
 
 /* ── Cartes ─────────────────────────────────────────────────────────── */
-function carteEl(c, dos) {
-  const d = document.createElement("div");
-  d.className = "carte" + (dos ? " carte--dos" : c.col === "r" ? " rouge" : "");
-  if (!dos) d.innerHTML = `<div class="rang">${c.r}<i>${c.suit}</i></div><div class="pip">${c.suit}</div><div class="bas">${c.r}<i>${c.suit}</i></div>`;
-  return d;
-}
+// Le dessin d'une carte (carteEl, carteHtml) vit dans cartes.js, concaténé juste
+// après ce fichier : une seule fabrique pour toute l'application.
 function sabotNeuf(jeux) {
   const s = [];
   for (let d = 0; d < jeux; d++) for (const [suit, col] of SUITS) for (let i = 0; i < 13; i++) s.push({ r: RANKS[i], i, suit, col });

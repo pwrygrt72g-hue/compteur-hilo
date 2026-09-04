@@ -149,35 +149,7 @@ button{cursor:pointer;background:none;border:0}
     0 0 48px -14px var(--laiton);
 }
 
-/* ── Les cartes ────────────────────────────────────────────────────── */
-.carte{
-  --w:104px;width:var(--w);aspect-ratio:1/1.4;border-radius:calc(var(--w)*.07);
-  position:relative;flex:none;user-select:none;
-  background:linear-gradient(168deg,#FFFFFF 0%, var(--nacre) 38%, #EDE6D4 100%);
-  color:#141110;font-family:"Instrument Serif",Georgia,serif;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.10), inset 0 1px 0 #fff,
-    inset 0 -2px 3px rgba(120,100,70,.16), 0 1px 1px rgba(0,0,0,.30),
-    0 10px 20px -10px rgba(0,0,0,.55);
-}
-.carte.rouge{color:#A8281C}
-.carte .rang{position:absolute;top:6%;left:7%;line-height:.95;text-align:center;
-  font-family:Archivo,sans-serif;font-weight:600;font-size:calc(var(--w)*.22)}
-.carte .rang i{display:block;font-style:normal;font-size:calc(var(--w)*.17)}
-.carte .pip{position:absolute;inset:0;display:grid;place-items:center;
-  font-size:calc(var(--w)*.46);opacity:.22}
-.carte .bas{position:absolute;bottom:6%;right:7%;transform:rotate(180deg);line-height:.95;
-  text-align:center;font-family:Archivo,sans-serif;font-weight:600;font-size:calc(var(--w)*.22)}
-.carte .bas i{display:block;font-style:normal;font-size:calc(var(--w)*.17)}
-/* Le dos : un treillis losangé à pas LARGE. Un soleil à rayons convergents
-   scintille et moire à quatre cartes par seconde — mesuré, donc écarté. */
-.carte--dos{
-  background:
-    repeating-linear-gradient(45deg, rgba(0,0,0,.22) 0 2px, transparent 2px 11px),
-    repeating-linear-gradient(-45deg, rgba(0,0,0,.22) 0 2px, transparent 2px 11px),
-    linear-gradient(160deg,#8A2420,#601513);
-  box-shadow:inset 0 0 0 5px var(--nacre), inset 0 0 0 6px rgba(0,0,0,.25), 0 10px 20px -10px rgba(0,0,0,.6);
-}
-.carte--dos .rang,.carte--dos .pip,.carte--dos .bas{display:none}
+/* ── Les cartes : voir la section « LES CARTES » en fin de fichier ── */
 
 /* ── Chrome ────────────────────────────────────────────────────────── */
 header{position:sticky;top:0;z-index:40;background:color-mix(in oklab, var(--encre) 88%, transparent);
@@ -404,12 +376,9 @@ input[type=range]{accent-color:var(--laiton);width:170px}
    SOUS ses mains, pas dans les coins (un sabot est toujours à portée de main). */
 .rangee-haute{ display:flex; justify-content:center; align-items:flex-start; gap:34px; margin-top:8px }
 .croupier{ display:flex; align-items:center; justify-content:center; gap:14px; min-width:270px }
-.main{ display:flex; justify-content:center; min-height:0; perspective:900px }
-.main .carte{ --w:84px; margin-left:-48px }
-.main .carte:first-child{ margin-left:0 }
-/* Les cartes grandissent avec l'écran : 84 px à 1280, 104 px à 1920 pour le croupier. */
-.croupier .main .carte{ --w:clamp(84px, 6.2vw, 104px); margin-left:calc(var(--w) * -.57) }
-.croupier .main .carte:first-child{ margin-left:0 }
+.main{ --w:84px; display:flex; justify-content:center; min-height:0 }
+/* Le croupier suit la largeur de table calculée par cartes.js (--w-table), un peu plus grand que les joueurs. */
+.croupier .main{ --w:clamp(84px, calc(var(--w-table, 84px) * 1.06), 110px) }
 .qui{ display:flex; flex-direction:column; align-items:center; gap:2px; font-size:var(--t-micro); letter-spacing:.14em;
   text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 82%, transparent) }
 .qui b{ font-family:"Martian Mono",monospace; font-size:var(--t-fort); color:var(--ivoire); letter-spacing:0 }
@@ -437,12 +406,14 @@ input[type=range]{accent-color:var(--laiton);width:170px}
   transition:box-shadow .2s; transform:translateY(calc(var(--ecart,0) * -8px)) }
 .siege.toi{ background:rgba(0,0,0,.16); box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 45%, transparent) inset }
 .siege.actif{ box-shadow:0 0 0 2px var(--or) inset, 0 0 22px -6px var(--or) }
-.siege .mains{ display:flex; gap:10px; align-items:flex-end; min-height:94px }
+/* Le siège a SA hauteur avant même la première carte (celle d'une main + son score) :
+   un siège qui grandit à la donne remonterait par-dessus le lettrage doré. */
+.siege .mains{ display:flex; gap:10px; align-items:flex-end; min-height:calc(var(--w-table, 84px) * 1.4 + 22px) }
 .siege .m{ display:grid; grid-template-columns:auto auto; justify-content:center; align-items:center; gap:2px 6px }
 .siege .m .main{ grid-column:1 / -1 }
 .siege .m.encours .main{ outline:2px dashed color-mix(in oklab, var(--or) 70%, transparent); outline-offset:5px; border-radius:8px }
-.siege .main .carte{ --w:clamp(66px, 5vw, 84px); margin-left:calc(var(--w) * -.56) }
-.siege .main .carte:first-child{ margin-left:0 }
+/* Valeur de repli avant que cartes.js n'ait mesuré (dimensionnerCartes pose --w et --pas en ligne sur chaque .main). */
+.siege .main{ --w:clamp(66px, 5vw, 84px) }
 .siege .score{ font-family:"Martian Mono",monospace; font-size:var(--t-petit); color:var(--ivoire); min-height:18px; text-shadow:0 1px 2px rgba(0,0,0,.5) }
 .siege .issue{ font-size:var(--t-micro); letter-spacing:.07em; text-transform:uppercase; padding:1px 7px; border-radius:999px; font-weight:600 }
 .siege .issue:empty{ display:none }
@@ -490,7 +461,7 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 .zone-actions .bulle{ bottom:auto; top:-8px; transform:translate(-50%,-100%) }
 
 /* ── Exercices ─────────────────────────────────────────────────────── */
-.scene{display:grid;place-items:center;min-height:238px;padding:16px 0 4px;perspective:900px;position:relative}
+.scene{display:grid;place-items:center;min-height:238px;padding:16px 0 4px;position:relative}
 .scene .groupe{display:flex;gap:34px}
 .scene .carte{--w:148px}
 .eclair{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
@@ -547,8 +518,7 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 /* ── Stratégie ─────────────────────────────────────────────────────── */
 .duel{display:grid;place-items:center;gap:5px;padding:4px 0}
 .duel .voie{display:flex;flex-direction:column;align-items:center;gap:5px}
-.duel .main .carte{--w:92px;margin-left:-44px}
-.duel .main .carte:first-child{margin-left:0}
+.duel .main{--w:92px}
 .duel .tot{font-family:"Martian Mono",monospace;font-size:var(--t-fort)}
 .tcbadge{font-family:"Martian Mono",monospace;font-size:var(--t-petit);border:1px solid var(--laiton);
   border-radius:999px;padding:5px 14px;background:var(--halo)}
@@ -667,8 +637,6 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
    mais ici on regarde une donne) : environ la moitié de la cadence, bornée. */
 .plateau{--don:clamp(110ms, calc(var(--intervalle,400ms) * .45), 300ms)}
 .carte--entre{animation:donne var(--don,150ms) var(--ressort) both}
-@keyframes retourne{from{transform:rotateY(-92deg)}to{transform:none}}
-.carte--revele{animation:retourne 220ms var(--sec) both;backface-visibility:hidden}
 @keyframes bascule{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .bascule{animation:bascule 120ms var(--sec)}
 
@@ -693,9 +661,9 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
   .tete{padding:8px 0}
   .scene .carte{--w:116px}.scene .groupe{gap:18px}
   .reponses button{width:92px;height:62px;font-size:23px}
-  .main .carte{--w:66px;margin-left:-38px}
+  .main{--w:66px}
   .siege{min-width:104px;padding:7px 3px}
-  .siege .main .carte{--w:52px;margin-left:-30px}
+  .siege .main{--w:52px}
   .sabot,.defausse{width:42px;height:60px;font-size:10px}
   .sabot::before,.defausse i{bottom:16px;height:calc(2px + var(--reste,1) * 30px)}
   .sabot::after{bottom:calc(18px + var(--coupe,.25) * 30px)}
@@ -757,7 +725,7 @@ body.a-table main{ padding-bottom:0 }
   .sabot,.defausse{ width:34px; height:46px; font-size:10px }
   .annonce{ font-size:var(--t-petit); min-height:0; margin:2px 0 }
   .conseil{ margin:0 }
-  .croupier .main .carte{ --w:62px; margin-left:-35px }
+  .croupier .main{ --w:62px }
   .sieges{ min-height:0 }
   .cercle{ width:30px; height:30px }
   .zone-actions{ padding:8px; gap:6px }
@@ -778,8 +746,8 @@ body.a-table main{ padding-bottom:0 }
   .siege{ flex:0 0 auto; min-width:0; width:clamp(92px,28vw,124px);
     scroll-snap-align:center; padding:4px 3px; transform:none }
   .siege.toi{ width:clamp(146px,46vw,196px) }
-  .siege .main .carte{ --w:44px; margin-left:-25px }
-  .siege.toi .main .carte{ --w:58px; margin-left:-33px }
+  .siege .main{ --w:44px }
+  .siege.toi .main{ --w:58px }
 }
 
 /* ── Poste « tranche » : téléphone couché ───────────────────────────────── */
@@ -805,7 +773,7 @@ body.a-table main{ padding-bottom:0 }
   .rack, .feutre>svg.lettrage{ display:none }
   .annonce{ font-size:var(--t-micro); margin:0; min-height:0 }
   .croupier{ min-height:0; min-width:0 }
-  .croupier .main .carte{ --w:54px; margin-left:-30px }
+  .croupier .main{ --w:54px }
   .sabot,.defausse{ width:34px; height:46px }
   .siege{ width:clamp(72px,11vw,110px) }
   .siege.toi{ width:clamp(110px,17vw,150px) }
@@ -834,3 +802,71 @@ body.a-table main{ padding-bottom:0 }
   nav{margin-left:0}
   nav button{padding:9px 10px}
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   LES CARTES (lot Cartes) — le dessin est dans cartes.js, la matière ici.
+   Une carte est un SVG (viewBox 100 × 140) posé sur un carton ivoire ; sa
+   largeur est --w, HÉRITÉE du conteneur (.main, .scene, .eventail…) et posée
+   en ligne par dimensionnerCartes() sur la table. Rien ici ne déclare --w
+   sur .carte lui-même : ce serait couper l'héritage.
+   ══════════════════════════════════════════════════════════════════════ */
+.carte{
+  width:var(--w,104px); aspect-ratio:1/1.4; border-radius:calc(var(--w,104px) * .07);
+  position:relative; flex:none; user-select:none; color:#141110;
+  -webkit-font-smoothing:antialiased;   /* le texte reste en niveaux de gris : rien ne saute pendant une transformation */
+}
+/* Le carton : ivoire, une toile très légère (deux trames croisées, aucun filtre),
+   une tranche de 1 px, un contact DUR de 2 px puis l'occlusion molle — l'ombre
+   d'un objet POSÉ, pas d'un objet qui flotte à sept millimètres du feutre. */
+.carte, .carte .face.av{
+  background:
+    repeating-linear-gradient(0deg, rgba(120,100,70,.028) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(120,100,70,.022) 0 1px, transparent 1px 3px),
+    linear-gradient(165deg, #FFFFFF 0%, #FBF8F0 42%, #EFE7D4 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
+    0 0 0 .5px rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.28), 0 6px 10px -4px rgba(0,0,0,.5);
+}
+.carte.rouge{ color:#A8281C }
+.carte .face-svg{ position:absolute; inset:0; width:100%; height:100%; display:block; fill:currentColor; overflow:visible }
+.carte .face-svg text{ font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:700; font-size:19px; font-stretch:100%; fill:currentColor }
+/* Dans une main, les cartes se recouvrent : --pas est ce qu'on VOIT de chaque
+   carte (44 % par défaut, resserré par cartes.js quand la main ne tient pas). */
+.main{ --pas:calc(var(--w,84px) * .44) }
+.main .carte + .carte{ margin-left:calc(var(--pas) - var(--w,84px)) }
+
+/* Le dos : le motif d'entrelacs dans la couleur du lieu (--dos-carte, posée par
+   #v-table[data-lieu]), une marge blanche et son liseré, un cartouche ovale au
+   centre. Les trames sont à pas FIXE (9 px) : elles ne moirent pas en vol. */
+.carte .face.ar{
+  background-color:var(--dos-carte,#8A2420);
+  background-image:
+    radial-gradient(120% 90% at 50% 50%, rgba(255,255,255,.10), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255,246,225,.20) 0 1.2px, transparent 1.2px 9px),
+    repeating-linear-gradient(-45deg, rgba(255,246,225,.20) 0 1.2px, transparent 1.2px 9px),
+    repeating-linear-gradient(45deg, rgba(0,0,0,.14) 0 1px, transparent 1px 4.5px);
+  box-shadow:
+    inset 0 0 0 calc(var(--w,84px) * .06) #F6F2E8,
+    inset 0 0 0 calc(var(--w,84px) * .06 + 1px) rgba(0,0,0,.4),
+    inset 0 0 calc(var(--w,84px) * .3) rgba(0,0,0,.35),
+    0 0 0 .5px rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.28), 0 6px 10px -4px rgba(0,0,0,.5);
+}
+.carte .face.ar::after{
+  content:""; position:absolute; left:50%; top:50%; width:44%; height:30%; border-radius:50%;
+  transform:translate(-50%,-50%);
+  border:1.5px solid rgba(255,246,225,.75);
+  box-shadow:0 0 0 3px var(--dos-carte,#8A2420), 0 0 0 4px rgba(255,246,225,.45), inset 0 0 0 3px var(--dos-carte,#8A2420), inset 0 0 0 4px rgba(255,246,225,.3);
+  background:var(--dos-carte,#8A2420);
+}
+
+/* La carte à deux faces : un pivot qui tourne EN 3D, avec sa propre perspective.
+   .cachee = dos visible. Retirer la classe la retourne (transition), et c'est
+   cartes.js qui dessine la face juste avant, sur « sabot:croupier-revele ».
+   ⚠️ Jamais d'overflow:hidden ni de filter sur .carte--pivot : ils aplatissent
+   le preserve-3d et la carte cesse de tourner. */
+.carte--pivot{ background:none; box-shadow:none }
+.carte--pivot .pivot{ position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d;
+  transform:perspective(700px) rotateY(0deg); transition:transform 520ms var(--sec) }
+.carte--pivot.cachee .pivot{ transform:perspective(700px) rotateY(180deg) }
+.carte .face{ position:absolute; inset:0; border-radius:inherit; backface-visibility:hidden; -webkit-backface-visibility:hidden }
+.carte .face.ar{ transform:rotateY(180deg) }
