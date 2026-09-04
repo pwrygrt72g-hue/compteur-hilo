@@ -1,0 +1,17 @@
+{
+  "name": "Compteur Hi-Lo",
+  "short_name": "Hi-Lo",
+  "description": "Entraînement au comptage de cartes au blackjack, sans mise.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#082b1e",
+  "theme_color": "#082b1e",
+  "lang": "fr",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}

@@ -1,4 +1,7 @@
 <title>Compteur Hi-Lo</title>
+<meta name="theme-color" content="#082b1e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
   :root{
@@ -168,6 +171,33 @@
   .bar b{color:var(--cream)}
   .bar .btn{font-family:var(--font-body)}
 
+  /* ---------- stratégie ---------- */
+  .drill{display:grid;place-items:center;gap:6px;padding:6px 0 2px}
+  .drill .lane{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .drill .hand .card{--w:96px;margin-left:-46px}
+  .drill .hand .card:first-child{margin-left:0}
+  .drill .tot{font-family:var(--font-mono);font-size:17px;color:var(--cream)}
+  .tcBadge{font-family:var(--font-mono);font-size:15px;border:1px solid var(--gold);border-radius:999px;padding:6px 16px;color:var(--cream);background:var(--gold-soft)}
+  .tcBadge b{font-size:19px;margin-left:6px}
+  .vs{font-family:var(--font-display);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--cream-dim)}
+  .fb{min-height:52px;text-align:center;margin-top:12px;font-size:15px;max-width:60ch;margin-left:auto;margin-right:auto}
+  .fb .verdict{font-family:var(--font-display);font-size:22px;display:block}
+  .fb .verdict.ok{color:var(--ok)}.fb .verdict.ko{color:var(--ko)}
+  .score{display:flex;gap:18px;justify-content:center;font-family:var(--font-mono);font-size:13px;color:var(--cream-dim);margin-top:6px}
+  .score b{color:var(--cream)}
+  .chartWrap{margin-top:14px}
+
+  /* ---------- estimation ---------- */
+  .tray{position:relative;width:210px;height:260px;margin:0 auto;border:3px solid #2a1a10;border-radius:8px;background:linear-gradient(180deg,#12100e,#1c1713);box-shadow:inset 0 0 24px rgba(0,0,0,.7);overflow:hidden}
+  .tray .stack{position:absolute;left:8px;right:8px;bottom:8px;border-radius:2px;
+    background:repeating-linear-gradient(0deg,#efe7d0 0 1px,#b9ad8e 1px 2px,#efe7d0 2px 3px);
+    box-shadow:0 -2px 6px rgba(0,0,0,.5);transition:height .5s cubic-bezier(.2,.8,.2,1)}
+  .tray .lip{position:absolute;left:0;right:0;bottom:0;height:26px;background:linear-gradient(180deg,rgba(42,26,16,0),#2a1a10 60%);pointer-events:none}
+  .tray .glare{position:absolute;inset:0;background:linear-gradient(105deg,rgba(255,255,255,.09) 0 30%,transparent 55%);pointer-events:none}
+  .quick{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:520px;margin:14px auto 0}
+  .quick button{border:1px solid var(--gold-dim);background:rgba(0,0,0,.25);border-radius:9px;padding:8px 12px;font-family:var(--font-mono);font-size:14px;min-width:56px}
+  .quick button:hover{border-color:var(--gold)}
+
   /* ---------- concentration ---------- */
   .focus{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
   .gauge{height:12px;border-radius:6px;background:rgba(0,0,0,.35);overflow:hidden;border:1px solid rgba(201,165,82,.3)}
@@ -242,6 +272,7 @@
     <button data-go="home" class="on">Accueil</button>
     <button data-go="train">Entraînement</button>
     <button data-go="table">Table</button>
+    <button data-go="strat">Stratégie</button>
     <button data-go="focus">Concentration</button>
     <button data-go="stats">Progression</button>
   </nav>
@@ -269,6 +300,7 @@
     <div class="modes">
       <button class="mode" data-go="train" data-tab="scroll"><span class="eyebrow">Réflexe</span><h3>Défilement</h3><p>Les cartes passent à la vitesse que tu choisis. Tu cliques la valeur, ou tu comptes en silence, avec des contrôles surprises.</p><span class="go">Ouvrir →</span></button>
       <button class="mode" data-go="train" data-tab="chrono"><span class="eyebrow">Vitesse</span><h3>Sabot chrono</h3><p>Le grand classique : un jeu complet le plus vite possible, et tu dois retomber sur le bon compte à la fin.</p><span class="go">Ouvrir →</span></button>
+      <button class="mode" data-go="strat"><span class="eyebrow">Décision</span><h3>Stratégie</h3><p>La stratégie de base main par main, puis les dix-huit écarts qui font vraiment gagner de l'argent quand le compte monte.</p><span class="go">Ouvrir →</span></button>
       <button class="mode" data-go="focus"><span class="eyebrow">Sang-froid</span><h3>Concentration</h3><p>Le chef de table te surveille. Les autres joueurs te parlent, on te regarde, la caméra guette tes lèvres. Garde le compte sans te griller.</p><span class="go">Ouvrir →</span></button>
       <button class="mode" data-go="table"><span class="eyebrow">Réalisme</span><h3>Table de blackjack</h3><p>Un croupier, jusqu'à cinq autres joueurs, une carte cachée, des séparations. Compte tout ce qui sort du sabot.</p><span class="go">Ouvrir →</span></button>
     </div>
@@ -289,7 +321,7 @@
   <!-- ================= ENTRAÎNEMENT ================= -->
   <section class="view" id="v-train" hidden>
     <div id="trainSetup" class="panel">
-      <div class="tabs"><button data-t="scroll" class="on">Défilement</button><button data-t="chrono">Sabot chrono</button></div>
+      <div class="tabs"><button data-t="scroll" class="on">Défilement</button><button data-t="chrono">Sabot chrono</button><button data-t="estim">Estimation</button></div>
       <div class="row" id="optScroll">
         <label class="f">Sabots <select id="tDecks"><option>1</option><option>2</option><option selected>6</option><option>8</option></select></label>
         <label class="f">Cartes <select id="tCount"><option>20</option><option selected>52</option><option>104</option><option>208</option><option value="all">Tout le sabot</option></select></label>
@@ -305,6 +337,11 @@
         <label class="f">Cartes à la fois <select id="cPer"><option>1</option><option selected>2</option><option>3</option></select></label>
         <p class="hint" style="margin:0;align-self:center">Tu avances toi-même (<kbd class="k">espace</kbd>, clic ou <kbd class="k">→</kbd>). Le chrono tourne dès la première carte. Un jeu complet doit retomber sur <b id="cTarget">0</b>.</p>
       </div>
+      <div class="row" id="optEstim" hidden>
+        <label class="f">Sabots en jeu <select id="eDecks"><option>4</option><option selected>6</option><option>8</option></select></label>
+        <label class="f">Manches <select id="eRounds"><option selected>10</option><option>20</option></select></label>
+        <p class="hint" style="margin:0;align-self:center">Tu regardes le tas de défausse et tu annonces combien de jeux y sont passés. C'est ce coup d'œil qui transforme un compte courant en compte vrai. Tolérance : un demi-jeu.</p>
+      </div>
       <div class="row" style="margin-top:16px"><button class="btn" id="tStart">Commencer</button>
         <p class="hint" style="margin:0;align-self:center">Clavier : <kbd class="k">←</kbd> −1 · <kbd class="k">↓</kbd>/<kbd class="k">espace</kbd> 0 · <kbd class="k">→</kbd> +1 · <kbd class="k">1</kbd>…<kbd class="k">5</kbd> boutons de gauche à droite.</p></div>
     </div>
@@ -319,6 +356,24 @@
       <div class="answers" id="answers"></div>
       <div class="dots" id="dots"></div>
       <div class="actions" style="margin-top:16px"><button class="btn ghost" id="tStop">Terminer maintenant</button></div>
+    </div>
+
+    <div id="estimRun" class="panel result" hidden>
+      <div class="eyebrow" id="ePos">Manche 1 sur 10</div>
+      <h2 style="font-size:24px;margin:4px 0 14px">Combien de jeux dans le tas ?</h2>
+      <div class="tray"><div class="stack" id="eStack"></div><div class="glare"></div><div class="lip"></div></div>
+      <div class="quick" id="eQuick"></div>
+      <div class="fb" id="eFb"></div>
+      <div class="score"><span>Justes <b id="eGood">0</b></span><span>Écart moyen <b id="eErr">—</b></span></div>
+      <div class="actions" style="margin-top:12px"><button class="btn ghost" id="eStop">Terminer</button></div>
+    </div>
+
+    <div id="estimEnd" class="panel result" hidden>
+      <div class="eyebrow">Estimation du sabot</div>
+      <div class="big" id="eScore"></div>
+      <div id="eTxt" style="font-size:15px;max-width:60ch;margin:0 auto"></div>
+      <div class="stats" id="eStats"></div>
+      <div class="actions" style="margin-top:20px"><button class="btn" id="eAgain">Rejouer</button><button class="btn ghost" id="eBack">Réglages</button></div>
     </div>
 
     <div id="trainEnd" class="panel result" hidden>
@@ -357,12 +412,15 @@
         <button class="btn ghost" id="bStand" disabled>Rester<kbd>R</kbd></button>
         <button class="btn ghost" id="bDouble" disabled>Doubler<kbd>B</kbd></button>
         <button class="btn ghost" id="bSplit" disabled>Séparer<kbd>S</kbd></button>
+        <button class="btn ghost" id="bSurr" disabled>Abandon<kbd>A</kbd></button>
       </div>
+      <div id="insBox"></div>
     </div>
     <div class="bar">
       <span>Sabots <select id="bDecks" class="sm"><option>1</option><option>2</option><option selected>6</option><option>8</option></select>
         &nbsp; joueurs <select id="bBots" class="sm"><option>0</option><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
-        &nbsp; <select id="bS17" class="sm"><option value="S17">reste à soft 17</option><option value="H17">tire à soft 17</option></select></span>
+        &nbsp; <select id="bS17" class="sm"><option value="S17">reste à soft 17</option><option value="H17">tire à soft 17</option></select>
+        &nbsp; <label style="cursor:pointer"><input type="checkbox" id="bSurrRule" checked> abandon</label></span>
       <span>croupier <input type="range" id="bSpeed" min="150" max="1200" step="50" value="450" style="width:100px;vertical-align:middle">
         &nbsp; quiz toutes les <select id="bQuiz" class="sm"><option value="0">—</option><option>3</option><option selected>5</option><option>10</option></select> mains
         &nbsp; <label style="cursor:pointer"><input type="checkbox" id="bHint"> aide stratégie</label></span>
@@ -370,6 +428,27 @@
       <span><button class="btn ghost" id="bCount">Donner mon compte</button> <button class="btn ghost" id="bShuffle">Nouveau sabot</button></span>
     </div>
     <p class="hint">Carte brûlée au début du sabot, une carte à chacun de gauche à droite puis au croupier, carte cachée, vérification du blackjack sur as ou 10, les autres joueurs suivent la stratégie de base, défausse visible, carte de coupe à 75 %. Compte toutes les cartes de la table.</p>
+  </section>
+
+  <!-- ================= STRATÉGIE ================= -->
+  <section class="view" id="v-strat" hidden>
+    <div class="tabs"><button data-s="base" class="on">Stratégie de base</button><button data-s="dev">Écarts au compte</button></div>
+    <div class="panel">
+      <p class="hint" id="sIntro" style="margin:0 0 10px"></p>
+      <div class="drill">
+        <div class="lane"><div class="eyebrow">Croupier</div><div class="hand" id="sUp"></div></div>
+        <div class="vs" id="sVs">contre</div>
+        <div class="tcBadge" id="sTc" hidden>Compte vrai<b>+0</b></div>
+        <div class="lane"><div class="hand" id="sHand"></div><div class="tot" id="sTot"></div></div>
+      </div>
+      <div class="actions" id="sBtns" style="margin-top:14px"></div>
+      <div class="fb" id="sFb"></div>
+      <div class="score"><span>Série <b id="sStreak">0</b></span><span>Session <b id="sSess">0/0</b></span><span>Total <b id="sAll">—</b></span></div>
+    </div>
+    <div class="panel" style="margin-top:14px" id="sTablePanel">
+      <div class="eyebrow">Les écarts travaillés</div>
+      <p class="hint" style="margin:6px 0 0" id="sList"></p>
+    </div>
   </section>
 
   <!-- ================= CONCENTRATION ================= -->
@@ -467,8 +546,9 @@
   };
 
   // ---------- persistance ----------
-  const DB={name:"",sound:true,sys:"hilo",sessions:[]};
+  const DB={name:"",sound:true,sys:"hilo",sessions:[],strat:{base:[0,0],dev:[0,0],ins:[0,0]},mistakes:[]};
   try{Object.assign(DB,JSON.parse(localStorage.getItem("cc_v2")||"{}"));}catch(e){}
+  DB.strat=Object.assign({base:[0,0],dev:[0,0],ins:[0,0]},DB.strat||{});DB.mistakes=DB.mistakes||[];
   const save=()=>{try{localStorage.setItem("cc_v2",JSON.stringify(DB));}catch(e){}};
   const sys=()=>SYS[DB.sys];
   const cv=c=>sys().v[c.i];
@@ -512,6 +592,7 @@
     view=v;document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);
     document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.go===v));
     if(v==="stats")renderStats(); if(v==="home")renderFan();
+    if(v==="strat"&&!STR.hand&&!STR.dev)newDeal();
     if(v!=="focus"&&typeof F!=="undefined"&&F.running)endFocus(false);
     if(v==="train"&&tab)setTab(tab);
     window.scrollTo({top:0});
@@ -543,8 +624,10 @@
 
   // ================= ENTRAÎNEMENT =================
   const T={kind:"scroll",shoe:[],cards:[],idx:-1,timer:null,rc:0,ans:[],running:false,decks:6,t0:0,rt:[],chk:[],nextChk:0,paused:false,start:0,chronoT:null,silent:false};
-  function setTab(t){T.kind=t;document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));$("optScroll").hidden=t!=="scroll";$("optChrono").hidden=t!=="chrono";}
-  document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+  function setTab(t){T.kind=t;document.querySelectorAll("[data-t]").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+    $("optScroll").hidden=t!=="scroll";$("optChrono").hidden=t!=="chrono";$("optEstim").hidden=t!=="estim";
+    $("estimRun").hidden=true;$("estimEnd").hidden=true;$("trainRun").hidden=true;$("trainEnd").hidden=true;$("trainSetup").hidden=false;}
+  document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>setTab(b.dataset.t));
   $("tSpeed").oninput=()=>$("tSpeedLbl").textContent=fr1(+$("tSpeed").value/1000)+" s / carte";
   $("tDecks").onchange=renderSys;$("cDecks").onchange=renderSys;
   $("tStart").onclick=startTrain;$("tStop").onclick=endTrain;
@@ -553,6 +636,7 @@
   function chkNext(from){if(T.kind!=="scroll")return Infinity;const m=$("tChk").value;if(m==="0")return Infinity;if(m==="rnd")return from+8+rnd(16);return from+ +m;}
   function startTrain(){
     ac();
+    if(T.kind==="estim")return startEstim();
     if(T.kind==="scroll"){
       T.decks=+$("tDecks").value;T.shoe=makeShoe(T.decks);
       const n=$("tCount").value==="all"?T.shoe.length:Math.min(+$("tCount").value,T.shoe.length);
@@ -649,20 +733,46 @@
   function total(h){let t=0,a=0;for(const c of h){t+=val(c);if(c.i===0)a++;}while(t>21&&a){t-=10;a--;}return t;}
   function soft(h){let t=0,a=0;for(const c of h){t+=val(c);if(c.i===0)a++;}return a>0&&t<=21;}
   const isBJ=h=>h.length===2&&total(h)===21;
-  function basic(h,up,canD,canP){
-    const u=val(up),t=total(h);
-    if(canP&&h.length===2&&val(h[0])===val(h[1])){
+  // Stratégie de base 6 jeux, DAS. o : {canD, canP, canU, h17}
+  function basic(h,up,o){
+    o=o||{};const canD=o.canD!==false,canP=o.canP!==false,canU=!!o.canU,h17=!!o.h17;
+    const u=val(up),t=total(h),pair=h.length===2&&val(h[0])===val(h[1]);
+    if(canU&&h.length===2){
+      if(pair&&val(h[0])===8&&u===11&&!h17)return"U";
+      if(!pair){
+        if(t===16&&(u===9||u===10||u===11))return"U";
+        if(t===15&&(u===10||(h17&&u===11)))return"U";
+        if(h17&&t===17&&u===11)return"U";
+      }
+    }
+    if(pair&&canP){
       const r=h[0].i===0?"A":val(h[0]);
-      if(r==="A"||r===8)return"P";if(r===9)return(u>=2&&u<=9&&u!==7)?"P":"S";
-      if(r===7||r===3||r===2)return u<=7?"P":"H";if(r===6)return u<=6?"P":"H";if(r===4)return(u===5||u===6)?"P":"H";if(r===10)return"S";
+      if(r==="A"||r===8)return"P";
+      if(r===9)return(u>=2&&u<=9&&u!==7)?"P":"S";
+      if(r===7||r===3||r===2)return u<=7?"P":"H";
+      if(r===6)return u<=6?"P":"H";
+      if(r===4)return(u===5||u===6)?"P":"H";
+      if(r===10)return"S";
     }
     const D=x=>canD?"D":x;
-    if(soft(h)){if(t>=19)return"S";if(t===18)return u>=3&&u<=6?D("S"):(u<=8?"S":"H");if(t===17)return u>=3&&u<=6?D("H"):"H";if(t>=15)return u>=4&&u<=6?D("H"):"H";return u>=5&&u<=6?D("H"):"H";}
-    if(t>=17)return"S";if(t>=13)return u<=6?"S":"H";if(t===12)return u>=4&&u<=6?"S":"H";
-    if(t===11)return u===11?"H":D("H");if(t===10)return u<=9?D("H"):"H";if(t===9)return u>=3&&u<=6?D("H"):"H";return"H";
+    if(soft(h)){
+      if(t>=20)return"S";
+      if(t===19)return(h17&&u===6)?D("S"):"S";
+      if(t===18)return u>=3&&u<=6?D("S"):(u<=8?"S":"H");
+      if(t===17)return u>=3&&u<=6?D("H"):"H";
+      if(t>=15)return u>=4&&u<=6?D("H"):"H";
+      return u>=5&&u<=6?D("H"):"H";
+    }
+    if(t>=17)return"S";
+    if(t>=13)return u<=6?"S":"H";
+    if(t===12)return u>=4&&u<=6?"S":"H";
+    if(t===11)return(u===11&&!h17)?"H":D("H");
+    if(t===10)return u<=9?D("H"):"H";
+    if(t===9)return u>=3&&u<=6?D("H"):"H";
+    return"H";
   }
-  const LBL={H:"Tirer",S:"Rester",D:"Doubler",P:"Séparer"};
-  const RES={"Gagné":"w","Perdu":"l","Égalité":"p","Sauté":"l","Blackjack":"bj"};
+  const LBL={H:"Tirer",S:"Rester",D:"Doubler",P:"Séparer",U:"Abandonner",Y:"Prendre l'assurance",N:"Refuser l'assurance"};
+  const RES={"Gagné":"w","Perdu":"l","Égalité":"p","Sauté":"l","Blackjack":"bj","Abandon":"p"};
 
   function newShoe(){
     B.shoe=makeShoe(+$("bDecks").value);B.cut=Math.floor(B.shoe.length*0.25);
@@ -693,7 +803,7 @@
     });
   }
   function refreshBar(){$("shoe").textContent=B.shoe.length;$("hands").textContent=B.hands;$("seen").textContent=B.seen;$("discardN").textContent=B.discard;$("discard").classList.toggle("full",B.discard>0);}
-  function setBtns(o){for(const [k,id] of [["deal","bDeal"],["hit","bHit"],["stand","bStand"],["dbl","bDouble"],["split","bSplit"]])$(id).disabled=!o[k];}
+  function setBtns(o){for(const [k,id] of [["deal","bDeal"],["hit","bHit"],["stand","bStand"],["dbl","bDouble"],["split","bSplit"],["surr","bSurr"]])$(id).disabled=!o[k];}
   function animateFromShoe(e,container){
     const s=$("shoe").getBoundingClientRect(),c=container.getBoundingClientRect();
     e.style.setProperty("--dx",(s.left+s.width/2-(c.left+c.width/2))+"px");e.style.setProperty("--dy",(s.top-c.top)+"px");e.classList.add("deal");
@@ -721,13 +831,14 @@
     B.busy=true;setBtns({});
     for(const st of B.seats)for(const h of st.hands)B.discard+=h.cards.length;
     B.discard+=B.d.length;B.d=[];B.cur=null;
-    for(const st of B.seats)st.hands=[{cards:[],doubled:false,res:""}];
+    for(const st of B.seats)st.hands=[{cards:[],doubled:false,res:"",surr:false}];
     renderSeats();$("dHand").innerHTML="";$("dScore").textContent="·";$("msg").textContent="";$("bsHint").textContent="";refreshBar();B.inPlay=true;
     for(let round=0;round<2;round++){
       for(let si=0;si<B.seats.length;si++)await drawSeat(si,0);
       await drawTo(B.d,$("dHand"),round===1);
       if(round===0)$("dScore").textContent=val(B.d[0]);
     }
+    if(val(B.d[0])===11)await askInsurance();
     if(val(B.d[0])>=10){
       $("msg").textContent="Le croupier vérifie sa carte…";await sleep(spd()*1.6);
       if(isBJ(B.d)){await revealHole();$("msg").textContent="Blackjack du croupier.";B.busy=false;await settle();return;}
@@ -735,11 +846,29 @@
     }
     B.busy=false;await playSeats(0);
   }
+  function askInsurance(){
+    return new Promise(res=>{
+      $("msg").textContent="Assurance ?";
+      const b=document.createElement("div");b.className="bubble";
+      b.innerHTML='<div class="from">Croupier</div><div class="q">Le croupier montre un as. Assurance ?</div><div class="opts"><button data-y="1">Oui</button><button data-y="0">Non</button></div>';
+      b.querySelectorAll("button").forEach(bt=>bt.onclick=()=>{
+        const took=bt.dataset.y==="1";$("insBox").innerHTML="";$("msg").textContent="";
+        if(sys().bal){
+          const tc=tcOf(B.rc,B.shoe.length/52),should=tc>=3,ok=took===should;
+          DB.strat.ins[ok?0:1]++;save();snd(ok?"ok":"ko");
+          toast(`${ok?"✓":"✗"} compte vrai ${fr1(tc)} · ${should?"assurance rentable à partir de +3":"pas d'assurance sous +3"}`,3200);
+        }
+        res(took);
+      });
+      $("insBox").appendChild(b);snd("warn");
+    });
+  }
   async function playSeats(from){
     for(let si=from;si<B.seats.length;si++){
       const st=B.seats[si];
       for(let hi=0;hi<st.hands.length;hi++){
         const h=st.hands[hi];
+        if(h.surr)continue;
         if(isBJ(h.cards)&&st.hands.length===1){h.res="Blackjack";renderSeats();continue;}
         B.cur={seat:si,hand:hi};renderSeats();
         if(st.you){B.busy=false;youTurn();return;}
@@ -750,11 +879,14 @@
   }
   const canSplit=(h,st)=>h.cards.length===2&&val(h.cards[0])===val(h.cards[1])&&st.hands.length<4;
   const canDouble=h=>h.cards.length===2&&!h.fromAces;
+  const isH17=()=>$("bS17").value==="H17";
+  const surrOK=(h,st)=>$("bSurrRule").checked&&h.cards.length===2&&st.hands.length===1&&!h.fromAces;
   async function botPlay(si,hi){
     const st=B.seats[si];let h=st.hands[hi];
     while(true){
       if(h.fromAces&&h.cards.length===2)break;
-      const a=basic(h.cards,B.d[0],canDouble(h),canSplit(h,st));await sleep(spd()*1.2);
+      const a=basic(h.cards,B.d[0],{canD:canDouble(h),canP:canSplit(h,st),canU:surrOK(h,st),h17:isH17()});await sleep(spd()*1.2);
+      if(a==="U"){h.surr=true;h.res="Abandon";renderSeats();return;}
       if(a==="S")break;
       if(a==="P"){await splitHand(si,hi);h=st.hands[hi];continue;}
       if(a==="D"){h.doubled=true;await drawSeat(si,hi);break;}
@@ -764,15 +896,16 @@
   }
   async function splitHand(si,hi){
     const st=B.seats[si],h=st.hands[hi];const c2=h.cards.pop();const aces=h.cards[0].i===0;
-    st.hands.splice(hi+1,0,{cards:[c2],doubled:false,res:"",fromAces:aces});h.fromAces=aces;renderSeats();
+    st.hands.splice(hi+1,0,{cards:[c2],doubled:false,res:"",surr:false,fromAces:aces});h.fromAces=aces;renderSeats();
     await drawSeat(si,hi);await drawSeat(si,hi+1);
   }
   function youTurn(){
     const st=B.you,h=st.hands[B.cur.hand];
+    if(h.surr)return nextYouHand();
     if(h.fromAces&&h.cards.length===2)return nextYouHand();
     if(total(h.cards)>=21){if(total(h.cards)>21){h.res="Sauté";renderSeats();}return nextYouHand();}
-    setBtns({hit:true,stand:true,dbl:canDouble(h),split:canSplit(h,st)});
-    $("bsHint").innerHTML=$("bHint").checked?`Stratégie de base : <b>${LBL[basic(h.cards,B.d[0],canDouble(h),canSplit(h,st))]}</b>`:"";
+    setBtns({hit:true,stand:true,dbl:canDouble(h),split:canSplit(h,st),surr:surrOK(h,st)});
+    $("bsHint").innerHTML=$("bHint").checked?`Stratégie de base : <b>${LBL[basic(h.cards,B.d[0],{canD:canDouble(h),canP:canSplit(h,st),canU:surrOK(h,st),h17:isH17()})]}</b>`:"";
   }
   async function nextYouHand(){
     const si=B.seats.indexOf(B.you);setBtns({});$("bsHint").textContent="";
@@ -783,11 +916,15 @@
   async function stand(){if(B.busy||!B.cur)return;await nextYouHand();}
   async function dbl(){if(B.busy||!B.cur)return;const h=B.you.hands[B.cur.hand];if(!canDouble(h))return;
     B.busy=true;setBtns({});h.doubled=true;await drawSeat(B.seats.indexOf(B.you),B.cur.hand);if(total(h.cards)>21){h.res="Sauté";renderSeats();}B.busy=false;await nextYouHand();}
+  async function surrender(){
+    if(B.busy||!B.cur)return;const st=B.you,h=st.hands[B.cur.hand];if(!surrOK(h,st))return;
+    h.surr=true;h.res="Abandon";renderSeats();snd("warn");await nextYouHand();
+  }
   async function split(){if(B.busy||!B.cur)return;const h=B.you.hands[B.cur.hand];if(!canSplit(h,B.you))return;
     B.busy=true;setBtns({});await splitHand(B.seats.indexOf(B.you),B.cur.hand);B.busy=false;youTurn();}
   async function dealerPlay(){
     B.busy=true;
-    const alive=B.seats.some(st=>st.hands.some(h=>total(h.cards)<=21&&!(isBJ(h.cards)&&st.hands.length===1)));
+    const alive=B.seats.some(st=>st.hands.some(h=>!h.surr&&total(h.cards)<=21&&!(isBJ(h.cards)&&st.hands.length===1)));
     await revealHole();await sleep(spd()*.6);
     if(alive){const h17=$("bS17").value==="H17";while(total(B.d)<17||(h17&&total(B.d)===17&&soft(B.d))){await drawTo(B.d,$("dHand"));$("dScore").textContent=total(B.d);}}
     await settle();
@@ -795,6 +932,7 @@
   async function settle(){
     const dt=total(B.d),dbj=isBJ(B.d);let mine=[];
     for(const st of B.seats)for(const h of st.hands){
+      if(h.surr){h.res="Abandon";if(st.you)mine.push("Abandon");continue;}
       const t=total(h.cards),bj=isBJ(h.cards)&&st.hands.length===1;
       h.res=t>21?"Sauté":bj&&dbj?"Égalité":bj?"Blackjack":dbj?"Perdu":(dt>21||t>dt)?"Gagné":t<dt?"Perdu":"Égalité";
       if(st.you)mine.push(h.res);
@@ -804,7 +942,7 @@
     setBtns({deal:true});
     const q=+$("bQuiz").value;if(q&&B.hands%q===0)setTimeout(openQuiz,900);
   }
-  $("bDeal").onclick=deal;$("bHit").onclick=hit;$("bStand").onclick=stand;$("bDouble").onclick=dbl;$("bSplit").onclick=split;
+  $("bDeal").onclick=deal;$("bHit").onclick=hit;$("bStand").onclick=stand;$("bDouble").onclick=dbl;$("bSplit").onclick=split;$("bSurr").onclick=surrender;
   $("bShuffle").onclick=newShoe;$("bDecks").onchange=newShoe;$("bBots").onchange=newShoe;
   $("bHint").onchange=()=>{if(B.cur&&!B.busy)youTurn();};
 
@@ -953,8 +1091,148 @@
     $("fAsk").hidden=true;$("fVerdict").hidden=false;
   }
 
+  // ================= STRATÉGIE =================
+  const mkCard=i=>{const [suit,col]=SUITS[rnd(4)];return{r:RANKS[i],i,suit,col};};
+  const upIdx=v=>v===11?0:v-1;
+  const sIdx=n=>(n>0?"+":"")+n;
+  // Illustrious 18 + Fab 4, Hi-Lo, 6 jeux. p : cartes du joueur, u : valeur de la carte du croupier.
+  const DEV=[
+    {k:"ins",lab:"Assurance",u:11,idx:3,at:"Y",below:"N",txt:"Assurance"},
+    {p:[9,5],u:10,idx:0,at:"S",below:"H",txt:"16 contre 10"},
+    {p:[9,4],u:10,idx:4,at:"S",below:"H",txt:"15 contre 10, sans abandon"},
+    {p:[9,9],u:5,idx:5,at:"P",below:"S",txt:"10,10 contre 5"},
+    {p:[9,9],u:6,idx:4,at:"P",below:"S",txt:"10,10 contre 6"},
+    {p:[5,3],u:10,idx:4,at:"D",below:"H",txt:"10 contre 10"},
+    {p:[9,1],u:3,idx:2,at:"S",below:"H",txt:"12 contre 3"},
+    {p:[9,1],u:2,idx:3,at:"S",below:"H",txt:"12 contre 2"},
+    {p:[5,4],u:11,idx:1,at:"D",below:"H",txt:"11 contre as"},
+    {p:[4,3],u:2,idx:1,at:"D",below:"H",txt:"9 contre 2"},
+    {p:[5,3],u:11,idx:4,at:"D",below:"H",txt:"10 contre as"},
+    {p:[4,3],u:7,idx:3,at:"D",below:"H",txt:"9 contre 7"},
+    {p:[9,5],u:9,idx:5,at:"S",below:"H",txt:"16 contre 9"},
+    {p:[9,2],u:2,idx:-1,at:"S",below:"H",txt:"13 contre 2"},
+    {p:[9,1],u:4,idx:0,at:"S",below:"H",txt:"12 contre 4"},
+    {p:[9,1],u:5,idx:-2,at:"S",below:"H",txt:"12 contre 5"},
+    {p:[9,1],u:6,idx:-1,at:"S",below:"H",txt:"12 contre 6"},
+    {p:[9,2],u:3,idx:-2,at:"S",below:"H",txt:"13 contre 3"},
+    {p:[9,3],u:10,idx:3,at:"U",below:"H",txt:"14 contre 10, abandon autorisé"},
+    {p:[9,4],u:9,idx:2,at:"U",below:"H",txt:"15 contre 9, abandon autorisé"},
+    {p:[9,4],u:11,idx:1,at:"U",below:"H",txt:"15 contre as, abandon autorisé"},
+    {p:[9,4],u:10,idx:0,at:"U",below:"H",txt:"15 contre 10, abandon autorisé"},
+  ];
+  const STR={mode:"base",hand:null,up:null,tc:0,dev:null,fromPool:false,streak:0,n:0,good:0,locked:false};
+  document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{
+    document.querySelectorAll("[data-s]").forEach(x=>x.classList.toggle("on",x===b));
+    STR.mode=b.dataset.s;STR.streak=0;STR.n=0;STR.good=0;newDeal();
+  });
+  const mistKey=(pc,u)=>pc.map(c=>c.i).sort().join("-")+"v"+u.i;
+  function newDeal(){
+    STR.locked=false;$("sFb").innerHTML="";STR.fromPool=false;
+    if(STR.mode==="dev"){
+      const d=DEV[rnd(DEV.length)];STR.dev=d;STR.tc=d.idx+rnd(5)-2;
+      STR.up=mkCard(upIdx(d.u));STR.hand=d.k==="ins"?null:d.p.map(mkCard);
+      $("sTc").hidden=false;$("sTc").innerHTML="Compte vrai<b>"+sIdx(STR.tc)+"</b>";
+    }else{
+      STR.dev=null;$("sTc").hidden=true;
+      const pool=DB.mistakes;
+      if(pool.length&&rnd(100)<35){const m=pool[rnd(pool.length)];STR.hand=m.p.map(mkCard);STR.up=mkCard(m.u);STR.fromPool=true;}
+      else{
+        const sh=makeShoe(6);
+        do{STR.hand=[sh.pop(),sh.pop()];STR.up=sh.pop();}while(total(STR.hand)===21);
+      }
+    }
+    render();
+  }
+  function render(){
+    $("sUp").innerHTML="";$("sUp").appendChild(cardEl(STR.up));
+    $("sHand").innerHTML="";
+    if(STR.hand){STR.hand.forEach(c=>$("sHand").appendChild(cardEl(c)));
+      const t=total(STR.hand);$("sTot").textContent=(soft(STR.hand)&&t<21?"souple ":"")+t;$("sVs").textContent="contre";}
+    else{$("sTot").textContent="";$("sVs").textContent="tu n'as pas encore regardé ta main";}
+    const pair=STR.hand&&STR.hand.length===2&&val(STR.hand[0])===val(STR.hand[1]);
+    const acts=STR.hand?[["H","Tirer","T"],["S","Rester","R"],["D","Doubler","B"],["P","Séparer","S"],["U","Abandonner","A"]]:[["Y","Assurance","O"],["N","Refuser","N"]];
+    $("sBtns").innerHTML=acts.map(([k,l,key])=>`<button class="btn ghost" data-a="${k}"${k==="P"&&!pair?" disabled":""}>${l}<kbd>${key}</kbd></button>`).join("");
+    $("sBtns").querySelectorAll("button").forEach(b=>b.onclick=()=>answerStrat(b.dataset.a));
+    $("sIntro").innerHTML=STR.mode==="dev"
+      ? "Le compte vrai t'est donné. Joue l'écart s'il y en a un, sinon la stratégie de base. Ce sont les dix-huit écarts d'Illustrious 18 et les quatre abandons de Fab 4, en Hi-Lo, six jeux."
+      : "Six jeux, croupier qui reste à dix-sept souple, doubler après séparation autorisé, abandon tardif autorisé. Les mains que tu rates reviennent plus souvent.";
+    $("sTablePanel").hidden=STR.mode!=="dev";
+    if(STR.mode==="dev")$("sList").textContent=DEV.map(d=>`${d.txt} : ${LBL[d.at].toLowerCase()} à partir de ${sIdx(d.idx)}`).join(" · ");
+    updScore();
+  }
+  function updScore(){
+    $("sStreak").textContent=STR.streak;$("sSess").textContent=STR.good+"/"+STR.n;
+    const a=DB.strat[STR.mode==="dev"?"dev":"base"];
+    $("sAll").textContent=a[0]+a[1]?Math.round(100*a[0]/(a[0]+a[1]))+" % sur "+(a[0]+a[1]):"—";
+  }
+  function answerStrat(a){
+    if(STR.locked)return;STR.locked=true;
+    let right,why;
+    if(STR.mode==="dev"){
+      const d=STR.dev;right=STR.tc>=d.idx?d.at:d.below;
+      why=`${d.txt} : ${LBL[d.at].toLowerCase()} à partir de ${sIdx(d.idx)}, sinon ${LBL[d.below].toLowerCase()}. Compte vrai ${sIdx(STR.tc)}.`;
+    }else{
+      const pair=STR.hand.length===2&&val(STR.hand[0])===val(STR.hand[1]);
+      right=basic(STR.hand,STR.up,{canD:true,canP:pair,canU:true,h17:false});
+      const t=total(STR.hand);
+      why=`${pair?STR.hand[0].r+","+STR.hand[1].r:(soft(STR.hand)?"souple ":"dur ")+t} contre ${STR.up.r} : ${LBL[right].toLowerCase()}.`;
+    }
+    const ok=a===right;STR.n++;if(ok){STR.good++;STR.streak++;}else STR.streak=0;
+    const key=STR.mode==="dev"?"dev":"base";DB.strat[key][ok?0:1]++;
+    if(STR.mode==="base"){
+      const k=mistKey(STR.hand,STR.up);const i=DB.mistakes.findIndex(m=>m.k===k);
+      if(!ok){if(i<0){DB.mistakes.push({k,p:STR.hand.map(c=>c.i),u:STR.up.i,n:1});while(DB.mistakes.length>40)DB.mistakes.shift();}else DB.mistakes[i].n++;}
+      else if(i>=0&&STR.fromPool){if(--DB.mistakes[i].n<=0)DB.mistakes.splice(i,1);}
+    }
+    save();snd(ok?"ok":"ko");
+    $("sFb").innerHTML=`<span class="verdict ${ok?"ok":"ko"}">${ok?"Juste":"Non — "+LBL[right]}</span>${why}`;
+    updScore();setTimeout(()=>{if(view==="strat")newDeal();},ok?900:2400);
+  }
+
+  // ================= ESTIMATION DU SABOT =================
+  const E={decks:6,rounds:10,i:0,n:0,good:0,errs:[],locked:false};
+  function startEstim(){
+    E.decks=+$("eDecks").value;E.rounds=+$("eRounds").value;E.i=0;E.good=0;E.errs=[];
+    $("trainSetup").hidden=true;$("trainEnd").hidden=true;$("trainRun").hidden=true;$("estimEnd").hidden=true;$("estimRun").hidden=false;
+    const opts=[];for(let d=0.5;d<=E.decks-0.5;d+=0.5)opts.push(d);
+    $("eQuick").innerHTML=opts.map(d=>`<button data-d="${d}">${fr1(d)}</button>`).join("");
+    $("eQuick").querySelectorAll("button").forEach(b=>b.onclick=()=>answerEstim(+b.dataset.d));
+    $("eGood").textContent="0";$("eErr").textContent="—";nextEstim();
+  }
+  function nextEstim(){
+    if(E.i>=E.rounds)return endEstim();
+    E.locked=false;$("eFb").innerHTML="";
+    const total=E.decks*52;E.n=26+rnd(total-52);
+    $("ePos").textContent=`Manche ${E.i+1} sur ${E.rounds} · sabot de ${E.decks} jeux`;
+    $("eStack").style.height="0px";
+    requestAnimationFrame(()=>{$("eStack").style.height=(244*E.n/total)+"px";});
+    snd("deal");
+  }
+  function answerEstim(g){
+    if(E.locked)return;E.locked=true;
+    const real=E.n/52,err=Math.abs(g-real),ok=err<=0.5;
+    if(ok)E.good++;E.errs.push(err);E.i++;snd(ok?"ok":"ko");
+    $("eFb").innerHTML=`<span class="verdict ${ok?"ok":"ko"}">${ok?"Bien vu":"Raté"}</span>${E.n} cartes, soit ${fr1(real)} jeux au tas. Il reste ${fr1(E.decks-real)} jeux dans le sabot.`;
+    $("eGood").textContent=E.good;
+    $("eErr").textContent=fr1(E.errs.reduce((a,b)=>a+b,0)/E.errs.length)+" jeu";
+    setTimeout(()=>{if(view==="train")nextEstim();},ok?1100:2100);
+  }
+  function endEstim(){
+    const pct=Math.round(100*E.good/Math.max(E.errs.length,1));
+    const mean=E.errs.length?E.errs.reduce((a,b)=>a+b,0)/E.errs.length:0;
+    $("estimRun").hidden=true;$("estimEnd").hidden=false;
+    $("eScore").textContent=pct+" %";$("eScore").className="big "+(pct>=70?"ok":"ko");
+    $("eTxt").textContent=pct>=90?"Coup d'œil de croupier. Ton compte vrai sera juste.":pct>=70?"Correct. Un demi-jeu d'erreur coûte déjà un point de compte vrai, continue.":"À travailler : un compte courant parfait divisé par une mauvaise estimation donne une mauvaise décision.";
+    $("eStats").innerHTML=[[E.good+"/"+E.errs.length,"Estimations justes"],[fr1(mean)+" jeu","Écart moyen"],[fr1(Math.max.apply(null,E.errs.concat([0])))+" jeu","Pire écart"],[E.decks,"Sabots en jeu"]]
+      .map(([b,l])=>`<div><b>${b}</b><span>${l}</span></div>`).join("");
+    DB.sessions.push({t:Date.now(),kind:"estim",sys:sys().name,n:E.errs.length,exact:pct>=70,off:+mean.toFixed(2),rt:null,secs:null,chk:null});
+    while(DB.sessions.length>200)DB.sessions.shift();save();
+  }
+  $("eStop").onclick=endEstim;$("eAgain").onclick=startEstim;$("eBack").onclick=()=>{$("estimEnd").hidden=true;$("trainSetup").hidden=false;};
+
   // ================= PROGRESSION =================
-  const KIND={scroll:"Défilement",chrono:"Sabot chrono",table:"Table",focus:"Concentration"};
+  const KIND={scroll:"Défilement",chrono:"Sabot chrono",table:"Table",focus:"Concentration",estim:"Estimation"};
+  const pctOf=a=>a[0]+a[1]?Math.round(100*a[0]/(a[0]+a[1]))+" %":"—";
   function renderStats(){
     const S=DB.sessions;$("statsTitle").textContent=firstName()?`Tes sessions, ${firstName()}`:"Tes sessions";
     if(!S.length){$("tiles").innerHTML=`<div class="tile"><b>—</b><span>Aucune session pour l'instant</span></div>`;$("log").innerHTML="";drawChart([]);return;}
@@ -964,11 +1242,12 @@
     let streak=0;for(let i=S.length-1;i>=0&&S[i].exact;i--)streak++;
     const last10=S.slice(-10);const ex10=last10.filter(s=>s.exact).length;
     $("tiles").innerHTML=[[S.length,"Sessions"],[Math.round(100*ex/S.length)+" %","Comptes exacts"],[Math.round(100*ex10/last10.length)+" %","Sur les 10 dernières"],[streak,"Série en cours"],
-      [rt!==null?fr1(rt)+" s":"—","Réaction moyenne"],[best!==null?fr1(best)+" s":"—","Meilleur jeu de 52, exact"]].map(([b,s])=>`<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("");
+      [rt!==null?fr1(rt)+" s":"—","Réaction moyenne"],[best!==null?fr1(best)+" s":"—","Meilleur jeu de 52, exact"],
+      [pctOf(DB.strat.base),"Stratégie de base"],[pctOf(DB.strat.dev),"Écarts au compte"],[pctOf(DB.strat.ins),"Assurance à la table"]].map(([b,s])=>`<div class="tile"><b>${b}</b><span>${s}</span></div>`).join("");
     const rows=S.slice(-40).reverse().map(s=>{const d=new Date(s.t);
       return`<tr><td>${d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"})} ${d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</td><td>${KIND[s.kind]}</td><td>${s.sys}</td><td>${s.n}</td><td class="${s.exact?"ok":"ko"}">${s.exact?"exact":"écart "+s.off}</td><td>${s.rt?fr1(s.rt)+" s":s.secs?fr1(s.secs)+" s":""}${s.chk?" · contrôles "+s.chk[0]+"/"+s.chk[1]:""}${s.susp!==undefined?" · suspicion "+s.susp+(s.burned?" · grillé":""):""}${s.speed?" · "+fr1(s.speed/1000)+" s/carte":""}</td></tr>`;}).join("");
     $("log").innerHTML=`<tr><th>Quand</th><th>Exercice</th><th>Système</th><th>Cartes</th><th>Résultat</th><th>Détail</th></tr>${rows}`;
-    drawChart(S.slice(-30));
+    drawChart(S.filter(x=>x.kind!=="estim").slice(-30));
   }
   function drawChart(S){
     const c=$("chart"),dpr=window.devicePixelRatio||1,W=c.clientWidth||800,H=220;c.width=W*dpr;c.height=H*dpr;const x=c.getContext("2d");x.scale(dpr,dpr);
@@ -983,8 +1262,8 @@
     S.forEach((s,i)=>{x.beginPath();x.arc(X(i),Y(s.off),i===n-1?5:3.5,0,7);x.fillStyle=s.exact?"#6fcf8f":"#f08a80";x.fill();});
     x.fillStyle=cream;x.fillText("plus ancien",P.l,H-8);const w=x.measureText("plus récent").width;x.fillText("plus récent",W-P.r-w,H-8);
   }
-  $("reset").onclick=()=>{if(confirm("Effacer tout l'historique ?")){DB.sessions=[];save();renderStats();toast("Historique effacé");}};
-  window.addEventListener("resize",()=>{if(view==="stats")drawChart(DB.sessions.slice(-30));});
+  $("reset").onclick=()=>{if(confirm("Effacer tout l'historique ?")){DB.sessions=[];DB.strat={base:[0,0],dev:[0,0],ins:[0,0]};DB.mistakes=[];save();renderStats();toast("Historique effacé");}};
+  window.addEventListener("resize",()=>{if(view==="stats")drawChart(DB.sessions.filter(x=>x.kind!=="estim").slice(-30));});
 
   // ---------- clavier ----------
   document.addEventListener("keydown",e=>{
@@ -995,14 +1274,19 @@
       else if(e.key==="ArrowRight"){answer(1);e.preventDefault();}
       else if(e.key==="ArrowDown"||e.key===" "){answer(0);e.preventDefault();}
       else if(/^[1-5]$/.test(e.key)){const b=$("answers").children[+e.key-1];if(b)answer(+b.dataset.v);}
+    }else if(view==="strat"&&!STR.locked){
+      const m={t:"H",r:"S",b:"D",s:"P",a:"U",o:"Y",n:"N"}[e.key.toLowerCase()];
+      const bt=m&&$("sBtns").querySelector(`[data-a="${m}"]`);
+      if(bt&&!bt.disabled){answerStrat(m);e.preventDefault();}
     }else if(view==="focus"&&F.running){
       if(e.key===" "||e.key==="Enter"){relax();e.preventDefault();}
     }else if(view==="table"){
       const k=e.key.toLowerCase();
-      if(k==="t")hit();else if(k==="r")stand();else if(k==="b")dbl();else if(k==="s")split();else if(k==="d"||k==="enter")deal();
+      if(k==="t")hit();else if(k==="r")stand();else if(k==="b")dbl();else if(k==="s")split();else if(k==="a")surrender();else if(k==="d"||k==="enter")deal();
     }
   });
 
+  if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
   renderSys();renderFan();newShoe();
 })();
 </script>
