@@ -870,3 +870,79 @@ body.a-table main{ padding-bottom:0 }
 .carte--pivot.cachee .pivot{ transform:perspective(700px) rotateY(180deg) }
 .carte .face{ position:absolute; inset:0; border-radius:inherit; backface-visibility:hidden; -webkit-backface-visibility:hidden }
 .carte .face.ar{ transform:rotateY(180deg) }
+
+/* ══════════════════════════════════════════════════════════════════════
+   LE CROUPIER (lot Croupier) — le personnage vit dans croupier.js, sa
+   matière est ici. Section délimitée : tout ce qui suit lui appartient.
+   ══════════════════════════════════════════════════════════════════════ */
+/* Sur un écran d'ordinateur, la bande au-dessus du rail lui est donnée :
+   mesurée à 64 px sur 1280 × 800, c'était la hauteur d'une tête. 30 svh − 136 px
+   donne 104 px à 800, 134 à 900, 188 à 1080 — le feutre garde ses sièges
+   entiers partout (vérifié au banc), et à 1280 × 800 le grand lettrage doré
+   cède la place : un croupier vaut plus qu'une ligne d'or. Le sabot et la
+   défausse se rapprochent de ses mains (gap 16 au lieu de 34) : à +200 px du
+   centre, aucun bras à cette échelle ne les atteignait. */
+@media (min-width:1000px){
+  #v-table{ --salle-haut:clamp(64px, calc(30svh - 136px), 190px) }
+  .rangee-haute{ gap:16px }
+  .croupier{ min-width:0 }
+}
+/* Le croupier est DEVANT la table (ses mains sont sur le feutre) mais DERRIÈRE
+   le rack de jetons, qui cache la coupe de son buste. Pour ça, .tapis ne doit
+   plus être un contexte d'empilement : son z-index passe à auto, et .rack (5)
+   comme .feutre (2) prennent rang dans la salle. Ordre obtenu, du fond vers
+   l'œil : table · feutre et cartes (2) · croupier (3) · liseré (4) · rack (5)
+   · jetons en vol (8). Un seul rang change, rien d'autre ne bouge. */
+.tapis{ z-index:auto }
+#croupierScene{ z-index:3; width:min(760px, 92%); height:calc(var(--salle-haut) + 12px); overflow:visible;
+  display:flex; justify-content:center; align-items:flex-end }
+/* L'<svg> prend TOUTE la hauteur de la bande ; sa largeur suit le viewBox (520 × 200),
+   donc l'échelle est exacte et croupier.js peut convertir un point d'écran en
+   unités de rig sans getScreenCTM. overflow:visible : les bras dépassent la
+   ligne de table pour atteindre le feutre, c'est voulu. */
+.cr-svg{ height:100%; width:auto; overflow:visible; display:block; flex:none }
+.cr-svg g, .cr-svg path{ transform-origin:0 0; transform-box:view-box }
+.cr-svg #cr-crSourcilG, .cr-svg #cr-crSourcilD, .cr-svg .cr-joue, .cr-svg #cr-crPaupG, .cr-svg #cr-crPaupD{ transition:transform .16s ease-out, opacity .2s }
+@media (prefers-reduced-motion:reduce){ .cr-svg *{ transition:none!important } }
+
+/* La bulle : ivoire, Instrument Serif, une pointe vers la tête. Elle vit dans
+   .salle (pas dans #croupierScene, qui est aria-hidden) pour que l'aria-live
+   soit lu. Position posée par croupier.js, à droite du visage. */
+.cr-bulle{ position:absolute; z-index:6; max-width:min(300px, 34%); padding:8px 13px 9px; border-radius:16px 16px 16px 4px;
+  background:linear-gradient(180deg,#FBF7EC,#EFE7D2); color:#1A1409;
+  font-family:"Instrument Serif",Georgia,serif; font-size:19px; line-height:1.15; text-wrap:balance;
+  box-shadow:0 10px 24px -10px rgba(0,0,0,.85), 0 0 0 1px rgba(0,0,0,.35), inset 0 1px 0 #fff;
+  opacity:0; transform:translate(-4px,6px) scale(.96); transform-origin:0 100%;
+  transition:opacity .16s ease-out, transform .18s var(--ressort, ease-out); pointer-events:none }
+.cr-bulle.on{ opacity:1; transform:none }
+.cr-bulle::before{ content:""; position:absolute; left:-7px; bottom:6px; width:12px; height:12px;
+  background:#EFE7D2; transform:skewX(-30deg) rotate(20deg); border-radius:2px; box-shadow:-1px 1px 0 rgba(0,0,0,.25) }
+.cr-bulle .cr-nom{ display:block; font-family:Archivo,sans-serif; font-weight:700; font-size:10px; letter-spacing:.14em;
+  text-transform:uppercase; color:#8A6A1E; margin-bottom:2px }
+
+/* Le sélecteur dans ⚙ Réglages de la table : six cartes, une vignette chacune,
+   navigables au clavier (ce sont de vrais boutons radio). */
+.cr-reglage{ margin-top:16px; text-align:left }
+.cr-choix{ display:grid; grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:8px; margin:8px 0 6px }
+.cr-carte{ position:relative; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 4px 7px;
+  border-radius:12px; border:1px solid var(--bord); background:var(--relief); cursor:pointer; text-align:center;
+  transition:border-color .15s, box-shadow .15s }
+.cr-carte:hover{ border-color:var(--laiton) }
+.cr-carte.on{ border-color:var(--laiton); box-shadow:0 0 0 1px var(--laiton) inset, 0 0 18px -8px var(--laiton) }
+.cr-carte input{ position:absolute; opacity:0; width:1px; height:1px; pointer-events:none }
+.cr-carte:has(input:focus-visible){ outline:2px solid var(--laiton); outline-offset:2px }
+.cr-carte b{ font-family:"Instrument Serif",serif; font-weight:400; font-size:17px; line-height:1.1 }
+.cr-carte i{ font-style:normal; font-size:var(--t-micro); letter-spacing:.06em; text-transform:uppercase; color:var(--os-eteint) }
+.cr-vignette{ width:72px; height:66px; display:grid; place-items:end center; border-radius:10px; overflow:hidden;
+  background:radial-gradient(70% 60% at 50% 20%, rgba(226,184,87,.22), transparent 70%), #0F1512 }
+.cr-vignette .cr-mini{ height:100%; width:auto; overflow:hidden; display:block }
+.cr-auto{ font-size:30px; line-height:1; color:var(--laiton); align-self:center }
+.cr-trait{ font-size:var(--t-petit); margin:0 0 10px; min-height:2.4em }
+
+/* Mode Concentration : la vignette du chef de table à côté de la jauge. */
+.cr-chef{ width:44px; height:44px; border-radius:50%; overflow:hidden; flex:none; display:block;
+  background:radial-gradient(70% 60% at 50% 20%, rgba(226,184,87,.3), transparent 70%), #0F1512;
+  box-shadow:0 0 0 1.5px var(--laiton) inset; transition:box-shadow .3s }
+.cr-chef .cr-mini{ width:100%; height:100%; display:block }
+.cr-chef.fixe{ box-shadow:0 0 0 2px var(--cinabre) inset, 0 0 14px -4px var(--cinabre) }
+.cr-chef .cr-mini #co-crSourcilG, .cr-chef .cr-mini #co-crSourcilD, .cr-chef .cr-mini #co-crBouche{ transition:transform .3s }
