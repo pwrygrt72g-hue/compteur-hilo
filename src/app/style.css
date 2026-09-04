@@ -315,26 +315,90 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 .salle{
   position:relative; min-height:0; overflow:hidden; border-radius:var(--r) var(--r) 0 0;
   display:grid; grid-template-rows:var(--salle-haut) minmax(0,1fr); padding:0 18px 12px;
+  background:var(--sol);
+  --lampes:linear-gradient(transparent, transparent);
+}
+/* Le DÉCOR du lieu : Vegas, Macao, Monte-Carlo et le Salon Privé n'étaient plus
+   qu'un même halo brun sur un même fond noir. La photo du lieu (embarquée,
+   créditée — cf. build.mjs), floutée et assombrie, fait la salle derrière le
+   croupier ; la lueur du filament et les lampes se posent PAR-DESSUS (::after). */
+.salle .decor{ position:absolute; inset:-28px; z-index:0; pointer-events:none;
+  background:var(--photo, none) center 32% / cover no-repeat, var(--sol);
+  filter:blur(14px) brightness(.36) saturate(1.25) }
+.salle::after{
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
   background:
+    var(--lampes),
     radial-gradient(52% 46% at 50% 8%, var(--lueur) 0%, transparent 72%),
     radial-gradient(120% 60% at 50% 100%, var(--sol-clair) 0%, transparent 60%),
-    var(--sol);
+    linear-gradient(180deg, rgba(0,0,0,.18), transparent 40%, rgba(0,0,0,.35));
 }
 /* Fremont et l'Aquarium ont un tube de néon dans la salle — un seul, pas un arc-en-ciel. */
 .salle::before{
-  content:""; position:absolute; left:8%; right:8%; top:0; height:2px; border-radius:2px;
+  content:""; position:absolute; left:8%; right:8%; top:0; height:2px; border-radius:2px; z-index:1;
   background:var(--neon); opacity:.55; pointer-events:none;
   box-shadow:0 0 12px 2px var(--neon), 0 0 44px 8px color-mix(in oklab, var(--neon) 40%, transparent);
 }
+/* Chaque lieu a sa lumière, pas seulement son feutre. */
+#v-table[data-lieu="boulevard"] .salle, #v-table[data-lieu="mainchaude"] .salle{
+  --lampes:radial-gradient(18% 12% at 22% 6%, rgba(255,200,120,.28), transparent 70%), radial-gradient(18% 12% at 78% 6%, rgba(255,200,120,.28), transparent 70%) }
+#v-table[data-lieu="cotai"]{ --lueur:rgba(242,193,90,.46) }
+#v-table[data-lieu="cotai"] .salle .decor{ filter:blur(12px) brightness(.5) saturate(1.6) }
+#v-table[data-lieu="cotai"] .salle{ --lampes:repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 3px, transparent 3px 90px) }
+#v-table[data-lieu="cotai"] .tapis{ --rail:#3A0F0C; --rail-clair:#5A1A14 }
+#v-table[data-lieu="neon"] .salle .decor, #v-table[data-lieu="aquarium"] .salle .decor{ filter:blur(10px) brightness(.42) saturate(1.5) }
+#v-table[data-lieu="cercle"]{ --lueur:rgba(212,180,106,.24) }
+#v-table[data-lieu="cercle"] .salle .decor{ filter:blur(18px) brightness(.28) saturate(.8) }
+/* Le Salon Privé : cuir capitonné et or, pas un feutre gris dans le noir. */
+#v-table[data-lieu="salonprive"]{ --rail-liseret:#E6C773; --feutre:#2A2D31; --feutre-clair:#3B4046 }
+#v-table[data-lieu="salonprive"] .tapis{
+  background:
+    radial-gradient(circle at 14px 14px, rgba(255,255,255,.07) 0 1.2px, transparent 2.4px) 0 0 / 28px 28px,
+    linear-gradient(180deg, rgba(255,255,255,.08), transparent 18%),
+    linear-gradient(180deg, #221A16 0%, #100B09 45%, #070504 100%) }
+#v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(16px) brightness(.24) saturate(.9) }
+#v-table[data-lieu="reno"] .salle .decor{ filter:blur(12px) brightness(.34) saturate(.8) sepia(.3) }
 #croupierScene{ position:absolute; left:50%; top:0; transform:translateX(-50%); z-index:1;
   width:min(560px, 80%); height:calc(var(--salle-haut) + 170px); pointer-events:none }
 #jetonsCalque{ position:absolute; inset:0; z-index:8; pointer-events:none }
+
+/* Le thème clair : la page est écrue, la salle l'était… en noir. Le sol devient
+   un parquet clair, la barre des coups prend la laque de la page. Le FEUTRE et
+   le rail ne changent pas : une table de blackjack ne blanchit pas le jour. */
+:root[data-theme="clair"] #v-table{ --sol:#D8D3C6; --sol-clair:#E9E5DA; --lueur:rgba(138,92,11,.30) }
+:root[data-theme="clair"]{
+  .salle .decor{ filter:blur(16px) brightness(1.02) saturate(.85); opacity:.5 }
+  .salle::after{ background:var(--lampes), radial-gradient(52% 46% at 50% 8%, var(--lueur) 0%, transparent 72%), linear-gradient(180deg, rgba(255,255,255,.35), transparent 45%, rgba(60,50,30,.18)) }
+  .zone-actions{ background:linear-gradient(180deg, var(--relief), var(--laque)); color:var(--os); box-shadow:inset 0 1px 0 rgba(255,255,255,.6) }
+  .btn.verre{ background:rgba(19,28,26,.06); color:var(--os); border-color:rgba(19,28,26,.16); box-shadow:none }
+  .btn.verre:hover{ background:rgba(19,28,26,.11) }
+  .btn.verre[disabled]{ color:rgba(19,28,26,.38); background:rgba(19,28,26,.03); border-color:rgba(19,28,26,.09) }
+  #bDonne[disabled]{ background:rgba(138,92,11,.10); color:rgba(19,28,26,.45); box-shadow:0 0 0 1px rgba(138,92,11,.35) inset }
+  .zone-actions .bulle{ background:var(--relief) }
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="sombre"]) #v-table{ --sol:#D8D3C6; --sol-clair:#E9E5DA; --lueur:rgba(138,92,11,.30) }
+  :root:not([data-theme="sombre"]){
+  .salle .decor{ filter:blur(16px) brightness(1.02) saturate(.85); opacity:.5 }
+    .salle::after{ background:var(--lampes), radial-gradient(52% 46% at 50% 8%, var(--lueur) 0%, transparent 72%), linear-gradient(180deg, rgba(255,255,255,.35), transparent 45%, rgba(60,50,30,.18)) }
+    .zone-actions{ background:linear-gradient(180deg, var(--relief), var(--laque)); color:var(--os); box-shadow:inset 0 1px 0 rgba(255,255,255,.6) }
+    .btn.verre{ background:rgba(19,28,26,.06); color:var(--os); border-color:rgba(19,28,26,.16); box-shadow:none }
+    .btn.verre:hover{ background:rgba(19,28,26,.11) }
+    .btn.verre[disabled]{ color:rgba(19,28,26,.38); background:rgba(19,28,26,.03); border-color:rgba(19,28,26,.09) }
+    #bDonne[disabled]{ background:rgba(138,92,11,.10); color:rgba(19,28,26,.45); box-shadow:0 0 0 1px rgba(138,92,11,.35) inset }
+    .zone-actions .bulle{ background:var(--relief) }
+  }
+}
 
 /* ── La table : une demi-lune, rail de cuir, liseré doré ──────────────── */
 .tapis{
   grid-row:2; position:relative; z-index:2; height:100%; min-height:0;
   width:min(100%, 1500px); margin:0 auto; padding:14px;
-  border-radius:42% 42% 30px 30px / 72% 72% 30px 30px;
+  /* Le bord DROIT est celui du croupier (le rack y est encastré), l'ARC est celui
+     des joueurs : on est assis autour, la demi-lune s'ouvre vers nous. Les rayons
+     du bas sont relus par cartes.js (placerSieges) et table.js (rendreLettrage) :
+     les sièges et le lettrage suivent la courbe RÉELLE, jamais une copie. */
+  border-radius:26px 26px 46% 46% / 26px 26px 44% 44%;
   background:
     linear-gradient(180deg, rgba(255,255,255,.10), transparent 18%),
     linear-gradient(180deg, var(--rail-clair) 0%, var(--rail) 45%, color-mix(in oklab, var(--rail) 70%, #000) 100%);
@@ -360,9 +424,31 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 .feutre>svg.grain{ mix-blend-mode:overlay; opacity:.55 }
 .feutre>svg.lettrage{ z-index:1 }
 .feutre>svg.lettrage text{ font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:700; fill:var(--or);
-  letter-spacing:.22em; text-transform:uppercase; opacity:.62; paint-order:stroke; stroke:rgba(0,0,0,.28); stroke-width:.6px }
+  letter-spacing:.22em; text-transform:uppercase; opacity:.88; paint-order:stroke; stroke:rgba(0,0,0,.45); stroke-width:1px;
+  transition:opacity .3s }
+/* Les deux lignes du rail sont petites (12 px) : elles portent des RÈGLES (6 TO 5 =
+   table imbattable, H17/S17). Mesuré à .62 d'opacité : 2,7:1 sur le vert. Le liseré
+   du rail, plus clair, passe le seuil des 4,5:1. */
+.feutre>svg.lettrage text.rail{ fill:var(--rail-liseret); opacity:.92 }
 .feutre>*:not(svg){ position:relative; z-index:2 }
 
+/* La rangée haute passe AU-DESSUS des sièges : le sabot y a rang 3, une carte qui
+   en part naît dessous (à l'échelle du sabot, scale .74) et en SORT, elle n'apparaît
+   pas en fantôme par-dessus. */
+.feutre>.rangee-haute{ z-index:3 }
+.sabot{ z-index:3 }
+/* L'annonce et le conseil vivent DANS la bande entre la main du croupier et les
+   sièges, par-dessus le lettrage (qui s'efface tant qu'une annonce est affichée) :
+   ils ne prennent plus 60 px de hauteur à un feutre qui n'en a que 450 à 1280 × 800. */
+@media (min-width:1000px){
+  .feutre{ grid-template-rows:auto minmax(0,1fr) }
+  .feutre>.annonce, .feutre>.conseil{ position:absolute; left:0; right:0; margin:0; z-index:3; pointer-events:none }
+  .feutre>.annonce{ top:calc(var(--w-croupier, 89px) * 1.4 + 40px) }
+  .feutre>.conseil{ top:calc(var(--w-croupier, 89px) * 1.4 + 72px) }
+  .feutre.annonce-on>svg.lettrage text.grand{ opacity:0 }
+  .sabot, .defausse{ margin-top:-10px }
+  .rack{ padding-bottom:14px }   /* le bas du buste du croupier passe derrière */
+}
 /* Le rack de jetons, planté dans le rail devant le croupier : six tubes vus de face. */
 .rack{ position:absolute; top:-2px; left:50%; transform:translateX(-50%); z-index:5;
   display:flex; gap:3px; padding:5px 6px 4px; border-radius:0 0 9px 9px;
@@ -374,11 +460,32 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 
 /* La rangée du croupier : défausse à gauche, sa main au centre, le sabot à droite —
    SOUS ses mains, pas dans les coins (un sabot est toujours à portée de main). */
-.rangee-haute{ display:flex; justify-content:center; align-items:flex-start; gap:34px; margin-top:8px }
-.croupier{ display:flex; align-items:center; justify-content:center; gap:14px; min-width:270px }
+/* La rangée a SA hauteur avant la première carte, comme les sièges : mesuré le
+   04/09, la première carte du croupier faisait grandir la rangée de 86 à 125 px,
+   reculer la défausse de 70 px et avancer le sabot d'autant — la source de la
+   donne se déplaçait pendant la donne, et toute la table se réorganisait à la
+   6ᵉ carte. --w-croupier est posé par cartes.js d'après la HAUTEUR du feutre
+   (stable), jamais d'après la hauteur des sièges (qui dépend de cette rangée :
+   une boucle). Le libellé « Croupier » est à GAUCHE de sa main, hors du couloir
+   sabot → main que chaque carte traverse. */
+.rangee-haute{ display:flex; justify-content:center; align-items:flex-start; gap:34px; margin-top:8px;
+  min-height:calc(var(--w-croupier, 89px) * 1.4 + 8px) }
+/* Le bloc est ÉTROIT (le libellé, puis la place de deux cartes) : le sabot et la
+   défausse doivent rester à portée des bras du croupier — mesuré le 04/09, à 1280
+   × 800 chaque bras atteint ~150 px de son épaule. Une main de trois cartes et
+   plus se resserre (table.js pose --pas sur #dMain) au lieu de pousser le sabot. */
+.croupier{ display:grid; grid-template-columns:auto auto; align-items:center; justify-content:start;
+  width:calc(var(--w-croupier, 89px) * 1.8 + 90px); min-height:calc(var(--w-croupier, 89px) * 1.4) }
+.croupier .main{ grid-column:2; justify-self:start; justify-content:flex-start }
+.croupier .qui{ grid-column:1; grid-row:1; justify-self:end; padding-right:12px }
 .main{ --w:84px; display:flex; justify-content:center; min-height:0 }
-/* Le croupier suit la largeur de table calculée par cartes.js (--w-table), un peu plus grand que les joueurs. */
-.croupier .main{ --w:clamp(84px, calc(var(--w-table, 84px) * 1.06), 110px) }
+.croupier .main{ --w:var(--w-croupier, 89px) }
+/* La carte cachée glisse SOUS la carte visible, et ressort dessus quand elle est
+   retournée : la carte qu'on regarde toute la main reste lisible entière. */
+#dMain{ --pas:calc(var(--w, 84px) * .62) }
+#dMain .carte:first-child{ position:relative; z-index:2 }
+#dMain .carte--pivot{ z-index:1 }
+#dMain .carte--pivot:not(.cachee){ z-index:3 }
 .qui{ display:flex; flex-direction:column; align-items:center; gap:2px; font-size:var(--t-micro); letter-spacing:.14em;
   text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 82%, transparent) }
 .qui b{ font-family:"Martian Mono",monospace; font-size:var(--t-fort); color:var(--ivoire); letter-spacing:0 }
@@ -402,10 +509,15 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 /* Les sièges, en bas, chacun avec son cercle de mise doré ; les sièges du bord
    remontent un peu (--ecart posé par la table) : on est assis autour, pas en rang. */
 .sieges{ display:flex; justify-content:center; align-items:flex-end; gap:12px; flex-wrap:wrap; min-height:0; padding:0 4px 2px }
+/* Chaque siège suit l'ARC du rail : --lift (remontée) et --tilt (inclinaison vers
+   le centre) sont calculés par cartes.js d'après la courbe réelle du feutre, pour
+   que le coin extérieur de chaque siège reste sur le feutre. Un siège n'a pas de
+   fond : ce n'est pas un panneau d'appli collé sur le feutre, c'est un marquage. */
 .siege{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 6px 4px; border-radius:14px; min-width:126px;
-  transition:box-shadow .2s; transform:translateY(calc(var(--ecart,0) * -8px)) }
-.siege.toi{ background:rgba(0,0,0,.16); box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 45%, transparent) inset }
+  transition:box-shadow .2s; transform:translateY(var(--lift, 0px)) rotate(var(--tilt, 0deg)) }
+.siege.toi .cercle{ box-shadow:0 0 0 2px var(--or) inset, 0 0 14px -4px var(--or); opacity:1 }
 .siege.actif{ box-shadow:0 0 0 2px var(--or) inset, 0 0 22px -6px var(--or) }
+@starting-style{ .siege.actif{ box-shadow:0 0 0 0 transparent, 0 0 0 0 transparent } }
 /* Le siège a SA hauteur avant même la première carte (celle d'une main + son score) :
    un siège qui grandit à la donne remonterait par-dessus le lettrage doré. */
 .siege .mains{ display:flex; gap:10px; align-items:flex-end; min-height:calc(var(--w-table, 84px) * 1.4 + 22px) }
@@ -417,12 +529,15 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 .siege .score{ font-family:"Martian Mono",monospace; font-size:var(--t-petit); color:var(--ivoire); min-height:18px; text-shadow:0 1px 2px rgba(0,0,0,.5) }
 .siege .issue{ font-size:var(--t-micro); letter-spacing:.07em; text-transform:uppercase; padding:1px 7px; border-radius:999px; font-weight:600 }
 .siege .issue:empty{ display:none }
+.siege .issue.neuve{ animation:bascule 160ms var(--sec) }
 .issue.g{ background:color-mix(in oklab,var(--jade) 26%,transparent); color:var(--jade) }
 .issue.p{ background:color-mix(in oklab,var(--cinabre) 24%,transparent); color:var(--cinabre) }
 .issue.n{ background:rgba(255,255,255,.12); color:var(--nacre) }
 .issue.bj{ background:var(--or); color:#1A1409 }
-.cercle{ width:46px; height:46px; border-radius:50%; position:relative; margin-top:3px; flex:none;
-  box-shadow:0 0 0 1.5px var(--or) inset, 0 0 10px -4px var(--or); opacity:.85 }
+/* Une vraie case de mise : 72 px, la pile de jetons (34 px) se lit DEDANS ; à 46 px
+   un seul jeton bouchait le cercle et une mise de 10 se lisait « 5 ». */
+.cercle{ width:clamp(52px, 4.6vw, 68px); height:clamp(52px, 4.6vw, 68px); border-radius:50%; position:relative; margin-top:3px; flex:none;
+  box-shadow:0 0 0 1.5px color-mix(in oklab, var(--or) 78%, transparent) inset, 0 0 10px -4px var(--or); opacity:.9 }
 .cercle::after{ content:""; position:absolute; inset:6px; border-radius:50%; border:1px solid color-mix(in oklab, var(--or) 40%, transparent) }
 .siege .nom{ font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 88%, transparent) }
 .siege.toi .nom{ color:var(--or) }
@@ -438,6 +553,12 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 .hud-compte i{ font-style:normal; font-family:Archivo,sans-serif; font-size:var(--t-micro); letter-spacing:.1em; text-transform:uppercase; color:var(--os-eteint) }
 .hud-compte b{ font-weight:600; min-width:3ch; text-align:right }
 .hud-compte.masque b{ color:var(--os-eteint) }
+/* Compte masqué (le cas par défaut) : quatre tirets en permanence faisaient un bandeau
+   mort. On les replie en une puce ; le tapis et la mise RÉELLE restent chiffrés. */
+.hud-compte .puce-masque{ display:none; font-family:Archivo,sans-serif; font-size:var(--t-micro); letter-spacing:.08em;
+  text-transform:uppercase; color:var(--os-eteint); border:1px solid var(--bord); border-radius:999px; padding:3px 10px; align-self:center }
+.hud-compte.masque > span:not(#hudTapis):not(#hudMise):not(.puce-masque){ display:none }
+.hud-compte.masque .puce-masque{ display:inline-flex }
 .hud-compte .plus b{ color:var(--jade) } .hud-compte .moins b{ color:var(--cinabre) }
 
 /* ── Les coups : verre teinté sur la scène, le principal en or ─────────── */
@@ -648,20 +769,28 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 /* ── Mouvement ─────────────────────────────────────────────────────── */
 /* La donne part du sabot et décrit un ARC : le point de passage à mi-course est
    soulevé de 34 px et la carte tourne légèrement en vol, comme lancée du poignet. */
-@keyframes donne{
-  from{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(-16deg) scale(.92);opacity:0}
-  30%{opacity:1}
-  55%{transform:translate(calc(var(--dx,240px) * .42),calc(var(--dy,-200px) * .42 - 34px)) rotate(-5deg) scale(.98)}
-  to{transform:none;opacity:1}
+/* Mesuré le 04/09 en rAF : avec un point de passage à 55 %, l'easing s'appliquait
+   À CHAQUE SEGMENT et la carte calait à mi-arc (69, 58, 34, 19, 12, 7, 4, 3, 1 px
+   par image… puis 60) — un coup de frein par carte, douze par manche. Le TRAJET
+   (transform) et la PORTANCE (translate, une propriété séparée qui se compose
+   par-dessus) sont deux animations à deux images clés : aucune cassure possible.
+   La carte part à l'échelle du sabot (.74 = 62/84) et en SORT, sans fondu. */
+@keyframes donne-trajet{
+  from{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(-16deg) scale(.74)}
+  to{transform:none}
 }
+@keyframes donne-arc{ 0%,100%{translate:0 0} 50%{translate:0 -30px} }
 /* LA ligne importante : la durée de la donne est une FRACTION de l'intervalle
    de l'exercice. À 250 ms par carte, une donne de 300 ms dure plus longtemps
    que l'exercice, et on compte une carte qu'on n'a jamais vue immobile. */
 .scene{--don:clamp(80ms, calc(var(--intervalle,1200ms) * .16), 165ms)}
 /* Sur la table, la carte VOLE (on ne compte pas une carte en vol dans un exercice,
    mais ici on regarde une donne) : environ la moitié de la cadence, bornée. */
-.plateau{--don:clamp(110ms, calc(var(--intervalle,400ms) * .45), 300ms)}
-.carte--entre{animation:donne var(--don,150ms) var(--ressort) both}
+.plateau{--don:clamp(150ms, calc(var(--intervalle,450ms) * .72), 420ms)}
+.carte--entre{animation:donne-trajet var(--don,150ms) cubic-bezier(.2,.6,.3,1) both, donne-arc var(--don,150ms) ease-in-out both;
+  animation-delay:30ms}
+/* Une carte qui change de largeur (l'éventail se resserre) glisse, elle ne saute pas. */
+.carte{ transition:width .25s var(--sec) }
 @keyframes bascule{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .bascule{animation:bascule 120ms var(--sec)}
 
@@ -720,6 +849,9 @@ main{ padding-left:max(var(--gap),var(--sg)); padding-right:max(var(--gap),var(-
    secours et l'encoche. Une constante y serait fausse la moitié du temps. */
 body.a-table{ overflow:hidden; overscroll-behavior:none }
 body.a-table main{ padding-bottom:0 }
+/* À 1920 la table occupait 56 % de la largeur, une petite table dans un vide noir
+   de 420 px de chaque côté. Un écran de salon donne une table qui emplit la vue. */
+body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)) }
 
 .hud .regles{ flex-wrap:nowrap }
 
@@ -745,8 +877,10 @@ body.a-table main{ padding-bottom:0 }
   .salle{ padding:0 6px 6px; --salle-haut:28px }
   .tapis{ padding:8px; border-radius:40% 40% 14px 14px / 60% 60% 14px 14px }
   .feutre{ padding:10px 6px 4px; gap:0 }
-  .rangee-haute{ gap:12px; margin-top:4px }
-  .croupier{ min-width:0; min-height:0 }
+  .rangee-haute{ gap:12px; margin-top:4px; min-height:0 }
+  .croupier{ min-width:0; min-height:0; width:auto; grid-template-columns:auto auto; gap:6px }
+  .croupier .qui{ grid-column:2; grid-row:1; padding:0 } .croupier .main{ grid-column:1 }
+  .siege{ transform:none }
   .sabot,.defausse{ width:34px; height:46px; font-size:10px }
   .annonce{ font-size:var(--t-petit); min-height:0; margin:2px 0 }
   .conseil{ margin:0 }
@@ -797,7 +931,10 @@ body.a-table main{ padding-bottom:0 }
   .feutre{ padding:6px; gap:0 }
   .rack, .feutre>svg.lettrage{ display:none }
   .annonce{ font-size:var(--t-micro); margin:0; min-height:0 }
-  .croupier{ min-height:0; min-width:0 }
+  .croupier{ min-height:0; min-width:0; width:auto; grid-template-columns:auto auto; gap:6px }
+  .croupier .qui{ grid-column:2; grid-row:1; padding:0 } .croupier .main{ grid-column:1 }
+  .rangee-haute{ min-height:0 }
+  .siege{ transform:none }
   .croupier .main{ --w:54px }
   .sabot,.defausse{ width:34px; height:46px }
   .siege{ width:clamp(72px,11vw,110px) }
@@ -954,9 +1091,10 @@ body.a-table main{ padding-bottom:0 }
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px -8px rgba(0,0,0,.9) }
 
 /* La ligne du coach : ta mise en unités et, si le compte est affiché, sa cohérence. */
-.coach-mise{ position:absolute; left:26px; bottom:12px; z-index:7; margin:0; pointer-events:none;
-  font-family:"Martian Mono",monospace; font-size:var(--t-micro); letter-spacing:.06em; text-transform:uppercase;
-  color:color-mix(in oklab, var(--ivoire) 72%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.7) }
+.coach-mise{ position:absolute; left:50%; transform:translateX(-50%); bottom:16px; z-index:7; margin:0; pointer-events:none;
+  font-family:Archivo,sans-serif; font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
+  padding:5px 13px; border-radius:999px; background:rgba(0,0,0,.5); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or) 30%, transparent);
+  color:color-mix(in oklab, var(--ivoire) 82%, transparent); animation:bascule 160ms var(--sec) }
 .coach-mise:empty{ display:none }
 .coach-mise b{ font-weight:600 } .coach-mise .ok{ color:#5FE0C6 } .coach-mise .ko{ color:#FF9B7A }
 
@@ -995,6 +1133,8 @@ body.a-table main{ padding-bottom:0 }
   #v-table{ --salle-haut:clamp(64px, calc(30svh - 136px), 190px) }
   .rangee-haute{ gap:16px }
   .croupier{ min-width:0 }
+  .siege{ min-width:0 }
+  .sieges{ padding:0 3% 2px }
 }
 /* Le croupier est DEVANT la table (ses mains sont sur le feutre) mais DERRIÈRE
    le rack de jetons, qui cache la coupe de son buste. Pour ça, .tapis ne doit
@@ -1004,12 +1144,15 @@ body.a-table main{ padding-bottom:0 }
    · jetons en vol (8). Un seul rang change, rien d'autre ne bouge. */
 .tapis{ z-index:auto }
 #croupierScene{ z-index:3; width:min(760px, 92%); height:calc(var(--salle-haut) + 12px); overflow:visible;
-  display:flex; justify-content:center; align-items:flex-end }
+  display:flex; justify-content:center; align-items:flex-start }
 /* L'<svg> prend TOUTE la hauteur de la bande ; sa largeur suit le viewBox (520 × 200),
    donc l'échelle est exacte et croupier.js peut convertir un point d'écran en
    unités de rig sans getScreenCTM. overflow:visible : les bras dépassent la
    ligne de table pour atteindre le feutre, c'est voulu. */
-.cr-svg{ height:100%; width:auto; overflow:visible; display:block; flex:none }
+/* Au moins 150 px de haut (jamais plus de 124 % de sa bande, jamais moins que la
+   bande) : à 1280 × 800 la bande fait 116 px, et un croupier de 116 px a des bras
+   de 126 px — le sabot était hors de portée. Le bas du buste passe sous le rack. */
+.cr-svg{ height:clamp(100%, 150px, 124%); width:auto; overflow:visible; display:block; flex:none; filter:drop-shadow(0 10px 14px rgba(0,0,0,.6)) }
 .cr-svg g, .cr-svg path{ transform-origin:0 0; transform-box:view-box }
 .cr-svg #cr-crSourcilG, .cr-svg #cr-crSourcilD, .cr-svg .cr-joue, .cr-svg #cr-crPaupG, .cr-svg #cr-crPaupD{ transition:transform .16s ease-out, opacity .2s }
 @media (prefers-reduced-motion:reduce){ .cr-svg *{ transition:none!important } }

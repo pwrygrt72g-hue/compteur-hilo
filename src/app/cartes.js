@@ -188,7 +188,10 @@ function retournerCarte(el, c) {
   if (av && !av.firstElementChild) av.innerHTML = faceSvg(c);
   el.classList.toggle("rouge", c.col === "r");
   el.setAttribute("aria-label", carteNom(c)); el.dataset.r = c.r; el.dataset.s = CARTES_SUITES[c.suit] || "";
-  el.classList.remove("cachee");
+  // La main du croupier arrive sur la carte à 240 ms (croupier.js) : la carte
+  // pivote SOUS elle, pas avant qu'elle l'ait touchée.
+  if (matchMedia("(prefers-reduced-motion:reduce)").matches) el.classList.remove("cachee");
+  else setTimeout(() => el.classList.remove("cachee"), 200);
 }
 document.addEventListener("sabot:croupier-revele", e => retournerCarte(e.detail.el, e.detail.carte));
 
@@ -200,28 +203,54 @@ document.addEventListener("sabot:croupier-revele", e => retournerCarte(e.detail.
    pas 316 px : elles se recouvrent. Posé sur chaque .main en ligne, donc
    au-dessus de tout ce que la feuille de style dit ; le croupier suit
    --w-table (posé sur le feutre), un peu plus grand que les joueurs. */
+/* La courbe RÉELLE du feutre : ses coins bas sont deux quarts d'ellipse dont les
+   rayons sont relus dans le border-radius calculé (en px ou en %), jamais
+   recopiés. cy = le centre des ellipses ; entre les deux, le bord est droit. */
+function courbeFeutre(f, W, H) {
+  const v = getComputedStyle(f).borderBottomLeftRadius.split(/\s+/);
+  const lire = (t, ref) => t.endsWith("%") ? parseFloat(t) / 100 * ref : parseFloat(t) || 0;
+  const rx = Math.min(W / 2, lire(v[0] || "0", W)), ry = Math.min(H, lire(v[1] || v[0] || "0", H));
+  const cy = H - ry;
+  // y du bord bas du feutre à l'abscisse x (H sur la partie droite).
+  const y = x => {
+    let cx = null; if (x < rx) cx = rx; else if (x > W - rx) cx = W - rx; else return H;
+    const u = (x - cx) / rx; return cy + ry * Math.sqrt(Math.max(0, 1 - u * u));
+  };
+  return { rx, ry, cy, y };
+}
 function dimensionnerCartes() {
   const box = $("sieges"); if (!box) return;
   const sieges = [...box.querySelectorAll(".siege")], n = sieges.length; if (!n) return;
-  const cs = getComputedStyle(box), L = box.clientWidth, H = box.clientHeight;
+  const cs = getComputedStyle(box), H = box.clientHeight;
+  const L = box.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
   if (L < 80) return;                                  // vue cachée : rien à mesurer
   const pellicule = cs.flexWrap === "nowrap";          // téléphone : les sièges défilent, la largeur de carte reste celle du CSS
   const gap = parseFloat(cs.columnGap) || 12;
   const cercle = box.querySelector(".cercle");
-  const chrome = (cercle ? cercle.offsetHeight : 46) + 68;   // score, nom, cercle, marges : tout ce qui n'est pas la carte (mesuré : 114 px)
-  // La bande du lettrage doré (« BLACKJACK PAYS 3 TO 2 ») entre l'annonce et les
-  // sièges : on la réserve quand les cartes restent lisibles (≥ 72 px) malgré elle,
-  // sinon l'arc s'efface et les cartes gardent la place — c'est table.js qui tranche.
-  const reserve = H > 0 && (H - chrome - 56) / 1.4 >= 72 ? 56 : 0;
-  const wHaut = H > 0 ? Math.max(44, (H - chrome - reserve) / 1.4) : 999;
-  const partage = Math.min(300, (L - gap * (n - 1)) / n);
+  const chrome = (cercle ? cercle.offsetHeight : 72) + 68;   // score, nom, cercle, marges : tout ce qui n'est pas la carte
+  // La carte du croupier suit la HAUTEUR DU FEUTRE (stable), jamais celle des sièges :
+  // la rangée haute a sa hauteur d'après cette valeur, et la hauteur des sièges dépend
+  // de la rangée haute — une boucle, si on lisait H. 15,5 % : 90 px sur un portable
+  // (feutre de 580), 100 sur un grand écran, 66 sur une tablette couchée.
+  const feutre = $("feutre"), Hf = feutre ? feutre.clientHeight : 0;
+  if (feutre && Hf > 0) feutre.style.setProperty("--w-croupier", Math.max(70, Math.min(106, Math.round(Hf * .19))) + "px");
+  // Plus de bande réservée au lettrage : le plafond (62 % de la hauteur d'un siège)
+  // laisse la bande de lui-même dès qu'il y a de la place, et sur un écran bas l'arc
+  // passe sous les cartes — comme sur une vraie table.
+  const wHaut = H > 0 ? Math.max(44, (H - chrome) / 1.4) : 999;
+  // Un siège de moins d'un demi-pixel de trop et le dernier passe à la ligne
+  // (vécu : le 5ᵉ siège sur une 2ᵉ rangée, remonté de 231 px sur l'arc).
+  const partage = Math.min(300, Math.floor((L - gap * (n - 1)) / n - .5));
   // La largeur « de la table » : celle d'une main de deux dans un siège ordinaire.
   // Plafond : une carte ne prend pas plus de 62 % de la hauteur qui lui revient —
   // 84 px sur un portable (1280 × 800), 100 px sur un grand écran (1920 × 1080).
-  const plafond = Math.min(100, Math.max(84, (H - chrome - reserve) / 1.4 * .62));
+  const plafond = Math.min(100, Math.max(84, (H - chrome) / 1.4 * .62));
   const sBase = (pellicule ? sieges[0].clientWidth : partage) - 12;
   const wTable = Math.max(40, Math.round(Math.min(plafond, wHaut, .62 * sBase)));
   sieges.forEach(s => {
+    // Une largeur FIXE par siège : un siège qui passe de 126 à 133 px à sa 2ᵉ carte
+    // faisait reculer tous ses voisins de 3 px (mesuré le 04/09).
+    if (!pellicule) s.style.width = partage + "px";
     const mains = [...s.querySelectorAll(".main")], h = Math.max(1, mains.length);
     const S = (pellicule ? s.clientWidth : partage) - 12;         // l'intérieur du siège
     const Wmain = (S - (h - 1) * 10) / h;
@@ -236,6 +265,29 @@ function dimensionnerCartes() {
       m.style.setProperty("--pas", Math.max(8, pas).toFixed(1) + "px");
     });
   });
-  const feutre = $("feutre"); if (feutre) feutre.style.setProperty("--w-table", (pellicule ? Math.round(.62 * sBase) : wTable) + "px");
+  if (feutre) feutre.style.setProperty("--w-table", (pellicule ? Math.round(.62 * sBase) : wTable) + "px");
+  if (!pellicule && feutre) placerSieges(box, sieges, feutre);
+}
+/* Les sièges sur l'ARC. Le rail bas est courbe : un siège du bord posé en rang
+   aurait son coin extérieur hors du feutre. Chacun REMONTE (--lift) juste ce qu'il
+   faut pour que le coin extérieur bas de son contenu reste sur le feutre, et
+   s'incline vers le centre (--tilt, 3,5° par rang, 7° au plus). Tout est mesuré
+   HORS transformation (offsetTop/offsetLeft), sinon on mesurerait le résultat. */
+function placerSieges(box, sieges, feutre) {
+  const W = feutre.clientWidth, H = feutre.clientHeight; if (W < 320 || H < 160) return;
+  const cf = courbeFeutre(feutre, W, H), n = sieges.length, marge = 22;
+  sieges.forEach((s, i) => {
+    const ecart = i - (n - 1) / 2;
+    const cx = box.offsetLeft + s.offsetLeft + s.offsetWidth / 2;
+    const bas = box.offsetTop + s.offsetTop + s.offsetHeight - 4;
+    // La demi-largeur du contenu : la plus large des pièces (mains, cercle, nom).
+    let demi = 40;
+    s.querySelectorAll(".mains, .cercle, .nom").forEach(p => { demi = Math.max(demi, p.offsetWidth / 2); });
+    demi += 12;
+    const yCourbe = Math.min(cf.y(cx - demi), cf.y(cx + demi)) - marge;
+    const lift = Math.max(0, Math.round(bas - yCourbe));
+    s.style.setProperty("--lift", -lift + "px");
+    s.style.setProperty("--tilt", (-Math.sign(ecart) * Math.min(7, Math.abs(ecart) * 3.5)).toFixed(1) + "deg");
+  });
 }
 if (window.ResizeObserver && $("sieges")) new ResizeObserver(() => dimensionnerCartes()).observe($("sieges"));

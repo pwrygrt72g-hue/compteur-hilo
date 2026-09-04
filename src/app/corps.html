@@ -84,8 +84,10 @@
       <span><i>Courant</i><b id="tRC">—</b></span>
       <span><i>Vrai</i><b id="tTC">—</b></span>
       <span><i>Jeux</i><b id="tJeux">—</b></span>
-      <span><i>Mise</i><b id="tMise">—</b></span>
+      <span title="La mise que dit la rampe de référence, en unités"><i>Rampe</i><b id="tMise">—</b></span>
+      <span class="puce-masque" aria-hidden="true">Compte masqué</span>
       <span class="solde" id="hudTapis" title="Tes jetons en main"><i>Tapis</i><b id="tTapis">1 000</b><em id="tNet" hidden></em></span>
+      <span id="hudMise" title="Ta mise réelle, et en unités du minimum"><i>Mise</i><b id="tMiseReelle">—</b></span>
     </div>
     <button class="icone" id="bReglagesTable" title="Réglages de la table" aria-label="Réglages de la table">⚙</button>
   </div>
@@ -94,6 +96,8 @@
        à lui) ; la table est une demi-lune : rail de cuir, liseré doré, feutre du lieu.
        #jetonsCalque est un calque au-dessus de tout, pour les jetons qui volent. -->
   <div class="salle" id="salle">
+    <!-- Le décor du lieu : la photo embarquée (window.PHOTOS), floutée et assombrie par le CSS. -->
+    <div class="decor" aria-hidden="true"></div>
     <div id="croupierScene" aria-hidden="true"></div>
     <div class="tapis plateau" id="plateau">
       <div class="rack" id="rack" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>

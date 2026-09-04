@@ -19,7 +19,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { extname } from "node:path";
 
 const args = process.argv.slice(2);
-const opt = Object.fromEntries(args.filter(a => a.startsWith("--")).map(a => { const [k, v] = a.slice(2).split("="); return [k, v ?? true]; }));
+// La valeur peut contenir des « = » (une expression JS pour --sonde) : on coupe au PREMIER seulement.
+const opt = Object.fromEntries(args.filter(a => a.startsWith("--")).map(a => { const i = a.indexOf("="); return i < 0 ? [a.slice(2), true] : [a.slice(2, i), a.slice(i + 1)]; }));
 const pos = args.filter(a => !a.startsWith("--"));
 const vue = pos[0] || "table";
 const [L, H] = (pos[1] || "1280x800").split("x").map(Number);
@@ -71,6 +72,8 @@ if (opt.donne) { await evaluer(`(document.getElementById("bDonne")||{click(){}})
 // --puis=bReste : un coup après la donne (pour voir le croupier retourner sa carte, un bust, un gain…).
 if (opt.puis) { await evaluer(`(document.getElementById(${JSON.stringify(opt.puis)})||{click(){}}).click()`); await dodo(+(opt.attendre2 || 2500)); }
 else await dodo(+(opt.attendre || 400));
+// --sonde=<expression JS> : imprime sa valeur (JSON) juste avant la capture — pour MESURER ce qu'on regarde.
+if (opt.sonde) console.log("SONDE", JSON.stringify(await evaluer(String(opt.sonde))));
 const erreurs = await evaluer(`(window.__err || []).join(" / ")`);
 const shot = await cdp("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
 writeFileSync(sortie, Buffer.from(shot.result.data, "base64"));

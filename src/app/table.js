@@ -3,6 +3,22 @@ const T = { sabot: [], graine: null, empreinte: "", coupe: 0, rc: 0, vues: 0, ma
   croupier: [], sieges: [], occupe: false, enJeu: false, toi: null, actif: null, revele: false, solde: 0 };
 const NOMS = ["Marc", "Sonia", "Karim", "Léa", "Paul", "Nadia"];
 const vitesse = () => DB.cadence;
+// La donne INITIALE va plus vite que les tirages : douze cartes à 900 ms font
+// onze secondes d'attente avant de pouvoir jouer (mesuré le 04/09), et à 400 ms
+// avec un vol de 180 ms les cartes « tombaient » (Léo). Ici la moitié de la
+// cadence, bornée, et le vol remplit l'intervalle (--don suit --intervalle) : un
+// croupier lancé, pas un bégaiement. Les tirages, où l'on compte carte par
+// carte, gardent la cadence pleine. T.rythme > 0 = on est dans la donne initiale.
+const cadenceDonne = () => Math.max(300, Math.min(600, Math.round(vitesse() * .5)));
+const rythme = () => T.rythme || vitesse();
+const poserIntervalle = ms => $("plateau").style.setProperty("--intervalle", ms + "ms");
+// Une annonce qui change ne surgit pas : elle bascule.
+function annoncer(txt) {
+  const a = $("annonce"); if (a.textContent === txt) return;
+  a.textContent = txt;
+  if (txt && !matchMedia("(prefers-reduced-motion:reduce)").matches)
+    a.animate([{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }], { duration: 200, easing: "ease-out" });
+}
 const reglesTable = () => {
   const t = tableCourante();
   return E.makeRules({ decks: t.jeux, h17: t.h17, blackjackPays: t.blackjackPays, das: t.das,
@@ -53,8 +69,8 @@ async function nouveauSabot(o) {
   poserLieu(t);
   $("conseil").textContent = "";
   rafraichirBarre(); rendreRecu();
-  if (!o.pendantDonne) { $("annonce").textContent = "Sabot neuf, mélangé, carte brûlée."; boutons({ donne: true }); }
-  $("plateau").style.setProperty("--intervalle", vitesse() + "ms");
+  if (!o.pendantDonne) { annoncer("Sabot neuf, mélangé, carte brûlée."); boutons({ donne: true }); }
+  poserIntervalle(rythme());
   emettre("remelange", { table: t.id, cartes: T.sabot.length, pendantDonne: !!o.pendantDonne });
 }
 /* ── Le lieu ─────────────────────────────────────────────────────────────
@@ -70,6 +86,11 @@ function poserLieu(t) {
   const csm = puces.find(p => /mélangeuse/.test(p.textContent));
   if (csm && !garde.includes(csm)) garde.push(csm);
   $("tRegles").replaceChildren(...garde);
+  // La salle a le décor de son lieu : la photo embarquée (window.PHOTOS, cf. build.mjs),
+  // floutée et assombrie par la feuille de style. Sans photo, la salle reste celle de
+  // la lueur et du sol posés par [data-lieu] — rien ne casse.
+  const ph = (window.PHOTOS || {})[t.id];
+  $("salle").style.setProperty("--photo", ph ? `url("${ph}")` : "none");
   rendreMotif(t.id); LETTRAGE.cle = ""; rendreLettrage();
   emettre("table", { table: t });
 }
@@ -89,43 +110,64 @@ function rendreLettrage() {
   const f = $("feutre"), svg = $("lettrage"); if (!f || !svg) return;
   const W = f.clientWidth, H = f.clientHeight;
   if (W < 320 || H < 160) { if (LETTRAGE.cle !== "vide") { svg.innerHTML = ""; LETTRAGE.cle = "vide"; } return; }
-  const fr = f.getBoundingClientRect();
-  const rangee = f.querySelector(".rangee-haute"), annonce = $("annonce");
-  const basHaut = Math.round(rangee.getBoundingClientRect().bottom - fr.top);
-  const basAnnonce = Math.round(annonce.getBoundingClientRect().bottom - fr.top);
+  const rangee = f.querySelector(".rangee-haute"), box = $("sieges");
+  // Tout est mesuré HORS transformation (offsetTop) : les sièges du bord sont
+  // remontés sur l'arc par un transform, ce n'est pas leur place dans le flux.
+  const basHaut = rangee.offsetTop + rangee.offsetHeight;
+  const basAnnonce = basHaut + 4;
   let hautSieges = H;
-  f.querySelectorAll(".siege").forEach(sg => { hautSieges = Math.min(hautSieges, sg.getBoundingClientRect().top - fr.top); });
+  box.querySelectorAll(".siege").forEach(sg => { hautSieges = Math.min(hautSieges, box.offsetTop + sg.offsetTop); });
   hautSieges = Math.round(hautSieges);
   const t = tableCourante(), tx = texteLettrage(t);
   const cle = [W, H, basHaut, basAnnonce, hautSieges, t.id].join("|");
-  if (cle === LETTRAGE.cle) return; LETTRAGE.cle = cle;
-  // Le rail est une demi-lune : on l'approche par une ellipse centrée sous le
-  // feutre (rx = W/2, ry = 72 % de H), et chaque ligne est un arc concentrique
-  // rentré de d pixels. Les angles sont en degrés, −90 = l'apex du rail.
-  const cx = W / 2, cy = .72 * H;
-  const arc = (d, a1, a2) => {
-    const rx = W / 2 - d, ry = .72 * H - d, p = a => { const r = a * Math.PI / 180; return [cx + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
+  if (cle === LETTRAGE.cle) return;
+  // Jamais effacé au milieu d'une manche : un arc qui disparaît d'un coup se voit plus
+  // qu'un arc qui passe sous une carte. Il se recalcule à la manche suivante.
+  if (T.enJeu && LETTRAGE.cle && LETTRAGE.cle !== "vide" && LETTRAGE.cle.split("|")[0] === String(W)) return;
+  LETTRAGE.cle = cle;
+  // Le rail bas = deux quarts d'ellipse (les coins) et un bord droit entre eux —
+  // la courbe RÉELLE du feutre, relue dans son border-radius (cf. courbeFeutre).
+  const cf = courbeFeutre(f, W, H);
+  const arcCoin = (cote, d, a1, a2) => {
+    const rx = cf.rx - d, ry = cf.ry - d, cx = cote === "G" ? cf.rx : W - cf.rx, cy = cf.cy;
+    const p = a => { const r = a * Math.PI / 180; return [cx + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
     const [x1, y1] = p(a1), [x2, y2] = p(a2);
-    return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+    return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 ${a2 > a1 ? 1 : 0} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
   };
   const petit = Math.max(9, Math.round(W * .0115)), grand = Math.max(14, Math.round(W * .021));
   let out = "", n = 0;
-  const ligne = (texte, d, a1, a2, taille) => {
-    n++; out += `<defs><path id="lt${n}" d="${arc(d, a1, a2)}"/></defs>
-      <text font-size="${taille}"><textPath href="#lt${n}" startOffset="50%" text-anchor="middle">${echap(texte)}</textPath></text>`;
+  const ligne = (texte, d, a1, a2, taille, classe) => {
+    n++; out += `<defs><path id="lt${n}" d="${d}"/></defs>
+      <text class="${classe}" font-size="${taille}"><textPath href="#lt${n}" startOffset="50%" text-anchor="middle">${echap(texte)}</textPath></text>`;
   };
-  // Le long du rail, de part et d'autre du rack : la règle du croupier à gauche,
-  // l'assurance à droite. L'apex reste libre pour le rack de jetons.
-  ligne(tx.croupier, 6 + petit, -176, -122, petit);
-  ligne(tx.assurance, 6 + petit, -58, -4, petit);
-  // Le paiement du blackjack, en grand, entre l'annonce et les sièges — si la
-  // place y est ; un écran bas garde le rail et perd le grand lettrage.
-  const place = hautSieges - basAnnonce;
-  // Centré dans la bande libre (au plus 40 px sous l'annonce) : collé à elle,
-  // « Assurance ? » se lisait par-dessus le lettrage.
-  if (place >= grand + 14) ligne(tx.paie, basAnnonce + grand + 4 + Math.min(40, (place - grand - 14) / 2), -140, -40, grand);
+  // Le long de l'arc bas, de part et d'autre des sièges : la règle du croupier à
+  // gauche, l'assurance à droite (180 = le bord gauche, 90 = le bas, 0 = le bord
+  // droit ; on lit de gauche à droite, le haut des lettres vers le centre).
+  ligne(tx.croupier, arcCoin("G", 6 + petit, 179, 126), 0, 0, petit, "rail");
+  ligne(tx.assurance, arcCoin("D", 6 + petit, 54, 1), 0, 0, petit, "rail");
+  // Le paiement du blackjack, en grand, dans la bande entre la main du croupier
+  // et les sièges — TOUJOURS : un arc concentrique au rail (un sourire), qui passe
+  // sous une carte quand il le faut, comme sur une vraie table.
+  const place = Math.max(grand + 8, hautSieges - basAnnonce);
+  const yBas = basAnnonce + Math.max(grand + 6, Math.min(place - 4, place / 2 + grand / 2));
+  const rx = W * .34, ry = rx * .42, cy = yBas - ry, A = 40;
+  const p = a => { const r = a * Math.PI / 180; return [W / 2 + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
+  const [x1, y1] = p(90 + A), [x2, y2] = p(90 - A);
+  ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, 0, 0, grand, "grand");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = out;
+  // Un texte plus long que son arc est coupé aux DEUX bouts (ancré au milieu) :
+  // « DEALER MUST STAND ON ALL 17 » perdait son D à Macao. On réduit la taille
+  // jusqu'à ce qu'il tienne, plutôt que d'écraser les lettres.
+  svg.querySelectorAll("text").forEach(tx => {
+    const tp = tx.querySelector("textPath"), chemin = svg.querySelector(tp.getAttribute("href"));
+    if (!chemin || !chemin.getTotalLength || !tx.getComputedTextLength) return;
+    const L = chemin.getTotalLength() * .96; let taille = parseFloat(tx.getAttribute("font-size"));
+    for (let k = 0; k < 6 && tx.getComputedTextLength() > L && taille > 8; k++) {
+      taille = Math.max(8, Math.floor(taille * L / tx.getComputedTextLength() * 100) / 100);
+      tx.setAttribute("font-size", taille);
+    }
+  });
 }
 // Deux lieux ont un motif tissé dans le feutre : les losanges de la laque de
 // Macao, le guillochis d'un cadran pour Londres · Monte-Carlo. Les autres se
@@ -146,6 +188,11 @@ function rendreMotif(lieu) {
     svg.innerHTML = `<g>${g}</g>`;
   } else svg.innerHTML = "";
 }
+// Une annonce à l'écran efface le grand lettrage sous elle (la bande est la même) ;
+// observé sur le nœud, pour que les écritures directes (table à plusieurs) comptent.
+if (window.MutationObserver && $("annonce")) new MutationObserver(() => {
+  $("feutre").classList.toggle("annonce-on", !!$("annonce").textContent.trim());
+}).observe($("annonce"), { childList: true, characterData: true, subtree: true });
 // Le lettrage se recalcule quand le feutre change de taille — y compris quand
 // la vue apparaît (0 × 0 → sa vraie taille).
 if (window.ResizeObserver) new ResizeObserver(() => rendreLettrage()).observe($("feutre"));
@@ -175,13 +222,16 @@ function rendreSieges() {
       sc.textContent = h.cards.length ? E.handTotal(h.cards) + (h.doubled ? " ×2" : "") : "";
       const rs = document.createElement("div"); rs.className = "issue " + (ISSUE[h.result] || "");
       rs.textContent = h.result || "";
+      // La pastille bascule à sa PREMIÈRE apparition seulement : rendreSieges()
+      // reconstruit tout, une pastille déjà vue ne doit pas resauter.
+      if (h.result && !h.issueVue) { rs.classList.add("neuve"); h.issueVue = true; }
       w.append(md, sc, rs); hs.appendChild(w);
     });
     // Le cercle de mise, doré, devant chaque siège : vide pour l'instant, le lot
     // Jetons y posera les piles (#cercle_<siège>). --ecart soulève les sièges du bord.
     const ce = document.createElement("div"); ce.className = "cercle"; ce.id = "cercle_" + si; ce.dataset.siege = si;
     const nm = document.createElement("div"); nm.className = "nom serre"; nm.textContent = st.nom;
-    d.style.setProperty("--ecart", Math.abs(si - (T.sieges.length - 1) / 2).toFixed(1));
+    d.style.setProperty("--ecart", (si - (T.sieges.length - 1) / 2).toFixed(1));   // signé : négatif à gauche
     d.append(hs, ce, nm); el.appendChild(d);
   });
   dimensionnerCartes();
@@ -194,6 +244,19 @@ function rendreSieges() {
     behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" });
   // Les cercles de mise viennent d'être recréés : les piles de jetons (jetons.js) s'y reposent.
   emettre("sieges", { sieges: T.sieges });
+}
+// Le tour passe à un autre siège : on bascule .actif/.encours sur les nœuds EN PLACE.
+// Reconstruire (rendreSieges) fait naître chaque siège dans son état final : la
+// transition du halo doré ne joue jamais, et les cartes posées sont recréées.
+function marquerActif() {
+  const el = $("sieges"); if (!el) return;
+  el.querySelectorAll(".siege").forEach((d, si) => {
+    d.classList.toggle("actif", !!(T.actif && T.actif.siege === si));
+    d.querySelectorAll(".m").forEach((w, hi) => w.classList.toggle("encours", !!(T.actif && T.actif.siege === si && T.actif.main === hi)));
+  });
+  const vedette = el.querySelector(".siege.actif") || el.querySelector(".siege.toi");
+  if (vedette && el.scrollWidth > el.clientWidth + 4) vedette.scrollIntoView({
+    inline: "center", block: "nearest", behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" });
 }
 function rafraichirBarre() {
   const t = tableCourante(), total = t.jeux * 52;
@@ -211,6 +274,7 @@ function rafraichirBarre() {
   $("tTC").textContent = visible ? (tc === null ? "n/a" : fr1(tc)) : "—";
   // La mise conseillée est la rampe de référence 2(TC−1), en UNITÉS de mise minimum
   // (misesUnites ne bat pas sa table — cf. counting.mjs). Le tapis, lui, est rendu par jetons.js.
+  // « Rampe » et non « Mise » : la mise RÉELLE est chiffrée à côté du tapis (jetons.js).
   $("tMise").textContent = visible && tc !== null ? CT.miseRampe(tc) : "—";
   const hc = $("hudCompte"); hc.classList.toggle("masque", !visible);
   hc.firstElementChild.className = visible ? (T.rc > 0 ? "plus" : T.rc < 0 ? "moins" : "") : "";
@@ -231,10 +295,13 @@ function boutons(o) {
   // Pas de donne sans mise : jetons.js pose T.miseOk (false tant que la mise est sous le minimum).
   if (o.donne && T.miseOk === false) $("bDonne").disabled = true;
 }
-function animerDepuisSabot(e, hote) {
-  const s = $("sabot").getBoundingClientRect(), c = hote.getBoundingClientRect();
-  e.style.setProperty("--dx", (s.left + s.width / 2 - (c.left + c.width / 2)) + "px");
-  e.style.setProperty("--dy", (s.top - c.top) + "px");
+// `cr` = le rect de la CARTE elle-même, mesuré avant l'animation. Mesuré sur le
+// centre de la main, la k-ième carte partait à (k − (n−1)/2)·pas du sabot — la 4ᵉ
+// carte du croupier naissait 55 px à droite du sabot.
+function animerDepuisSabot(e, cr) {
+  const s = $("sabot").getBoundingClientRect();
+  e.style.setProperty("--dx", (s.left + s.width / 2 - (cr.left + cr.width / 2)) + "px");
+  e.style.setProperty("--dy", (s.top + 6 - cr.top) + "px");
   e.classList.add("carte--entre");
 }
 async function tirer(main, hote, cachee, qui) {
@@ -245,19 +312,37 @@ async function tirer(main, hote, cachee, qui) {
     emettre("remelange", { table: t.id, cartes: T.sabot.length, pendantDonne: true });
   }
   const c = T.sabot.pop(); c.cachee = !!cachee; main.push(c);
+  // Les cartes déjà posées glissent quand la main se recentre (FLIP) : mesurées
+  // avant l'insertion, animées de leur ancienne place vers la nouvelle.
+  const avant = [...hote.children].map(x => x.getBoundingClientRect().left);
   const e = carteEl(c, cachee); hote.appendChild(e);
   // Une carte de plus dans un siège : l'éventail se resserre pour qu'elle tienne.
-  if (qui) dimensionnerCartes();
+  // Jamais pour le croupier : sa rangée a une géométrie fixée avant la première carte.
+  if (qui && qui.siege !== "croupier") dimensionnerCartes();
+  if (!matchMedia("(prefers-reduced-motion:reduce)").matches)
+    [...hote.children].slice(0, -1).forEach((x, i) => {
+      const dx = avant[i] - x.getBoundingClientRect().left;
+      if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 220, easing: "cubic-bezier(.3,0,.2,1)" });
+    });
   // Mesurée AVANT l'animation : pendant le vol, le rect de la carte est celui
   // du sabot, pas celui de son point d'arrivée.
   const cr = e.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
-  animerDepuisSabot(e, hote); son("carte");
+  // La main du croupier se resserre au lieu de pousser le sabot : --pas suit le nombre
+  // de cartes et la place que le bloc lui laisse (jamais moins d'un tiers de carte).
+  if (hote.id === "dMain" && hote.children.length > 2) {
+    const bloc = hote.parentNode, qui = bloc.querySelector(".qui");
+    const dispo = bloc.clientWidth - (qui ? qui.offsetWidth : 0), w = e.offsetWidth || 84, k = hote.children.length;
+    hote.style.setProperty("--pas", Math.max(w * .3, Math.min(w * .62, (dispo - w) / (k - 1))).toFixed(1) + "px");
+  }
+  // La main du croupier part D'ABORD (l'événement), la carte suit 30 ms plus tard
+  // (animation-delay) : le geste pousse la carte, il ne la suit pas.
   emettre("carte", { siege: qui ? qui.siege : "croupier", main: qui ? qui.main : 0, index: main.length - 1,
     carte: c, cachee: !!cachee, el: e,
     depuis: { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 },
     vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
+  animerDepuisSabot(e, cr); son("carte");
   if (!cachee) { T.rc += valeurCompte(c); T.vues++; }
-  rafraichirBarre(); await dodo(vitesse()); return c;
+  rafraichirBarre(); await dodo(rythme()); return c;
 }
 async function tirerSiege(si, hi) {
   const st = T.sieges[si], h = st && st.mains[hi], hote = $(`m_${si}_${hi}`);
@@ -273,10 +358,15 @@ async function revelerCachee() {
   const c = T.croupier.find(x => x.cachee); if (!c) return;
   c.cachee = false; T.rc += valeurCompte(c); T.vues++;
   const e = $("dMain").children[1] || $("dMain").lastElementChild;
+  const reduit = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  // La main du croupier vient sur la carte (240 ms), la carte pivote sous elle (dès
+  // 200 ms, 520 ms de retournement), et le total n'apparaît qu'à mi-retournement,
+  // quand la face devient lisible — pas avant que la carte ait bougé.
+  emettre("croupier-revele", { carte: c, total: E.handTotal(T.croupier), el: e });
+  await dodo(reduit ? 30 : 460);
   son("carte");
   rafraichirBarre(); $("dScore").textContent = E.handTotal(T.croupier);
-  emettre("croupier-revele", { carte: c, total: E.handTotal(T.croupier), el: e });
-  await dodo(matchMedia("(prefers-reduced-motion:reduce)").matches ? 60 : 420);
+  await dodo(reduit ? 30 : 440);
 }
 // Doubler et séparer engagent une seconde mise : il faut l'avoir en main (DB.tapis, lot Jetons).
 const peutPayer = (h, st) => !st.toi || typeof DB.tapis !== "number" || DB.tapis >= h.bet;
@@ -317,28 +407,33 @@ async function distribuer() {
   if (csm) {
     // La mélangeuse ne clôt pas une partie : elle reprend les cartes et on continue.
     // Le nombre de mains et le solde ne bougent pas, seul le compte est remis à plat.
-    if (T.mains > 0) { $("annonce").textContent = "La mélangeuse reprend les cartes."; await remelanger(); await dodo(400); }
+    if (T.mains > 0) { annoncer("La mélangeuse reprend les cartes."); await remelanger(); await dodo(400); }
   } else if (T.sabot.length <= T.coupe) {
-    $("annonce").textContent = "Carte de coupe atteinte : on remélange.";
+    annoncer("Carte de coupe atteinte : on remélange.");
     if (T.vues > 20) demanderMonCompte(true);
     await dodo(900); await nouveauSabot({ pendantDonne: true });
-    $("annonce").textContent = "Sabot neuf, mélangé, carte brûlée.";
+    annoncer("Sabot neuf, mélangé, carte brûlée.");
   }
+  // Les cartes de la manche précédente sont RAMASSÉES vers la défausse, pas
+  // effacées : un balayage en éventail, une carte après l'autre, puis le tas grimpe.
+  await ramasser();
   for (const st of T.sieges) for (const h of st.mains) T.defausse += h.cards.length;
   T.defausse += T.croupier.length; T.croupier = []; T.actif = null;
   // Chaque siège joue la mise qu'il a posée dans son cercle (st.mise, lot Jetons) ; `|| 1` = sans jetons, une unité.
   for (const st of T.sieges) st.mains = [E.newHand([], st.mise || 1)];
-  rendreSieges(); $("dMain").innerHTML = ""; $("dScore").textContent = "·";
-  $("annonce").textContent = ""; $("conseil").textContent = ""; rafraichirBarre();
+  rendreSieges(); $("dMain").innerHTML = ""; $("dMain").style.removeProperty("--pas"); $("dScore").textContent = "·";
+  annoncer(""); $("conseil").textContent = ""; rafraichirBarre();
   T.enJeu = true;
   emettre("donne-debut", { table: t.id, sieges: T.sieges.length });
   const r = reglesTable();
+  T.rythme = cadenceDonne(); poserIntervalle(T.rythme);
   for (let tour = 0; tour < 2; tour++) {
     for (let si = 0; si < T.sieges.length; si++) await tirerSiege(si, 0);
     // Sans carte cachée, le croupier ne prend qu'une carte : c'est toute la règle.
     if (tour === 0) { await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.cardValue(T.croupier[0]); }
     else if (r.holeCard) await tirer(T.croupier, $("dMain"), true, CROUPIER);
   }
+  T.rythme = 0; poserIntervalle(vitesse());
   if (r.holeCard && E.cardValue(T.croupier[0]) === 11 && T.toi) {
     // L'assurance coûte la moitié de la mise : on s'assure d'abord qu'elle est payable
     // (un écouteur peut refuser), puis la réponse devient une vraie mise sur la main.
@@ -352,20 +447,35 @@ async function distribuer() {
     }
   }
   if (r.holeCard && r.peek && E.cardValue(T.croupier[0]) >= 10) {
-    $("annonce").textContent = "Le croupier vérifie sa carte…"; await dodo(vitesse() * 1.4);
-    if (E.handTotal(T.croupier) === 21) { await revelerCachee(); $("annonce").textContent = "Blackjack du croupier."; T.occupe = false; return regler(); }
-    $("annonce").textContent = "";
+    annoncer("Le croupier vérifie sa carte…"); await dodo(vitesse() * 1.4);
+    if (E.handTotal(T.croupier) === 21) { await revelerCachee(); annoncer("Blackjack du croupier."); T.occupe = false; return regler(); }
+    annoncer("");
   }
   T.occupe = false; await jouerSieges(0);
 }
+// Le ramassage : chaque carte du feutre glisse vers la défausse, en éventail
+// (28 ms d'écart), à l'échelle du tas ; puis le DOM est vidé. En mouvement réduit,
+// rien ne vole. Le --pile de la défausse a déjà sa transition.
+async function ramasser() {
+  const cartes = [...$("feutre").querySelectorAll(".main .carte")]; if (!cartes.length) return;
+  if (matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  const d = $("defausse").getBoundingClientRect(); if (!d.width) return;
+  cartes.forEach((c, i) => {
+    const r = c.getBoundingClientRect();
+    c.animate([{ transform: "none", opacity: 1 },
+      { transform: `translate(${d.left + d.width / 2 - r.left - r.width / 2}px,${d.top + 8 - r.top}px) rotate(-8deg) scale(.7)`, opacity: .12 }],
+      { duration: 260, delay: i * 28, easing: "cubic-bezier(.3,0,.2,1)", fill: "forwards" });
+  });
+  await dodo(260 + cartes.length * 28);
+}
 function demanderAssurance() {
   return new Promise(res => {
-    $("annonce").textContent = "Assurance ?";
+    annoncer("Assurance ?");
     const b = document.createElement("div"); b.className = "bulle";
     b.innerHTML = `<div class="de">Croupier</div><div class="q">Le croupier montre un as. Assurance ?</div>
       <div class="opts"><button data-o="1">Oui</button><button data-o="0">Non</button></div>`;
     b.querySelectorAll("button").forEach(bt => bt.onclick = () => {
-      const prise = bt.dataset.o === "1"; $("boiteAssurance").innerHTML = ""; $("annonce").textContent = "";
+      const prise = bt.dataset.o === "1"; $("boiteAssurance").innerHTML = ""; annoncer("");
       if (sys().equilibre) {
         const seuil = donneesTable().assurance;
         const tc = CT.compteVrai(T.rc, T.sabot.length / 52);
@@ -386,13 +496,13 @@ async function jouerSieges(depuis) {
       const h = st.mains[hi];
       if (h.surrendered) continue;
       if (E.isBlackjack(h) && st.mains.length === 1) { h.result = "blackjack"; rendreSieges(); continue; }
-      T.actif = { siege: si, main: hi }; rendreSieges();
+      T.actif = { siege: si, main: hi }; marquerActif();
       emettre("tour", { siege: si, main: hi, toi: st.toi });
       if (st.toi) { T.occupe = false; return tonTour(); }
       await jouerAuto(si, hi);
     }
   }
-  T.actif = null; rendreSieges(); await jouerCroupier();
+  T.actif = null; marquerActif(); await jouerCroupier();
 }
 async function jouerAuto(si, hi) {
   const st = T.sieges[si], r = reglesTable();
@@ -433,7 +543,7 @@ function tonTour() {
 }
 async function mainSuivante() {
   const si = T.sieges.indexOf(T.toi); boutons({}); $("conseil").textContent = "";
-  if (T.actif.main + 1 < T.toi.mains.length) { T.actif = { siege: si, main: T.actif.main + 1 }; rendreSieges();
+  if (T.actif.main + 1 < T.toi.mains.length) { T.actif = { siege: si, main: T.actif.main + 1 }; marquerActif();
     emettre("tour", { siege: si, main: T.actif.main, toi: true }); return tonTour(); }
   T.occupe = true; await jouerSieges(si + 1);
 }
@@ -484,7 +594,7 @@ async function regler() {
   }); });
   T.solde += net;
   T.actif = null; rendreSieges(); T.mains++; T.enJeu = false; T.occupe = false; rafraichirBarre(); garder();
-  $("annonce").textContent = `Croupier ${dt > 21 ? "saute à " + dt : dt}. Toi : ${miennes.join(" · ")}.`;
+  annoncer(`Croupier ${dt > 21 ? "saute à " + dt : dt}. Toi : ${miennes.join(" · ")}.`);
   // Les mains d'abord, une par une, puis la manche : un écouteur peut compter
   // sur cet ordre pour faire glisser les jetons avant de tirer un bilan.
   assurances.forEach(a => emettre("assurance-fin", a));
@@ -501,14 +611,14 @@ $("bReglagesTable").onclick = () => {
     <div class="demande" style="flex-direction:column;align-items:stretch;text-align:left">
       <label class="ch"><span class="grave">Cadence du croupier</span>
         <input type="range" id="rgCadence" min="120" max="1400" step="20" value="${DB.cadence}">
-        <span class="muet" id="rgCadenceL">${fr1(DB.cadence / 1000)} s par carte</span></label>
+        <span class="muet" id="rgCadenceL">${fr1(DB.cadence / 1000)} s par carte · donne initiale à ${fr1(cadenceDonne() / 1000)} s</span></label>
       <label class="ch ligne"><input type="checkbox" id="rgConseil"${DB.conseil ? " checked" : ""}>
         Afficher la stratégie de base pendant mon tour</label>
     </div>`);
   $("rgCadence").oninput = () => {
     DB.cadence = +$("rgCadence").value; garder();
-    $("rgCadenceL").textContent = fr1(DB.cadence / 1000) + " s par carte";
-    $("plateau").style.setProperty("--intervalle", vitesse() + "ms");
+    $("rgCadenceL").textContent = fr1(DB.cadence / 1000) + " s par carte · donne initiale à " + fr1(cadenceDonne() / 1000) + " s";
+    poserIntervalle(rythme());
   };
   $("rgConseil").onchange = () => {
     DB.conseil = $("rgConseil").checked; garder();

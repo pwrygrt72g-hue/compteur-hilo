@@ -136,7 +136,7 @@ const ancreMaison = si => { const st = T.sieges[si]; if (st && st.toi) return an
    et s'éloigne. Sous prefers-reduced-motion, tout se pose en une milliseconde. */
 function vol(o) {
   const calque = $("jetonsCalque"), invisible = $("v-table").hidden || salleRect().width < 50;
-  const dur = invisible || reduit() ? 1 : (o.duree || 400);
+  const dur = invisible || reduit() ? 1 : (o.duree || 320);
   const w = o.w || (o.montant !== undefined ? 40 : 44);
   const porte = document.createElement("div"); porte.className = "jt-vol"; porte.style.setProperty("--w", w + "px");
   const ombre = document.createElement("i"); ombre.className = "jt-ombre";
@@ -144,7 +144,10 @@ function vol(o) {
   porte.append(ombre, corps); calque.appendChild(porte);
   const dx = o.vers.x - o.depuis.x, dy = o.vers.y - o.depuis.y;
   porte.style.left = (o.depuis.x - w / 2) + "px"; porte.style.top = (o.depuis.y - w / 2) + "px";
-  const ease = o.glisse ? "cubic-bezier(.3,0,.2,1)" : "cubic-bezier(.22,.72,.24,1)";
+  // UNE courbe pour le trajet, la rotation et la portance : mesuré le 04/09, avec un
+  // porteur à 80 % du trajet en 120 ms et une toupie de 400 ms, le jeton faisait sa
+  // pirouette SUR PLACE au-dessus du cercle. Sommet à 38 % : il retombe sur le cercle.
+  const ease = o.glisse ? "cubic-bezier(.3,0,.2,1)" : "cubic-bezier(.3,.1,.25,1)";
   // fondu : s'efface en arrivant (vers le croupier, ou hors de la table) ;
   // apparait : surgit en partant (les jetons d'un voisin viennent de son rail, hors champ).
   const trajet = o.fondu
@@ -154,9 +157,11 @@ function vol(o) {
     : [{ transform: "translate(0,0)" }, { transform: `translate(${dx}px,${dy}px)` }];
   const a = porte.animate(trajet, { duration: dur, easing: ease, fill: "forwards" });
   if (!o.glisse) {
-    corps.animate([{ transform: "translateY(0) rotate(0deg) scale(1)" }, { transform: "translateY(-30px) rotate(200deg) scale(1.14)", offset: .5 }, { transform: "translateY(0) rotate(360deg) scale(1)" }],
-      { duration: dur, easing: "ease-in-out", fill: "forwards" });
-    ombre.animate([{ transform: "scale(1)", opacity: .55 }, { transform: "scale(.6)", opacity: .2, offset: .5 }, { transform: "scale(1)", opacity: .55 }], { duration: dur, fill: "forwards" });
+    corps.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(300deg)" }], { duration: dur, easing: "linear", fill: "forwards" });
+    const porte = corps.firstElementChild;
+    if (porte) porte.animate([{ transform: "translateY(0) scale(1)" }, { transform: "translateY(-26px) scale(1.1)", offset: .38 }, { transform: "translateY(0) scale(1)" }],
+      { duration: dur, easing: "ease-out", fill: "forwards" });
+    ombre.animate([{ transform: "scale(1)", opacity: .55 }, { transform: "scale(.6)", opacity: .2, offset: .38 }, { transform: "scale(1)", opacity: .55 }], { duration: dur, fill: "forwards" });
   } else corps.animate([{ transform: "rotate(0)" }, { transform: `rotate(${dx > 0 ? 16 : -16}deg)` }], { duration: dur, easing: ease, fill: "forwards" });
   // L'arrivée est garantie par un minuteur, pas seulement par onfinish : un onglet
   // caché (ou un Chrome sans images) ne fait pas avancer ses animations, et l'ÉTAT
@@ -201,7 +206,8 @@ function garnirCercles() {
     ce.classList.toggle("garni", parts.length > 0);
     if (!parts.length) return;
     const box = document.createElement("div"); box.className = "jt-mises";
-    parts.forEach(m => box.appendChild(pileEl(m, st.toi ? 40 : 36)));
+    // 34 px dans un cercle de 72 : la pile se lit DANS la case, elle ne la bouche pas.
+    parts.forEach(m => box.appendChild(pileEl(m, st.toi ? 34 : 30)));
     ce.appendChild(box);
   });
 }
@@ -224,6 +230,7 @@ function rendreRack() {
   $("rjTapis").textContent = fmtJ(DB.tapis);
   $("rjLimites").textContent = `min ${fmtJ(l.min)} · max ${fmtJ(l.max)}`;
   $("rjMise").textContent = fmtJ(J.mise);
+  rendreMiseHud();
   const u = J.mise / l.min;
   $("rjUnites").textContent = J.mise ? `${fr1(u)} unité${u > 1 ? "s" : ""}` : (DB.tapis >= l.min ? "pose ta mise" : "—");
   $("bRetirer").disabled = !ouvert || !J.poses.length;
@@ -337,14 +344,23 @@ function proposerRachat() {
 // cohérence avec le compte vrai. Le compte masqué reste masqué : la cohérence
 // se lit alors dans « Mon compte », qui le révèle de toute façon.
 function coherence(u, tc) { const ref = CT.miseRampe(tc); return { ok: Math.abs(u - ref) <= 1, ref }; }
+// La mise RÉELLE vit dans la barre, à côté du tapis (« MISE 25 · 2,5 u ») : celle
+// qu'on pose pendant la phase de mise, celle qui joue pendant la manche.
+function rendreMiseHud() {
+  const e = $("tMiseReelle"); if (!e) return;
+  const l = limites(), m = J.phase === "mise" ? J.mise : T.miseDonne;
+  if (!m) { e.textContent = "—"; return; }
+  const u = m / l.min;
+  e.textContent = fmtJ(m) + " · " + fr1(u) + " u";
+}
+// La phrase du coach ne dit plus que ce que la barre ne dit pas : la COHÉRENCE de
+// la mise avec le compte vrai figé à la donne, quand le compte est affiché.
 function rendreCoach() {
   const c = $("coachMise"), l = limites();
-  if (J.phase === "mise" || J.phase === "attente" || !T.miseDonne) { c.innerHTML = ""; return; }
-  const u = T.miseDonne / l.min;
-  let h = `Mise ${fmtJ(T.miseDonne)} · ${fr1(u)} unité${u > 1 ? "s" : ""}`;
-  if (T.montre && typeof T.tcMise === "number") { const { ok, ref } = coherence(u, T.tcMise);
-    h += ` · compte vrai ${T.tcMise > 0 ? "+" : ""}${fr1(T.tcMise)} → <b class="${ok ? "ok" : "ko"}">${ok ? "cohérent" : "incohérent, la rampe dit " + ref}</b>`; }
-  c.innerHTML = h;
+  rendreMiseHud();
+  if (J.phase === "mise" || J.phase === "attente" || !T.miseDonne || !T.montre || typeof T.tcMise !== "number") { c.innerHTML = ""; return; }
+  const u = T.miseDonne / l.min, { ok, ref } = coherence(u, T.tcMise);
+  c.innerHTML = `${fr1(u)} unité${u > 1 ? "s" : ""} pour un compte vrai de ${T.tcMise > 0 ? "+" : ""}${fr1(T.tcMise)} → <b class="${ok ? "ok" : "ko"}">${ok ? "cohérent" : "incohérent, la rampe dit " + ref}</b>`;
 }
 $("bMontrer").addEventListener("click", rendreCoach);
 

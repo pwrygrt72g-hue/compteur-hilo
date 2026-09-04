@@ -103,6 +103,8 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
  <path d="M0-18c-10 0-17 6-17 14l4 108c0 7 6 11 13 11s13-4 13-11l4-108c0-8-7-14-17-14z" fill="var(--cr-manche,#1E242A)"/>
  <g transform="translate(0,112)"><g id="@crAvantG">
   <path d="M0-14c-9 0-15 6-14 13l3 90c0 6 5 9 11 9s11-3 11-9l3-90c1-7-5-13-14-13z" fill="var(--cr-manche,#1E242A)"/>
+  <path d="M-13-4c4 5 22 5 26 0l-1 14c-5 3-19 3-24 0z" fill="#000" opacity=".28" stroke="none"/>
+  <path d="M-6 10h4l-1 70h-4z" fill="#000" opacity=".16" stroke="none"/>
   <path d="M-12 84h24l-1 8h-22z" fill="var(--cr-poignet,#F1ECE0)"/>
   <g transform="translate(0,96)"><g id="@crMainG">
    <path d="M0-3c-9 0-13 5-13 12 0 9 5 16 13 18 8-2 13-9 13-18 0-7-4-12-13-12z" fill="var(--cr-peau,#D6A579)"/>
@@ -115,6 +117,8 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
  <path d="M0-18c-10 0-17 6-17 14l4 108c0 7 6 11 13 11s13-4 13-11l4-108c0-8-7-14-17-14z" fill="var(--cr-manche,#1E242A)"/>
  <g transform="translate(0,112)"><g id="@crAvantD">
   <path d="M0-14c-9 0-15 6-14 13l3 90c0 6 5 9 11 9s11-3 11-9l3-90c1-7-5-13-14-13z" fill="var(--cr-manche,#1E242A)"/>
+  <path d="M-13-4c4 5 22 5 26 0l-1 14c-5 3-19 3-24 0z" fill="#000" opacity=".28" stroke="none"/>
+  <path d="M-6 10h4l-1 70h-4z" fill="#000" opacity=".16" stroke="none"/>
   <path d="M-12 84h24l-1 8h-22z" fill="var(--cr-poignet,#F1ECE0)"/>
   <g transform="translate(0,96)"><g id="@crMainD">
    <path d="M0-3c-9 0-13 5-13 12 0 9 5 16 13 18 8-2 13-9 13-18 0-7-4-12-13-12z" fill="var(--cr-peau,#D6A579)"/>
@@ -134,7 +138,7 @@ const CROUPIERS = {
     coiffe: "c-plaque", orne: "o-noeud", lunettes: "l-rien", moustache: "m-rien", sourcils: 1,
     p: { "--cr-peau": "#D8A57C", "--cr-cheveux": "#14100E", "--cr-veste": "#171C21", "--cr-manche": "#171C21", "--cr-gilet": "#3B1F22",
       "--cr-chemise": "#F2EDE1", "--cr-poignet": "#F2EDE1", "--cr-orne": "#C8252B", "--cr-iris": "#3A2A1C" },
-    piquant: .95, colere: .8, vigilance: 1,
+    piquant: .95, colere: .8, vigilance: 1, repos: "content",
     dit: {
       accueil: ["Bienvenue au Boulevard. Asseyez-vous, on va bien s'entendre.", "Salut. Vegas, baby."],
       moqueur: ["Ça pique.", "La maison vous remercie.", "On remet ça ?", "Dommage. Sincèrement.", "Vegas, baby.", "Les cartes ne vous aiment pas ce soir.",
@@ -202,7 +206,7 @@ const CROUPIERS = {
     coiffe: "c-courts", orne: "o-cravate", lunettes: "l-rien", moustache: "m-fine", sourcils: 1.6,
     p: { "--cr-peau": "#CFA07A", "--cr-cheveux": "#26221F", "--cr-veste": "#0F1418", "--cr-manche": "#0F1418", "--cr-gilet": "#181E24",
       "--cr-chemise": "#FBF8F0", "--cr-poignet": "#FBF8F0", "--cr-orne": "#141A20", "--cr-iris": "#2A3A46" },
-    piquant: .8, colere: .9, vigilance: 3,
+    piquant: .8, colere: .9, vigilance: 3, repos: "concentre",
     dit: {
       accueil: ["Chef de table. Je surveille, vous jouez.", "Bonsoir. Vos mises m'intéressent plus que vos cartes."],
       moqueur: ["Dommage.", "Ça pique.", "La maison vous remercie.", "Perdu. Encore.", "On remet ça ?", "Le compte ne fait pas tout.",
@@ -225,6 +229,10 @@ if (DB.croupier.id && !CROUPIERS[DB.croupier.id]) DB.croupier.id = "";
 const crEffectif = () => DB.croupier.id || CROUPIER_DEFAUT[tableCourante().id] || "vince";
 const crPerso = () => CROUPIERS[CR.id] || CROUPIERS.vince;
 const crNom = () => (DB.croupier.noms[CR.id] || "").trim() || crPerso().nom;
+// Le visage de repos n'est pas le même pour tout le monde : Vince sourit en coin,
+// le Chef ne se déride jamais. `CR.base` y retombe entre deux manches.
+const crRepos = () => crPerso().repos || "neutre";
+const crAuRepos = () => CR.emotion === "neutre" || CR.emotion === crRepos();
 
 /* ── L'état ──────────────────────────────────────────────────────────── */
 const CR = { id: "", el: null, scene: null, bulle: null, visible: false, salue: false, fixe: false,
@@ -254,7 +262,7 @@ function monterCroupier() {
   CR.el = scene.querySelector("svg"); CR.scene = scene;
   crLook(CR.el, c, "cr-");
   CR.j = {}; CR.seg = {}; CR.an = {}; CR.arme = false;
-  crVisage(EMOTIONS.neutre);
+  CR.base = crRepos(); CR.emotion = CR.base; crVisage(EMOTIONS[CR.base]);
   crReposer(1);
   crLancerAmbiance();
 }
@@ -274,7 +282,7 @@ function crVersRig(x, y, rep) {
   rep = rep || crRepere(); if (!rep) return null;
   return { x: (x - rep.x0) / rep.s - 50, y: (y - rep.y0) / rep.s + 14 };
 }
-/* Cinématique inverse à deux os. Le coude va toujours vers l'EXTÉRIEUR du
+/* Cinématique inverse à deux os. Le coude va vers le bas et l'extérieur du
    corps, et la portée est bornée : hors d'atteinte, le bras se tend vers la
    cible — il ne se casse jamais. Les segments sont dessinés le long de +y,
    d'où θ = atan2(−cos φ, sin φ) pour pointer dans la direction φ. */
@@ -285,7 +293,9 @@ function crIK(cote, px, py) {
   dx *= dd / d; dy *= dd / d; d = dd;
   const a = Math.atan2(dy, dx);
   const alpha = Math.acos(Math.max(-1, Math.min(1, (L1 * L1 + d * d - L2 * L2) / (2 * L1 * d))));
-  const dir1 = a - (cote === "D" ? 1 : -1) * alpha;
+  // Le coude va vers le BAS (et l'extérieur) : avec le coude au-dessus de l'épaule,
+  // un bras replié sur le sabot faisait une aile de poulet (vu le 04/09).
+  const dir1 = a + (cote === "D" ? 1 : -1) * alpha;
   const ex = S[0] + L1 * Math.cos(dir1), ey = S[1] + L1 * Math.sin(dir1);
   const dir2 = Math.atan2(S[1] + dy - ey, S[0] + dx - ex);
   const th = f => Math.atan2(-Math.cos(f), Math.sin(f)) * 180 / Math.PI;
@@ -330,7 +340,7 @@ function crBouger(cle, a, ms) {
 
 /* ── Les poses. Toutes lues à l'écran : le sabot et la défausse sont là où
    la scène les a mis, la course des bras suit. ─────────────────────────── */
-function crCibleSabot() { const r = crRect("sabot"); return r ? { x: r.left + r.width * .58, y: r.top + 12 } : null; }
+function crCibleSabot() { const r = crRect("sabot"); return r ? { x: r.left + r.width * .5, y: r.top + r.height * .3 } : null; }
 function crReposer(ms) {
   ms = ms === undefined ? 340 : ms; CR.arme = false;
   const rs = crRect("sabot"), rd = crRect("defausse");
@@ -348,7 +358,7 @@ function crReposer(ms) {
 // carte, elle reste où elle doit être.
 function crPoserGauche(ms) {
   const rd = crRect("defausse"); if (!rd) return false;
-  return crMainVers("G", rd.left + rd.width * .5, rd.top + rd.height * .32, ms, -8);
+  return crMainVers("G", rd.left + rd.width * .5, rd.top - 6, ms, -8);
 }
 function crArmer(ms) {
   const c = crCibleSabot(); if (!c) return false;
@@ -363,7 +373,10 @@ function crFlick(vers, v) {
   const c = crCibleSabot(); if (!c) return;
   if (!CR.arme) crArmer(Math.min(200, v));
   const amp = Math.max(.22, Math.min(1, v / 450));
-  const ms = Math.max(90, Math.min(420, v * .55));
+  // Mesuré le 04/09 : à 420 ms de geste pour 300 ms de vol, la main SUIVAIT la carte.
+  // Le geste dure 80 % du vol (--don, celui du plateau) : il pousse, il ne suit pas.
+  const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
+  const ms = Math.max(90, Math.min(don * .8, v * .55));
   const dx = vers.x - c.x, dy = vers.y - c.y, d = Math.hypot(dx, dy) || 1;
   const pas = Math.min(96, d * .3) * amp;
   crMainVers("D", c.x + dx / d * pas, c.y + dy / d * pas, ms, -18 * amp);
@@ -504,17 +517,25 @@ function crCligne(ms, unSeul) {
 }
 function crLancerAmbiance() {
   crStopperAmbiance();
+  // La respiration : le buste se soulève d'un pixel et demi toutes les 3,4 s. Une
+  // figurine posée ne respire pas ; c'est ce qui la distingue d'un personnage.
+  const torse = crQ("#cr-crTorse");
+  if (torse && !MOUVEMENT_REDUIT.on) {
+    if (CR.souffle) CR.souffle.cancel();
+    CR.souffle = torse.animate([{ transform: "translateY(0)" }, { transform: "translateY(1.6px)" }, { transform: "translateY(0)" }],
+      { duration: 3400, iterations: Infinity, easing: "ease-in-out" });
+  }
   const tic = () => {
     if (!CR.el) return;
-    const clin = CR.emotion === "neutre" && !CR.arme && Math.random() < .18;
-    if (clin) { crCligne(320, true); crVisage(EMOTIONS.content); crMinuteur(() => { if (CR.emotion === "neutre") crVisage(EMOTIONS.neutre); }, 700); }
+    const clin = crAuRepos() && !CR.arme && Math.random() < .18;
+    if (clin) { crCligne(320, true); crVisage(EMOTIONS.content); crMinuteur(() => { if (crAuRepos()) crVisage(EMOTIONS[CR.base] || EMOTIONS.neutre); }, 700); }
     else crCligne(150);
-    if (CR.emotion === "neutre" && !CR.arme && Math.random() < .35) crBouger("crTete", (Math.random() - .5) * 5, 600);
+    if (crAuRepos() && !CR.arme && Math.random() < .35) crBouger("crTete", (Math.random() - .5) * 5, 600);
     CR.ambiance = setTimeout(tic, 2600 + Math.random() * 3800);
   };
   CR.ambiance = setTimeout(tic, 1800);
 }
-function crStopperAmbiance() { clearTimeout(CR.ambiance); CR.ambiance = null; }
+function crStopperAmbiance() { clearTimeout(CR.ambiance); CR.ambiance = null; if (CR.souffle) { CR.souffle.cancel(); CR.souffle = null; } }
 
 /* ── La surveillance : un croupier ne regarde pas ton COMPTE, il regarde ta
    MISE. Un saut brusque, ou une rampe qui suit le compte vrai sur plusieurs
@@ -551,14 +572,15 @@ document.addEventListener("sabot:table", () => { monterCroupier(); CR.mises = []
 document.addEventListener("sabot:remelange", () => { if (CR.visible) crMelange(); });
 document.addEventListener("sabot:donne-debut", e => {
   if (!CR.el) monterCroupier();
-  CR.base = "concentre"; if (CR.emotion === "neutre") { CR.emotion = "concentre"; crVisage(EMOTIONS.concentre); }
+  if (crAuRepos()) { CR.emotion = "concentre"; crVisage(EMOTIONS.concentre); }
+  CR.base = "concentre";
   crArmer(320);
   const d = e.detail || {};
   const mise = d.mise !== undefined ? d.mise : crLireNombre("tMise");
   const tc = d.tc !== undefined ? d.tc : (d.compte !== undefined ? d.compte : crLireNombre("tTC"));
   crSurveille(mise, tc);
 });
-document.addEventListener("sabot:carte", e => { const d = e.detail || {}; if (d.vers) crFlick(d.vers, vitesse()); });
+document.addEventListener("sabot:carte", e => { const d = e.detail || {}; if (d.vers) crFlick(d.vers, rythme()); });
 document.addEventListener("sabot:tour", e => {
   const d = e.detail || {}; if (!CR.el || !CR.visible) return;
   if (d.siege === "croupier") { const r = crRect("dMain"); if (r) crRegarde(r.left + r.width / 2, r.top + r.height, 260); return; }
@@ -590,7 +612,7 @@ document.addEventListener("sabot:main-fin", e => {
   }
 });
 document.addEventListener("sabot:manche-fin", () => {
-  CR.base = "neutre"; if (CR.emotion === "concentre") { CR.emotion = "neutre"; crVisage(EMOTIONS.neutre); }
+  CR.base = crRepos(); if (CR.emotion === "concentre") { CR.emotion = CR.base; crVisage(EMOTIONS[CR.base]); }
   crMinuteur(() => { const b = $("bDonne"); if (!b || !b.disabled) crReposer(380); }, 600);
 });
 
@@ -601,7 +623,7 @@ if (window.ResizeObserver && $("croupierScene")) new ResizeObserver(entries => {
   if (!CR.visible) return;
   if (!CR.el) monterCroupier();
   if (!CR.arme) crReposer(avant ? 200 : 1);
-  if (!CR.salue) { CR.salue = true; crMinuteur(() => { if (CR.emotion === "neutre") crEmotion("content", { texte: crReplique("accueil"), tenue: 1600, ms: 2600 }); }, 700); }
+  if (!CR.salue) { CR.salue = true; crMinuteur(() => { if (crAuRepos()) crEmotion("content", { texte: crReplique("accueil"), tenue: 1600, ms: 2600 }); }, 700); }
 }).observe($("croupierScene"));
 addEventListener("resize", () => { if (CR.visible && !CR.arme) crReposer(1); });
 
