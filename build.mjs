@@ -1,7 +1,7 @@
 // Fabrique index.html : un seul fichier, sans dépendance, sans empaqueteur npm.
 // Il précalcule ce qui est cher (stratégies de base et écarts au compte, table par table)
 // pour que l'application n'ait plus rien à résoudre au chargement.
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { solve } from "./src/solver.mjs";
 import { computeIndices } from "./src/indices.mjs";
 import { simulate } from "./src/sim.mjs";
@@ -13,6 +13,12 @@ const t0 = Date.now();
 const MAINS = +(process.env.MAINS || 3_000_000);
 
 // ---- 1. précalcul ----
+// Cache des avantages maison, indexé par signature de règles + nombre de mains.
+// Il est versionné dans le dépôt : un clone frais construit sans re-simuler.
+const CACHE = "src/avantages.json";
+const cache = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, "utf8")) : {};
+let simules = 0;
+
 const cles = new Map();          // règles identiques = un seul calcul
 const signature = r => JSON.stringify([r.decks, r.h17, r.das, r.surrender, r.doubleOn, r.maxHands, r.hitSplitAces, r.peek, r.blackjackPays]);
 const donnees = { tables: {}, systemes: {}, genere: new Date().toISOString().slice(0, 10) };
@@ -23,7 +29,11 @@ for (const t of TABLES) {
   if (!cles.has(sig)) cles.set(sig, { chart: solve(r).chart, indices: computeIndices(r, SYSTEMES.hilo.v, { min: -8, max: 8 }) });
   const { chart, indices } = cles.get(sig);
   const rr = t.melange === "melangeuse_continue" ? Object.assign({}, r, { penetration: 0.02 }) : r;
-  const { edge } = simulate(rr, MAINS, 20260904);
+  // La signature de simulation inclut la pénétration : deux tables aux mêmes règles
+  // mais coupées différemment n'ont pas le même avantage.
+  const sigSim = signature(rr) + "|" + rr.penetration + "|" + MAINS;
+  let edge = cache[sigSim];
+  if (edge === undefined) { edge = simulate(rr, MAINS, 20260904).edge; cache[sigSim] = edge; simules++; }
   donnees.tables[t.id] = {
     chart,
     ecarts: indices.deviations.filter(d => Math.abs(d.index) <= 6).map(d => [d.fam, d.key, d.up, d.index, d.vers]),
@@ -33,6 +43,7 @@ for (const t of TABLES) {
   };
   process.stderr.write(`  ${t.nom.padEnd(18)} avantage ${edge.toFixed(3)} %  ·  ${donnees.tables[t.id].ecarts.length} écarts\n`);
 }
+if (simules) { writeFileSync(CACHE, JSON.stringify(cache, null, 1)); process.stderr.write(`  (${simules} table(s) re-simulée(s) sur ${MAINS.toLocaleString("fr")} mains)\n`); }
 for (const [k, s] of Object.entries(SYSTEMES)) donnees.systemes[k] = { nom: s.nom, equilibre: s.equilibre, niveau: s.niveau, v: s.v, note: s.note };
 donnees.catalogue = TABLES;
 
@@ -57,7 +68,15 @@ for (const nom of ORDRE) {
 // ---- 3. assemblage ----
 const css = readFileSync("src/app/style.css", "utf8");
 const corps = readFileSync("src/app/corps.html", "utf8");
-const app = readFileSync("src/app/app.js", "utf8");
+// L'interface est concaténée DANS CET ORDRE à l'intérieur d'une seule portée.
+// Ce n'est pas un système de modules : c'est une table des matières. Un fichier
+// annoncé mais absent fait échouer la construction, plutôt que de produire une
+// page à moitié muette qu'on découvrirait à l'usage.
+const MORCEAUX = ["app.js"];
+const app = MORCEAUX.map(f => {
+  try { return `\n/* ═══ ${f} ═══ */\n` + readFileSync(`src/app/${f}`, "utf8"); }
+  catch (e) { throw new Error(`morceau d'interface manquant : src/app/${f}`); }
+}).join("\n");
 const tete = readFileSync("src/app/tete.html", "utf8");
 
 const out = `${tete}
