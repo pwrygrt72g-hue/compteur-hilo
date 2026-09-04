@@ -76,7 +76,7 @@ const SONDE = `(() => {
     deborde: largeurDoc > vw + 1 ? dep : [], largeurDoc, hEntete: h("header"),
     yCoups: y("#coups"), hTapis: h("#plateau"), hSieges: h("#sieges"),
     bandes: { tete: h(".tete"), padHaut: q("header") ? parseFloat(getComputedStyle(q("header")).paddingTop) : null,
-      teteTable: h(".tete-table"), haute: h(".rangee-haute"), annonce: h("#annonce"), conseil: h("#conseil"),
+      barre: h(".hud"), salle: h(".salle"), haute: h(".rangee-haute"), annonce: h("#annonce"), conseil: h("#conseil"),
       actions: h(".zone-actions"), vTable: h("#v-table"), main: h("main") },
     petits: [...new Set(petits)].slice(0, 6) };
 })()`;
@@ -117,7 +117,7 @@ const t = rapport.filter(r => r.vue === "table");
 console.log("\nTABLE — hauteur d'en-tête · bas des coups · feutre · sièges");
 for (const r of t) { const b = r.bandes;
   console.log(`  ${(r.L + "×" + r.H).padEnd(10)} entête ${String(r.hEntete).padStart(4)} px (tete ${b.tete}, pad ${b.padHaut}) · coups à y=${String(r.yCoups).padStart(5)} (fenêtre ${r.vh}) ${r.yCoups > r.vh ? "❌ HORS ÉCRAN" : "✓"} · feutre ${r.hTapis} · sièges ${r.hSieges}`);
-  console.log(`             bandes : tête-table ${b.teteTable} · rangée haute ${b.haute} · annonce ${b.annonce} · conseil ${b.conseil} · actions ${b.actions} · #v-table ${b.vTable} · main ${b.main}`); }
+  console.log(`             bandes : barre ${b.barre} · salle ${b.salle} · rangée haute ${b.haute} · annonce ${b.annonce} · conseil ${b.conseil} · actions ${b.actions} · #v-table ${b.vTable} · main ${b.main}`); }
 const cibles44 = [...new Set(rapport.flatMap(r => r.petits))];
 console.log("\nCIBLES TACTILES SOUS 44 px :", cibles44.length ? cibles44.slice(0, 10).join(" · ") : "aucune");
 

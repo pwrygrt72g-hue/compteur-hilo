@@ -113,23 +113,6 @@ button{cursor:pointer;background:none;border:0}
 }
 .pad{padding:18px 20px}
 
-/* ── Le feutre ─────────────────────────────────────────────────────────
-   Le vert plat est ce qui rend un tapis CSS faux. Un vrai feutre a une trame
-   croisée (27° et −63°, perpendiculaires comme chaîne et trame), un plafonnier
-   décentré, et un creux sombre sur les bords. */
-.tapis{
-  position:relative;background-color:var(--tapis);
-  background-image:
-    repeating-linear-gradient( 27deg, var(--trame-clair)  0 1px, transparent 1px 3px),
-    repeating-linear-gradient(-63deg, var(--trame-sombre) 0 1px, transparent 1px 3px),
-    radial-gradient(118% 76% at 50% -14%, var(--tapis-clair) 0%, transparent 60%),
-    radial-gradient(132% 104% at 50% 48%, transparent 40%, rgba(0,0,0,.44) 100%);
-  box-shadow:inset 0 0 90px rgba(0,0,0,.30), inset 0 2px 0 rgba(255,255,255,.05);
-  border-radius:190px 190px 20px 20px;
-  border:10px solid var(--cuir);
-  outline:1px solid rgba(0,0,0,.55);outline-offset:-11px;
-}
-
 /* ── La denture : le motif signature ───────────────────────────────────
    Une arête entaillée à pas régulier, chaque entaille en DEUX tons : le creux
    sombre puis la bavure claire. Un seul ton donne une impression, pas une
@@ -217,7 +200,7 @@ nav{display:flex;gap:2px;margin-left:auto;flex-wrap:nowrap;min-width:0;overflow-
 nav::-webkit-scrollbar{display:none}
 nav button{padding:9px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);
   border:1px solid transparent;transition:color .15s,background .15s;flex:none;white-space:nowrap;
-  scroll-snap-align:center;min-height:38px}
+  scroll-snap-align:center;min-height:44px}
 nav button:hover{color:var(--os)}
 nav button[aria-current="page"]{background:var(--laiton);color:var(--encre);font-weight:600}
 /* Le bloc d'outils n'a qu'un seul habitat visible : la feuille ⚙. */
@@ -240,11 +223,6 @@ main{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:var(--gap) 
 .btn.creux{background:transparent;color:var(--os);border:1px solid var(--bord)}
 .btn.creux:hover{border-color:var(--laiton);filter:none}
 .btn[disabled]{opacity:.42;cursor:not-allowed;transform:none;filter:none}
-/* Sur le tapis, un bouton éteint garde son contour : effacé, il ferait croire
-   que l'écran est cassé plutôt que le geste indisponible. */
-.tapis .btn[disabled]{opacity:1;background:transparent;color:color-mix(in oklab,var(--nacre) 78%,transparent);
-  box-shadow:0 0 0 1px color-mix(in oklab,var(--nacre) 34%,transparent) inset;text-shadow:none}
-.tapis .btn[disabled] kbd{opacity:.6}
 .btn kbd{font-family:"Martian Mono",monospace;font-size:10px;opacity:.6}
 .rang-btn{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
 label.ch{display:flex;flex-direction:column;gap:5px}
@@ -314,80 +292,202 @@ input[type=range]{accent-color:var(--laiton);width:170px}
   box-shadow:0 0 0 1px color-mix(in oklab, var(--cinabre) 42%, transparent) inset;
 }
 
-/* ── La réglette : le compte, matérialisé sur une échelle graduée ───── */
-.rail{position:relative;height:58px;border-radius:9px;overflow:hidden;
-  background:linear-gradient(180deg,#2A2114 0%,#1A1409 52%,#241B0F 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 -2px 6px rgba(0,0,0,.55), 0 1px 2px -1px var(--ombre)}
-.rail::before{content:"";position:absolute;inset:auto 0 0 0;height:15px;
-  background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.60) 0 1px, rgba(224,168,60,.22) 1px 2px, transparent 2px 8px)}
-.rail::after{content:"";position:absolute;inset:auto 0 0 0;height:25px;
-  background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.72) 0 1px, rgba(224,168,60,.34) 1px 2px, transparent 2px 40px)}
-.rail .coupe{position:absolute;top:0;bottom:0;width:2px;left:var(--penetration,75%);
-  background:var(--cinabre);box-shadow:0 0 8px -1px var(--cinabre)}
-.rail .zero{position:absolute;top:4px;bottom:4px;width:1px;left:50%;background:rgba(255,255,255,.22)}
-/* Dimensionné au pire cas : un sabot de six jeux produit couramment des comptes
-   au-delà de ±20, et Martian Mono est une chasse large. Un compte qui déborde
-   à l'instant où il devient intéressant annule tout le bénéfice de la réglette. */
-.rail .index{position:absolute;top:6px;bottom:6px;left:50%;min-width:5ch;padding-inline:8px;
-  transform:translateX(-50%);border-radius:5px;display:grid;place-items:center;
-  background:linear-gradient(180deg,#F3C866,#C08E22 62%,#8A6416);
-  color:#1A1409;font-family:"Martian Mono",monospace;font-size:15px;font-weight:700;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), inset 0 -2px 3px rgba(0,0,0,.35), 0 2px 6px -2px rgba(0,0,0,.7);
-  transition:left 240ms var(--ressort), background 140ms linear}
-.rail .index.plus{background:linear-gradient(180deg,#8FF0DC,#2FBFA6 62%,#137A66);color:#04201B}
-.rail .index.moins{background:linear-gradient(180deg,#FFB49F,#E86A4E 62%,#9B3A22);color:#2A0C05}
-.bandeau{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px;margin-top:10px}
-.bandeau div{text-align:center}
-.bandeau b{display:block;font-family:"Martian Mono",monospace;font-size:var(--t-titre);font-weight:600}
+/* ══════════════════════════════════════════════════════════════════════
+   LA SCÈNE DE TABLE — un casino la nuit
+   La salle, la table, les coups. Ses couleurs sont EXPLICITES : la scène
+   ne suit pas le thème de la page, seul le cadre autour s'adapte. Le lieu
+   pose ses jetons sur #v-table[data-lieu] ; tout le reste les consomme.
+   ══════════════════════════════════════════════════════════════════════ */
+#v-table{
+  --feutre:#1F5E44; --feutre-clair:#2B7659; --feutre-ombre:#0C3324;
+  --rail:#2A1810; --rail-clair:#43291B; --rail-liseret:#D9B45B;
+  --or:#E2B857; --or-fonce:#A67C22; --ivoire:#F6F1E4;
+  --lueur:rgba(226,184,87,.20); --neon:transparent; --dos-carte:#8A2420;
+  --sol:#0A0C0E; --sol-clair:#15181C;
+  --salle-haut:clamp(44px, 8svh, 90px);    /* la place du croupier au-dessus du rail */
+}
+/* Les neuf lieux. Le feutre est un vrai feutre de casino : une couleur pleine.
+   Le nom du lieu donne aussi l'ambiance autour (lueur, néon, laque). */
+#v-table[data-lieu="boulevard"]{ --feutre:#1F5E44; --feutre-clair:#2B7659; --feutre-ombre:#0C3324;
+  --rail:#2A1810; --rail-clair:#43291B; --dos-carte:#8A2420; --lueur:rgba(226,184,87,.20) }
+#v-table[data-lieu="neon"]{ --feutre:#1E3F8F; --feutre-clair:#2A55B5; --feutre-ombre:#0E2358;
+  --rail:#1F1A1A; --rail-clair:#332A2A; --rail-liseret:#E8D7A0; --or:#F0D07A;
+  --dos-carte:#1F3A93; --neon:#FF2E7A; --lueur:rgba(34,211,238,.22); --sol:#07090F; --sol-clair:#121628 }
+#v-table[data-lieu="frontdemer"]{ --feutre:#6E1F30; --feutre-clair:#872A3E; --feutre-ombre:#3E0F1B;
+  --rail:#221612; --rail-clair:#38251C; --rail-liseret:#D8B36A; --or:#D8B36A;
+  --dos-carte:#7A1F2E; --lueur:rgba(216,179,106,.18); --sol:#0B0A0B; --sol-clair:#181416 }
+#v-table[data-lieu="cotai"]{ --feutre:#951C1C; --feutre-clair:#B72A26; --feutre-ombre:#560C0C;
+  --rail:#1B0E0C; --rail-clair:#2E1814; --rail-liseret:#F2C15A; --or:#F2C15A; --or-fonce:#B8862B;
+  --dos-carte:#B8202A; --lueur:rgba(242,193,90,.28); --sol:#0D0707; --sol-clair:#1E1010 }
+#v-table[data-lieu="cercle"]{ --feutre:#1B2A4E; --feutre-clair:#273B6B; --feutre-ombre:#0D1530;
+  --rail:#1C1210; --rail-clair:#2F1E19; --rail-liseret:#D4B46A; --or:#D4B46A;
+  --dos-carte:#1B2E5E; --lueur:rgba(212,180,106,.16); --sol:#070910; --sol-clair:#12141F }
+#v-table[data-lieu="mainchaude"]{ --feutre:#1C4D2A; --feutre-clair:#27643A; --feutre-ombre:#0B2A15;
+  --rail:#2A1810; --rail-clair:#43291B; --dos-carte:#2E5E3A; --lueur:rgba(226,184,87,.26) }
+#v-table[data-lieu="salonprive"]{ --feutre:#25282B; --feutre-clair:#353A3E; --feutre-ombre:#121415;
+  --rail:#15110F; --rail-clair:#241C18; --rail-liseret:#C9A65A; --or:#C9A65A;
+  --dos-carte:#17181B; --lueur:rgba(201,166,90,.16); --sol:#050505; --sol-clair:#101010 }
+#v-table[data-lieu="reno"]{ --feutre:#59602F; --feutre-clair:#6C7440; --feutre-ombre:#33381A;
+  --rail:#4A3620; --rail-clair:#634A2E; --rail-liseret:#BFAF7A; --or:#D6C078;
+  --dos-carte:#3D2B1F; --lueur:rgba(255,240,200,.10); --sol:#0F0E0B; --sol-clair:#1B1913 }
+#v-table[data-lieu="aquarium"]{ --feutre:#136A72; --feutre-clair:#1B838C; --feutre-ombre:#083E44;
+  --rail:#1A1F22; --rail-clair:#2B3338; --rail-liseret:#CFE3E6; --or:#E9D48A;
+  --dos-carte:#0F5C66; --lueur:rgba(34,211,238,.20); --neon:#22D3EE; --sol:#050A0C; --sol-clair:#0E181B }
 
-/* ── La table de jeu ───────────────────────────────────────────────── */
-.plateau{padding:18px 20px 20px;min-height:400px;overflow:hidden}
-.plateau .devise{position:absolute;top:150px;left:0;right:0;text-align:center;pointer-events:none;
-  font-family:"Instrument Serif",serif;font-size:var(--t-petit);letter-spacing:.2em;
-  color:color-mix(in oklab, var(--nacre) 40%, transparent)}
-.sabot,.defausse{position:absolute;top:20px;width:60px;height:86px;border-radius:6px;
-  display:grid;place-items:end center;padding-bottom:4px;font-family:"Martian Mono",monospace;
-  font-size:var(--t-micro);color:color-mix(in oklab, var(--nacre) 66%, transparent)}
-.sabot{right:24px;background:#1B120D;border:2px solid var(--filet)}
-.sabot::before{content:"";position:absolute;top:6px;left:6px;right:6px;height:48px;border-radius:2px;
-  background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px)}
-.defausse{left:24px;border:2px dashed color-mix(in oklab, var(--filet) 60%, transparent)}
-.defausse i{position:absolute;top:6px;left:6px;right:6px;bottom:20px;border-radius:3px;opacity:0;
-  transition:opacity .3s;background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px)}
-.defausse.pleine i{opacity:1}
-.croupier{display:flex;flex-direction:column;align-items:center;gap:5px}
-.main{display:flex;justify-content:center;min-height:0;perspective:900px}
-.main .carte{--w:88px;margin-left:-50px}
-.main .carte:first-child{margin-left:0}
-.qui{display:flex;align-items:baseline;gap:9px;font-size:var(--t-micro);letter-spacing:.14em;
-  text-transform:uppercase;color:color-mix(in oklab, var(--nacre) 72%, transparent)}
-.qui b{font-family:"Martian Mono",monospace;font-size:var(--t-fort);color:var(--nacre);letter-spacing:0}
-.annonce{text-align:center;font-family:"Instrument Serif",serif;font-size:var(--t-titre);
-  min-height:32px;margin:10px 0 2px;color:var(--nacre)}
-.sieges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;align-items:flex-start;min-height:170px;margin-top:4px}
-.siege{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 8px 7px;border-radius:12px;min-width:126px;transition:box-shadow .2s}
-.siege.toi{background:rgba(0,0,0,.16);box-shadow:0 0 0 1px color-mix(in oklab, var(--filet) 50%, transparent) inset}
-.siege.actif{box-shadow:0 0 0 2px var(--filet) inset}
-.siege .mains{display:flex;gap:10px}
-.siege .m{display:flex;flex-direction:column;align-items:center;gap:3px}
-.siege .m.encours .main{outline:2px dashed color-mix(in oklab, var(--filet) 70%, transparent);outline-offset:5px;border-radius:8px}
-.siege .main .carte{--w:66px;margin-left:-37px}
-.siege .main .carte:first-child{margin-left:0}
-.siege .score{font-family:"Martian Mono",monospace;font-size:var(--t-petit);color:var(--nacre);min-height:18px}
-.siege .issue{font-size:var(--t-micro);letter-spacing:.07em;text-transform:uppercase;min-height:14px;padding:1px 7px;border-radius:999px;font-weight:600}
-.issue.g{background:color-mix(in oklab,var(--jade) 26%,transparent);color:var(--jade)}
-.issue.p{background:color-mix(in oklab,var(--cinabre) 24%,transparent);color:var(--cinabre)}
-.issue.n{background:rgba(255,255,255,.12);color:var(--nacre)}
-.issue.bj{background:var(--filet);color:#1A1409}
-.siege .nom{font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;
-  color:color-mix(in oklab, var(--nacre) 90%, transparent)}
-.siege.toi .nom{color:var(--filet)}
-.conseil{text-align:center;font-size:var(--t-petit);min-height:20px;margin-top:6px;
-  color:color-mix(in oklab, var(--nacre) 88%, transparent)}
-.conseil b{color:var(--filet)}
-.barre{display:flex;justify-content:space-between;align-items:center;gap:10px 18px;flex-wrap:wrap;
-  margin-top:12px;font-family:"Martian Mono",monospace;font-size:var(--t-fin);color:var(--os-eteint)}
-.barre b{color:var(--os)}
+/* Les encres SOUS le feutre lui appartiennent : il est sombre dans les deux
+   thèmes, or --jade et --cinabre du thème clair sont des encres foncées faites
+   pour la laque claire (mesuré : 1,4:1 sur le feutre). On les redéclare ici. */
+.tapis{ --jade:#5FE0C6; --cinabre:#FF9B7A; --filet:var(--or); --nacre:#F6F2E8 }
+
+/* ── La salle ─────────────────────────────────────────────────────────── */
+.salle{
+  position:relative; min-height:0; overflow:hidden; border-radius:var(--r) var(--r) 0 0;
+  display:grid; grid-template-rows:var(--salle-haut) minmax(0,1fr); padding:0 18px 12px;
+  background:
+    radial-gradient(52% 46% at 50% 8%, var(--lueur) 0%, transparent 72%),
+    radial-gradient(120% 60% at 50% 100%, var(--sol-clair) 0%, transparent 60%),
+    var(--sol);
+}
+/* Fremont et l'Aquarium ont un tube de néon dans la salle — un seul, pas un arc-en-ciel. */
+.salle::before{
+  content:""; position:absolute; left:8%; right:8%; top:0; height:2px; border-radius:2px;
+  background:var(--neon); opacity:.55; pointer-events:none;
+  box-shadow:0 0 12px 2px var(--neon), 0 0 44px 8px color-mix(in oklab, var(--neon) 40%, transparent);
+}
+#croupierScene{ position:absolute; left:50%; top:0; transform:translateX(-50%); z-index:1;
+  width:min(560px, 80%); height:calc(var(--salle-haut) + 170px); pointer-events:none }
+#jetonsCalque{ position:absolute; inset:0; z-index:8; pointer-events:none }
+
+/* ── La table : une demi-lune, rail de cuir, liseré doré ──────────────── */
+.tapis{
+  grid-row:2; position:relative; z-index:2; height:100%; min-height:0;
+  width:min(100%, 1500px); margin:0 auto; padding:14px;
+  border-radius:42% 42% 30px 30px / 72% 72% 30px 30px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), transparent 18%),
+    linear-gradient(180deg, var(--rail-clair) 0%, var(--rail) 45%, color-mix(in oklab, var(--rail) 70%, #000) 100%);
+  box-shadow:
+    0 36px 64px -22px rgba(0,0,0,.9), 0 0 0 1px rgba(0,0,0,.75),
+    inset 0 2px 0 rgba(255,255,255,.07), inset 0 -3px 0 rgba(0,0,0,.55);
+}
+.tapis::before{ content:""; position:absolute; inset:5px; border-radius:inherit; pointer-events:none; z-index:4;
+  border:1.5px solid var(--rail-liseret); opacity:.72; box-shadow:0 0 6px -2px var(--rail-liseret) }
+.feutre{
+  position:relative; height:100%; min-height:0; overflow:hidden; border-radius:inherit; z-index:2;
+  background-color:var(--feutre);
+  background-image:
+    radial-gradient(110% 80% at 50% 0%, var(--feutre-clair) 0%, transparent 62%),
+    radial-gradient(150% 120% at 50% 55%, transparent 42%, var(--feutre-ombre) 100%);
+  box-shadow:inset 0 4px 10px rgba(0,0,0,.55), inset 0 0 70px rgba(0,0,0,.22);
+  display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:2px; padding:20px 16px 8px;
+}
+/* Le grain est une TUILE de 180 px rendue une fois par l'SVG en ligne — jamais
+   un filtre vivant plein écran (mesuré : 0,7 ms contre 20 ms), et jamais un
+   data: URI, qu'une CSP peut avaler en silence. */
+.feutre>svg.grain, .feutre>svg.motif, .feutre>svg.lettrage{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none }
+.feutre>svg.grain{ mix-blend-mode:overlay; opacity:.55 }
+.feutre>svg.lettrage{ z-index:1 }
+.feutre>svg.lettrage text{ font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:700; fill:var(--or);
+  letter-spacing:.22em; text-transform:uppercase; opacity:.62; paint-order:stroke; stroke:rgba(0,0,0,.28); stroke-width:.6px }
+.feutre>*:not(svg){ position:relative; z-index:2 }
+
+/* Le rack de jetons, planté dans le rail devant le croupier : six tubes vus de face. */
+.rack{ position:absolute; top:-2px; left:50%; transform:translateX(-50%); z-index:5;
+  display:flex; gap:3px; padding:5px 6px 4px; border-radius:0 0 9px 9px;
+  background:linear-gradient(180deg,#1C1512,#0E0A08); box-shadow:0 6px 12px -4px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(0,0,0,.6) }
+.rack i{ width:30px; height:18px; border-radius:3px; background:repeating-linear-gradient(90deg, var(--c) 0 3px, #F4EFE2 3px 4px);
+  box-shadow:inset 0 -3px 4px rgba(0,0,0,.5), inset 0 2px 2px rgba(255,255,255,.25) }
+.rack i:nth-child(1){--c:#EDE7D9} .rack i:nth-child(2){--c:#C8252B} .rack i:nth-child(3){--c:#1E7A44}
+.rack i:nth-child(4){--c:#1A1A1D} .rack i:nth-child(5){--c:#6D3D9C} .rack i:nth-child(6){--c:#E67E22}
+
+/* La rangée du croupier : défausse à gauche, sa main au centre, le sabot à droite —
+   SOUS ses mains, pas dans les coins (un sabot est toujours à portée de main). */
+.rangee-haute{ display:flex; justify-content:center; align-items:flex-start; gap:34px; margin-top:8px }
+.croupier{ display:flex; align-items:center; justify-content:center; gap:14px; min-width:270px }
+.main{ display:flex; justify-content:center; min-height:0; perspective:900px }
+.main .carte{ --w:84px; margin-left:-48px }
+.main .carte:first-child{ margin-left:0 }
+/* Les cartes grandissent avec l'écran : 84 px à 1280, 104 px à 1920 pour le croupier. */
+.croupier .main .carte{ --w:clamp(84px, 6.2vw, 104px); margin-left:calc(var(--w) * -.57) }
+.croupier .main .carte:first-child{ margin-left:0 }
+.qui{ display:flex; flex-direction:column; align-items:center; gap:2px; font-size:var(--t-micro); letter-spacing:.14em;
+  text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 82%, transparent) }
+.qui b{ font-family:"Martian Mono",monospace; font-size:var(--t-fort); color:var(--ivoire); letter-spacing:0 }
+/* Le sabot : une cale laquée, les cartes dedans, la carte de coupe rouge à sa
+   hauteur. --reste et --coupe sont posés par la table (fractions du sabot). */
+.sabot,.defausse{ position:relative; width:62px; height:86px; flex:none; display:grid; place-items:end center; padding-bottom:3px;
+  font-family:"Martian Mono",monospace; font-size:var(--t-micro); color:color-mix(in oklab, var(--ivoire) 82%, transparent) }
+.sabot{ border-radius:5px 5px 7px 7px; transform:rotate(-5deg);
+  background:linear-gradient(180deg,#221915,#0E0908); box-shadow:0 0 0 1.5px var(--or-fonce), 0 10px 18px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.1) }
+.sabot::before{ content:""; position:absolute; left:7px; right:7px; bottom:20px; height:calc(4px + var(--reste,1) * 48px); border-radius:2px;
+  background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px); transition:height .3s }
+.sabot::after{ content:""; position:absolute; left:6px; right:6px; bottom:calc(22px + var(--coupe,.25) * 48px); height:2px; background:#E8362F;
+  box-shadow:0 0 5px #E8362F; opacity:calc(var(--coupe,.25) * 4) }
+.defausse{ border-radius:5px; background:rgba(0,0,0,.22); box-shadow:inset 0 0 0 1.5px color-mix(in oklab, var(--or) 55%, transparent), inset 0 0 14px rgba(0,0,0,.4) }
+.defausse i{ position:absolute; left:7px; right:7px; bottom:20px; height:calc(2px + var(--pile,0) * 48px); border-radius:2px; opacity:0;
+  transition:opacity .3s, height .3s; background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px) }
+.defausse.pleine i{ opacity:1 }
+
+.annonce{ text-align:center; font-family:"Instrument Serif",serif; font-size:var(--t-titre); min-height:30px; margin:2px 0 0;
+  color:var(--ivoire); text-shadow:0 1px 3px rgba(0,0,0,.6) }
+/* Les sièges, en bas, chacun avec son cercle de mise doré ; les sièges du bord
+   remontent un peu (--ecart posé par la table) : on est assis autour, pas en rang. */
+.sieges{ display:flex; justify-content:center; align-items:flex-end; gap:12px; flex-wrap:wrap; min-height:0; padding:0 4px 2px }
+.siege{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 6px 4px; border-radius:14px; min-width:126px;
+  transition:box-shadow .2s; transform:translateY(calc(var(--ecart,0) * -8px)) }
+.siege.toi{ background:rgba(0,0,0,.16); box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 45%, transparent) inset }
+.siege.actif{ box-shadow:0 0 0 2px var(--or) inset, 0 0 22px -6px var(--or) }
+.siege .mains{ display:flex; gap:10px; align-items:flex-end; min-height:94px }
+.siege .m{ display:grid; grid-template-columns:auto auto; justify-content:center; align-items:center; gap:2px 6px }
+.siege .m .main{ grid-column:1 / -1 }
+.siege .m.encours .main{ outline:2px dashed color-mix(in oklab, var(--or) 70%, transparent); outline-offset:5px; border-radius:8px }
+.siege .main .carte{ --w:clamp(66px, 5vw, 84px); margin-left:calc(var(--w) * -.56) }
+.siege .main .carte:first-child{ margin-left:0 }
+.siege .score{ font-family:"Martian Mono",monospace; font-size:var(--t-petit); color:var(--ivoire); min-height:18px; text-shadow:0 1px 2px rgba(0,0,0,.5) }
+.siege .issue{ font-size:var(--t-micro); letter-spacing:.07em; text-transform:uppercase; padding:1px 7px; border-radius:999px; font-weight:600 }
+.siege .issue:empty{ display:none }
+.issue.g{ background:color-mix(in oklab,var(--jade) 26%,transparent); color:var(--jade) }
+.issue.p{ background:color-mix(in oklab,var(--cinabre) 24%,transparent); color:var(--cinabre) }
+.issue.n{ background:rgba(255,255,255,.12); color:var(--nacre) }
+.issue.bj{ background:var(--or); color:#1A1409 }
+.cercle{ width:46px; height:46px; border-radius:50%; position:relative; margin-top:3px; flex:none;
+  box-shadow:0 0 0 1.5px var(--or) inset, 0 0 10px -4px var(--or); opacity:.85 }
+.cercle::after{ content:""; position:absolute; inset:6px; border-radius:50%; border:1px solid color-mix(in oklab, var(--or) 40%, transparent) }
+.siege .nom{ font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 88%, transparent) }
+.siege.toi .nom{ color:var(--or) }
+.conseil{ text-align:center; font-size:var(--t-petit); min-height:20px; margin:2px 0 0; color:color-mix(in oklab, var(--ivoire) 88%, transparent) }
+.conseil b{ color:var(--or) }
+
+/* ── La barre : une seule ligne, le feutre prend la place ──────────────── */
+.hud{ display:flex; align-items:center; gap:14px; padding:2px 6px 2px 16px; min-height:44px; flex-wrap:wrap; margin-bottom:8px }
+.hud-table{ display:flex; align-items:center; gap:10px; min-width:0; flex-wrap:wrap }
+.hud-table b{ font-family:"Instrument Serif",serif; font-weight:400; font-size:19px; white-space:nowrap }
+.hud-compte{ margin-left:auto; display:flex; gap:18px; font-family:"Martian Mono",monospace; font-size:var(--t-fin); flex-wrap:wrap }
+.hud-compte span{ display:flex; align-items:baseline; gap:6px; white-space:nowrap }
+.hud-compte i{ font-style:normal; font-family:Archivo,sans-serif; font-size:var(--t-micro); letter-spacing:.1em; text-transform:uppercase; color:var(--os-eteint) }
+.hud-compte b{ font-weight:600; min-width:3ch; text-align:right }
+.hud-compte.masque b{ color:var(--os-eteint) }
+.hud-compte .plus b{ color:var(--jade) } .hud-compte .moins b{ color:var(--cinabre) }
+
+/* ── Les coups : verre teinté sur la scène, le principal en or ─────────── */
+.zone-actions{ position:relative; z-index:5; padding:10px 12px; padding-bottom:max(10px,var(--sb));
+  display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between;
+  color:var(--ivoire); border-radius:0 0 var(--r) var(--r);
+  background:linear-gradient(180deg, var(--sol-clair), var(--sol)); box-shadow:inset 0 1px 0 rgba(255,255,255,.06) }
+.zone-actions .rang-btn{ display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start }
+.zone-actions .btn{ min-height:46px; padding:8px 13px; border-radius:12px; font-size:var(--t-petit); white-space:nowrap }
+.zone-actions .btn kbd{ opacity:.55; font-size:10px }
+#bDonne{ background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 8px 16px -8px rgba(0,0,0,.9), 0 0 0 1px rgba(0,0,0,.4) }
+#bDonne[disabled]{ opacity:1; background:rgba(226,184,87,.14); color:rgba(246,241,228,.45); box-shadow:0 0 0 1px rgba(226,184,87,.28) inset }
+.btn.verre{ background:rgba(255,255,255,.07); color:var(--ivoire); border:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:inset 0 1px 0 rgba(255,255,255,.08) }
+.btn.verre:hover{ background:rgba(255,255,255,.13); border-color:color-mix(in oklab, var(--or) 60%, transparent); filter:none }
+.btn.verre[disabled]{ opacity:1; color:rgba(246,241,228,.38); background:rgba(255,255,255,.035); border-color:rgba(255,255,255,.08); cursor:not-allowed }
+.btn.verre.mini{ min-height:44px; padding:7px 10px; font-size:var(--t-fin) }
+.btn.mini[aria-pressed="true"]{ color:var(--or); border-color:var(--or) }
+.rang-table{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto }
+.zone-actions .bulle{ bottom:auto; top:-8px; transform:translate(-50%,-100%) }
 
 /* ── Exercices ─────────────────────────────────────────────────────── */
 .scene{display:grid;place-items:center;min-height:238px;padding:16px 0 4px;perspective:900px;position:relative}
@@ -551,14 +651,21 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
   font-size:var(--t-petit);box-shadow:0 10px 30px -8px var(--ombre);animation:paraitre .2s;max-width:min(90vw,520px)}
 
 /* ── Mouvement ─────────────────────────────────────────────────────── */
+/* La donne part du sabot et décrit un ARC : le point de passage à mi-course est
+   soulevé de 34 px et la carte tourne légèrement en vol, comme lancée du poignet. */
 @keyframes donne{
-  from{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(9deg) scale(.94);opacity:0}
+  from{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(-16deg) scale(.92);opacity:0}
+  30%{opacity:1}
+  55%{transform:translate(calc(var(--dx,240px) * .42),calc(var(--dy,-200px) * .42 - 34px)) rotate(-5deg) scale(.98)}
   to{transform:none;opacity:1}
 }
 /* LA ligne importante : la durée de la donne est une FRACTION de l'intervalle
    de l'exercice. À 250 ms par carte, une donne de 300 ms dure plus longtemps
    que l'exercice, et on compte une carte qu'on n'a jamais vue immobile. */
-.scene,.plateau{--don:clamp(80ms, calc(var(--intervalle,1200ms) * .16), 165ms)}
+.scene{--don:clamp(80ms, calc(var(--intervalle,1200ms) * .16), 165ms)}
+/* Sur la table, la carte VOLE (on ne compte pas une carte en vol dans un exercice,
+   mais ici on regarde une donne) : environ la moitié de la cadence, bornée. */
+.plateau{--don:clamp(110ms, calc(var(--intervalle,400ms) * .45), 300ms)}
 .carte--entre{animation:donne var(--don,150ms) var(--ressort) both}
 @keyframes retourne{from{transform:rotateY(-92deg)}to{transform:none}}
 .carte--revele{animation:retourne 220ms var(--sec) both;backface-visibility:hidden}
@@ -569,7 +676,7 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
   *,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;
     transition-duration:1ms!important;scroll-behavior:auto!important}
   /* On coupe le TRAJET, jamais le VERDICT : la couleur reste une information. */
-  .juste,.faux,.rail .index{transition-duration:130ms!important}
+  .juste,.faux{transition-duration:130ms!important}
 }
 
 /* ── Téléphone ─────────────────────────────────────────────────────── */
@@ -586,14 +693,13 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
   .tete{padding:8px 0}
   .scene .carte{--w:116px}.scene .groupe{gap:18px}
   .reponses button{width:92px;height:62px;font-size:23px}
-  .plateau{padding:14px 8px 16px;border-radius:120px 120px 16px 16px;min-height:0}
-  .plateau .devise{top:114px;font-size:var(--t-micro);letter-spacing:.12em}
   .main .carte{--w:66px;margin-left:-38px}
   .siege{min-width:104px;padding:7px 3px}
   .siege .main .carte{--w:52px;margin-left:-30px}
-  .sabot,.defausse{width:42px;height:60px;font-size:10px;top:14px}
-  .sabot{right:10px}.defausse{left:10px}
-  .sabot::before{height:32px}
+  .sabot,.defausse{width:42px;height:60px;font-size:10px}
+  .sabot::before,.defausse i{bottom:16px;height:calc(2px + var(--reste,1) * 30px)}
+  .sabot::after{bottom:calc(18px + var(--coupe,.25) * 30px)}
+  .rack{display:none}
   .salon{grid-template-columns:1fr}
   .codesalon{font-size:30px}
   .bac{width:170px;height:214px}
@@ -622,15 +728,11 @@ main{ padding-left:max(var(--gap),var(--sg)); padding-right:max(var(--gap),var(-
 body.a-table{ overflow:hidden; overscroll-behavior:none }
 body.a-table main{ padding-bottom:0 }
 
-.tete-table .ligne-table{ display:flex; justify-content:space-between; align-items:baseline;
-  gap:12px; flex-wrap:wrap }
-.tete-table .ligne-table h3{ margin:2px 0 0 }
-.tete-table .rail{ margin-top:12px }
-.aide-table{ font-size:var(--t-fin); margin:8px 0 0 }
+.hud .regles{ flex-wrap:nowrap }
 
 @media (min-height:521px){
   #v-table{
-    display:grid; grid-template-rows:auto minmax(140px,1fr) auto; gap:8px;
+    display:grid; grid-template-rows:auto minmax(140px,1fr) auto; gap:0;
     height:calc(100svh - var(--h-entete,64px) - var(--gap) - var(--sb));
     animation:none;                      /* un poste fixe ne glisse pas à l'entrée */
   }
@@ -641,101 +743,74 @@ body.a-table main{ padding-bottom:0 }
    largeur de son CONTENU, et un `overflow:auto` ne la contredit pas. */
 #v-table > *{ min-width:0 }
 
-#v-table .tapis{
-  min-height:0; height:100%; overflow:hidden;
-  display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:2px; padding:10px;
-}
-/* Le bac et le sabot deviennent des enfants de grille. En absolu, le coin
-   arrondi du feutre les rognait en diagonale : la frontière de découpe est à
-   x = R − R·√(1 − ((d−R)/R)²), soit 87,5 px pour un rayon de 190. Le bac était
-   à 34 px. Le sortir du positionnement absolu supprime le calcul. */
-.rangee-haute{ display:grid; grid-template-columns:auto minmax(0,1fr) auto;
-  align-items:start; gap:8px }
-.rangee-haute .croupier{ grid-column:2 }
-#v-table .sabot, #v-table .defausse{ position:static }
-
-.zone-actions{ position:relative; z-index:5; padding:10px;
-  padding-bottom:max(10px,var(--sb)); display:grid; gap:8px }
-.zone-actions .rang-btn{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px }
-.zone-actions .rang-btn .btn{ min-height:48px; padding:6px 4px; font-size:var(--t-petit);
-  border-radius:12px; white-space:nowrap }
-.zone-actions .rang-btn .btn kbd{ display:none }
-.rang-table{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center }
-.rang-table .btn{ min-height:44px }
-.btn.mini{ padding:7px 11px; font-size:var(--t-fin); min-height:38px }
-.btn.mini[aria-pressed="true"]{ color:var(--os); box-shadow:0 0 0 1px var(--laiton) inset }
-@media (min-width:760px){
-  .zone-actions .rang-btn{ display:flex; flex-wrap:wrap; justify-content:center }
-  .zone-actions .rang-btn .btn kbd{ display:inline }
-}
-
-/* ── Poste « poche » : téléphone debout ──────────────────────────────── */
+/* ── Poste « poche » : téléphone debout (hors périmètre : ne casse pas, c'est tout) ── */
 @media (max-width:759.98px) and (min-height:521px){
-  #v-table .tete-table{ padding:8px 10px }
-  #v-table .rail{ height:38px; margin-top:8px }
-  #v-table .rail .index{ font-size:13px; min-width:4ch }
-  #tAide{ display:none }
-  /* Le bandeau des cinq indicateurs : de trois rangées (169 px) à une seule
-     qui défile (46 px). Le plus gros gain vertical après l'en-tête. */
-  #v-table .bandeau{ display:flex; gap:0; margin-top:8px; overflow-x:auto;
-    scrollbar-width:none; scroll-snap-type:x proximity }
-  #v-table .bandeau::-webkit-scrollbar{ display:none }
-  #v-table .bandeau div{ flex:0 0 auto; min-width:80px; padding-right:14px;
-    text-align:left; scroll-snap-align:start }
-  #v-table .tapis{ border-radius:64px 64px 14px 14px; padding:8px 8px 6px }
-  #v-table .sabot, #v-table .defausse{ width:34px; height:46px; font-size:10px }
-  #v-table .annonce{ font-size:var(--t-petit); min-height:0; margin:2px 0 }
-  #v-table .conseil{ margin:0 }
-  #v-table .croupier .main .carte{ --w:62px; margin-left:-35px }
-  #v-table .devise{ display:none }
+  .hud{ padding:4px 6px 4px 10px; gap:8px; margin-bottom:6px }
+  .hud .regles{ display:none }
+  .hud-compte{ gap:10px; overflow-x:auto; scrollbar-width:none; flex-wrap:nowrap; max-width:100% }
+  .hud-compte::-webkit-scrollbar{ display:none }
+  .salle{ padding:0 6px 6px; --salle-haut:28px }
+  .tapis{ padding:8px; border-radius:40% 40% 14px 14px / 60% 60% 14px 14px }
+  .feutre{ padding:10px 6px 4px; gap:0 }
+  .rangee-haute{ gap:12px; margin-top:4px }
+  .croupier{ min-width:0; min-height:0 }
+  .sabot,.defausse{ width:34px; height:46px; font-size:10px }
+  .annonce{ font-size:var(--t-petit); min-height:0; margin:2px 0 }
+  .conseil{ margin:0 }
+  .croupier .main .carte{ --w:62px; margin-left:-35px }
+  .sieges{ min-height:0 }
+  .cercle{ width:30px; height:30px }
+  .zone-actions{ padding:8px; gap:6px }
+  .zone-actions .rang-btn{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); width:100% }
+  .zone-actions .btn{ padding:6px 4px }
+  .zone-actions .btn kbd{ display:none }
+  .rang-table{ margin-left:0; justify-content:center; width:100% }
 }
 
-/* ── La pellicule de sièges ───────────────────────────────────────────────
+/* ── La pellicule de sièges (téléphone) ───────────────────────────────────
    Trois rangées de 170 px deviennent une rangée qui défile. L'ORDRE RÉEL de la
-   table est conservé — voir qui joue avant toi fait partie de l'apprentissage —
-   et c'est ton siège qui s'élargit, il ne remonte pas en tête. */
+   table est conservé, et c'est ton siège qui s'élargit, il ne remonte pas en tête. */
 @media (max-width:999.98px){
   #sieges{ display:flex; flex-wrap:nowrap; justify-content:flex-start;
     overflow-x:auto; overflow-y:hidden; gap:6px; min-height:0; padding-bottom:2px;
     scroll-snap-type:x proximity; scrollbar-width:none; overscroll-behavior-x:contain }
   #sieges::-webkit-scrollbar{ display:none }
   .siege{ flex:0 0 auto; min-width:0; width:clamp(92px,28vw,124px);
-    scroll-snap-align:center; padding:4px 3px }
+    scroll-snap-align:center; padding:4px 3px; transform:none }
   .siege.toi{ width:clamp(146px,46vw,196px) }
   .siege .main .carte{ --w:44px; margin-left:-25px }
   .siege.toi .main .carte{ --w:58px; margin-left:-33px }
 }
 
-/* ── Poste « tranche » : téléphone couché ─────────────────────────────────
-   Le cas que personne ne teste et qui casse tout : à 844×390 il fallait
-   défiler 1319 px, et rien du jeu n'était visible sans défiler. */
+/* ── Poste « tranche » : téléphone couché ───────────────────────────────── */
 @media (max-height:520px){
   body.a-table header{ position:static }
   #v-table{
     display:grid; grid-template-columns:minmax(0,1fr) clamp(196px,26vw,260px);
-    grid-template-rows:minmax(0,1fr); grid-template-areas:"feutre flanc"; gap:8px;
+    grid-template-rows:auto minmax(0,1fr); grid-template-areas:"salle hud" "salle coups"; gap:6px 8px;
     height:calc(100svh - var(--h-entete,54px) - 12px);
   }
-  #v-table .tapis{ grid-area:feutre; border-radius:22px; padding:6px }
-  /* Le flanc est UNE seule grille à deux rangées. Empiler deux éléments dans la
-     même zone avec align-self:start/end les fait se recouvrir dès que le
-     panneau est haut. */
-  #v-table .tete-table, #v-table .zone-actions{ grid-area:flanc }
-  #v-table .tete-table{ align-self:stretch; padding:8px 10px; overflow:auto;
-    display:grid; grid-template-rows:auto auto 1fr auto; gap:6px }
-  #v-table .zone-actions{ align-self:end }
-  #v-table .zone-actions .rang-btn{ grid-template-columns:1fr 1fr }
-  #v-table .bandeau{ display:grid; grid-template-columns:1fr 1fr; gap:2px 8px; overflow:visible }
-  #v-table .bandeau div{ min-width:0; padding:0 }
-  #tRegles, #tAide, #v-table .devise{ display:none }
-  #v-table .rail{ height:30px; margin-top:0 }
-  #v-table .annonce{ font-size:var(--t-micro); margin:0 }
-  #v-table .croupier .main .carte{ --w:54px; margin-left:-30px }
+  .salle{ grid-area:salle; border-radius:16px; padding:0 4px 4px; --salle-haut:0px }
+  .hud{ grid-area:hud; align-self:start; flex-direction:column; align-items:stretch; gap:6px; padding:8px; margin:0 }
+  .hud .regles{ display:none }
+  .hud-compte{ margin:0; display:grid; grid-template-columns:1fr 1fr; gap:2px 8px }
+  .hud-compte span{ justify-content:space-between }
+  .zone-actions{ grid-area:coups; align-self:end; border-radius:var(--r); padding:8px; gap:6px }
+  .zone-actions .rang-btn{ display:grid; grid-template-columns:1fr 1fr; width:100% }
+  .zone-actions .btn kbd{ display:none }
+  .rang-table{ margin-left:0; width:100%; justify-content:center }
+  .rang-table .btn.mini{ min-height:32px; padding:5px 8px; font-size:var(--t-micro) }
+  .tapis{ padding:6px; border-radius:22px }
+  .feutre{ padding:6px; gap:0 }
+  .rack, .feutre>svg.lettrage{ display:none }
+  .annonce{ font-size:var(--t-micro); margin:0; min-height:0 }
+  .croupier{ min-height:0; min-width:0 }
+  .croupier .main .carte{ --w:54px; margin-left:-30px }
+  .sabot,.defausse{ width:34px; height:46px }
   .siege{ width:clamp(72px,11vw,110px) }
   .siege.toi{ width:clamp(110px,17vw,150px) }
-  .rang-table .btn.mini{ min-height:32px; padding:5px 8px; font-size:var(--t-micro) }
+  .cercle{ width:26px; height:26px }
 }
-
 /* ── L'en-tête : 181 px, soit 27 % d'un téléphone ─────────────────────────
    `nav` portait `flex-wrap:wrap` ET `overflow-x:auto` : le repli gagnait et le
    défilement était du code mort. La barre se repliait sur deux lignes. */

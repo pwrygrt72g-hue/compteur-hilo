@@ -130,7 +130,7 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
   // ── Progression
   clic('nav [data-vue="progres"]'); await dodo(500);
   ok("progression : 9 tuiles", qa("#progPave .t").length === 9, qa("#progPave .t").length + " tuiles");
-  { let m=""; try{m=(JSON.parse(localStorage.getItem("laque_v1")||"{}").sessions||[]).map(x=>x.genre+":"+x.ecart).join(",")}catch(e){m="illisible"}
+  { let m=""; try{m=(JSON.parse(localStorage.getItem("sabot")||"{}").sessions||[]).map(x=>x.genre+":"+x.ecart).join(",")}catch(e){m="illisible"}
     ok("mémoire : session de table écrite", /table/.test(m), "sessions = " + m); }
   ok("progression : journal (table incluse)", qa("#progJournal tr").length >= 6 && /Table/.test(q("#progJournal").textContent), qa("#progJournal tr").length + " lignes : " + qa("#progJournal tr").slice(1).map(r => r.children[1].textContent).join(","));
   ok("progression : courbe dessinée", q("#courbe").width > 100, "canvas " + q("#courbe").width);

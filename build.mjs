@@ -84,8 +84,10 @@ const corps = readFileSync("src/app/corps.html", "utf8");
 // page à moitié muette qu'on découvrirait à l'usage.
 // ⚠️ L'ORDRE EST LE CODE : tout vit dans une seule portée IIFE et les `const`
 // ne remontent pas. Intervertir deux morceaux casse en zone morte temporelle.
-const MORCEAUX = ["socle.js","salon.js","table.js","exercices.js","strategie.js",
-  "concentration.js","ensemble.js","progres.js","clavier.js","demarrage.js"];
+// cartes.js (le dessin des cartes) doit précéder le salon, qui en affiche ;
+// jetons.js et croupier.js écoutent le bus émis par table.js, ils viennent juste après.
+const MORCEAUX = ["socle.js","cartes.js","salon.js","table.js","jetons.js","croupier.js",
+  "exercices.js","strategie.js","concentration.js","ensemble.js","progres.js","clavier.js","demarrage.js"];
 const app = MORCEAUX.map(f => {
   try { return `\n/* ═══ ${f} ═══ */\n` + readFileSync(`src/app/${f}`, "utf8"); }
   catch (e) { throw new Error(`morceau d'interface manquant : src/app/${f}`); }

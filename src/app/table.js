@@ -11,6 +11,19 @@ const reglesTable = () => {
 };
 const ISSUE = { "gagné": "g", "perdu": "p", "égalité": "n", "sauté": "p", "blackjack": "bj", "abandon": "n" };
 const MOT = { H: "Tirer", S: "Rester", D: "Doubler", P: "Séparer", U: "Abandonner" };
+const CROUPIER = { siege: "croupier", main: 0 };
+// Les issues, dans le vocabulaire du bus (sans accents : ce sont des clés).
+const ISSUE_BUS = { "gagné": "gagne", "perdu": "perd", "sauté": "bust", "blackjack": "blackjack", "égalité": "egalite", "abandon": "abandon" };
+// Un bust et un abandon se savent À L'INSTANT : le croupier doit réagir tout de
+// suite, pas au règlement. `emis` évite de les annoncer deux fois.
+function sauter(si, hi) {
+  const h = T.sieges[si].mains[hi]; h.result = "sauté"; h.emis = true; rendreSieges();
+  emettre("main-fin", { siege: si, main: hi, toi: T.sieges[si].toi, issue: "bust", montant: -(h.bet || 1) * (h.doubled ? 2 : 1) });
+}
+function abandonner(si, hi) {
+  const h = T.sieges[si].mains[hi]; h.surrendered = true; h.result = "abandon"; h.emis = true; rendreSieges();
+  emettre("main-fin", { siege: si, main: hi, toi: T.sieges[si].toi, issue: "abandon", montant: -(h.bet || 1) / 2 });
+}
 
 // Remélanger sans quitter la table : nouvelles cartes, compte à zéro, historique intact.
 async function remelanger() {
@@ -19,7 +32,7 @@ async function remelanger() {
   T.sabot = s.cartes; T.graine = s.graine; T.empreinte = s.empreinte; T.revele = false;
   T.rc = CT.compteInitial(DB.sys, t.jeux); T.vues = 0;
   T.sabot.pop(); T.defausse = 0;
-  rafraichirBarre(); rendreRecu();
+  rafraichirBarre(); rendreRecu(); emettre("remelange", { table: t.id, cartes: T.sabot.length });
 }
 // `pendantDonne` : le sabot est renouvelé au milieu d'une donne (carte de coupe).
 // Dans ce cas le verrou appartient à l'appelant — le relâcher ici laisserait une
@@ -37,15 +50,105 @@ async function nouveauSabot(o) {
     $("dMain").innerHTML = ""; $("dScore").textContent = "·";
   }
   T.sabot.pop(); T.defausse = 1;              // la carte brûlée : ni montrée, ni comptée
-  $("tNom").textContent = t.nom + " · " + t.lieu;
-  $("tRegles").innerHTML = chipsRegles(t);
-  $("devise").textContent = t.blackjackPays === 1.5 ? "LE BLACKJACK PAIE 3 POUR 2" : "LE BLACKJACK PAIE 6 POUR 5";
-  $("tCoupe").style.left = Math.round((t.melange === "melangeuse_continue" ? 2 : (t.penetration || .75) * 100)) + "%";
+  poserLieu(t);
   $("conseil").textContent = "";
   rafraichirBarre(); rendreRecu();
   if (!o.pendantDonne) { $("annonce").textContent = "Sabot neuf, mélangé, carte brûlée."; boutons({ donne: true }); }
   $("plateau").style.setProperty("--intervalle", vitesse() + "ms");
+  emettre("remelange", { table: t.id, cartes: T.sabot.length });
 }
+/* ── Le lieu ─────────────────────────────────────────────────────────────
+   L'identifiant de la table EST l'identifiant du décor : [data-lieu] sur la
+   vue, et la feuille de style fait le reste. La barre ne garde que trois
+   puces — le nombre de jeux, H17/S17, 3:2 ou 6:5 — plus la mélangeuse quand
+   il y en a une, parce que celle-là tue le comptage. */
+function poserLieu(t) {
+  $("v-table").dataset.lieu = t.id;
+  $("tNom").textContent = t.nom + " · " + t.lieu;
+  const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
+  const puces = [...tmp.children], garde = puces.slice(0, 3);
+  const csm = puces.find(p => /mélangeuse/.test(p.textContent));
+  if (csm && !garde.includes(csm)) garde.push(csm);
+  $("tRegles").replaceChildren(...garde);
+  rendreMotif(t.id); LETTRAGE.cle = ""; rendreLettrage();
+  emettre("table", { table: t });
+}
+/* Le lettrage doré en arc est DÉRIVÉ des règles : « 3 TO 2 » ou « 6 TO 5 »,
+   « HIT SOFT 17 » ou « STAND ON ALL 17s », et l'assurance seulement là où le
+   croupier a une carte cachée. Les arcs suivent le rail réel : ils sont
+   recalculés sur la taille mesurée du feutre, jamais dessinés en dur. */
+const LETTRAGE = { cle: "" };
+function texteLettrage(t) {
+  return {
+    paie: t.blackjackPays === 1.5 ? "BLACKJACK PAYS 3 TO 2" : "BLACKJACK PAYS 6 TO 5",
+    croupier: t.h17 ? "DEALER MUST HIT SOFT 17" : "DEALER MUST STAND ON ALL 17s",
+    assurance: t.holeCard ? "INSURANCE PAYS 2 TO 1" : "NO HOLE CARD",
+  };
+}
+function rendreLettrage() {
+  const f = $("feutre"), svg = $("lettrage"); if (!f || !svg) return;
+  const W = f.clientWidth, H = f.clientHeight;
+  if (W < 320 || H < 160) { if (LETTRAGE.cle !== "vide") { svg.innerHTML = ""; LETTRAGE.cle = "vide"; } return; }
+  const fr = f.getBoundingClientRect();
+  const rangee = f.querySelector(".rangee-haute"), annonce = $("annonce");
+  const basHaut = Math.round(rangee.getBoundingClientRect().bottom - fr.top);
+  const basAnnonce = Math.round(annonce.getBoundingClientRect().bottom - fr.top);
+  let hautSieges = H;
+  f.querySelectorAll(".siege").forEach(sg => { hautSieges = Math.min(hautSieges, sg.getBoundingClientRect().top - fr.top); });
+  hautSieges = Math.round(hautSieges);
+  const t = tableCourante(), tx = texteLettrage(t);
+  const cle = [W, H, basHaut, basAnnonce, hautSieges, t.id].join("|");
+  if (cle === LETTRAGE.cle) return; LETTRAGE.cle = cle;
+  // Le rail est une demi-lune : on l'approche par une ellipse centrée sous le
+  // feutre (rx = W/2, ry = 72 % de H), et chaque ligne est un arc concentrique
+  // rentré de d pixels. Les angles sont en degrés, −90 = l'apex du rail.
+  const cx = W / 2, cy = .72 * H;
+  const arc = (d, a1, a2) => {
+    const rx = W / 2 - d, ry = .72 * H - d, p = a => { const r = a * Math.PI / 180; return [cx + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
+    const [x1, y1] = p(a1), [x2, y2] = p(a2);
+    return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+  };
+  const petit = Math.max(9, Math.round(W * .0115)), grand = Math.max(14, Math.round(W * .021));
+  let out = "", n = 0;
+  const ligne = (texte, d, a1, a2, taille) => {
+    n++; out += `<defs><path id="lt${n}" d="${arc(d, a1, a2)}"/></defs>
+      <text font-size="${taille}"><textPath href="#lt${n}" startOffset="50%" text-anchor="middle">${echap(texte)}</textPath></text>`;
+  };
+  // Le long du rail, de part et d'autre du rack : la règle du croupier à gauche,
+  // l'assurance à droite. L'apex reste libre pour le rack de jetons.
+  ligne(tx.croupier, 6 + petit, -176, -122, petit);
+  ligne(tx.assurance, 6 + petit, -58, -4, petit);
+  // Le paiement du blackjack, en grand, entre l'annonce et les sièges — si la
+  // place y est ; un écran bas garde le rail et perd le grand lettrage.
+  const place = hautSieges - basAnnonce;
+  // Centré dans la bande libre (au plus 40 px sous l'annonce) : collé à elle,
+  // « Assurance ? » se lisait par-dessus le lettrage.
+  if (place >= grand + 14) ligne(tx.paie, basAnnonce + grand + 4 + Math.min(40, (place - grand - 14) / 2), -140, -40, grand);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = out;
+}
+// Deux lieux ont un motif tissé dans le feutre : les losanges de la laque de
+// Macao, le guillochis d'un cadran pour Londres · Monte-Carlo. Les autres se
+// distinguent par la couleur et la lumière — un motif de plus serait un gadget.
+// Le motif ne pèse jamais plus que le grain : sinon il devient le sujet.
+function rendreMotif(lieu) {
+  const svg = $("motif"); if (!svg) return;
+  if (lieu === "cotai") svg.innerHTML = `<defs><pattern id="mtf" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="translate(20 0)">
+      <path d="M20 0L40 20L20 40L0 20Z" fill="none" style="stroke:var(--or)" stroke-opacity=".09" stroke-width="1"/>
+      <circle cx="20" cy="20" r="1.6" style="fill:var(--or)" fill-opacity=".10"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#mtf)"/>`;
+  else if (lieu === "cercle") {
+    let g = "";
+    for (let r = 26; r <= 380; r += 14) g += `<ellipse cx="50%" cy="-2" rx="${r * 1.35}" ry="${r}" fill="none" stroke="#fff" stroke-opacity=".045" stroke-width=".7"/>`;
+    for (let a = 0; a < 360; a += 6) { const t = a * Math.PI / 180, x1 = (Math.cos(t) * 30).toFixed(1), y1 = (Math.sin(t) * 22 - 2).toFixed(1),
+      x2 = (Math.cos(t) * 520).toFixed(1), y2 = (Math.sin(t) * 385 - 2).toFixed(1);
+      g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#fff" stroke-opacity=".022" stroke-width=".5" style="transform:translateX(50%)"/>`; }
+    svg.innerHTML = `<g>${g}</g>`;
+  } else svg.innerHTML = "";
+}
+// Le lettrage se recalcule quand le feutre change de taille — y compris quand
+// la vue apparaît (0 × 0 → sa vraie taille).
+if (window.ResizeObserver) new ResizeObserver(() => rendreLettrage()).observe($("feutre"));
 function construireSieges() {
   const t = tableCourante(), n = Math.max(1, Math.min(t.sieges, 6));
   const moi = Math.floor((n - 1) / 2);
@@ -74,9 +177,14 @@ function rendreSieges() {
       rs.textContent = h.result || "";
       w.append(md, sc, rs); hs.appendChild(w);
     });
+    // Le cercle de mise, doré, devant chaque siège : vide pour l'instant, le lot
+    // Jetons y posera les piles (#cercle_<siège>). --ecart soulève les sièges du bord.
+    const ce = document.createElement("div"); ce.className = "cercle"; ce.id = "cercle_" + si; ce.dataset.siege = si;
     const nm = document.createElement("div"); nm.className = "nom serre"; nm.textContent = st.nom;
-    d.append(hs, nm); el.appendChild(d);
+    d.style.setProperty("--ecart", Math.abs(si - (T.sieges.length - 1) / 2).toFixed(1));
+    d.append(hs, ce, nm); el.appendChild(d);
   });
+  rendreLettrage();
   // Sur téléphone les sièges défilent horizontalement : sans ce recentrage, le
   // siège qui joue peut être hors écran au moment précis où c'est son tour.
   const vedette = el.querySelector(".siege.actif") || el.querySelector(".siege.toi");
@@ -85,9 +193,13 @@ function rendreSieges() {
     behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" });
 }
 function rafraichirBarre() {
-  const t = tableCourante();
-  $("sabot").textContent = T.sabot.length;
+  const t = tableCourante(), total = t.jeux * 52;
+  // Le sabot montre ses cartes et sa carte de coupe ; la défausse, son tas.
+  const sb = $("sabot"); sb.textContent = T.sabot.length;
+  sb.style.setProperty("--reste", (T.sabot.length / total).toFixed(3));
+  sb.style.setProperty("--coupe", (T.coupe / total).toFixed(3));
   $("defausseN").textContent = T.defausse; $("defausse").classList.toggle("pleine", T.defausse > 0);
+  $("defausse").style.setProperty("--pile", Math.min(1, T.defausse / total).toFixed(3));
   const jeuxRestants = T.sabot.length / 52;
   const visible = !!T.montre;
   $("tRC").textContent = visible ? sgn(T.rc) : "—";
@@ -96,13 +208,9 @@ function rafraichirBarre() {
   $("tTC").textContent = visible ? (tc === null ? "n/a" : fr1(tc)) : "—";
   $("tMise").textContent = visible && tc !== null ? CT.misesUnites(tc, 12) : "—";
   $("tSolde").textContent = (T.solde >= 0 ? "+" : "") + fr1(T.solde);
-  const idx = $("tIndex");
-  if (visible) {
-    idx.textContent = sgn(T.rc);
-    idx.className = "index cadran " + (T.rc > 0 ? "plus" : T.rc < 0 ? "moins" : "");
-    idx.style.left = Math.max(4, Math.min(96, 50 + T.rc * 2.2)) + "%";
-  } else { idx.textContent = "?"; idx.className = "index cadran"; idx.style.left = "50%"; }
-  $("tAide").textContent = visible
+  const hc = $("hudCompte"); hc.classList.toggle("masque", !visible);
+  hc.firstElementChild.className = visible ? (T.rc > 0 ? "plus" : T.rc < 0 ? "moins" : "") : "";
+  hc.title = visible
     ? "Le compte est affiché : sers-t'en pour vérifier, pas pour t'en passer."
     : "Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.";
 }
@@ -123,21 +231,30 @@ function animerDepuisSabot(e, hote) {
   e.style.setProperty("--dy", (s.top - c.top) + "px");
   e.classList.add("carte--entre");
 }
-async function tirer(main, hote, cachee) {
+async function tirer(main, hote, cachee, qui) {
   // Filet de sécurité : plutôt remélanger que distribuer une carte inexistante.
   if (!T.sabot.length) { const t = tableCourante(); const s = await sabotProuvable(t.jeux);
     T.sabot = s.cartes; T.graine = s.graine; T.empreinte = s.empreinte; T.revele = false;
     T.rc = CT.compteInitial(DB.sys, t.jeux); T.vues = 0; T.sabot.pop(); rendreRecu();
+    emettre("remelange", { table: t.id, cartes: T.sabot.length });
   }
   const c = T.sabot.pop(); c.cachee = !!cachee; main.push(c);
-  const e = carteEl(c, cachee); hote.appendChild(e); animerDepuisSabot(e, hote); son("carte");
+  const e = carteEl(c, cachee); hote.appendChild(e);
+  // Mesurée AVANT l'animation : pendant le vol, le rect de la carte est celui
+  // du sabot, pas celui de son point d'arrivée.
+  const cr = e.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
+  animerDepuisSabot(e, hote); son("carte");
+  emettre("carte", { siege: qui ? qui.siege : "croupier", main: qui ? qui.main : 0, index: main.length - 1,
+    carte: c, cachee: !!cachee, el: e,
+    depuis: { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 },
+    vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
   if (!cachee) { T.rc += valeurCompte(c); T.vues++; }
   rafraichirBarre(); await dodo(vitesse()); return c;
 }
 async function tirerSiege(si, hi) {
   const st = T.sieges[si], h = st && st.mains[hi], hote = $(`m_${si}_${hi}`);
   if (!h || !hote) return;
-  await tirer(h.cards, hote);
+  await tirer(h.cards, hote, false, { siege: si, main: hi });
   const w = $(`m_${si}_${hi}`);
   if (w && w.parentNode) w.parentNode.querySelector(".score").textContent = E.handTotal(h.cards) + (h.doubled ? " ×2" : "");
 }
@@ -148,6 +265,7 @@ async function revelerCachee() {
   const e = carteEl(c); e.classList.add("carte--revele");
   $("dMain").replaceChild(e, vieux); son("carte");
   rafraichirBarre(); $("dScore").textContent = E.handTotal(T.croupier);
+  emettre("croupier-revele", { carte: c, total: E.handTotal(T.croupier), el: e });
   await dodo(240);
 }
 const peutSeparer = (h, st) => E.canSplit(h, st.mains, reglesTable());
@@ -200,12 +318,13 @@ async function distribuer() {
   rendreSieges(); $("dMain").innerHTML = ""; $("dScore").textContent = "·";
   $("annonce").textContent = ""; $("conseil").textContent = ""; rafraichirBarre();
   T.enJeu = true;
+  emettre("donne-debut", { table: t.id, sieges: T.sieges.length });
   const r = reglesTable();
   for (let tour = 0; tour < 2; tour++) {
     for (let si = 0; si < T.sieges.length; si++) await tirerSiege(si, 0);
     // Sans carte cachée, le croupier ne prend qu'une carte : c'est toute la règle.
-    if (tour === 0) { await tirer(T.croupier, $("dMain")); $("dScore").textContent = E.cardValue(T.croupier[0]); }
-    else if (r.holeCard) await tirer(T.croupier, $("dMain"), true);
+    if (tour === 0) { await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.cardValue(T.croupier[0]); }
+    else if (r.holeCard) await tirer(T.croupier, $("dMain"), true, CROUPIER);
   }
   if (r.holeCard && E.cardValue(T.croupier[0]) === 11) await demanderAssurance();
   if (r.holeCard && r.peek && E.cardValue(T.croupier[0]) >= 10) {
@@ -244,6 +363,7 @@ async function jouerSieges(depuis) {
       if (h.surrendered) continue;
       if (E.isBlackjack(h) && st.mains.length === 1) { h.result = "blackjack"; rendreSieges(); continue; }
       T.actif = { siege: si, main: hi }; rendreSieges();
+      emettre("tour", { siege: si, main: hi, toi: st.toi });
       if (st.toi) { T.occupe = false; return tonTour(); }
       await jouerAuto(si, hi);
     }
@@ -257,14 +377,14 @@ async function jouerAuto(si, hi) {
     if (h.fromSplitAces && !r.hitSplitAces && h.cards.length === 2) break;
     const a = actionBase(h.cards, T.croupier[0], st, h);
     await dodo(vitesse() * 1.1);
-    if (a === "U") { h.surrendered = true; h.result = "abandon"; rendreSieges(); return; }
+    if (a === "U") { abandonner(si, hi); return; }
     if (a === "S") break;
     if (a === "P") { await separer(si, hi); h = st.mains[hi]; continue; }
     if (a === "D") { h.doubled = true; await tirerSiege(si, hi); break; }
     await tirerSiege(si, hi);
     if (E.handTotal(h.cards) >= 21) break;
   }
-  if (E.isBust(h.cards)) { h.result = "sauté"; rendreSieges(); }
+  if (E.isBust(h.cards)) sauter(si, hi);
 }
 async function separer(si, hi) {
   const st = T.sieges[si], h = st.mains[hi];
@@ -279,7 +399,7 @@ function tonTour() {
   if (h.surrendered) return mainSuivante();
   if (h.fromSplitAces && !r.hitSplitAces && h.cards.length === 2) return mainSuivante();
   const total = E.handTotal(h.cards);
-  if (total >= 21) { if (total > 21) { h.result = "sauté"; rendreSieges(); } return mainSuivante(); }
+  if (total >= 21) { if (total > 21) sauter(T.sieges.indexOf(st), T.actif.main); return mainSuivante(); }
   boutons({ tire: true, reste: true, double: peutDoubler(h, st), separe: peutSeparer(h, st), abandon: peutAbandonner(h, st) });
   if (DB.conseil) {
     const tc = sys().equilibre ? CT.compteVrai(T.rc, T.sabot.length / 52) : null;
@@ -289,7 +409,8 @@ function tonTour() {
 }
 async function mainSuivante() {
   const si = T.sieges.indexOf(T.toi); boutons({}); $("conseil").textContent = "";
-  if (T.actif.main + 1 < T.toi.mains.length) { T.actif = { siege: si, main: T.actif.main + 1 }; rendreSieges(); return tonTour(); }
+  if (T.actif.main + 1 < T.toi.mains.length) { T.actif = { siege: si, main: T.actif.main + 1 }; rendreSieges();
+    emettre("tour", { siege: si, main: T.actif.main, toi: true }); return tonTour(); }
   T.occupe = true; await jouerSieges(si + 1);
 }
 const monAction = f => async () => { if (T.occupe || !T.actif) return; await f(); };
@@ -298,7 +419,7 @@ $("bReste").onclick = monAction(async () => { await mainSuivante(); });
 $("bDouble").onclick = monAction(async () => {
   const h = T.toi.mains[T.actif.main]; if (!peutDoubler(h, T.toi)) return;
   T.occupe = true; boutons({}); h.doubled = true; await tirerSiege(T.sieges.indexOf(T.toi), T.actif.main);
-  if (E.isBust(h.cards)) { h.result = "sauté"; rendreSieges(); } T.occupe = false; await mainSuivante();
+  if (E.isBust(h.cards)) sauter(T.sieges.indexOf(T.toi), T.actif.main); T.occupe = false; await mainSuivante();
 });
 $("bSepare").onclick = monAction(async () => {
   const h = T.toi.mains[T.actif.main]; if (!peutSeparer(h, T.toi)) return;
@@ -306,34 +427,40 @@ $("bSepare").onclick = monAction(async () => {
 });
 $("bAbandon").onclick = monAction(async () => {
   const h = T.toi.mains[T.actif.main]; if (!peutAbandonner(h, T.toi)) return;
-  h.surrendered = true; h.result = "abandon"; rendreSieges(); son("alerte"); await mainSuivante();
+  abandonner(T.sieges.indexOf(T.toi), T.actif.main); son("alerte"); await mainSuivante();
 });
 async function jouerCroupier() {
   T.occupe = true; const r = reglesTable();
+  emettre("tour", { siege: "croupier", main: 0, toi: false });
   const vivants = T.sieges.some(st => st.mains.some(h => !h.surrendered && !E.isBust(h.cards) && !(E.isBlackjack(h) && st.mains.length === 1)));
   if (r.holeCard) await revelerCachee();
-  else if (vivants || true) { await tirer(T.croupier, $("dMain")); $("dScore").textContent = E.handTotal(T.croupier); }
+  else { await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.handTotal(T.croupier); }
   await dodo(vitesse() * .5);
   if (vivants) {
     for (;;) {
       const t = E.handTotal(T.croupier), soft = E.isSoft(T.croupier);
       if (t > 21 || t > 17 || (t === 17 && !(r.h17 && soft))) break;
-      await tirer(T.croupier, $("dMain")); $("dScore").textContent = E.handTotal(T.croupier);
+      await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.handTotal(T.croupier);
     }
   }
   await regler();
 }
 async function regler() {
   const r = reglesTable(), dt = E.handTotal(T.croupier);
-  let miennes = [], net = 0;
-  for (const st of T.sieges) for (const h of st.mains) {
+  let miennes = [], net = 0; const issues = [], fins = [];
+  T.sieges.forEach((st, si) => { issues[si] = []; st.mains.forEach((h, hi) => {
     const res = r.holeCard ? E.settleHand(h, T.croupier, r) : E.settleNoHoleCard(h, T.croupier, r);
-    h.result = res.result;
+    h.result = res.result; issues[si][hi] = ISSUE_BUS[res.result] || res.result;
     if (st.toi) { miennes.push(res.result); net += res.net; }
-  }
+    if (!h.emis) fins.push({ siege: si, main: hi, toi: st.toi, issue: issues[si][hi], montant: res.net });
+  }); });
   T.solde += net; DB.solde = T.solde;
   T.actif = null; rendreSieges(); T.mains++; T.enJeu = false; T.occupe = false; rafraichirBarre(); garder();
   $("annonce").textContent = `Croupier ${dt > 21 ? "saute à " + dt : dt}. Toi : ${miennes.join(" · ")}.`;
+  // Les mains d'abord, une par une, puis la manche : un écouteur peut compter
+  // sur cet ordre pour faire glisser les jetons avant de tirer un bilan.
+  fins.forEach(f => emettre("main-fin", f));
+  emettre("manche-fin", { issues, toi: T.toi ? issues[T.sieges.indexOf(T.toi)] : [], net, solde: T.solde, croupier: dt });
   boutons({ donne: true });
 }
 $("bDonne").onclick = distribuer;

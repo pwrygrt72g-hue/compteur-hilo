@@ -72,58 +72,72 @@
 </section>
 
 <!-- ════════════════════ TABLE ════════════════════ -->
-<section class="vue" id="v-table" hidden>
-  <!-- BANDE 1 — l'identité de la table et la réglette du compte. Hauteur libre. -->
-  <div class="laque pad tete-table">
-    <div class="ligne-table">
-      <div><span class="grave">Table en cours</span><h3 id="tNom">—</h3></div>
-      <div class="regles" id="tRegles"></div>
-      <button class="icone" id="bReglagesTable" title="Réglages de la table" aria-label="Réglages de la table">⚙</button>
+<!-- Trois bandes : la BARRE (une ligne), la SALLE (élastique, tout le reste),
+     les COUPS. La salle est un casino la nuit : ses couleurs sont les siennes,
+     posées par [data-lieu] ; seul le cadre autour suit le thème. -->
+<section class="vue" id="v-table" hidden data-lieu="boulevard">
+  <!-- BANDE 1 — la barre : nom de la table, trois puces, le compte en petits chiffres, ⚙.
+       Discrète : elle ne vole rien au feutre. -->
+  <div class="laque hud" id="hud">
+    <div class="hud-table"><b id="tNom">—</b><span class="regles" id="tRegles"></span></div>
+    <div class="hud-compte" id="hudCompte" title="Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.">
+      <span><i>Courant</i><b id="tRC">—</b></span>
+      <span><i>Vrai</i><b id="tTC">—</b></span>
+      <span><i>Jeux</i><b id="tJeux">—</b></span>
+      <span><i>Mise</i><b id="tMise">—</b></span>
+      <span class="solde"><i>Solde</i><b id="tSolde">+0,0</b></span>
     </div>
-    <div class="rail" id="rail">
-      <div class="zero"></div><div class="coupe" id="tCoupe"></div>
-      <div class="index cadran" id="tIndex">0</div>
-    </div>
-    <div class="bandeau">
-      <div><span class="grave">Compte courant</span><b id="tRC">0</b></div>
-      <div><span class="grave">Compte vrai</span><b id="tTC">—</b></div>
-      <div><span class="grave">Jeux restants</span><b id="tJeux">—</b></div>
-      <div><span class="grave">Mise conseillée</span><b id="tMise">1</b></div>
-      <div><span class="grave">Solde</span><b id="tSolde">0</b></div>
-    </div>
-    <p class="muet aide-table" id="tAide">Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.</p>
+    <button class="icone" id="bReglagesTable" title="Réglages de la table" aria-label="Réglages de la table">⚙</button>
   </div>
 
-  <!-- BANDE 2 — le feutre. C'est la SEULE bande élastique : elle absorbe toute
-       la variation de hauteur, des 390 px d'un téléphone couché aux 1080 d'un écran. -->
-  <div class="tapis plateau" id="plateau">
-    <div class="rangee-haute">
-      <div class="defausse" id="defausse"><i></i><span id="defausseN">0</span></div>
-      <div class="croupier"><div class="qui">Croupier <b id="dScore">·</b></div><div class="main" id="dMain"></div></div>
-      <div class="sabot" id="sabot">312</div>
+  <!-- BANDE 2 — la salle. Le croupier se tient derrière la table (#croupierScene est
+       à lui) ; la table est une demi-lune : rail de cuir, liseré doré, feutre du lieu.
+       #jetonsCalque est un calque au-dessus de tout, pour les jetons qui volent. -->
+  <div class="salle" id="salle">
+    <div id="croupierScene" aria-hidden="true"></div>
+    <div class="tapis plateau" id="plateau">
+      <div class="rack" id="rack" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="feutre" id="feutre">
+        <svg class="grain" aria-hidden="true" focusable="false"><defs>
+          <filter id="grainF" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency=".92" numOctaves="2" seed="7" stitchTiles="stitch"/>
+            <feColorMatrix type="saturate" values="0"/>
+          </filter>
+          <pattern id="grainP" width="180" height="180" patternUnits="userSpaceOnUse">
+            <rect width="180" height="180" filter="url(#grainF)"/>
+          </pattern></defs>
+          <rect width="100%" height="100%" fill="url(#grainP)"/>
+        </svg>
+        <svg class="motif" id="motif" aria-hidden="true" focusable="false"></svg>
+        <svg class="lettrage" id="lettrage" aria-hidden="true" focusable="false"></svg>
+        <div class="rangee-haute">
+          <div class="defausse" id="defausse"><i></i><span id="defausseN">0</span></div>
+          <div class="croupier"><div class="main" id="dMain"></div><div class="qui">Croupier <b id="dScore">·</b></div></div>
+          <div class="sabot" id="sabot">312</div>
+        </div>
+        <p class="annonce" id="annonce"></p>
+        <div class="sieges" id="sieges"></div>
+        <p class="conseil" id="conseil"></p>
+      </div>
     </div>
-    <p class="devise" id="devise"></p>
-    <p class="annonce" id="annonce"></p>
-    <div class="sieges" id="sieges"></div>
-    <p class="conseil" id="conseil"></p>
+    <div id="jetonsCalque" aria-hidden="true"></div>
   </div>
 
-  <!-- BANDE 3 — les coups. Sortie du feutre : c'est ce qui la colle en bas de
-       l'écran et ce qui évite au bac à défausse d'être rogné par le coin arrondi. -->
-  <div class="zone-actions laque">
+  <!-- BANDE 3 — les coups, en verre teinté sur la scène. Le principal est en or. -->
+  <div class="zone-actions">
     <div class="rang-btn" id="coups">
       <button class="btn" id="bDonne">Distribuer<kbd>D</kbd></button>
-      <button class="btn creux" id="bTire" disabled>Tirer<kbd>T</kbd></button>
-      <button class="btn creux" id="bReste" disabled>Rester<kbd>R</kbd></button>
-      <button class="btn creux" id="bDouble" disabled>Doubler<kbd>B</kbd></button>
-      <button class="btn creux" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
-      <button class="btn creux" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
+      <button class="btn verre" id="bTire" disabled>Tirer<kbd>T</kbd></button>
+      <button class="btn verre" id="bReste" disabled>Rester<kbd>R</kbd></button>
+      <button class="btn verre" id="bDouble" disabled>Doubler<kbd>B</kbd></button>
+      <button class="btn verre" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
+      <button class="btn verre" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
     </div>
     <div class="rang-table">
-      <button class="btn creux mini" id="bMontrer" aria-pressed="false">Montrer le compte</button>
-      <button class="btn creux mini" id="bMonCompte">Donner mon compte</button>
-      <button class="btn creux mini" id="bNouveauSabot">Nouveau sabot</button>
-      <button class="btn creux mini" id="bRecu">Reçu du sabot</button>
+      <button class="btn verre mini" id="bMontrer" aria-pressed="false">Montrer le compte</button>
+      <button class="btn verre mini" id="bMonCompte">Mon compte</button>
+      <button class="btn verre mini" id="bNouveauSabot">Nouveau sabot</button>
+      <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
     </div>
     <div id="boiteAssurance"></div>
   </div>

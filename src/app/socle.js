@@ -2,8 +2,28 @@
    L'application. Tout ce qui est cher — stratégies de base, écarts au compte,
    avantage maison — a été calculé à la construction et vit dans DONNEES.
    Ici on ne fait que jouer, afficher, et mesurer.
+
+   ── Le bus d'événements de la table ──────────────────────────────────
+   La scène (table.js) ÉMET, les calques (jetons.js, croupier.js, cartes.js)
+   ÉCOUTENT : `document.addEventListener("sabot:carte", e => e.detail…)`.
+   Personne ne touche aux lignes de la scène pour se brancher dessus.
+
+     sabot:table            { table }                 la table (et son lieu) est posée
+     sabot:remelange        { table, cartes }         sabot neuf ou mélangeuse : compte à zéro
+     sabot:donne-debut      { table, sieges }         la donne commence, les mains sont vides
+     sabot:carte            { siege, main, index, carte, cachee, depuis:{x,y}, vers:{x,y}, el }
+                            siege = indice du siège, ou "croupier" ; depuis = centre du sabot,
+                            vers = centre de la carte posée ; el = l'élément de la carte
+     sabot:tour             { siege, main, toi }      c'est à ce siège de jouer
+     sabot:croupier-revele  { carte, total }          la carte cachée est retournée
+     sabot:main-fin         { siege, main, toi, issue, montant }
+                            issue ∈ gagne · perd · bust · blackjack · egalite · abandon ;
+                            montant en unités de mise (négatif = perdu). Un bust et un abandon
+                            sont émis À L'INSTANT, les autres au règlement.
+     sabot:manche-fin       { issues, toi, net, solde } issues[siege][main] ; toi = tes issues
    ══════════════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
+const emettre = (nom, detail) => document.dispatchEvent(new CustomEvent("sabot:" + nom, { detail: detail || {} }));
 const E = M.engine, SOL = M.solver, SH = M.shuffle, CT = M.counting, NET = M.net;
 const RANKS = E.RANKS, SUITS = E.SUITS;
 const sgn = n => (n > 0 ? "+" : "") + n;
@@ -17,10 +37,12 @@ const echap = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt
 /* ── Mémoire locale ─────────────────────────────────────────────────── */
 const DB = { prenom: "", son: true, sys: "hilo", theme: "", table: "boulevard", sessions: [],
   strat: { base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }, fautes: [], solde: 0 };
-try { Object.assign(DB, JSON.parse(localStorage.getItem("laque_v1") || "{}")); } catch (e) {}
+// La clé s'appelle « sabot ». L'ancienne (« laque_v1 ») est relue une fois pour
+// ne perdre ni prénom ni historique, puis tout s'écrit sous le nouveau nom.
+try { Object.assign(DB, JSON.parse(localStorage.getItem("sabot") || localStorage.getItem("laque_v1") || "{}")); } catch (e) {}
 DB.strat = Object.assign({ base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }, DB.strat || {});
 DB.fautes = DB.fautes || []; DB.sessions = DB.sessions || [];
-const garder = () => { try { localStorage.setItem("laque_v1", JSON.stringify(DB)); } catch (e) {} };
+const garder = () => { try { localStorage.setItem("sabot", JSON.stringify(DB)); } catch (e) {} };
 const sys = () => DONNEES.systemes[DB.sys] || DONNEES.systemes.hilo;
 if (DB.cadence === undefined) DB.cadence = 400;
 if (DB.conseil === undefined) DB.conseil = false;
