@@ -1,0 +1,57 @@
+// Capture d'écran d'une vue, à une taille, dans un thème — pour REGARDER son travail.
+//
+//   node outils/capturer.mjs <vue> [LxH] [sortie.png] [--donne] [--sombre|--clair] [--table=id] [--attendre=ms]
+//
+//   node outils/capturer.mjs table 1280x800 /tmp/table.png --donne
+//   node outils/capturer.mjs table 375x667 /tmp/tel.png --donne --table=cotai
+//
+// Même moteur que mesurer.mjs : Chrome headless piloté par le protocole DevTools
+// (`--window-size` est ignoré en headless, seule l'émulation fait foi).
+import { spawn } from "node:child_process";
+import { createServer } from "node:http";
+import { readFileSync, writeFileSync } from "node:fs";
+import { extname } from "node:path";
+
+const args = process.argv.slice(2);
+const opt = Object.fromEntries(args.filter(a => a.startsWith("--")).map(a => { const [k, v] = a.slice(2).split("="); return [k, v ?? true]; }));
+const pos = args.filter(a => !a.startsWith("--"));
+const vue = pos[0] || "table";
+const [L, H] = (pos[1] || "1280x800").split("x").map(Number);
+const sortie = pos[2] || `/tmp/capture-${vue}-${L}x${H}.png`;
+
+const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const PORT = 8750 + Math.floor(Math.random() * 200), CDP = 9400 + Math.floor(Math.random() * 200);
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
+const serveur = createServer((q, r) => {
+  const f = (q.url === "/" ? "/index.html" : q.url).split("?")[0].replace(/\.\./g, "");
+  let corps; try { corps = readFileSync("." + f); } catch (e) { r.writeHead(404); return r.end("non"); }
+  r.writeHead(200, { "content-type": TYPES[extname(f)] || "text/plain" }); r.end(corps);
+}).listen(PORT);
+const chrome = spawn(CHROME, ["--headless=new", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
+  "--remote-debugging-port=" + CDP, "--remote-allow-origins=*", "about:blank"], { stdio: "ignore" });
+const dodo = ms => new Promise(r => setTimeout(r, ms));
+const attendre = async (url, n = 60) => { for (let i = 0; i < n; i++) { try { return await (await fetch(url)).json(); } catch (e) { await dodo(250); } } throw new Error("Chrome muet"); };
+const cibles = await attendre(`http://127.0.0.1:${CDP}/json/list`);
+const ws = new WebSocket(cibles.find(c => c.type === "page").webSocketDebuggerUrl);
+await new Promise(r => ws.addEventListener("open", r));
+let id = 0; const attentes = new Map();
+ws.addEventListener("message", e => { const m = JSON.parse(e.data); if (m.id && attentes.has(m.id)) { attentes.get(m.id)(m); attentes.delete(m.id); } });
+const cdp = (method, params = {}) => new Promise(res => { const n = ++id; attentes.set(n, res); ws.send(JSON.stringify({ id: n, method, params })); });
+const evaluer = async expr => { const r = await cdp("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true }); return r.result?.result?.value; };
+
+await cdp("Page.enable"); await cdp("Runtime.enable");
+await cdp("Emulation.setDeviceMetricsOverride", { width: L, height: H, deviceScaleFactor: 2, mobile: L < 900 });
+if (opt.sombre || opt.clair) await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: opt.sombre ? "dark" : "light" }] });
+await cdp("Page.navigate", { url: `http://127.0.0.1:${PORT}/index.html` });
+await dodo(1500);
+if (opt.table) await evaluer(`(() => { try { const d = JSON.parse(localStorage.getItem("sabot") || "{}"); d.table = ${JSON.stringify(opt.table)}; localStorage.setItem("sabot", JSON.stringify(d)); } catch (e) {} })()`);
+if (opt.table) { await cdp("Page.reload"); await dodo(1500); }
+await evaluer(`(document.querySelector('[data-vue="${vue}"]')||{click(){}}).click()`);
+await dodo(700);
+if (opt.donne) { await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(+(opt.attendre || 3200)); }
+else await dodo(+(opt.attendre || 400));
+const erreurs = await evaluer(`(window.__err || []).join(" / ")`);
+const shot = await cdp("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+writeFileSync(sortie, Buffer.from(shot.result.data, "base64"));
+console.log(`${sortie}  (${L}×${H}, vue ${vue}${opt.donne ? ", après une donne" : ""}${erreurs ? " — ERREURS JS : " + erreurs : ""})`);
+ws.close(); chrome.kill(); serveur.close(); process.exit(0);

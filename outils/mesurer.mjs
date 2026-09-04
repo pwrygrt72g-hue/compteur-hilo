@@ -124,12 +124,18 @@ console.log("\nCIBLES TACTILES SOUS 44 px :", cibles44.length ? cibles44.slice(0
 // ── Assertions ────────────────────────────────────────────────────────────
 // Le banc IMPRIMAIT ; il ne tombait pas. Six des sept chantiers sont de la mise
 // en page : sans assertion par taille, tout se vérifie à l'œil, donc jamais.
-const echecs = [];
-const exiger = (cond, msg) => { if (!cond) echecs.push(msg); };
+// Ordinateur d'abord (Léo, 04/09) : les assertions ne portent que sur les tailles
+// ≥ 1024 px. Les lignes téléphone restent IMPRIMÉES — de l'information, pas un
+// verdict — jusqu'au jour où le téléphone entre dans le périmètre.
+const LARGEUR_STRICTE = 1024;
+const echecs = [], infos = [];
+let courant = null;
+const exiger = (cond, msg) => { if (!cond) (courant && courant.L >= LARGEUR_STRICTE ? echecs : infos).push(msg); };
 // Cibles tactiles tolérées sous 44 px : les puces de nav (38 px, scroll-snap),
 // la marque (un lien, pas un bouton d'action), et les entrées de formulaire.
 const TOLERE = /^(marque|prenom|eJeux|sys)\b|^BUTTON \d+×3[4-9]$/;
 for (const r of rapport) {
+  courant = r;
   const ou = `${r.L}×${r.H}/${r.vue}`;
   exiger(r.largeurDoc <= r.vw + 1, `${ou} : la page déborde horizontalement (${r.largeurDoc} > ${r.vw}) → ${r.deborde.join(",")}`);
   exiger(r.hEntete <= 64, `${ou} : en-tête de ${r.hEntete} px (plafond 64 — une seule rangée)`);
@@ -141,5 +147,7 @@ for (const r of rapport) {
   for (const c of r.petits) if (!TOLERE.test(c)) exiger(false, `${ou} : cible tactile ${c} sous 44 px`);
 }
 const uniques = [...new Set(echecs)];
-console.log("\n" + (uniques.length ? "✗ " + uniques.length + " DÉFAUT(S) DE MISE EN PAGE\n  " + uniques.join("\n  ") : "✓ MISE EN PAGE : tout passe"));
+const infosU = [...new Set(infos)];
+if (infosU.length) console.log("\nℹ️ téléphone (hors périmètre pour l'instant, non bloquant) : " + infosU.length + " remarque(s)\n  " + infosU.slice(0, 8).join("\n  "));
+console.log("\n" + (uniques.length ? "✗ " + uniques.length + " DÉFAUT(S) DE MISE EN PAGE (≥ 1024 px)\n  " + uniques.join("\n  ") : "✓ MISE EN PAGE : tout passe (≥ 1024 px)"));
 ws.close(); chrome.kill(); serveur.close(); process.exit(uniques.length ? 1 : 0);
