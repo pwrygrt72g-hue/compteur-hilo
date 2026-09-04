@@ -20,19 +20,38 @@ export const COURTIERS = [
   "wss://test.mosquitto.org:8081/mqtt",
 ];
 
-export function connecter(url, { clientId, onMessage, onOpen, onClose, onError } = {}) {
+export function connecter(url, { clientId, testament, onMessage, onOpen, onClose, onError } = {}) {
   let ws;
   try { ws = new WebSocket(url, "mqtt"); } catch (e) { onError && onError(e); return null; }
   ws.binaryType = "arraybuffer";
-  let pid = 1, vivant = false, ping = null, buf = new Uint8Array(0), fini = false;
+  let pid = 1, vivant = false, ping = null, buf = new Uint8Array(0), fini = false, signale = false;
   const api = {
     souscrire(t) { if (vivant) ws.send(pkt(8, 2, [pid >> 8, pid++ & 255, ...s2(t), 0])); },
     publier(t, m) { if (vivant) ws.send(pkt(3, 0, [...s2(t), ...enc.encode(m)])); },
     fermer() { fini = true; clearInterval(ping); try { ws.close(); } catch (e) {} },
     get vivant() { return vivant; },
   };
-  const minuteur = setTimeout(() => { if (!vivant) { api.fermer(); onError && onError(new Error("délai dépassé")); } }, 9000);
-  ws.onopen = () => ws.send(pkt(1, 0, [...s2("MQTT"), 4, 2, 0, 60, ...s2(clientId)]));
+  // Un seul chemin de sortie, appelé une seule fois. Sans lui, un refus signalé
+  // par le navigateur en une milliseconde attendait les neuf secondes du minuteur,
+  // trois fois de suite : vingt-sept secondes de « Connexion au courtier… » pour
+  // un échec déjà connu. Mesuré.
+  const echouer = e => {
+    if (signale || vivant) return;
+    signale = true; clearTimeout(minuteur); fini = true;
+    clearInterval(ping); try { ws.close(); } catch (_) {}
+    onError && onError(e);
+  };
+  const minuteur = setTimeout(() => echouer(new Error("délai dépassé")), 9000);
+  ws.onopen = () => {
+    // Drapeaux de connexion : 2 = session propre, +4 = testament présent (MQTT 3.1.1 §3.1.2.5).
+    // Le testament fait annoncer un départ brutal par le courtier lui-même — un
+    // onglet fermé ne laisse plus de siège fantôme à la table.
+    const dr = testament ? 2 | 4 : 2;
+    const corps = testament
+      ? [...s2("MQTT"), 4, dr, 0, 60, ...s2(clientId), ...s2(testament.sujet), ...s2(testament.message)]
+      : [...s2("MQTT"), 4, dr, 0, 60, ...s2(clientId)];
+    ws.send(pkt(1, 0, corps));
+  };
   ws.onmessage = e => {
     const inc = new Uint8Array(e.data), all = new Uint8Array(buf.length + inc.length);
     all.set(buf); all.set(inc, buf.length); buf = all;
@@ -44,7 +63,7 @@ export function connecter(url, { clientId, onMessage, onOpen, onClose, onError }
       const type = buf[i] >> 4, body = buf.slice(j, j + len); i = j + len;
       if (type === 2) {
         clearTimeout(minuteur);
-        if (body[1] !== 0) { onError && onError(new Error("refus du courtier " + body[1])); api.fermer(); return; }
+        if (body[1] !== 0) { echouer(new Error("refus du courtier " + body[1])); return; }
         vivant = true;
         ping = setInterval(() => { try { ws.send(pkt(12, 0, [])); } catch (e) {} }, 25000);
         onOpen && onOpen(api);
@@ -55,8 +74,15 @@ export function connecter(url, { clientId, onMessage, onOpen, onClose, onError }
     }
     buf = buf.slice(i);
   };
-  ws.onclose = () => { vivant = false; clearInterval(ping); clearTimeout(minuteur); if (!fini) onClose && onClose(); };
-  ws.onerror = () => {};
+  ws.onclose = () => {
+    clearInterval(ping); clearTimeout(minuteur);
+    // Fermé AVANT la poignée de main : c'est un échec de connexion, pas une
+    // déconnexion. Les confondre laissait l'appelant attendre le minuteur.
+    if (!vivant && !signale) return echouer(new Error("fermée avant la poignée de main"));
+    vivant = false;
+    if (!fini) onClose && onClose();
+  };
+  ws.onerror = () => echouer(new Error("connexion refusée"));
   return api;
 }
 
@@ -64,6 +90,9 @@ export function connecter(url, { clientId, onMessage, onOpen, onClose, onError }
 export function connecterAvecRepli(opts, i = 0) {
   return new Promise((res, rej) => {
     if (i >= COURTIERS.length) return rej(new Error("aucun courtier joignable"));
+    // On DIT lequel on essaie : « Connexion au courtier… » pendant vingt secondes
+    // sans autre information ressemble à une application plantée.
+    opts.onEssai && opts.onEssai(i + 1, COURTIERS.length, nomCourtier(COURTIERS[i]));
     const c = connecter(COURTIERS[i], Object.assign({}, opts, {
       onOpen: api => res({ api, url: COURTIERS[i] }),
       onError: () => connecterAvecRepli(opts, i + 1).then(res, rej),
@@ -71,6 +100,7 @@ export function connecterAvecRepli(opts, i = 0) {
     if (!c) connecterAvecRepli(opts, i + 1).then(res, rej);
   });
 }
+export const nomCourtier = url => url.replace(/^wss:\/\//, "").split(/[:/]/)[0];
 
 // Un code de salon lisible au téléphone : pas de 0/O, pas de 1/I.
 const ALPHA = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";

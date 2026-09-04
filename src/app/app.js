@@ -1153,10 +1153,11 @@ async function ouvrirSalon(code) {
   MP.code = code; MP.moi = "j" + SH.hex(crypto.getRandomValues(new Uint8Array(5)));
   MP.nom = prenom() || "Joueur";
   MP.pairs = new Map([[MP.moi, { id: MP.moi, nom: MP.nom }]]);
-  $("mpEtat").textContent = "Connexion au courtier…";
+  $("mpEtat").textContent = "Recherche d'un courtier…";
   try {
     const { api, url } = await NET.connecterAvecRepli({
       clientId: "hilo-" + MP.moi,
+      onEssai: (n, total, nom) => { $("mpEtat").textContent = `Essai ${n} sur ${total} — ${nom}…`; },
       onMessage: (_, brut) => { try { recevoirMP(JSON.parse(brut)); } catch (e) {} },
       onClose: () => { $("mpRelais").textContent = "Connexion perdue. Recharge la page pour revenir."; },
     });
