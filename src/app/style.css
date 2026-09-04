@@ -875,3 +875,82 @@ body.a-table main{ padding-bottom:0 }
 .cachees{margin:14px auto 0;max-width:60ch;display:flex;flex-direction:column;align-items:center;gap:8px}
 .cachees .groupe{display:flex;gap:8px;justify-content:center}
 .cachees .carte{--w:58px}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LES JETONS (lot Jetons) — le dessin est dans jetons.js, la matière ici.
+   Un jeton est un SVG (viewBox 100 × 100) de largeur --w, HÉRITÉE du
+   conteneur (.jt-tas, le rack, le clone en vol). Une pile empile ses jetons
+   de --ep (8,5 % du diamètre : l'épaisseur réelle d'un jeton d'argile) ; le
+   relief du SVG, sombre en bas, fait la tranche de ceux du dessous.
+   ══════════════════════════════════════════════════════════════════════ */
+.jt{ width:var(--w,46px); aspect-ratio:1; position:relative; flex:none; display:block; border-radius:50%; padding:0; border:0; background:none; color:inherit }
+.jt .jt-svg{ position:absolute; inset:0; width:100%; height:100%; display:block; overflow:visible }
+.jt .jt-svg text{ font-family:"Martian Mono",ui-monospace,Menlo,monospace; font-weight:700; letter-spacing:-.04em }
+.jt-tas{ display:flex; align-items:flex-end; --w:40px; --ep:calc(var(--w) * .085) }
+.jt-tas > .jt-pile + .jt-pile{ margin-left:calc(var(--w) * -.32) }
+.jt-pile{ position:relative; width:var(--w); height:calc(var(--w) + (var(--n,1) - 1) * var(--ep)); flex:none }
+/* L'ombre de contact sous la pile : une ellipse molle, pas un halo. */
+.jt-pile::before{ content:""; position:absolute; left:6%; right:6%; bottom:-3px; height:calc(var(--w) * .2); border-radius:50%;
+  background:rgba(0,0,0,.5); filter:blur(3px) }
+.jt-pile .jt{ position:absolute; left:0; bottom:calc(var(--i,0) * var(--ep)) }
+
+/* Dans le cercle de mise : la pile est posée au centre, elle dépasse vers le haut. */
+.cercle .jt-mises{ position:absolute; left:50%; bottom:2px; transform:translateX(-50%); display:flex; align-items:flex-end; gap:3px; z-index:3 }
+.cercle .jt-mises > .jt-tas + .jt-tas{ margin-left:-6px }
+.cercle.garni{ opacity:1 }
+
+/* ── Le rack : tes jetons, sur le rail devant toi ──────────────────────────
+   Un plateau de cuir sombre lisière d'or, posé sur le bord bas de la table.
+   Ouvert pendant la phase de mise seulement ; il glisse sous le rail dès que
+   la donne commence, pour rendre le feutre (et la ligne de stratégie). */
+.rack-jetons{
+  position:absolute; left:50%; bottom:5px; z-index:7; transform:translate(-50%, 0);
+  display:flex; align-items:center; gap:14px; padding:4px 12px 4px 16px; border-radius:14px;
+  background:linear-gradient(180deg, #2C1C13, #170E0A 70%, #100906);
+  box-shadow:0 0 0 1px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 1px color-mix(in oklab, var(--or) 38%, transparent), 0 16px 30px -12px rgba(0,0,0,.9);
+  transition:transform .32s var(--ressort), opacity .22s;
+}
+.rack-jetons:not(.ouvert){ transform:translate(-50%, 140%); opacity:0; pointer-events:none }
+.rj-bloc{ display:flex; flex-direction:column; align-items:flex-start; line-height:1.15; min-width:66px }
+.rj-bloc .grave{ color:color-mix(in oklab, var(--or) 82%, transparent); font-size:10px; letter-spacing:.16em }
+.rj-bloc b{ color:var(--ivoire); font-size:var(--t-fort); font-weight:600; white-space:nowrap }
+.rj-bloc .rj-sous{ font-family:"Martian Mono",monospace; font-size:10px; color:color-mix(in oklab, var(--ivoire) 55%, transparent); white-space:nowrap }
+.rj-jetons{ display:flex; gap:7px; align-items:center; padding:2px 6px }
+.rj-jetons .jt{ --w:46px; cursor:pointer; transition:transform .14s var(--ressort), opacity .2s, filter .2s }
+.rj-jetons .jt:hover:not([disabled]), .rj-jetons .jt:focus-visible{ transform:translateY(-5px) }
+.rj-jetons .jt:active:not([disabled]){ transform:translateY(-1px) scale(.96) }
+.rj-jetons .jt[disabled]{ opacity:.32; cursor:not-allowed; filter:saturate(.35) }
+.rj-retirer{ min-width:44px; min-height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.14); color:var(--ivoire);
+  background:rgba(255,255,255,.07); font-size:19px; line-height:1 }
+.rj-retirer:hover:not([disabled]){ border-color:color-mix(in oklab, var(--or) 60%, transparent); background:rgba(255,255,255,.12) }
+.rj-retirer[disabled]{ opacity:.32; cursor:not-allowed }
+.rj-rachat{ min-height:44px; padding:0 14px; border-radius:12px; white-space:nowrap; font-weight:600; font-size:var(--t-petit);
+  background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px -8px rgba(0,0,0,.9) }
+
+/* La ligne du coach : ta mise en unités et, si le compte est affiché, sa cohérence. */
+.coach-mise{ position:absolute; left:26px; bottom:12px; z-index:7; margin:0; pointer-events:none;
+  font-family:"Martian Mono",monospace; font-size:var(--t-micro); letter-spacing:.06em; text-transform:uppercase;
+  color:color-mix(in oklab, var(--ivoire) 72%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.7) }
+.coach-mise:empty{ display:none }
+.coach-mise b{ font-weight:600 } .coach-mise .ok{ color:#5FE0C6 } .coach-mise .ko{ color:#FF9B7A }
+
+/* Le tapis dans la barre : le net de la session en petit, à côté. */
+#hudTapis b{ min-width:5ch }
+#tNet{ font-style:normal; font-size:var(--t-micro); margin-left:2px } #tNet.plus{ color:var(--jade) } #tNet.moins{ color:var(--cinabre) }
+
+/* Le vol : un clone dans le calque, son ombre reste sur le feutre. */
+.jt-vol{ position:absolute; left:0; top:0; width:var(--w,44px); z-index:9; pointer-events:none; will-change:transform }
+.jt-vol .jt-ombre{ position:absolute; left:8%; right:8%; bottom:-5px; height:calc(var(--w,44px) * .22); border-radius:50%; background:rgba(0,0,0,.55); filter:blur(4px); opacity:.55 }
+.jt-vol > .jt, .jt-vol > .jt-tas{ position:relative; will-change:transform }
+.jt-lueur{ position:absolute; width:150px; height:150px; border-radius:50%; pointer-events:none; z-index:6; opacity:0;
+  background:radial-gradient(circle, rgba(245,205,95,.6) 0%, rgba(245,205,95,.22) 38%, rgba(245,205,95,0) 70%) }
+
+/* Téléphone (hors périmètre : ne casse pas, c'est tout) */
+@media (max-width:759.98px){
+  .rack-jetons{ gap:6px; padding:3px 6px; bottom:3px; max-width:calc(100% - 8px) }
+  .rj-jetons{ gap:4px; padding:0 } .rj-jetons .jt{ --w:40px }
+  .rj-bloc{ min-width:0 } .rj-bloc .rj-sous{ display:none }
+  .coach-mise{ left:10px; bottom:4px; font-size:9px }
+}
+@media (max-height:520px){ .rack-jetons{ bottom:2px } .rj-jetons .jt{ --w:40px } .coach-mise{ display:none } }

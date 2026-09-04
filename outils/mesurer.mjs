@@ -81,6 +81,13 @@ const SONDE = `(() => {
     petits: [...new Set(petits)].slice(0, 6) };
 })()`;
 
+const MISER = `(async () => { const q = s => document.querySelector(s), dodo = ms => new Promise(r => setTimeout(r, ms));
+  for (let g = 0; g < 30 && q("#bDonne") && q("#bDonne").disabled; g++) {
+    const rack = q("#rackJetons"), min = rack ? +(rack.dataset.min || 5) : 5;
+    const libres = [...document.querySelectorAll("#rjJetons button:not([disabled])")];
+    const j = libres.find(b => +b.dataset.v >= min) || libres[libres.length - 1];
+    if (!j) break; j.click(); await dodo(90);
+  } })()`;
 const rapport = [];
 for (const [nom, L, H] of TAILLES) {
   await cdp("Emulation.setDeviceMetricsOverride", { width: L, height: H, deviceScaleFactor: 1, mobile: L < 900 });
@@ -89,7 +96,8 @@ for (const [nom, L, H] of TAILLES) {
   for (const v of VUES) {
     await evaluer(`(document.querySelector('nav [data-vue="${v}"]')||{click(){}}).click()`);
     await dodo(v === "table" ? 900 : 350);
-    if (v === "table") { await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(2600); }
+    // La donne exige une mise (lot Jetons) : on tape un jeton qui couvre le minimum avant de distribuer.
+    if (v === "table") { await evaluer(MISER); await dodo(300); await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(2600); }
     const m = await evaluer(SONDE);
     if (m && !m.erreur) rapport.push({ taille: nom, L, H, vue: v, ...m });
   }

@@ -1,6 +1,6 @@
 # Le Sabot
 
-Entraînement au comptage de cartes au blackjack, dans le navigateur. Aucune mise, aucun argent : c'est un outil pour s'entraîner.
+Entraînement au comptage de cartes au blackjack, dans le navigateur. Des jetons, mais aucun argent : tout le monde s'assoit avec le même tapis de 1 000, et c'est un outil pour s'entraîner.
 
 **→ [pwrygrt72g-hue.github.io/compteur-hilo](https://pwrygrt72g-hue.github.io/compteur-hilo/)**
 
