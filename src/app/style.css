@@ -199,8 +199,11 @@ button{cursor:pointer;background:none;border:0}
 /* ── Chrome ────────────────────────────────────────────────────────── */
 header{position:sticky;top:0;z-index:40;background:color-mix(in oklab, var(--encre) 88%, transparent);
   backdrop-filter:blur(12px);border-bottom:1px solid var(--ardoise)}
-.tete{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:10px 0;
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+/* Une seule rangée, toujours : l'en-tête est du budget vertical volé à la table.
+   Mesuré avant : 149 px sur un iPhone SE (nav sur deux rangées + un <select>),
+   soit 22 % de l'écran, et les sièges réduits à 2 px. */
+.tete{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:8px 0;
+  display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0}
 .marque{display:flex;align-items:center;gap:9px;font-family:"Instrument Serif",serif;font-size:21px}
 .marque .emb{width:26px;height:26px;border-radius:5px;flex:none;
   background:linear-gradient(180deg,#F3C866,#C08E22 62%,#8A6416);
@@ -208,13 +211,20 @@ header{position:sticky;top:0;z-index:40;background:color-mix(in oklab, var(--enc
   position:relative;overflow:hidden}
 .marque .emb::after{content:"";position:absolute;inset:auto 0 0 0;height:9px;
   background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 1px, rgba(255,255,255,.35) 1px 2px, transparent 2px 5px)}
-nav{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
-nav button{padding:7px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);
-  border:1px solid transparent;transition:color .15s,background .15s}
+nav{display:flex;gap:2px;margin-left:auto;flex-wrap:nowrap;min-width:0;overflow-x:auto;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
+  mask-image:linear-gradient(90deg,transparent,#000 10px,#000 calc(100% - 10px),transparent)}
+nav::-webkit-scrollbar{display:none}
+nav button{padding:9px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);
+  border:1px solid transparent;transition:color .15s,background .15s;flex:none;white-space:nowrap;
+  scroll-snap-align:center;min-height:38px}
 nav button:hover{color:var(--os)}
 nav button[aria-current="page"]{background:var(--laiton);color:var(--encre);font-weight:600}
-.outils{display:flex;gap:6px;align-items:center}
-.icone{width:34px;height:34px;border-radius:50%;border:1px solid var(--bord);display:grid;place-items:center;font-size:14px}
+/* Le bloc d'outils n'a qu'un seul habitat visible : la feuille ⚙. */
+.outils{display:flex;flex-direction:column;gap:12px;align-items:stretch;text-align:left}
+.outils select{min-height:44px}
+.outils .rang-btn{justify-content:flex-start}
+.icone{width:44px;height:44px;border-radius:50%;border:1px solid var(--bord);display:grid;place-items:center;font-size:16px;flex:none}
 .icone.eteint{opacity:.45}
 main{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:var(--gap) 0 56px}
 .vue[hidden]{display:none}
@@ -587,4 +597,165 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
   .salon{grid-template-columns:1fr}
   .codesalon{font-size:30px}
   .bac{width:170px;height:214px}
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LE POSTE DE JEU
+   La table cesse d'être un document qu'on fait défiler pour devenir un poste
+   à hauteur d'écran. Mesuré avant : 375×667 demandait 1927 px de défilement
+   et il fallait descendre de 870 px pour atteindre « Tirer » pendant son tour.
+   Trois bandes ; le feutre est la seule élastique, il absorbe tout.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* L'encoche et la barre du bas. `viewport-fit=cover` était déclaré depuis le
+   début et `env()` n'apparaissait nulle part : la page passait sous l'encoche
+   sans compensation. Le maximum, jamais la somme — sinon on paie deux fois. */
+:root{ --sg:env(safe-area-inset-left,0px); --sd:env(safe-area-inset-right,0px);
+       --sb:env(safe-area-inset-bottom,0px); --st:env(safe-area-inset-top,0px); }
+header{ padding-top:var(--st) }
+main{ padding-left:max(var(--gap),var(--sg)); padding-right:max(var(--gap),var(--sd)) }
+.bandeau-bas{ bottom:calc(22px + var(--sb)) }
+
+/* `--h-entete` est mesurée au chargement et au redimensionnement plutôt que
+   codée en dur : l'en-tête change de hauteur avec la langue, la police de
+   secours et l'encoche. Une constante y serait fausse la moitié du temps. */
+body.a-table{ overflow:hidden; overscroll-behavior:none }
+body.a-table main{ padding-bottom:0 }
+
+.tete-table .ligne-table{ display:flex; justify-content:space-between; align-items:baseline;
+  gap:12px; flex-wrap:wrap }
+.tete-table .ligne-table h3{ margin:2px 0 0 }
+.tete-table .rail{ margin-top:12px }
+.aide-table{ font-size:var(--t-fin); margin:8px 0 0 }
+
+@media (min-height:521px){
+  #v-table{
+    display:grid; grid-template-rows:auto minmax(140px,1fr) auto; gap:8px;
+    height:calc(100svh - var(--h-entete,64px) - var(--gap) - var(--sb));
+    animation:none;                      /* un poste fixe ne glisse pas à l'entrée */
+  }
+}
+/* ⚠️ La ligne à ne pas oublier : sans elle, mesuré à 375 px de large, la bande
+   d'actions et le feutre gonflent à 429 px dans une grille de 350 et le
+   document déborde de 443 px. La taille minimale d'un enfant de grille vaut la
+   largeur de son CONTENU, et un `overflow:auto` ne la contredit pas. */
+#v-table > *{ min-width:0 }
+
+#v-table .tapis{
+  min-height:0; height:100%; overflow:hidden;
+  display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:2px; padding:10px;
+}
+/* Le bac et le sabot deviennent des enfants de grille. En absolu, le coin
+   arrondi du feutre les rognait en diagonale : la frontière de découpe est à
+   x = R − R·√(1 − ((d−R)/R)²), soit 87,5 px pour un rayon de 190. Le bac était
+   à 34 px. Le sortir du positionnement absolu supprime le calcul. */
+.rangee-haute{ display:grid; grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:start; gap:8px }
+.rangee-haute .croupier{ grid-column:2 }
+#v-table .sabot, #v-table .defausse{ position:static }
+
+.zone-actions{ position:relative; z-index:5; padding:10px;
+  padding-bottom:max(10px,var(--sb)); display:grid; gap:8px }
+.zone-actions .rang-btn{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px }
+.zone-actions .rang-btn .btn{ min-height:48px; padding:6px 4px; font-size:var(--t-petit);
+  border-radius:12px; white-space:nowrap }
+.zone-actions .rang-btn .btn kbd{ display:none }
+.rang-table{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center }
+.rang-table .btn{ min-height:44px }
+.btn.mini{ padding:7px 11px; font-size:var(--t-fin); min-height:38px }
+.btn.mini[aria-pressed="true"]{ color:var(--os); box-shadow:0 0 0 1px var(--laiton) inset }
+@media (min-width:760px){
+  .zone-actions .rang-btn{ display:flex; flex-wrap:wrap; justify-content:center }
+  .zone-actions .rang-btn .btn kbd{ display:inline }
+}
+
+/* ── Poste « poche » : téléphone debout ──────────────────────────────── */
+@media (max-width:759.98px) and (min-height:521px){
+  #v-table .tete-table{ padding:8px 10px }
+  #v-table .rail{ height:38px; margin-top:8px }
+  #v-table .rail .index{ font-size:13px; min-width:4ch }
+  #tAide{ display:none }
+  /* Le bandeau des cinq indicateurs : de trois rangées (169 px) à une seule
+     qui défile (46 px). Le plus gros gain vertical après l'en-tête. */
+  #v-table .bandeau{ display:flex; gap:0; margin-top:8px; overflow-x:auto;
+    scrollbar-width:none; scroll-snap-type:x proximity }
+  #v-table .bandeau::-webkit-scrollbar{ display:none }
+  #v-table .bandeau div{ flex:0 0 auto; min-width:80px; padding-right:14px;
+    text-align:left; scroll-snap-align:start }
+  #v-table .tapis{ border-radius:64px 64px 14px 14px; padding:8px 8px 6px }
+  #v-table .sabot, #v-table .defausse{ width:34px; height:46px; font-size:10px }
+  #v-table .annonce{ font-size:var(--t-petit); min-height:0; margin:2px 0 }
+  #v-table .conseil{ margin:0 }
+  #v-table .croupier .main .carte{ --w:62px; margin-left:-35px }
+  #v-table .devise{ display:none }
+}
+
+/* ── La pellicule de sièges ───────────────────────────────────────────────
+   Trois rangées de 170 px deviennent une rangée qui défile. L'ORDRE RÉEL de la
+   table est conservé — voir qui joue avant toi fait partie de l'apprentissage —
+   et c'est ton siège qui s'élargit, il ne remonte pas en tête. */
+@media (max-width:999.98px){
+  #sieges{ display:flex; flex-wrap:nowrap; justify-content:flex-start;
+    overflow-x:auto; overflow-y:hidden; gap:6px; min-height:0; padding-bottom:2px;
+    scroll-snap-type:x proximity; scrollbar-width:none; overscroll-behavior-x:contain }
+  #sieges::-webkit-scrollbar{ display:none }
+  .siege{ flex:0 0 auto; min-width:0; width:clamp(92px,28vw,124px);
+    scroll-snap-align:center; padding:4px 3px }
+  .siege.toi{ width:clamp(146px,46vw,196px) }
+  .siege .main .carte{ --w:44px; margin-left:-25px }
+  .siege.toi .main .carte{ --w:58px; margin-left:-33px }
+}
+
+/* ── Poste « tranche » : téléphone couché ─────────────────────────────────
+   Le cas que personne ne teste et qui casse tout : à 844×390 il fallait
+   défiler 1319 px, et rien du jeu n'était visible sans défiler. */
+@media (max-height:520px){
+  body.a-table header{ position:static }
+  #v-table{
+    display:grid; grid-template-columns:minmax(0,1fr) clamp(196px,26vw,260px);
+    grid-template-rows:minmax(0,1fr); grid-template-areas:"feutre flanc"; gap:8px;
+    height:calc(100svh - var(--h-entete,54px) - 12px);
+  }
+  #v-table .tapis{ grid-area:feutre; border-radius:22px; padding:6px }
+  /* Le flanc est UNE seule grille à deux rangées. Empiler deux éléments dans la
+     même zone avec align-self:start/end les fait se recouvrir dès que le
+     panneau est haut. */
+  #v-table .tete-table, #v-table .zone-actions{ grid-area:flanc }
+  #v-table .tete-table{ align-self:stretch; padding:8px 10px; overflow:auto;
+    display:grid; grid-template-rows:auto auto 1fr auto; gap:6px }
+  #v-table .zone-actions{ align-self:end }
+  #v-table .zone-actions .rang-btn{ grid-template-columns:1fr 1fr }
+  #v-table .bandeau{ display:grid; grid-template-columns:1fr 1fr; gap:2px 8px; overflow:visible }
+  #v-table .bandeau div{ min-width:0; padding:0 }
+  #tRegles, #tAide, #v-table .devise{ display:none }
+  #v-table .rail{ height:30px; margin-top:0 }
+  #v-table .annonce{ font-size:var(--t-micro); margin:0 }
+  #v-table .croupier .main .carte{ --w:54px; margin-left:-30px }
+  .siege{ width:clamp(72px,11vw,110px) }
+  .siege.toi{ width:clamp(110px,17vw,150px) }
+  .rang-table .btn.mini{ min-height:32px; padding:5px 8px; font-size:var(--t-micro) }
+}
+
+/* ── L'en-tête : 181 px, soit 27 % d'un téléphone ─────────────────────────
+   `nav` portait `flex-wrap:wrap` ET `overflow-x:auto` : le repli gagnait et le
+   défilement était du code mort. La barre se repliait sur deux lignes. */
+@media (max-width:759.98px){
+  #nav{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
+    scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch }
+  #nav::-webkit-scrollbar{ display:none }
+  #nav button{ flex:0 0 auto; scroll-snap-align:start; min-height:44px }
+  .marque{ font-size:var(--t-corps) }
+}
+
+/* ── Une modale ne doit jamais être amputée ───────────────────────────────
+   À 812×375 la boîte faisait 379 px, dépassait de 24 px sous la fenêtre, et
+   n'avait aucun défilement interne : le bouton Fermer était hors d'atteinte. */
+.modale{ overflow-y:auto; padding:16px 12px }
+.modale .boite{ max-height:calc(100svh - 32px); overflow-y:auto; overscroll-behavior:contain }
+
+@media (max-width:759.98px){
+  .marque .nom{display:none}
+  .marque{gap:0}
+  nav{margin-left:0}
+  nav button{padding:9px 10px}
 }

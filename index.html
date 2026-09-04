@@ -216,8 +216,11 @@ button{cursor:pointer;background:none;border:0}
 /* ── Chrome ────────────────────────────────────────────────────────── */
 header{position:sticky;top:0;z-index:40;background:color-mix(in oklab, var(--encre) 88%, transparent);
   backdrop-filter:blur(12px);border-bottom:1px solid var(--ardoise)}
-.tete{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:10px 0;
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+/* Une seule rangée, toujours : l'en-tête est du budget vertical volé à la table.
+   Mesuré avant : 149 px sur un iPhone SE (nav sur deux rangées + un <select>),
+   soit 22 % de l'écran, et les sièges réduits à 2 px. */
+.tete{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:8px 0;
+  display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0}
 .marque{display:flex;align-items:center;gap:9px;font-family:"Instrument Serif",serif;font-size:21px}
 .marque .emb{width:26px;height:26px;border-radius:5px;flex:none;
   background:linear-gradient(180deg,#F3C866,#C08E22 62%,#8A6416);
@@ -225,13 +228,20 @@ header{position:sticky;top:0;z-index:40;background:color-mix(in oklab, var(--enc
   position:relative;overflow:hidden}
 .marque .emb::after{content:"";position:absolute;inset:auto 0 0 0;height:9px;
   background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 1px, rgba(255,255,255,.35) 1px 2px, transparent 2px 5px)}
-nav{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
-nav button{padding:7px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);
-  border:1px solid transparent;transition:color .15s,background .15s}
+nav{display:flex;gap:2px;margin-left:auto;flex-wrap:nowrap;min-width:0;overflow-x:auto;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
+  mask-image:linear-gradient(90deg,transparent,#000 10px,#000 calc(100% - 10px),transparent)}
+nav::-webkit-scrollbar{display:none}
+nav button{padding:9px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);
+  border:1px solid transparent;transition:color .15s,background .15s;flex:none;white-space:nowrap;
+  scroll-snap-align:center;min-height:38px}
 nav button:hover{color:var(--os)}
 nav button[aria-current="page"]{background:var(--laiton);color:var(--encre);font-weight:600}
-.outils{display:flex;gap:6px;align-items:center}
-.icone{width:34px;height:34px;border-radius:50%;border:1px solid var(--bord);display:grid;place-items:center;font-size:14px}
+/* Le bloc d'outils n'a qu'un seul habitat visible : la feuille ⚙. */
+.outils{display:flex;flex-direction:column;gap:12px;align-items:stretch;text-align:left}
+.outils select{min-height:44px}
+.outils .rang-btn{justify-content:flex-start}
+.icone{width:44px;height:44px;border-radius:50%;border:1px solid var(--bord);display:grid;place-items:center;font-size:16px;flex:none}
 .icone.eteint{opacity:.45}
 main{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:var(--gap) 0 56px}
 .vue[hidden]{display:none}
@@ -606,9 +616,170 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
   .bac{width:170px;height:214px}
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   LE POSTE DE JEU
+   La table cesse d'être un document qu'on fait défiler pour devenir un poste
+   à hauteur d'écran. Mesuré avant : 375×667 demandait 1927 px de défilement
+   et il fallait descendre de 870 px pour atteindre « Tirer » pendant son tour.
+   Trois bandes ; le feutre est la seule élastique, il absorbe tout.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* L'encoche et la barre du bas. `viewport-fit=cover` était déclaré depuis le
+   début et `env()` n'apparaissait nulle part : la page passait sous l'encoche
+   sans compensation. Le maximum, jamais la somme — sinon on paie deux fois. */
+:root{ --sg:env(safe-area-inset-left,0px); --sd:env(safe-area-inset-right,0px);
+       --sb:env(safe-area-inset-bottom,0px); --st:env(safe-area-inset-top,0px); }
+header{ padding-top:var(--st) }
+main{ padding-left:max(var(--gap),var(--sg)); padding-right:max(var(--gap),var(--sd)) }
+.bandeau-bas{ bottom:calc(22px + var(--sb)) }
+
+/* `--h-entete` est mesurée au chargement et au redimensionnement plutôt que
+   codée en dur : l'en-tête change de hauteur avec la langue, la police de
+   secours et l'encoche. Une constante y serait fausse la moitié du temps. */
+body.a-table{ overflow:hidden; overscroll-behavior:none }
+body.a-table main{ padding-bottom:0 }
+
+.tete-table .ligne-table{ display:flex; justify-content:space-between; align-items:baseline;
+  gap:12px; flex-wrap:wrap }
+.tete-table .ligne-table h3{ margin:2px 0 0 }
+.tete-table .rail{ margin-top:12px }
+.aide-table{ font-size:var(--t-fin); margin:8px 0 0 }
+
+@media (min-height:521px){
+  #v-table{
+    display:grid; grid-template-rows:auto minmax(140px,1fr) auto; gap:8px;
+    height:calc(100svh - var(--h-entete,64px) - var(--gap) - var(--sb));
+    animation:none;                      /* un poste fixe ne glisse pas à l'entrée */
+  }
+}
+/* ⚠️ La ligne à ne pas oublier : sans elle, mesuré à 375 px de large, la bande
+   d'actions et le feutre gonflent à 429 px dans une grille de 350 et le
+   document déborde de 443 px. La taille minimale d'un enfant de grille vaut la
+   largeur de son CONTENU, et un `overflow:auto` ne la contredit pas. */
+#v-table > *{ min-width:0 }
+
+#v-table .tapis{
+  min-height:0; height:100%; overflow:hidden;
+  display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:2px; padding:10px;
+}
+/* Le bac et le sabot deviennent des enfants de grille. En absolu, le coin
+   arrondi du feutre les rognait en diagonale : la frontière de découpe est à
+   x = R − R·√(1 − ((d−R)/R)²), soit 87,5 px pour un rayon de 190. Le bac était
+   à 34 px. Le sortir du positionnement absolu supprime le calcul. */
+.rangee-haute{ display:grid; grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:start; gap:8px }
+.rangee-haute .croupier{ grid-column:2 }
+#v-table .sabot, #v-table .defausse{ position:static }
+
+.zone-actions{ position:relative; z-index:5; padding:10px;
+  padding-bottom:max(10px,var(--sb)); display:grid; gap:8px }
+.zone-actions .rang-btn{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px }
+.zone-actions .rang-btn .btn{ min-height:48px; padding:6px 4px; font-size:var(--t-petit);
+  border-radius:12px; white-space:nowrap }
+.zone-actions .rang-btn .btn kbd{ display:none }
+.rang-table{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center }
+.rang-table .btn{ min-height:44px }
+.btn.mini{ padding:7px 11px; font-size:var(--t-fin); min-height:38px }
+.btn.mini[aria-pressed="true"]{ color:var(--os); box-shadow:0 0 0 1px var(--laiton) inset }
+@media (min-width:760px){
+  .zone-actions .rang-btn{ display:flex; flex-wrap:wrap; justify-content:center }
+  .zone-actions .rang-btn .btn kbd{ display:inline }
+}
+
+/* ── Poste « poche » : téléphone debout ──────────────────────────────── */
+@media (max-width:759.98px) and (min-height:521px){
+  #v-table .tete-table{ padding:8px 10px }
+  #v-table .rail{ height:38px; margin-top:8px }
+  #v-table .rail .index{ font-size:13px; min-width:4ch }
+  #tAide{ display:none }
+  /* Le bandeau des cinq indicateurs : de trois rangées (169 px) à une seule
+     qui défile (46 px). Le plus gros gain vertical après l'en-tête. */
+  #v-table .bandeau{ display:flex; gap:0; margin-top:8px; overflow-x:auto;
+    scrollbar-width:none; scroll-snap-type:x proximity }
+  #v-table .bandeau::-webkit-scrollbar{ display:none }
+  #v-table .bandeau div{ flex:0 0 auto; min-width:80px; padding-right:14px;
+    text-align:left; scroll-snap-align:start }
+  #v-table .tapis{ border-radius:64px 64px 14px 14px; padding:8px 8px 6px }
+  #v-table .sabot, #v-table .defausse{ width:34px; height:46px; font-size:10px }
+  #v-table .annonce{ font-size:var(--t-petit); min-height:0; margin:2px 0 }
+  #v-table .conseil{ margin:0 }
+  #v-table .croupier .main .carte{ --w:62px; margin-left:-35px }
+  #v-table .devise{ display:none }
+}
+
+/* ── La pellicule de sièges ───────────────────────────────────────────────
+   Trois rangées de 170 px deviennent une rangée qui défile. L'ORDRE RÉEL de la
+   table est conservé — voir qui joue avant toi fait partie de l'apprentissage —
+   et c'est ton siège qui s'élargit, il ne remonte pas en tête. */
+@media (max-width:999.98px){
+  #sieges{ display:flex; flex-wrap:nowrap; justify-content:flex-start;
+    overflow-x:auto; overflow-y:hidden; gap:6px; min-height:0; padding-bottom:2px;
+    scroll-snap-type:x proximity; scrollbar-width:none; overscroll-behavior-x:contain }
+  #sieges::-webkit-scrollbar{ display:none }
+  .siege{ flex:0 0 auto; min-width:0; width:clamp(92px,28vw,124px);
+    scroll-snap-align:center; padding:4px 3px }
+  .siege.toi{ width:clamp(146px,46vw,196px) }
+  .siege .main .carte{ --w:44px; margin-left:-25px }
+  .siege.toi .main .carte{ --w:58px; margin-left:-33px }
+}
+
+/* ── Poste « tranche » : téléphone couché ─────────────────────────────────
+   Le cas que personne ne teste et qui casse tout : à 844×390 il fallait
+   défiler 1319 px, et rien du jeu n'était visible sans défiler. */
+@media (max-height:520px){
+  body.a-table header{ position:static }
+  #v-table{
+    display:grid; grid-template-columns:minmax(0,1fr) clamp(196px,26vw,260px);
+    grid-template-rows:minmax(0,1fr); grid-template-areas:"feutre flanc"; gap:8px;
+    height:calc(100svh - var(--h-entete,54px) - 12px);
+  }
+  #v-table .tapis{ grid-area:feutre; border-radius:22px; padding:6px }
+  /* Le flanc est UNE seule grille à deux rangées. Empiler deux éléments dans la
+     même zone avec align-self:start/end les fait se recouvrir dès que le
+     panneau est haut. */
+  #v-table .tete-table, #v-table .zone-actions{ grid-area:flanc }
+  #v-table .tete-table{ align-self:stretch; padding:8px 10px; overflow:auto;
+    display:grid; grid-template-rows:auto auto 1fr auto; gap:6px }
+  #v-table .zone-actions{ align-self:end }
+  #v-table .zone-actions .rang-btn{ grid-template-columns:1fr 1fr }
+  #v-table .bandeau{ display:grid; grid-template-columns:1fr 1fr; gap:2px 8px; overflow:visible }
+  #v-table .bandeau div{ min-width:0; padding:0 }
+  #tRegles, #tAide, #v-table .devise{ display:none }
+  #v-table .rail{ height:30px; margin-top:0 }
+  #v-table .annonce{ font-size:var(--t-micro); margin:0 }
+  #v-table .croupier .main .carte{ --w:54px; margin-left:-30px }
+  .siege{ width:clamp(72px,11vw,110px) }
+  .siege.toi{ width:clamp(110px,17vw,150px) }
+  .rang-table .btn.mini{ min-height:32px; padding:5px 8px; font-size:var(--t-micro) }
+}
+
+/* ── L'en-tête : 181 px, soit 27 % d'un téléphone ─────────────────────────
+   `nav` portait `flex-wrap:wrap` ET `overflow-x:auto` : le repli gagnait et le
+   défilement était du code mort. La barre se repliait sur deux lignes. */
+@media (max-width:759.98px){
+  #nav{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
+    scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch }
+  #nav::-webkit-scrollbar{ display:none }
+  #nav button{ flex:0 0 auto; scroll-snap-align:start; min-height:44px }
+  .marque{ font-size:var(--t-corps) }
+}
+
+/* ── Une modale ne doit jamais être amputée ───────────────────────────────
+   À 812×375 la boîte faisait 379 px, dépassait de 24 px sous la fenêtre, et
+   n'avait aucun défilement interne : le bouton Fermer était hors d'atteinte. */
+.modale{ overflow-y:auto; padding:16px 12px }
+.modale .boite{ max-height:calc(100svh - 32px); overflow-y:auto; overscroll-behavior:contain }
+
+@media (max-width:759.98px){
+  .marque .nom{display:none}
+  .marque{gap:0}
+  nav{margin-left:0}
+  nav button{padding:9px 10px}
+}
+
 </style>
 <header><div class="tete">
-  <button class="marque" data-vue="accueil"><span class="emb"></span>Le Sabot</button>
+  <button class="marque" data-vue="accueil"><span class="emb"></span><span class="nom">Le Sabot</span></button>
   <nav id="nav">
     <button data-vue="accueil" aria-current="page">Accueil</button>
     <button data-vue="salon">Salon</button>
@@ -619,10 +790,17 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
     <button data-vue="ensemble">À plusieurs</button>
     <button data-vue="progres">Progression</button>
   </nav>
-  <div class="outils">
-    <select id="sys" title="Système de comptage" aria-label="Système de comptage"></select>
-    <button class="icone" id="theme" title="Thème clair ou sombre" aria-label="Changer de thème">◐</button>
-    <button class="icone" id="son" title="Sons" aria-label="Activer ou couper les sons">♪</button>
+  <button class="icone" id="bReglages" title="Réglages" aria-label="Réglages">&#9881;</button>
+  <!-- Les outils vivent ici en permanence : la feuille &#9881; les EMPRUNTE puis les rend.
+       Les dupliquer dans la modale casserait l'unicité des identifiants, et les
+       reconstruire y perdrait les branchements posés au d&#233;marrage. -->
+  <div class="outils" id="outils" hidden>
+    <label class="ch"><span class="grave">Syst&#232;me de comptage</span>
+      <select id="sys" title="Syst&#232;me de comptage" aria-label="Syst&#232;me de comptage"></select></label>
+    <div class="rang-btn">
+      <button class="btn creux" id="theme" title="Th&#232;me clair ou sombre" aria-label="Changer de th&#232;me">&#9689; Th&#232;me</button>
+      <button class="btn creux" id="son" title="Sons" aria-label="Activer ou couper les sons">&#9834; Sons</button>
+    </div>
   </div>
 </div></header>
 
@@ -675,12 +853,14 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 
 <!-- ════════════════════ TABLE ════════════════════ -->
 <section class="vue" id="v-table" hidden>
-  <div class="laque pad" style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-      <div><span class="grave">Table en cours</span><h3 id="tNom" style="margin:2px 0 0">—</h3></div>
+  <!-- BANDE 1 — l'identité de la table et la réglette du compte. Hauteur libre. -->
+  <div class="laque pad tete-table">
+    <div class="ligne-table">
+      <div><span class="grave">Table en cours</span><h3 id="tNom">—</h3></div>
       <div class="regles" id="tRegles"></div>
+      <button class="icone" id="bReglagesTable" title="Réglages de la table" aria-label="Réglages de la table">⚙</button>
     </div>
-    <div class="rail" id="rail" style="margin-top:12px">
+    <div class="rail" id="rail">
       <div class="zero"></div><div class="coupe" id="tCoupe"></div>
       <div class="index cadran" id="tIndex">0</div>
     </div>
@@ -691,18 +871,27 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
       <div><span class="grave">Mise conseillée</span><b id="tMise">1</b></div>
       <div><span class="grave">Solde</span><b id="tSolde">0</b></div>
     </div>
-    <p class="muet" style="font-size:var(--t-fin);margin:8px 0 0" id="tAide">Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.</p>
+    <p class="muet aide-table" id="tAide">Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.</p>
   </div>
 
+  <!-- BANDE 2 — le feutre. C'est la SEULE bande élastique : elle absorbe toute
+       la variation de hauteur, des 390 px d'un téléphone couché aux 1080 d'un écran. -->
   <div class="tapis plateau" id="plateau">
-    <div class="defausse" id="defausse"><i></i><span id="defausseN">0</span></div>
-    <div class="sabot" id="sabot">312</div>
+    <div class="rangee-haute">
+      <div class="defausse" id="defausse"><i></i><span id="defausseN">0</span></div>
+      <div class="croupier"><div class="qui">Croupier <b id="dScore">·</b></div><div class="main" id="dMain"></div></div>
+      <div class="sabot" id="sabot">312</div>
+    </div>
     <p class="devise" id="devise"></p>
-    <div class="croupier"><div class="qui">Croupier <b id="dScore">·</b></div><div class="main" id="dMain"></div></div>
     <p class="annonce" id="annonce"></p>
     <div class="sieges" id="sieges"></div>
     <p class="conseil" id="conseil"></p>
-    <div class="rang-btn" style="margin-top:8px">
+  </div>
+
+  <!-- BANDE 3 — les coups. Sortie du feutre : c'est ce qui la colle en bas de
+       l'écran et ce qui évite au bac à défausse d'être rogné par le coin arrondi. -->
+  <div class="zone-actions laque">
+    <div class="rang-btn" id="coups">
       <button class="btn" id="bDonne">Distribuer<kbd>D</kbd></button>
       <button class="btn creux" id="bTire" disabled>Tirer<kbd>T</kbd></button>
       <button class="btn creux" id="bReste" disabled>Rester<kbd>R</kbd></button>
@@ -710,28 +899,14 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
       <button class="btn creux" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
       <button class="btn creux" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
     </div>
+    <div class="rang-table">
+      <button class="btn creux mini" id="bMontrer" aria-pressed="false">Montrer le compte</button>
+      <button class="btn creux mini" id="bMonCompte">Donner mon compte</button>
+      <button class="btn creux mini" id="bNouveauSabot">Nouveau sabot</button>
+      <button class="btn creux mini" id="bRecu">Reçu du sabot</button>
+    </div>
     <div id="boiteAssurance"></div>
   </div>
-
-  <div class="barre">
-    <span>mains <b id="tMains">0</b> · cartes vues <b id="tVues">0</b></span>
-    <span><label class="ch ligne"><input type="checkbox" id="tConseil"> aide stratégie</label>
-      <label class="ch ligne"><input type="checkbox" id="tCompteVisible"> montrer le compte</label></span>
-    <span>cadence <input type="range" id="tVitesse" min="120" max="1000" step="40" value="400" style="width:96px;vertical-align:middle"></span>
-    <span><button class="btn creux" id="bMonCompte">Donner mon compte</button>
-      <button class="btn creux" id="bNouveauSabot">Nouveau sabot</button></span>
-  </div>
-
-  <details class="laque pad" style="margin-top:12px">
-    <summary style="cursor:pointer"><span class="grave" style="display:inline">Le reçu du sabot — vérifier le mélange</span></summary>
-    <p class="muet" style="font-size:var(--t-petit);margin-top:8px">Avant de distribuer, l'application publie l'empreinte d'une graine. À la fin du sabot, elle révèle la graine. N'importe qui peut alors recalculer l'ordre exact des cartes et vérifier qu'il n'a pas été choisi après coup.</p>
-    <dl class="recu" id="recu"></dl>
-    <div class="rang-btn" style="margin-top:10px;justify-content:flex-start">
-      <button class="btn creux" id="bVerifier">Vérifier ce sabot</button>
-      <button class="btn creux" id="bCopierVerif">Copier le vérificateur</button>
-    </div>
-    <p class="muet" id="verifResultat" style="font-size:var(--t-petit);margin-top:8px"></p>
-  </details>
 </section>
 
 <!-- ════════════════════ EXERCICES ════════════════════ -->
@@ -1505,7 +1680,7 @@ return {COURTIERS,connecter,connecterAvecRepli,nomCourtier,codeSalon,sujet};
 })();
 
 
-/* ═══ app.js ═══ */
+/* ═══ socle.js ═══ */
 /* ══════════════════════════════════════════════════════════════════════
    L'application. Tout ce qui est cher — stratégies de base, écarts au compte,
    avantage maison — a été calculé à la construction et vit dans DONNEES.
@@ -1530,6 +1705,8 @@ DB.strat = Object.assign({ base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }, DB
 DB.fautes = DB.fautes || []; DB.sessions = DB.sessions || [];
 const garder = () => { try { localStorage.setItem("laque_v1", JSON.stringify(DB)); } catch (e) {} };
 const sys = () => DONNEES.systemes[DB.sys] || DONNEES.systemes.hilo;
+if (DB.cadence === undefined) DB.cadence = 400;
+if (DB.conseil === undefined) DB.conseil = false;
 // Les cartes ont 13 rangs à l'écran, mais 10 en mathématiques : 10, V, D et R
 // sont une seule et même colonne. Tout ce qui parle au solveur ou au comptage
 // passe par rg(). Sans ça, un roi tombe hors du tableau et le compte devient NaN.
@@ -1585,8 +1762,20 @@ async function sabotProuvable(jeux, graineDonnee) {
 
 /* ── Navigation ─────────────────────────────────────────────────────── */
 let vue = "accueil";
+function mesurerEntete() {
+  const h = document.querySelector("header");
+  if (h) document.documentElement.style.setProperty("--h-entete", Math.round(h.getBoundingClientRect().height) + "px");
+}
+addEventListener("resize", mesurerEntete);
+addEventListener("orientationchange", () => setTimeout(mesurerEntete, 120));
+
 function aller(v) {
   vue = v;
+  // La table est un POSTE, pas un document : on empêche la page de défiler
+  // sous elle, ce qui est aussi ce qui rend `100svh` stable quand la barre
+  // d'URL d'un téléphone se rétracte.
+  document.body.classList.toggle("a-table", v === "table");
+  mesurerEntete();
   document.querySelectorAll(".vue").forEach(s => { s.hidden = s.id !== "v-" + v; });
   document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-current", b.dataset.vue === v ? "page" : "false"));
   if (v === "progres") rendreProgres();
@@ -1602,11 +1791,13 @@ document.querySelectorAll("[data-vue]").forEach(b => b.addEventListener("click",
 function appliquerTheme() {
   if (DB.theme) document.documentElement.setAttribute("data-theme", DB.theme);
   else document.documentElement.removeAttribute("data-theme");
-  $("theme").textContent = DB.theme === "clair" ? "☀" : DB.theme === "sombre" ? "☾" : "◐";
-  $("theme").title = DB.theme ? "Thème " + DB.theme : "Thème du système";
+  $("theme").textContent = (DB.theme === "clair" ? "☀ " : DB.theme === "sombre" ? "☾ " : "◐ ")
+    + (DB.theme ? "Thème " + DB.theme : "Thème du système");
+  $("theme").title = "Basculer clair / sombre / système";
 }
 $("theme").onclick = () => { DB.theme = DB.theme === "" ? "sombre" : DB.theme === "sombre" ? "clair" : ""; garder(); appliquerTheme(); };
-function rendreSon() { $("son").textContent = DB.son ? "♪" : "✕"; $("son").classList.toggle("eteint", !DB.son); }
+function rendreSon() { $("son").textContent = DB.son ? "♪ Sons activés" : "✕ Sons coupés";
+  $("son").classList.toggle("eteint", !DB.son); }
 $("son").onclick = () => { DB.son = !DB.son; garder(); rendreSon(); if (DB.son) son("ok"); };
 $("prenom").value = DB.prenom;
 $("prenom").oninput = () => { DB.prenom = $("prenom").value; garder(); };
@@ -1644,6 +1835,8 @@ $("modes").innerHTML = MODES.map(([v, e, t, p]) =>
   `<button class="laque mode" data-vue="${v}"><span class="grave">${e}</span><h3>${t}</h3><p>${p}</p><span class="fleche">Ouvrir →</span></button>`).join("");
 $("modes").querySelectorAll("[data-vue]").forEach(b => b.addEventListener("click", () => aller(b.dataset.vue)));
 
+
+/* ═══ salon.js ═══ */
 /* ══════════════════════ LE SALON ══════════════════════ */
 function chipsRegles(t) {
   const d = DONNEES.tables[t.id];
@@ -1718,19 +1911,41 @@ $("filtreSalon").querySelectorAll("button").forEach(b => b.onclick = () => {
   $("filtreSalon").querySelectorAll("button").forEach(x => x.setAttribute("aria-selected", x === b ? "true" : "false"));
   rendreSalon();
 });
+// La feuille de réglages EMPRUNTE le bloc `#outils` à l'en-tête et le rend à la
+// fermeture. Recopier son HTML dupliquerait `#sys`, `#theme`, `#son` — des
+// identifiants en double, et les branchements posés au démarrage resteraient
+// accrochés à la copie cachée : les boutons de la feuille ne feraient rien.
+$("bReglages").onclick = () => {
+  ouvrirModale(`<h2>R\u00e9glages</h2><div id="accueilOutils"></div>
+    <p class="muet" style="margin-top:14px">Le syst\u00e8me de comptage change les valeurs
+    de toutes les cartes, partout dans l'application \u2014 y compris dans les exercices.</p>`);
+  const o = $("outils"); o.hidden = false; $("accueilOutils").appendChild(o);
+  const fermer = $("modaleFermer").onclick;
+  $("modaleFermer").onclick = () => { rendreOutils(); fermer(); };
+};
+// Rendre le bloc à l'en-tête, quoi qu'il arrive — y compris quand la modale est
+// fermée par un clic sur le voile ou par une autre modale qui écrase la boîte.
+function rendreOutils() {
+  const o = $("outils"); if (!o) return;
+  o.hidden = true; document.querySelector(".tete").appendChild(o);
+}
 function ouvrirModale(html) {
+  rendreOutils();
   $("modaleBoite").innerHTML = html + `<div class="rang-btn" style="margin-top:16px"><button class="btn creux" id="modaleFermer">Fermer</button></div>`;
   $("modale").hidden = false;
   $("modaleFermer").onclick = () => { $("modale").hidden = true; };
   $("modaleFermer").focus();
 }
-$("modale").addEventListener("click", e => { if (e.target === $("modale")) $("modale").hidden = true; });
+$("modale").addEventListener("click", e => { if (e.target === $("modale")) { rendreOutils(); $("modale").hidden = true; } });
+addEventListener("keydown", e => { if (e.key === "Escape" && !$("modale").hidden) { rendreOutils(); $("modale").hidden = true; } });
 
+
+/* ═══ table.js ═══ */
 /* ══════════════════════ LA TABLE ══════════════════════ */
 const T = { sabot: [], graine: null, empreinte: "", coupe: 0, rc: 0, vues: 0, mains: 0, defausse: 0,
   croupier: [], sieges: [], occupe: false, enJeu: false, toi: null, actif: null, revele: false, solde: 0 };
 const NOMS = ["Marc", "Sonia", "Karim", "Léa", "Paul", "Nadia"];
-const vitesse = () => +$("tVitesse").value;
+const vitesse = () => DB.cadence;
 const reglesTable = () => {
   const t = tableCourante();
   return E.makeRules({ decks: t.jeux, h17: t.h17, blackjackPays: t.blackjackPays, das: t.das,
@@ -1805,13 +2020,19 @@ function rendreSieges() {
     const nm = document.createElement("div"); nm.className = "nom serre"; nm.textContent = st.nom;
     d.append(hs, nm); el.appendChild(d);
   });
+  // Sur téléphone les sièges défilent horizontalement : sans ce recentrage, le
+  // siège qui joue peut être hors écran au moment précis où c'est son tour.
+  const vedette = el.querySelector(".siege.actif") || el.querySelector(".siege.toi");
+  if (vedette && el.scrollWidth > el.clientWidth + 4) vedette.scrollIntoView({
+    inline: "center", block: "nearest",
+    behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" });
 }
 function rafraichirBarre() {
   const t = tableCourante();
-  $("sabot").textContent = T.sabot.length; $("tMains").textContent = T.mains; $("tVues").textContent = T.vues;
+  $("sabot").textContent = T.sabot.length;
   $("defausseN").textContent = T.defausse; $("defausse").classList.toggle("pleine", T.defausse > 0);
   const jeuxRestants = T.sabot.length / 52;
-  const visible = $("tCompteVisible").checked;
+  const visible = !!T.montre;
   $("tRC").textContent = visible ? sgn(T.rc) : "—";
   $("tJeux").textContent = visible ? fr1(jeuxRestants) : "—";
   const tc = sys().equilibre ? CT.compteVrai(T.rc, jeuxRestants) : null;
@@ -1828,8 +2049,13 @@ function rafraichirBarre() {
     ? "Le compte est affiché : sers-t'en pour vérifier, pas pour t'en passer."
     : "Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.";
 }
-$("tCompteVisible").onchange = rafraichirBarre;
-$("tVitesse").oninput = () => $("plateau").style.setProperty("--intervalle", vitesse() + "ms");
+// Un seul bouton de 38 px à la place de deux cases de 13 px, inutilisables au doigt.
+$("bMontrer").onclick = () => {
+  T.montre = !T.montre;
+  $("bMontrer").setAttribute("aria-pressed", T.montre ? "true" : "false");
+  $("bMontrer").textContent = T.montre ? "Masquer le compte" : "Montrer le compte";
+  rafraichirBarre();
+};
 function boutons(o) {
   [["donne", "bDonne"], ["tire", "bTire"], ["reste", "bReste"], ["double", "bDouble"], ["separe", "bSepare"], ["abandon", "bAbandon"]]
     .forEach(([k, id]) => { $(id).disabled = !o[k]; });
@@ -1998,7 +2224,7 @@ function tonTour() {
   const total = E.handTotal(h.cards);
   if (total >= 21) { if (total > 21) { h.result = "sauté"; rendreSieges(); } return mainSuivante(); }
   boutons({ tire: true, reste: true, double: peutDoubler(h, st), separe: peutSeparer(h, st), abandon: peutAbandonner(h, st) });
-  if ($("tConseil").checked) {
+  if (DB.conseil) {
     const tc = sys().equilibre ? CT.compteVrai(T.rc, T.sabot.length / 52) : null;
     const { a, ecart } = actionAvecEcart(h.cards, T.croupier[0], st, h, tc);
     $("conseil").innerHTML = `Stratégie : <b>${MOT[a]}</b>` + (ecart !== null ? ` <span class="muet">— écart au compte, à partir de ${sgn(ecart)}</span>` : "");
@@ -2055,7 +2281,27 @@ async function regler() {
 }
 $("bDonne").onclick = distribuer;
 $("bNouveauSabot").onclick = () => nouveauSabot();
-$("tConseil").onchange = () => { if (T.actif && !T.occupe && T.toi === T.sieges[T.actif.siege]) tonTour(); };
+// Les réglages d'installation — cadence, aide — se règlent une fois et n'ont
+// rien à faire sur le feutre à côté des coups qu'on joue à chaque main.
+$("bReglagesTable").onclick = () => {
+  ouvrirModale(`<h2>Réglages de la table</h2>
+    <div class="demande" style="flex-direction:column;align-items:stretch;text-align:left">
+      <label class="ch"><span class="grave">Cadence du croupier</span>
+        <input type="range" id="rgCadence" min="120" max="1400" step="40" value="${DB.cadence}">
+        <span class="muet" id="rgCadenceL">${fr1(DB.cadence / 1000)} s par carte</span></label>
+      <label class="ch ligne"><input type="checkbox" id="rgConseil"${DB.conseil ? " checked" : ""}>
+        Afficher la stratégie de base pendant mon tour</label>
+    </div>`);
+  $("rgCadence").oninput = () => {
+    DB.cadence = +$("rgCadence").value; garder();
+    $("rgCadenceL").textContent = fr1(DB.cadence / 1000) + " s par carte";
+    $("plateau").style.setProperty("--intervalle", vitesse() + "ms");
+  };
+  $("rgConseil").onchange = () => {
+    DB.conseil = $("rgConseil").checked; garder();
+    if (T.actif && !T.occupe && T.toi === T.sieges[T.actif.siege]) tonTour();
+  };
+};
 $("bMonCompte").onclick = () => demanderMonCompte(false);
 // Le compte est figé à l'ouverture : le sabot peut être remélangé pendant
 // que la question est à l'écran, la réponse doit rester celle qu'on a posée.
@@ -2092,28 +2338,26 @@ function demanderMonCompte(finSabot) {
   $("mcRC").addEventListener("keydown", e => { if (e.key === "Enter") verifier(); });
   setTimeout(() => $("mcRC").focus(), 40);
 }
-/* ── Le reçu : l'empreinte avant, la graine après ─────────────────── */
-function rendreRecu() {
-  const t = tableCourante();
-  const scelle = !T.revele;
-  $("recu").innerHTML = `
-    <div class="sceau ${scelle ? "" : "revele"}"><span class="rond"></span>${scelle ? "Scellé — l'ordre des cartes est fixé et personne ne le connaît" : "Révélé — n'importe qui peut refaire ce mélange"}</div>
+/* ── Le reçu du sabot : l'empreinte avant, la graine après ───────────────
+   Il vivait dans un <details> sous la table. Le poste n'a plus de « sous » :
+   il devient une fiche qu'on ouvre, ce qui est de toute façon son usage —
+   on la lit une fois, quand on veut vérifier. */
+function recuHtml() {
+  const t = tableCourante(), scelle = !T.revele;
+  return `<dl class="recu">
+    <div class="sceau ${scelle ? "" : "revele"}"><span class="rond"></span>${scelle
+      ? "Scellé — l'ordre des cartes est fixé et personne ne le connaît"
+      : "Révélé — n'importe qui peut refaire ce mélange"}</div>
     <dt>Table</dt><dd>${echap(t.nom)} · ${t.jeux} jeux · ${T.sabot.length} cartes restantes</dd>
     <dt>Empreinte de la graine, publiée avant la donne</dt><dd>${T.empreinte || "—"}</dd>
-    <dt>Graine</dt><dd>${T.revele ? SH.hex(T.graine) : "révélée à la fin du sabot"}</dd>`;
+    <dt>Graine</dt><dd>${T.revele ? SH.hex(T.graine) : "révélée à la fin du sabot"}</dd></dl>`;
 }
-$("bVerifier").onclick = async () => {
-  if (!T.revele) { T.revele = true; rendreRecu(); }
-  const recalc = await SH.shuffle(sabotNeuf(tableCourante().jeux), T.graine);
-  const emp = await SH.commit(T.graine);
-  const memeEmpreinte = emp === T.empreinte;
-  $("verifResultat").innerHTML = memeEmpreinte
-    ? `✓ L'empreinte publiée correspond bien à cette graine, et le mélange se rejoue à l'identique. Première carte du sabot : <b>${recalc[recalc.length - 1].r}${recalc[recalc.length - 1].suit}</b>.`
-    : `✗ L'empreinte ne correspond pas. Quelque chose ne va pas.`;
-  son(memeEmpreinte ? "ok" : "ko");
-};
-$("bCopierVerif").onclick = () => {
-  const code = `// Colle ceci dans la console d'un navigateur pour refaire le mélange toi-même.
+// Le reçu peut être ouvert pendant qu'un sabot se termine : on le rafraîchit
+// s'il est à l'écran, on ne le fabrique pas s'il n'y est pas.
+function rendreRecu() { const e = $("recu"); if (e) e.outerHTML = recuHtml(); }
+
+function verificateurTexte() {
+  return `// Colle ceci dans la console d'un navigateur pour refaire le mélange toi-même.
 const graine = "${T.revele ? SH.hex(T.graine) : "…révèle d'abord la graine…"}";
 const unhex = h => new Uint8Array(h.match(/../g).map(x => parseInt(x, 16)));
 const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
@@ -2133,11 +2377,36 @@ const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")
   for (let i = a.length - 1; i > 0; i--) { const j = await below(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
   console.log("ordre de distribution :", a.slice().reverse().join(" "));
 })();`;
-  navigator.clipboard && navigator.clipboard.writeText(code).then(
-    () => bandeau("Vérificateur copié : colle-le dans la console d'un navigateur."),
-    () => ouvrirModale(`<h2>Vérificateur</h2><div class="recu" style="text-align:left;white-space:pre-wrap;max-height:50vh;overflow:auto">${echap(code)}</div>`));
+}
+
+$("bRecu").onclick = () => {
+  ouvrirModale(`<h2>Le reçu du sabot</h2>
+    <p class="muet" style="font-size:var(--t-petit);text-align:left">Avant de distribuer, l'application publie l'empreinte d'une graine. À la fin du sabot, elle révèle la graine. N'importe qui peut alors recalculer l'ordre exact des cartes et vérifier qu'il n'a pas été choisi après coup.</p>
+    ${recuHtml()}
+    <div class="rang-btn" style="margin-top:10px;justify-content:center">
+      <button class="btn creux mini" id="bVerifier">Vérifier ce sabot</button>
+      <button class="btn creux mini" id="bCopierVerif">Copier le vérificateur</button>
+    </div>
+    <p class="muet" id="verifResultat" style="font-size:var(--t-petit);margin-top:8px"></p>`);
+  $("bVerifier").onclick = async () => {
+    if (!T.revele) { T.revele = true; rendreRecu(); }
+    const recalc = await SH.shuffle(sabotNeuf(tableCourante().jeux), T.graine);
+    const meme = (await SH.commit(T.graine)) === T.empreinte;
+    $("verifResultat").innerHTML = meme
+      ? `✓ L'empreinte publiée correspond bien à cette graine, et le mélange se rejoue à l'identique. Première carte du sabot : <b>${recalc[recalc.length - 1].r}${recalc[recalc.length - 1].suit}</b>.`
+      : `✗ L'empreinte ne correspond pas. Quelque chose ne va pas.`;
+    son(meme ? "ok" : "ko");
+  };
+  $("bCopierVerif").onclick = () => {
+    const code = verificateurTexte();
+    navigator.clipboard && navigator.clipboard.writeText(code).then(
+      () => bandeau("Vérificateur copié : colle-le dans la console d'un navigateur."),
+      () => ouvrirModale(`<h2>Vérificateur</h2><div class="recu" style="text-align:left;white-space:pre-wrap;max-height:50svh;overflow:auto">${echap(code)}</div>`));
+  };
 };
 
+
+/* ═══ exercices.js ═══ */
 /* ══════════════════════ EXERCICES ══════════════════════ */
 const X = { genre: "defilement", sabot: [], cartes: [], i: -1, minuteur: null, rc: 0, rep: [], encours: false,
   jeux: 6, t0: 0, delais: [], controles: [], prochainControle: 0, pause: false, depart: 0, chrono: null, silence: false, par: 1 };
@@ -2341,6 +2610,8 @@ $("estStop").onclick = finEstimation;
 $("estRejouer").onclick = demarrerEstimation;
 $("estRetourReglages").onclick = () => { $("estBilan").hidden = true; $("exReglages").hidden = false; };
 
+
+/* ═══ strategie.js ═══ */
 /* ══════════════════════ STRATÉGIE ══════════════════════ */
 const STR = { mode: "base", main: null, up: null, tc: 0, ecart: null, dePile: false, serie: 0, n: 0, bons: 0, bloque: false };
 const carteDe = i => { const [suit, col] = SUITS[alea(4)]; return { r: RANKS[i], i, suit, col }; };
@@ -2458,6 +2729,8 @@ function rendreGrille() {
   $("grilleHote").innerHTML = h + "</table>";
 }
 
+
+/* ═══ concentration.js ═══ */
 /* ══════════════════════ CONCENTRATION ══════════════════════ */
 const CO = { sabot: [], cartes: [], i: -1, rc: 0, minuteur: null, encours: false, susp: 0, indices: [],
   depart: 0, occupe: null, minuteurBulle: null, prochain: 0, flux: null, raf: null, prec: null, fige: 0,
@@ -2642,6 +2915,8 @@ function verifierConcentration() {
   $("coDemande").hidden = true; $("coVerdict").hidden = false;
 }
 
+
+/* ═══ ensemble.js ═══ */
 /* ══════════════════════ À PLUSIEURS ══════════════════════ */
 const MP = { api: null, code: "", moi: "", nom: "", pairs: new Map(), hote: false, url: "",
   cartes: [], i: -1, rc: 0, encours: false, minuteur: null, annonces: new Map(), graine: null, empreinte: "" };
@@ -2778,6 +3053,8 @@ if (location.hash.startsWith("#salon=")) {
   if (c.length >= 4) { aller("ensemble"); setTimeout(() => ouvrirSalon(c), 300); }
 }
 
+
+/* ═══ progres.js ═══ */
 /* ══════════════════════ PROGRESSION ══════════════════════ */
 const GENRE = { defilement: "Défilement", chrono: "Sabot chrono", table: "Table", concentration: "Concentration", estimation: "Estimation" };
 const pctDe = a => a[0] + a[1] ? Math.round(100 * a[0] / (a[0] + a[1])) + " %" : "—";
@@ -2844,6 +3121,8 @@ $("progEffacer").onclick = () => {
 };
 window.addEventListener("resize", () => { if (vue === "progres") dessinerCourbe(DB.sessions.filter(x => x.genre !== "estimation").slice(-30)); });
 
+
+/* ═══ clavier.js ═══ */
 /* ══════════════════════ CLAVIER ══════════════════════ */
 document.addEventListener("keydown", e => {
   if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA") return;
@@ -2868,9 +3147,12 @@ document.addEventListener("keydown", e => {
   }
 });
 
+
+/* ═══ demarrage.js ═══ */
 /* ══════════════════════ DÉMARRAGE ══════════════════════ */
-appliquerTheme(); rendreSon(); rendreSysteme(); rendreReponses(); rendreEventail(); ongletEx("defilement");
+appliquerTheme(); rendreSon(); rendreSysteme(); mesurerEntete(); rendreReponses(); rendreEventail(); ongletEx("defilement");
 $("eVitesse").dispatchEvent(new Event("input")); $("coVitesse").dispatchEvent(new Event("input"));
+$("plateau").style.setProperty("--intervalle", vitesse() + "ms");
 nouveauSabot();
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 

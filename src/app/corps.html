@@ -1,5 +1,5 @@
 <header><div class="tete">
-  <button class="marque" data-vue="accueil"><span class="emb"></span>Le Sabot</button>
+  <button class="marque" data-vue="accueil"><span class="emb"></span><span class="nom">Le Sabot</span></button>
   <nav id="nav">
     <button data-vue="accueil" aria-current="page">Accueil</button>
     <button data-vue="salon">Salon</button>
@@ -10,10 +10,17 @@
     <button data-vue="ensemble">À plusieurs</button>
     <button data-vue="progres">Progression</button>
   </nav>
-  <div class="outils">
-    <select id="sys" title="Système de comptage" aria-label="Système de comptage"></select>
-    <button class="icone" id="theme" title="Thème clair ou sombre" aria-label="Changer de thème">◐</button>
-    <button class="icone" id="son" title="Sons" aria-label="Activer ou couper les sons">♪</button>
+  <button class="icone" id="bReglages" title="Réglages" aria-label="Réglages">&#9881;</button>
+  <!-- Les outils vivent ici en permanence : la feuille &#9881; les EMPRUNTE puis les rend.
+       Les dupliquer dans la modale casserait l'unicité des identifiants, et les
+       reconstruire y perdrait les branchements posés au d&#233;marrage. -->
+  <div class="outils" id="outils" hidden>
+    <label class="ch"><span class="grave">Syst&#232;me de comptage</span>
+      <select id="sys" title="Syst&#232;me de comptage" aria-label="Syst&#232;me de comptage"></select></label>
+    <div class="rang-btn">
+      <button class="btn creux" id="theme" title="Th&#232;me clair ou sombre" aria-label="Changer de th&#232;me">&#9689; Th&#232;me</button>
+      <button class="btn creux" id="son" title="Sons" aria-label="Activer ou couper les sons">&#9834; Sons</button>
+    </div>
   </div>
 </div></header>
 
@@ -66,12 +73,14 @@
 
 <!-- ════════════════════ TABLE ════════════════════ -->
 <section class="vue" id="v-table" hidden>
-  <div class="laque pad" style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-      <div><span class="grave">Table en cours</span><h3 id="tNom" style="margin:2px 0 0">—</h3></div>
+  <!-- BANDE 1 — l'identité de la table et la réglette du compte. Hauteur libre. -->
+  <div class="laque pad tete-table">
+    <div class="ligne-table">
+      <div><span class="grave">Table en cours</span><h3 id="tNom">—</h3></div>
       <div class="regles" id="tRegles"></div>
+      <button class="icone" id="bReglagesTable" title="Réglages de la table" aria-label="Réglages de la table">⚙</button>
     </div>
-    <div class="rail" id="rail" style="margin-top:12px">
+    <div class="rail" id="rail">
       <div class="zero"></div><div class="coupe" id="tCoupe"></div>
       <div class="index cadran" id="tIndex">0</div>
     </div>
@@ -82,18 +91,27 @@
       <div><span class="grave">Mise conseillée</span><b id="tMise">1</b></div>
       <div><span class="grave">Solde</span><b id="tSolde">0</b></div>
     </div>
-    <p class="muet" style="font-size:var(--t-fin);margin:8px 0 0" id="tAide">Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.</p>
+    <p class="muet aide-table" id="tAide">Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.</p>
   </div>
 
+  <!-- BANDE 2 — le feutre. C'est la SEULE bande élastique : elle absorbe toute
+       la variation de hauteur, des 390 px d'un téléphone couché aux 1080 d'un écran. -->
   <div class="tapis plateau" id="plateau">
-    <div class="defausse" id="defausse"><i></i><span id="defausseN">0</span></div>
-    <div class="sabot" id="sabot">312</div>
+    <div class="rangee-haute">
+      <div class="defausse" id="defausse"><i></i><span id="defausseN">0</span></div>
+      <div class="croupier"><div class="qui">Croupier <b id="dScore">·</b></div><div class="main" id="dMain"></div></div>
+      <div class="sabot" id="sabot">312</div>
+    </div>
     <p class="devise" id="devise"></p>
-    <div class="croupier"><div class="qui">Croupier <b id="dScore">·</b></div><div class="main" id="dMain"></div></div>
     <p class="annonce" id="annonce"></p>
     <div class="sieges" id="sieges"></div>
     <p class="conseil" id="conseil"></p>
-    <div class="rang-btn" style="margin-top:8px">
+  </div>
+
+  <!-- BANDE 3 — les coups. Sortie du feutre : c'est ce qui la colle en bas de
+       l'écran et ce qui évite au bac à défausse d'être rogné par le coin arrondi. -->
+  <div class="zone-actions laque">
+    <div class="rang-btn" id="coups">
       <button class="btn" id="bDonne">Distribuer<kbd>D</kbd></button>
       <button class="btn creux" id="bTire" disabled>Tirer<kbd>T</kbd></button>
       <button class="btn creux" id="bReste" disabled>Rester<kbd>R</kbd></button>
@@ -101,28 +119,14 @@
       <button class="btn creux" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
       <button class="btn creux" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
     </div>
+    <div class="rang-table">
+      <button class="btn creux mini" id="bMontrer" aria-pressed="false">Montrer le compte</button>
+      <button class="btn creux mini" id="bMonCompte">Donner mon compte</button>
+      <button class="btn creux mini" id="bNouveauSabot">Nouveau sabot</button>
+      <button class="btn creux mini" id="bRecu">Reçu du sabot</button>
+    </div>
     <div id="boiteAssurance"></div>
   </div>
-
-  <div class="barre">
-    <span>mains <b id="tMains">0</b> · cartes vues <b id="tVues">0</b></span>
-    <span><label class="ch ligne"><input type="checkbox" id="tConseil"> aide stratégie</label>
-      <label class="ch ligne"><input type="checkbox" id="tCompteVisible"> montrer le compte</label></span>
-    <span>cadence <input type="range" id="tVitesse" min="120" max="1000" step="40" value="400" style="width:96px;vertical-align:middle"></span>
-    <span><button class="btn creux" id="bMonCompte">Donner mon compte</button>
-      <button class="btn creux" id="bNouveauSabot">Nouveau sabot</button></span>
-  </div>
-
-  <details class="laque pad" style="margin-top:12px">
-    <summary style="cursor:pointer"><span class="grave" style="display:inline">Le reçu du sabot — vérifier le mélange</span></summary>
-    <p class="muet" style="font-size:var(--t-petit);margin-top:8px">Avant de distribuer, l'application publie l'empreinte d'une graine. À la fin du sabot, elle révèle la graine. N'importe qui peut alors recalculer l'ordre exact des cartes et vérifier qu'il n'a pas été choisi après coup.</p>
-    <dl class="recu" id="recu"></dl>
-    <div class="rang-btn" style="margin-top:10px;justify-content:flex-start">
-      <button class="btn creux" id="bVerifier">Vérifier ce sabot</button>
-      <button class="btn creux" id="bCopierVerif">Copier le vérificateur</button>
-    </div>
-    <p class="muet" id="verifResultat" style="font-size:var(--t-petit);margin-top:8px"></p>
-  </details>
 </section>
 
 <!-- ════════════════════ EXERCICES ════════════════════ -->

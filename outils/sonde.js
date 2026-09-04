@@ -27,8 +27,7 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
   clic('#salon [data-asseoir="boulevard"]'); await dodo(2000);
   ok("assis au Boulevard", txt("#tNom").indexOf("Boulevard") >= 0, txt("#tNom"));
   ok("sabot de 6 jeux moins la brûlée", txt("#sabot") === "311", txt("#sabot"));
-  q("#tCompteVisible").checked = true; q("#tCompteVisible").dispatchEvent(new Event("change"));
-  q("#tVitesse").value = q("#tVitesse").min; q("#tVitesse").dispatchEvent(new Event("input"));
+  if (q("#bMontrer").getAttribute("aria-pressed") !== "true") q("#bMontrer").click();
   const attendre = async () => { let g = 0; while (q("#bDonne").disabled && g++ < 400) await dodo(120); };
   const jouerUneMain = async (tire) => {
     clic("#bDonne"); await dodo(600);
@@ -45,12 +44,15 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
   };
   const trace = [];
   for (let k = 0; k < 10; k++) { await jouerUneMain(true);
-    trace.push("m" + k + "[mains=" + txt("#tMains") + " sabot=" + txt("#sabot") + " vues=" + txt("#tVues") +
+    trace.push("m" + k + "[sabot=" + txt("#sabot") +
       " donne=" + (q("#bDonne").disabled ? "off" : "on") + " ann=" + txt("#annonce").slice(0, 28) + "]"); }
   ok("table : la fin de sabot demande le compte", window.__modales >= 2, "modales ouvertes : " + window.__modales);
-  ok("table : carte de coupe franchie", trace.some(t=>/coupe|neuf/.test(t)) || +txt("#tMains")>=10, trace.join(" "));
+  // Le sabot qui REMONTE entre deux mains est la seule preuve observable d'un
+  // remélange — le compteur de mains a quitté le feutre, on ne peut plus le lire.
+  const restants = trace.map(t => +(/sabot=(\d+)/.exec(t) || [0, 0])[1]);
+  ok("table : carte de coupe franchie", restants.some((n, i) => i && n > restants[i - 1] + 10), restants.join(" "));
   ok("table : aucune donne interrompue", trace.every(t=>/Croupier/.test(t)), trace.join(" "));
-  ok("6 mains jouées", +txt("#tMains") >= 1, "mains=" + txt("#tMains"));
+  ok("des mains ont été jouées", +txt("#sabot") < 300, "sabot=" + txt("#sabot"));
   ok("compte courant entier (jamais NaN)", entier(txt("#tRC")), txt("#tRC"));
   ok("compte vrai chiffré", /[0-9]/.test(txt("#tTC")), txt("#tTC"));
   ok("mise recommandée chiffrée", entier(txt("#tMise")), txt("#tMise"));
@@ -61,11 +63,10 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
   // ── Mélangeuse continue : le compte ne doit jamais s'accumuler
   clic('nav [data-vue="salon"]'); await dodo(200);
   clic('#salon [data-asseoir="cotai"]'); await dodo(2000);
-  q("#tCompteVisible").checked = true; q("#tCompteVisible").dispatchEvent(new Event("change"));
-  q("#tVitesse").value = q("#tVitesse").min; q("#tVitesse").dispatchEvent(new Event("input"));
+  if (q("#bMontrer").getAttribute("aria-pressed") !== "true") q("#bMontrer").click();
   for (let k = 0; k < 4; k++) await jouerUneMain(false);
-  ok("mélangeuse : mains comptées", +txt("#tMains") >= 4, txt("#tMains"));
-  ok("mélangeuse : le compte ne s'accumule pas", +txt("#tVues") < 30, txt("#tVues") + " cartes vues");
+  ok("mélangeuse : le sabot se recharge", +txt("#sabot") > 280, txt("#sabot"));
+  ok("mélangeuse : le compte ne s'accumule pas", entier(txt("#tRC")) && Math.abs(+txt("#tRC")) < 12, txt("#tRC"));
 
   // ── Stratégie : 20 réponses, figures incluses
   clic('nav [data-vue="strategie"]'); await dodo(300);
@@ -136,9 +137,9 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
 
   // ── Reçu du sabot
   clic('nav [data-vue="table"]'); await dodo(300);
-  clic("#bVerifier"); await dodo(3000);
+  clic("#bRecu"); await dodo(400); clic("#bVerifier"); await dodo(3000);
   ok("mélange vérifiable", /correspond bien/.test(txt("#verifResultat")), txt("#verifResultat").slice(0, 60));
-  ok("graine révélée", /[0-9a-f]{16}/.test(txt("#recu")), "pas de graine");
+  ok("graine révélée", /[0-9a-f]{16}/.test(txt("#modaleBoite")), "pas de graine"); clic("#modaleFermer"); await dodo(200);
 
   // ── Système de comptage : bascule
   q("#sys").value = "omega2"; q("#sys").dispatchEvent(new Event("change")); await dodo(2000);

@@ -82,7 +82,10 @@ const corps = readFileSync("src/app/corps.html", "utf8");
 // Ce n'est pas un système de modules : c'est une table des matières. Un fichier
 // annoncé mais absent fait échouer la construction, plutôt que de produire une
 // page à moitié muette qu'on découvrirait à l'usage.
-const MORCEAUX = ["app.js"];
+// ⚠️ L'ORDRE EST LE CODE : tout vit dans une seule portée IIFE et les `const`
+// ne remontent pas. Intervertir deux morceaux casse en zone morte temporelle.
+const MORCEAUX = ["socle.js","salon.js","table.js","exercices.js","strategie.js",
+  "concentration.js","ensemble.js","progres.js","clavier.js","demarrage.js"];
 const app = MORCEAUX.map(f => {
   try { return `\n/* ═══ ${f} ═══ */\n` + readFileSync(`src/app/${f}`, "utf8"); }
   catch (e) { throw new Error(`morceau d'interface manquant : src/app/${f}`); }
