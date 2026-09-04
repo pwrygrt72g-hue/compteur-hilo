@@ -127,3 +127,40 @@ ${out.slice(out.indexOf("<style>"))}</body>
 `);
 const ko = Math.round(out.length / 1024);
 console.log(`\nindex.html écrit : ${ko} Ko, ${out.split("\n").length} lignes, en ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+
+// ═══ Photos ═══════════════════════════════════════════════════════════════════
+// Section indépendante du reste : elle relit les deux sorties déjà écrites et y
+// glisse, AVANT le script de l'application, `window.PHOTOS` (clé → URL) et
+// `window.PHOTOS_CREDITS` (auteur, licence, source). Une CC BY sans crédit est
+// une violation : le crédit voyage donc avec les photos, dans la page.
+// Deux régimes, parce que les deux sorties ne vivent pas au même endroit :
+//  · index.html   — des URL relatives ; GitHub Pages sert static/photos/*.webp.
+//  · artefact.html — des data: URI, parce que la CSP de l'artefact bloque toute
+//    image externe SANS ERREUR : les versions -petit, et le plein format pour le
+//    hall seul. Le poids injecté est affiché et plafonné à 6 Mo — l'artefact
+//    entier doit rester sous 16 Mo, et personne ne le verrait grossir sinon.
+{
+  const CREDITS = "static/photos/credits.json";
+  if (!existsSync(CREDITS)) {
+    process.stderr.write("  photos : pas de static/photos/credits.json, rien d'injecté\n");
+  } else {
+    const credits = JSON.parse(readFileSync(CREDITS, "utf8"));
+    const dataUri = f => "data:image/webp;base64," + readFileSync(f).toString("base64");
+    const photos = mode => Object.fromEntries(credits.map(c => [c.cle,
+      mode === "pages" ? c.fichier : dataUri(c.cle === "hall" ? c.fichier : c.fichier_petit)]));
+    // `</` échappé : une balise fermante dans une chaîne JSON couperait le <script>.
+    const js = v => JSON.stringify(v).replace(/<\//g, "<\\/");
+    const script = mode => `<script>window.PHOTOS=${js(photos(mode))};window.PHOTOS_CREDITS=${js(credits)};</script>\n`;
+    const injecter = (page, s) => {
+      const i = page.indexOf("<script>");
+      if (i < 0) throw new Error("photos : aucun <script> où s'accrocher dans la page");
+      return page.slice(0, i) + s + page.slice(i);
+    };
+    const sArt = script("artefact"), sIdx = script("pages");
+    const mo = sArt.length / 1048576;
+    if (mo > 6) throw new Error(`photos : ${mo.toFixed(2)} Mo injectés dans l'artefact, plafond 6 Mo`);
+    writeFileSync("artefact.html", injecter(readFileSync("artefact.html", "utf8"), sArt));
+    writeFileSync("index.html", injecter(readFileSync("index.html", "utf8"), sIdx));
+    console.log(`photos : ${credits.length} clés · ${Math.round(sIdx.length / 1024)} Ko dans index.html · ${mo.toFixed(2)} Mo en data: URI dans artefact.html`);
+  }
+}
