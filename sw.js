@@ -1,4 +1,4 @@
-const C = "hilo-v2";
+const C = "le-sabot-v3";
 const A = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(A)).then(() => self.skipWaiting()));
