@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banc visio — Le Sabot</title>
+<!--
+  Page de banc pour prouver-visio.mjs : ?salon=CODE&moi=A[&courtier=wss://…][&eviter=nom][&sanstestament=1]
+  Elle se relie au VRAI courtier public, prend la caméra, et expose `window.__etat`
+  toutes les 500 ms — framesDecoded vient de pc.getStats() (inbound-rtp vidéo),
+  jamais d'un compteur maison : c'est le décodeur qui témoigne que des images passent.
+-->
+<style>
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #0d1a14; color: #e8e2d0; padding: 12px; }
+  video { width: 160px; height: 120px; background: #000; border-radius: 6px; object-fit: cover; }
+  .vignettes { display: flex; gap: 10px; flex-wrap: wrap; }
+  figure { margin: 0; } figcaption { font-size: 12px; opacity: .8; }
+  pre { font-size: 11px; white-space: pre-wrap; opacity: .85; max-height: 40vh; overflow: auto; }
+</style>
+</head>
+<body>
+<h1 id="titre">Banc visio</h1>
+<p id="statut">Démarrage…</p>
+<div class="vignettes">
+  <figure><video id="local" autoplay playsinline muted></video><figcaption>moi</figcaption></figure>
+  <div id="distants" class="vignettes"></div>
+</div>
+<pre id="journal"></pre>
+<script type="module">
+import { connecter, connecterAvecRepli, nomCourtier, COURTIERS } from "../src/net.mjs";
+import { cameraPartagee } from "../src/camera.mjs";
+import { creerVisio, testamentVisio, expliquerEchec } from "../src/visio.mjs";
+
+const q = new URLSearchParams(location.search);
+const salon = (q.get("salon") || "BANC0").toUpperCase(), moi = q.get("moi") || "A";
+const force = q.get("courtier") || "", eviter = q.get("eviter") || "";
+const $ = id => document.getElementById(id);
+$("titre").textContent = `Banc visio — salon ${salon}, je suis ${moi}`;
+const lignes = [];
+const journal = s => { lignes.push(new Date().toISOString().slice(11, 23) + " " + s); if (lignes.length > 200) lignes.shift(); $("journal").textContent = lignes.slice(-40).join("\n"); };
+const videos = new Map(), departs = [];
+window.__etat = { courtier: "", connecte: false, moi, salon, camera: "eteinte", pairs: [], departs, journal: lignes, erreur: "" };
+addEventListener("error", e => { window.__etat.erreur = String(e.message || e); journal("ERREUR " + e.message); });
+addEventListener("unhandledrejection", e => { journal("REJET " + ((e.reason && e.reason.message) || e.reason)); });
+
+let visio = null;
+const opts = {
+  clientId: "hilo-visio-" + moi + "-" + Math.random().toString(36).slice(2, 8),
+  // &sanstestament=1 : le banc prouve que le SILENCE suffit à voir un départ, sans le courtier.
+  testament: q.get("sanstestament") ? undefined : testamentVisio(salon, moi),
+  onEssai: (n, t, nom) => { $("statut").textContent = `Essai ${n}/${t} — ${nom}…`; journal("essai courtier " + nom); },
+  onMessage: (s, m) => { if (visio) visio.recevoir(s, m); },
+  onClose: () => { window.__etat.connecte = false; $("statut").textContent = "Connexion au courtier perdue."; journal("courtier : connexion perdue"); },
+};
+
+// Le courtier : forcé par l'URL (pour que les deux navigateurs du banc prennent
+// LE MÊME), sinon le premier qui répond, en évitant celui qu'on nous a dit d'éviter.
+function relier() {
+  if (force) return new Promise((res, rej) => {
+    const c = connecter(force, Object.assign({}, opts, { onOpen: api => res({ api, url: force }), onError: rej }));
+    if (!c) rej(new Error("WebSocket impossible"));
+  });
+  if (eviter) { const i = COURTIERS.findIndex(u => nomCourtier(u) === eviter); if (i >= 0) COURTIERS.push(COURTIERS.splice(i, 1)[0]); }
+  return connecterAvecRepli(opts);
+}
+
+(async () => {
+  let api, url;
+  try { ({ api, url } = await relier()); }
+  catch (e) { $("statut").textContent = expliquerEchec(e); journal("échec courtier : " + (e && e.message)); return; }
+  window.__etat.courtier = nomCourtier(url); window.__etat.connecte = true;
+  journal("relié à " + nomCourtier(url));
+
+  const cam = cameraPartagee();
+  let { flux, etat, raison } = await cam.prendre();
+  journal("caméra : " + etat + (raison ? " — " + raison : "") + (cam.detail ? " [" + cam.detail + "]" : ""));
+  // Le faux périphérique de Chrome headless refuse parfois la PREMIÈRE demande
+  // quand deux navigateurs viennent d'être tués (vu au banc, jamais reproduit à
+  // froid). Ici on réessaie deux fois, en le DISANT ; camera.mjs, lui, ne
+  // réessaie jamais — un refus humain est un refus.
+  for (let k = 1; k <= 2 && !flux && etat === "refusee"; k++) {
+    await new Promise(r => setTimeout(r, 800)); cam.rendre();
+    ({ flux, etat, raison } = await cam.prendre());
+    journal(`caméra, réessai ${k} : ${etat}${cam.detail ? " [" + cam.detail + "]" : ""}`);
+  }
+  window.__etat.camera = etat;
+  if (flux) { $("local").srcObject = flux; $("local").play().catch(() => {}); }
+  cam.onEtat(e => { window.__etat.camera = e; });
+
+  visio = creerVisio({
+    reseau: api, salon, moi, flux, nom: moi,
+    onJournal: journal,
+    onEtat: (id, e) => journal(`${id} → ${e}`),
+    onFlux: (id, s) => {
+      let v = videos.get(id);
+      if (!v) {
+        const f = document.createElement("figure");
+        v = document.createElement("video"); v.autoplay = true; v.playsInline = true; v.muted = true;
+        const c = document.createElement("figcaption"); c.textContent = id;
+        f.append(v, c); $("distants").append(f); videos.set(id, v);
+      }
+      v.srcObject = s; v.play().catch(() => {});
+    },
+    onDepart: id => {
+      departs.push({ id, t: Date.now() });
+      const v = videos.get(id); if (v) { v.parentElement.remove(); videos.delete(id); }
+    },
+  });
+  visio.demarrer();
+  $("statut").textContent = `Relié par ${nomCourtier(url)} · caméra ${etat}`;
+
+  // La sonde : toutes les 500 ms, l'état vrai de chaque paire, lu dans le pc.
+  let occupe = false;
+  setInterval(async () => {
+    if (occupe) return; occupe = true;
+    try {
+      const pairs = [];
+      for (const p of visio.pairs.values()) {
+        let framesDecoded = 0, bytesReceived = 0, candidatLocal = "";
+        try {
+          const st = await p.pc.getStats();
+          st.forEach(r => {
+            if (r.type === "inbound-rtp" && r.kind === "video") { framesDecoded = r.framesDecoded || 0; bytesReceived = r.bytesReceived || 0; }
+            if (r.type === "candidate-pair" && r.state === "succeeded" && r.nominated) {
+              const l = st.get(r.localCandidateId); if (l) candidatLocal = l.candidateType || "";
+            }
+          });
+        } catch (e) {}
+        const v = videos.get(p.id);
+        pairs.push({ id: p.id, ice: p.pc.iceConnectionState, signal: p.pc.signalingState, connexion: p.pc.connectionState,
+          videoWidth: v ? v.videoWidth : 0, framesDecoded, bytesReceived, candidatLocal });
+      }
+      window.__etat.pairs = pairs;
+      window.__etat.connecte = !!api.vivant;
+    } finally { occupe = false; }
+  }, 500);
+})();
+</script>
+</body>
+</html>
