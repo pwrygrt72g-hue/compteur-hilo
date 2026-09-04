@@ -10,7 +10,11 @@
 
      sabot:table            { table }                 la table (et son lieu) est posée
      sabot:remelange        { table, cartes }         sabot neuf ou mélangeuse : compte à zéro
-     sabot:donne-debut      { table, sieges }         la donne commence, les mains sont vides
+     sabot:donne-debut      { table, sieges, mise?, jetons?, tc? }  la donne commence, les mains
+                            sont vides. mise = ta mise en UNITÉS du minimum, jetons = en jetons,
+                            tc = compte vrai figé à la fermeture des mises (null si système
+                            déséquilibré) — posés par jetons.js dans son propre écouteur, donc
+                            visibles des écouteurs enregistrés APRÈS lui (croupier.js) seulement
      sabot:carte            { siege, main, index, carte, cachee, depuis:{x,y}, vers:{x,y}, el }
                             siege = indice du siège, ou "croupier" ; depuis = centre du sabot,
                             vers = centre de la carte posée ; el = l'élément de la carte

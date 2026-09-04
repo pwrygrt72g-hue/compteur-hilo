@@ -7,6 +7,16 @@ const entier = t => /^[+-]?\d+$/.test(t);
 window.__modales = 0;
 new MutationObserver(() => { if (!document.getElementById("modale").hidden) window.__modales++; })
   .observe(document.getElementById("modale"), { attributes: true, attributeFilter: ["hidden"] });
+// Les coutures entre lots (Jetons ↔ Croupier) se lisent sur le bus « sabot:* » : ces
+// écouteurs sont enregistrés APRÈS l'application, donc ils voient le detail tel que
+// croupier.js le reçoit (jetons.js l'enrichit dans son propre écouteur, avant).
+window.__donnes = []; window.__fins = []; window.__bulles = [];
+document.addEventListener("sabot:donne-debut", e => __donnes.push(Object.assign({}, e.detail)));
+document.addEventListener("sabot:main-fin", e => { if (e.detail && e.detail.toi) __fins.push(e.detail.issue); });
+new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.classList && b.classList.contains("cr-bulle") && b.classList.contains("on"))) continue;
+  const t = (b.querySelector(".cr-texte") || {}).textContent || ""; const d = __bulles[__bulles.length - 1];
+  if (t && !(d && d.t === t && d.apres === __donnes.length)) __bulles.push({ t, apres: __donnes.length }); } })
+  .observe(document.getElementById("salle"), { subtree: true, attributes: true, attributeFilter: ["class"] });
 (async () => {
  try {
   await dodo(1500);
@@ -91,6 +101,13 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
   ok("défausse alimentée", +txt("#defausseN") > 5, txt("#defausseN"));
   ok("jetons : tapis chiffré après dix mains", /^\d[\d\u202f ]*(,\d+)?$/.test(txt("#tTapis")), txt("#tTapis"));
   ok("jetons : le rack est rouvert entre deux mains", phase() === "mise" && q("#rackJetons").classList.contains("ouvert"), "phase " + phase());
+  // ── Les coutures Jetons ↔ Croupier
+  ok("croupier : monté sur la scène", !!q("#croupierScene svg"), "pas de svg dans #croupierScene");
+  ok("croupier : la mise réelle voyage dans donne-debut (unités, jetons, compte vrai figé)",
+    __donnes.length >= 10 && __donnes.every(d => typeof d.mise === "number" && d.mise >= 1 && d.jetons >= 10 && (d.tc === null || typeof d.tc === "number")),
+    __donnes.length + " donnes : " + JSON.stringify(__donnes.slice(0, 2)));
+  ok("bus : mes issues parlent le vocabulaire des deux lots", __fins.length >= 5 && __fins.every(i => ["gagne", "perd", "bust", "blackjack", "egalite", "abandon"].includes(i)), __fins.join(","));
+  ok("croupier : il réagit à mes issues (une bulle après une main)", __bulles.some(b => b.apres > 0), __bulles.length + " bulles : " + __bulles.map(b => b.t).join(" | "));
   { let t = {}; try { t = JSON.parse(localStorage.getItem("sabot") || "{}"); } catch (e) {}
     ok("mémoire : tapis écrit, rien d'engagé", typeof t.tapis === "number" && (t.engage || 0) === 0, "tapis=" + t.tapis + " engage=" + t.engage); }
   ok("aucune erreur en jeu", __err.length === 0, __err.join(" / "));

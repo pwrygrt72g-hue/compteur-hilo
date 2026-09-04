@@ -361,8 +361,17 @@ function fermerMises() {
   rendreRack(); rendreCoach();
 }
 $("bDonne").addEventListener("click", () => { if (J.phase === "mise" && T.occupe) fermerMises(); });
-document.addEventListener("sabot:donne-debut", () => {
+document.addEventListener("sabot:donne-debut", e => {
   fermerMises(); J.donnee = true;
+  // Le croupier (croupier.js, concaténé APRÈS ce fichier, donc écouté après) surveille
+  // ta mise : on pose dans le detail la mise réellement jouée — en unités du minimum,
+  // l'échelle de sa vigilance et de #tMise —, le montant en jetons, et le compte vrai
+  // figé à la fermeture des mises. table.js ne peut pas les porter lui-même : sur le
+  // chemin courant il émet cet événement dans le clic, avant que les mises soient fermées.
+  if (e && e.detail && T.miseDonne) {
+    e.detail.jetons = T.miseDonne; e.detail.mise = T.miseDonne / limites().min;
+    e.detail.tc = typeof T.tcMise === "number" ? T.tcMise : null;
+  }
   T.sieges.forEach(st => st.mains.forEach(h => { h.jEngage = true; h.jVu = true; }));
   garnirCercles(); rendreRack(); rendreCoach();
 });
