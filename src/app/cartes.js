@@ -190,8 +190,10 @@ function retournerCarte(el, c) {
   el.setAttribute("aria-label", carteNom(c)); el.dataset.r = c.r; el.dataset.s = CARTES_SUITES[c.suit] || "";
   // La main du croupier arrive sur la carte à 240 ms (croupier.js) : la carte
   // pivote SOUS elle, pas avant qu'elle l'ait touchée.
+  // La tranche (90°) doit tomber sur le coup de poignet du croupier (250 ms) : départ à
+  // 240 ms, 420 ms en ease-in-out (style.css) → la tranche passe vers 450 ms, juste après.
   if (matchMedia("(prefers-reduced-motion:reduce)").matches) el.classList.remove("cachee");
-  else setTimeout(() => el.classList.remove("cachee"), 200);
+  else setTimeout(() => el.classList.remove("cachee"), 240);
 }
 document.addEventListener("sabot:croupier-revele", e => retournerCarte(e.detail.el, e.detail.carte));
 
@@ -232,8 +234,14 @@ function dimensionnerCartes() {
   // la rangée haute a sa hauteur d'après cette valeur, et la hauteur des sièges dépend
   // de la rangée haute — une boucle, si on lisait H. 15,5 % : 90 px sur un portable
   // (feutre de 580), 100 sur un grand écran, 66 sur une tablette couchée.
-  const feutre = $("feutre"), Hf = feutre ? feutre.clientHeight : 0;
-  if (feutre && Hf > 0) feutre.style.setProperty("--w-croupier", Math.max(70, Math.min(106, Math.round(Hf * .19))) + "px");
+  // Posées sur le PLATEAU (pas seulement le feutre) : le rack du croupier, le sabot, la
+  // défausse et les jetons (jetons.js) suivent la même échelle — à 1920 × 1080 tout ce qui
+  // était posé sur un feutre de 1456 px restait à l'échelle de 1280.
+  const feutre = $("feutre"), plateau = $("plateau"), Hf = feutre ? feutre.clientHeight : 0;
+  // Sur un feutre bas (1024 × 768 : 369 px), 19 % ne laissait AUCUN trou entre les
+  // cartes du croupier et celles des sièges (mesuré le 05/09 : 371 contre 365) — l'arc
+  // doré passait sous les cartes. Le croupier prend un peu moins, l'arc retrouve sa place.
+  if (plateau && Hf > 0) plateau.style.setProperty("--w-croupier", Math.max(58, Math.min(106, Math.round(Hf * (Hf < 430 ? .17 : .19)))) + "px");
   // Plus de bande réservée au lettrage : le plafond (62 % de la hauteur d'un siège)
   // laisse la bande de lui-même dès qu'il y a de la place, et sur un écran bas l'arc
   // passe sous les cartes — comme sur une vraie table.
@@ -265,7 +273,7 @@ function dimensionnerCartes() {
       m.style.setProperty("--pas", Math.max(8, pas).toFixed(1) + "px");
     });
   });
-  if (feutre) feutre.style.setProperty("--w-table", (pellicule ? Math.round(.62 * sBase) : wTable) + "px");
+  if (plateau) plateau.style.setProperty("--w-table", (pellicule ? Math.round(.62 * sBase) : wTable) + "px");
   if (!pellicule && feutre) placerSieges(box, sieges, feutre);
 }
 /* Les sièges sur l'ARC. Le rail bas est courbe : un siège du bord posé en rang
@@ -275,19 +283,42 @@ function dimensionnerCartes() {
    HORS transformation (offsetTop/offsetLeft), sinon on mesurerait le résultat. */
 function placerSieges(box, sieges, feutre) {
   const W = feutre.clientWidth, H = feutre.clientHeight; if (W < 320 || H < 160) return;
-  const cf = courbeFeutre(feutre, W, H), n = sieges.length, marge = 22;
-  sieges.forEach((s, i) => {
-    const ecart = i - (n - 1) / 2;
+  const cf = courbeFeutre(feutre, W, H), n = sieges.length;
+  // La marge au rail : 22 px, mais 38 dans les COINS, où court le lettrage du rail
+  // (table.js : baseline à 6 + petit du bord, lettres vers le centre) — mesuré le
+  // 05/09, « MARC » se posait sur « HIT SOFT 17 ». Le texte occupe les coins jusqu'à
+  // l'angle 126° de l'ellipse, soit x ≈ 0,42 rx du bord.
+  const petit = Math.max(11, Math.round(W * .013)), bande = 6 + petit + Math.round(petit * .75) + 6, zone = cf.rx * .42 + 16;
+  const marge = x => (x < zone || x > W - zone) ? bande : 22;
+  // Chaque PIÈCE du siège est tenue au-dessus de la courbe sur SA largeur : le cercle
+  // et le nom, en bas, sont étroits ; les cartes, en haut, sont loin du rail. Mesuré le
+  // 05/09 avec la demi-largeur de la boîte (99 px pour 65 de contenu) : les sièges
+  // intérieurs remontaient de 33 px et leurs cartes couvraient l'arc doré — pour un
+  // rail que seul le cercle, 130 px plus bas, aurait pu toucher. La remontée est
+  // prise PAR PAIRE (miroir) : « Marc » 35 px et « Léa » 23 px faisaient 11 px d'écart.
+  const wT = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--w-table")) || 84;
+  // Le haut d'une pièce dans la boîte des sièges, en sommant les offsetTop jusqu'à elle :
+  // un siège transformé peut être ou non l'offsetParent de ses pièces selon le moteur.
+  const hautDans = el => { let y = 0; for (let e = el; e && e !== box; e = e.offsetParent) y += e.offsetTop; return y; };
+  const lifts = sieges.map(s => {
     const cx = box.offsetLeft + s.offsetLeft + s.offsetWidth / 2;
-    const bas = box.offsetTop + s.offsetTop + s.offsetHeight - 4;
-    // La demi-largeur du contenu : la plus large des pièces (mains, cercle, nom).
-    let demi = 40;
-    s.querySelectorAll(".mains, .cercle, .nom").forEach(p => { demi = Math.max(demi, p.offsetWidth / 2); });
-    demi += 12;
-    const yCourbe = Math.min(cf.y(cx - demi), cf.y(cx + demi)) - marge;
-    const lift = Math.max(0, Math.round(bas - yCourbe));
-    s.style.setProperty("--lift", -lift + "px");
+    let lift = 0;
+    s.querySelectorAll(".mains, .cercle, .nom").forEach(p => {
+      // Les cartes : une largeur FIXE (un éventail de trois), sinon la 3ᵉ carte déplacerait le siège.
+      const demi = (p.classList.contains("mains") ? Math.max(p.offsetWidth, wT * 2.2) : p.offsetWidth) / 2 + 10;
+      const bas = box.offsetTop + hautDans(p) + p.offsetHeight;
+      const yCourbe = Math.min(cf.y(cx - demi) - marge(cx - demi), cf.y(cx + demi) - marge(cx + demi));
+      lift = Math.max(lift, Math.round(bas - yCourbe));
+    });
+    return lift;
+  });
+  sieges.forEach((s, i) => {
+    const ecart = i - (n - 1) / 2, j = n - 1 - i;
+    s.style.setProperty("--lift", -Math.max(lifts[i], lifts[j]) + "px");
     s.style.setProperty("--tilt", (-Math.sign(ecart) * Math.min(7, Math.abs(ecart) * 3.5)).toFixed(1) + "deg");
   });
+  // Les sièges viennent de bouger : l'arc doré se place dans le trou qu'ils laissent,
+  // et l'observateur du feutre ne voit pas un siège qui remonte. Idempotent (clé).
+  if (typeof rendreLettrage === "function") rendreLettrage();
 }
 if (window.ResizeObserver && $("sieges")) new ResizeObserver(() => dimensionnerCartes()).observe($("sieges"));

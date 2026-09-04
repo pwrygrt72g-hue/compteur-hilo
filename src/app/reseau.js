@@ -27,7 +27,10 @@ const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, 
   mise: 0, poses: [], miseVue: {}, enVol: {}, emis: new Set(), partis: new Set(), assurPartie: new Set(), vus: new Set(),
   vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, panneauOuvert: false };
 const PAGES_URL = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
-const COULEURS = [["#E24B4B", "rouge"], ["#E2B857", "or"], ["#4FD8C0", "jade"], ["#4F8FE0", "bleu"], ["#A66BE0", "violet"], ["#E27AA8", "rose"]];
+// Ta couleur à la table = un JETON du rack (jetons.js), pas une pastille arc-en-ciel :
+// la pastille devant ton nom en prend la face. Une ancienne couleur enregistrée
+// qui n'est plus dans la liste retombe sur un jeton tiré au sort.
+const COULEURS = RACK.map(v => { const j = jetonDe(v); return [j.face, fmtJ(v), v]; });
 if (!DB.couleur || !COULEURS.some(c => c[0] === DB.couleur)) DB.couleur = COULEURS[alea(COULEURS.length)][0];
 
 /* ── Qui je suis : un identifiant par onglet, qui survit à un rechargement ──
@@ -39,10 +42,36 @@ function rsIdentite() {
 }
 function rendreCouleurs() {
   const b = $("mpCouleurBoite"); if (!b) return;
-  b.innerHTML = COULEURS.map(([c, n]) => `<button type="button" class="couleur${DB.couleur === c ? " on" : ""}" style="--c:${c}" role="radio" aria-checked="${DB.couleur === c}" aria-label="${n}" title="${n}" data-c="${c}"></button>`).join("");
-  b.querySelectorAll("button").forEach(x => x.onclick = () => { DB.couleur = x.dataset.c; garder(); rendreCouleurs(); });
+  b.innerHTML = "";
+  COULEURS.forEach(([c, n, v]) => {
+    const x = jetonEl(v, 44, "button"); x.type = "button"; x.classList.add("couleur"); x.classList.toggle("on", DB.couleur === c);
+    x.style.setProperty("--c", c); x.setAttribute("role", "radio"); x.setAttribute("aria-checked", DB.couleur === c); x.setAttribute("aria-label", "jeton de " + n); x.title = "Jeton de " + n; x.dataset.c = c;
+    x.onclick = () => { DB.couleur = x.dataset.c; garder(); rendreCouleurs(); };
+    b.appendChild(x);
+  });
+  rendreTableMP();
+}
+// La table où l'on va s'asseoir, à droite du formulaire : la carte du salon, telle
+// quelle (mêmes règles, même avantage maison), avec ses sièges — on voit ce qu'on ouvre.
+function rendreTableMP() {
+  const boite = $("mpTable"); if (!boite) return;
+  const t = tableCourante(), d = DONNEES.tables[t.id], ind = indiceComptable(t);
+  boite.innerHTML = `<article class="laque tbl">
+      <span class="num">Ta table · ${echap(t.lieu)}</span>
+      <h3>${echap(t.nom)}</h3>
+      <div class="jauge" title="Indice de comptabilité"><i style="width:${ind}%"></i><b>${ind}</b></div>
+      <div class="regles">${chipsRegles(t)}</div>
+      <div class="chiffres">
+        <div><b>${fr2(d.avantage)} %</b><span class="grave">avantage maison</span></div>
+        <div><b>${Math.min(t.sieges, 5)}</b><span class="grave">sièges</span></div>
+        <div><b>${fmtJ(t.mise_min)}</b><span class="grave">mise minimale</span></div>
+      </div>
+      <div class="pied"><button class="btn creux" data-vue="salon">Changer de table</button></div>
+    </article>`;
+  boite.querySelector("[data-vue]").onclick = () => aller("salon");
 }
 rendreCouleurs();
+document.addEventListener("sabot:table", rendreTableMP);
 
 /* ── Le transport : MQTT en vrai ; une usine injectée (window.__reseauTransport)
    pour la sonde et les captures, qui n'ont pas de courtier. ─────────────── */

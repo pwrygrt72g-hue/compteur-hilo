@@ -99,6 +99,16 @@ function pileEl(montant, w) {
   return tas;
 }
 
+/* ── La taille des jetons POSÉS : celle de la table (--w-table, posée par cartes.js
+   sur le plateau), 56 % d'une carte pour ta pile, 46 % pour celle d'un voisin. Le
+   clone en vol a la taille d'ARRIVÉE — mesuré le 05/09, un clone de 40 px qui
+   devenait une pile de 34 au contact faisait un accroc de 15 %. */
+function tailleJeton(toi) {
+  const w = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--w-table")) || 84;
+  return Math.round(w * (toi ? .56 : .46));
+}
+const tailleRack = () => { const b = $("rjJetons").firstElementChild; return b ? (parseFloat(getComputedStyle(b).getPropertyValue("--w")) || 46) : 46; };
+
 /* ── L'état ─────────────────────────────────────────────────────────────── */
 const J = { phase: "attente", mise: 0, poses: [], attente: 0 };
 if (typeof DB.tapis !== "number" || isNaN(DB.tapis)) DB.tapis = TAPIS_DEPART;
@@ -156,8 +166,14 @@ function vol(o) {
     ? [{ transform: "translate(0,0)", opacity: 0 }, { transform: `translate(${dx * .3}px,${dy * .3}px)`, opacity: 1, offset: .3 }, { transform: `translate(${dx}px,${dy}px)`, opacity: 1 }]
     : [{ transform: "translate(0,0)" }, { transform: `translate(${dx}px,${dy}px)` }];
   const a = porte.animate(trajet, { duration: dur, easing: ease, fill: "forwards" });
+  // Le jeton part à la taille de là où il était (le rack : 46 px) et prend celle
+  // d'arrivée dans le premier tiers du vol — jamais au contact.
+  if (o.de && o.de !== w) porte.animate([{ scale: (o.de / w).toFixed(3) }, { scale: "1", offset: .3 }, { scale: "1" }], { duration: dur, easing: "ease-out", fill: "forwards" });
   if (!o.glisse) {
-    corps.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(300deg)" }], { duration: dur, easing: "linear", fill: "forwards" });
+    // Mesuré le 05/09 : rotation LINÉAIRE de 300° sous un porteur en cubic-bezier, les
+    // 130 dernières ms tournaient de 125° pour 20 px de course, et la pile posée est à 0°
+    // (300° ≡ −60° : le chiffre sautait au contact). Même courbe, tour complet.
+    corps.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], { duration: dur, easing: ease, fill: "forwards" });
     const porte = corps.firstElementChild;
     if (porte) porte.animate([{ transform: "translateY(0) scale(1)" }, { transform: "translateY(-26px) scale(1.1)", offset: .38 }, { transform: "translateY(0) scale(1)" }],
       { duration: dur, easing: "ease-out", fill: "forwards" });
@@ -201,20 +217,25 @@ function misesVisibles(st) {
 function garnirCercles() {
   T.sieges.forEach((st, si) => {
     const ce = $("cercle_" + si); if (!ce) return;
-    ce.querySelectorAll(".jt-mises").forEach(x => x.remove());
+    ce.querySelectorAll(".jt-mises, .jt-montant").forEach(x => x.remove());
     const parts = misesVisibles(st);
     ce.classList.toggle("garni", parts.length > 0);
     if (!parts.length) return;
     const box = document.createElement("div"); box.className = "jt-mises";
-    // 34 px dans un cercle de 72 : la pile se lit DANS la case, elle ne la bouche pas.
-    parts.forEach(m => box.appendChild(pileEl(m, st.toi ? 34 : 30)));
+    const w = tailleJeton(st.toi);
+    parts.forEach(m => box.appendChild(pileEl(m, w)));
     ce.appendChild(box);
+    // Le montant, en clair, à droite du cercle : une pile se compte à la tranche, et
+    // une tranche de 3 px ne se lit pas. Le croupier annonce la mise, on l'écrit.
+    const total = parts.reduce((a, b) => a + b, 0);
+    const mt = document.createElement("i"); mt.className = "jt-montant"; mt.textContent = fmtJ(total); ce.appendChild(mt);
   });
 }
 document.addEventListener("sabot:sieges", () => { detecterSeparations(); garnirCercles(); });
 
 /* ── Le rack : tes jetons, sur le rail devant toi ────────────────────────── */
-function rendreRack() {
+function rendreRack(o) {
+  o = o || {};
   const l = limites(), r = $("rackJetons"), boite = $("rjJetons");
   r.dataset.min = l.min; r.dataset.max = l.max;
   if (!boite.children.length) RACK.forEach(v => {
@@ -227,15 +248,22 @@ function rendreRack() {
     b.disabled = !ouvert || v > DB.tapis || J.mise + v > l.max || (l.par5 && v % 5 !== 0);
     b.title = l.par5 && v % 5 !== 0 ? "Ici les mises vont par 5" : `Poser ${fmtJ(v)} (touche ${RACK.indexOf(v) + 1})`;
   });
-  $("rjTapis").textContent = fmtJ(DB.tapis);
   $("rjLimites").textContent = `min ${fmtJ(l.min)} · max ${fmtJ(l.max)}`;
+  // Mesuré le 05/09 : les chiffres changeaient à t=0 alors que le jeton touchait le
+  // cercle à 320 ms. `differe` laisse les montants au vol : c'est lui qui les écrit.
+  if (!o.differe) rendreMontants();
+  $("bRetirer").disabled = !ouvert || !J.poses.length;
+  $("bRachat").hidden = !(ouvert && DB.tapis < l.min && J.mise === 0);
+  r.classList.toggle("ouvert", ouvert);
+}
+// Les montants du rack et de la barre : écrits ensemble, quand le jeton est arrivé.
+function rendreMontants() {
+  const l = limites();
+  $("rjTapis").textContent = fmtJ(DB.tapis);
   $("rjMise").textContent = fmtJ(J.mise);
   rendreMiseHud();
   const u = J.mise / l.min;
   $("rjUnites").textContent = J.mise ? `${fr1(u)} unité${u > 1 ? "s" : ""}` : (DB.tapis >= l.min ? "pose ta mise" : "—");
-  $("bRetirer").disabled = !ouvert || !J.poses.length;
-  $("bRachat").hidden = !(ouvert && DB.tapis < l.min && J.mise === 0);
-  r.classList.toggle("ouvert", ouvert);
   rendreTapis();
 }
 function rendreTapis() {
@@ -258,15 +286,17 @@ function poserJeton(v) {
   if (J.mise + v > l.max) return bandeau(`Maximum de la table : ${fmtJ(l.max)}.`);
   const si = T.sieges.indexOf(T.toi), depuis = ancreRack(v);
   engager(T.toi, v); J.mise = arr(J.mise + v); J.poses.push(v); T.toi.mise = T.mise = J.mise;
-  rendreRack(); majDonne();
-  vol({ v, w: 40, depuis, vers: ancreCercle(si), fin: () => { if (J.phase !== "mise") return; T.toi.miseVue = Math.min(J.mise, arr((T.toi.miseVue || 0) + v)); garnirCercles(); son("jetons"); } });
+  rendreRack({ differe: true }); majDonne(); appelMise();
+  vol({ v, w: tailleJeton(true), de: tailleRack(), depuis, vers: ancreCercle(si), fin: () => {
+    rendreMontants(); if (J.phase !== "mise") return;
+    T.toi.miseVue = Math.min(J.mise, arr((T.toi.miseVue || 0) + v)); garnirCercles(); son("jetons"); } });
 }
 function retirerJeton() {
   if (J.phase !== "mise" || !J.poses.length || !T.toi) return;
   const v = J.poses.pop(), si = T.sieges.indexOf(T.toi);
   J.mise = arr(J.mise - v); T.toi.mise = T.mise = J.mise; T.toi.miseVue = Math.min(T.toi.miseVue || 0, J.mise);
-  rendre(T.toi, v, v); garnirCercles(); rendreRack(); majDonne();
-  vol({ v, w: 40, depuis: ancreCercle(si), vers: ancreRack(v), fin: () => son("jetons") });
+  rendre(T.toi, v, v); garnirCercles(); rendreRack(); majDonne(); appelMise();
+  vol({ v, w: tailleJeton(true), depuis: ancreCercle(si), vers: ancreRack(v), fin: () => son("jetons") });
 }
 function poserJetonRang(k) { const b = $("rjJetons").children[k - 1]; if (b && !b.disabled) b.click(); }
 $("bRetirer").onclick = retirerJeton;
@@ -299,6 +329,27 @@ function miseBot(st) {
   st.derniereU = m / l.min; return m;
 }
 
+/* ── L'appel à miser ─────────────────────────────────────────────────────
+   Mesuré le 05/09 : « pose ta mise » était un 10 px gris dans le rack, pendant que
+   « Sabot neuf, mélangé, carte brûlée. » en 22 px serif dominait le feutre et que
+   « Distribuer » (éteint) était le bouton le plus voyant. La hiérarchie disait
+   « lis l'annonce, clique Distribuer » ; l'état disait « clique un jeton ». */
+let APPEL_T = null;
+function appelMise() {
+  clearTimeout(APPEL_T);
+  if ($("v-table").dataset.reseau) return;
+  const l = limites(), ok = miseValide(J.mise);
+  const toi = document.querySelector("#sieges .siege.toi");
+  if (toi) toi.classList.toggle("appel", J.phase === "mise" && !ok);
+  if (J.phase !== "mise") return;
+  if (ok) { if (/mise/i.test($("annonce").textContent)) annoncer(""); return; }
+  const dire = () => { if (J.phase === "mise" && !miseValide(J.mise) && !T.enJeu) annoncer(DB.tapis >= l.min ? `Pose ta mise · minimum ${fmtJ(l.min)}` : "Plus assez de jetons pour la mise minimale"); };
+  // On laisse lire ce que la table vient de dire (« Sabot neuf… », le règlement), puis on appelle.
+  const a = $("annonce").textContent.trim();
+  if (!a || /mise/i.test(a)) dire(); else APPEL_T = setTimeout(dire, 1600);
+}
+document.addEventListener("sabot:sieges", () => appelMise());
+
 /* ── La phase de mise ────────────────────────────────────────────────────── */
 function ouvrirMises() {
   if (T.enJeu || T.occupe) return;
@@ -307,13 +358,13 @@ function ouvrirMises() {
   J.phase = "mise"; J.donnee = false; J.mise = 0; J.poses = []; J.attente = 0; T.mise = 0; T.miseDonne = 0;
   $("v-table").dataset.phase = "mise";
   T.sieges.forEach(st => { st.mise = 0; st.miseVue = 0; (st.mains || []).forEach(h => { h.jParti = true; }); });
-  profilerSieges(); garnirCercles(); rendreRack(); majDonne(); rendreCoach();
+  profilerSieges(); garnirCercles(); rendreRack(); majDonne(); rendreCoach(); appelMise();
   const l = limites();
   T.sieges.forEach((st, si) => {
     if (st.toi) return;
     const m = miseBot(st); st.mise = m; engager(st, m);
     setTimeout(() => { if (J.phase !== "mise" || T.sieges[si] !== st) return;
-      vol({ montant: m, w: 36, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 380, apparait: true, fin: () => { if (J.phase === "mise" && T.sieges[si] === st) { st.miseVue = m; garnirCercles(); } } });
+      vol({ montant: m, w: tailleJeton(false), depuis: ancreMaison(si), vers: ancreCercle(si), duree: 380, apparait: true, fin: () => { if (J.phase === "mise" && T.sieges[si] === st) { st.miseVue = m; garnirCercles(); } } });
     }, 120 + si * 110);
   });
   if (DB.tapis < l.min) setTimeout(() => { if (J.phase === "mise" && DB.tapis < l.min && vue === "table") proposerRachat(); }, 600);
@@ -397,7 +448,7 @@ function detecterSeparations() {
   T.sieges.forEach((st, si) => st.mains.forEach(h => {
     if (h.jEngage || !h.fromSplit) return;
     h.jEngage = true; engager(st, h.bet); rendreRack();
-    vol({ montant: h.bet, w: st.toi ? 40 : 36, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
+    vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
       fin: () => { h.jVu = true; garnirCercles(); if (st.toi) son("jetons"); } });
   }));
 }
@@ -406,7 +457,7 @@ document.addEventListener("sabot:carte", e => {
   const { siege: si, main: hi } = e.detail; if (si === "croupier" || J.phase !== "jeu") return;
   const st = T.sieges[si], h = st && st.mains[hi]; if (!h || !h.doubled || h.jDouble || !h.jEngage) return;
   h.jDouble = true; engager(st, h.bet); rendreRack();
-  vol({ montant: h.bet, w: st.toi ? 40 : 36, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
+  vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
     fin: () => { h.jDoubleVu = true; garnirCercles(); if (st.toi) son("jetons"); } });
 });
 // L'assurance : payable ou pas, puis posée à côté de la mise.
@@ -415,7 +466,7 @@ document.addEventListener("sabot:assurance", e => {
   const { siege: si, main: hi, prise, montant } = e.detail; const st = T.sieges[si], h = st && st.mains[hi];
   if (!prise || !h || !montant) return;
   engager(st, montant); rendreRack();
-  vol({ montant, w: 36, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, fin: () => { h.jAssuranceVu = true; garnirCercles(); son("jetons"); } });
+  vol({ montant, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, fin: () => { h.jAssuranceVu = true; garnirCercles(); son("jetons"); } });
 });
 
 /* ── Le règlement : les gains glissent vers toi, les pertes vers le croupier ──
@@ -423,7 +474,7 @@ document.addEventListener("sabot:assurance", e => {
    ESPACE (140 ms) pour que le croupier paie une place après l'autre. Un bust
    arrive à l'instant, seul : il part tout de suite. */
 function enfiler(fn) { const d = reduit() ? 0 : J.attente; J.attente += 140; setTimeout(fn, d); }
-function glisser(montant, depuis, vers, o) { return vol(Object.assign({ montant, w: 38, depuis, vers, glisse: true, duree: 520 }, o || {})); }
+function glisser(montant, depuis, vers, o) { return vol(Object.assign({ montant, w: tailleJeton(o && o.toi), depuis, vers, glisse: true, duree: 520 }, o || {})); }
 document.addEventListener("sabot:main-fin", e => {
   const { siege: si, main: hi, toi, issue, montant } = e.detail;
   const st = T.sieges[si], h = st && st.mains[hi]; if (!h || h.jRegle) return; h.jRegle = true;
@@ -433,15 +484,15 @@ document.addEventListener("sabot:main-fin", e => {
   enfiler(() => {
     h.jParti = true; garnirCercles();
     const ce = ancreCercle(si), croupier = ancreCroupier(), maison = ancreMaison(si);
-    if (issue === "bust" || issue === "perd") glisser(engage, ce, croupier, { fondu: true });
-    else if (issue === "abandon") { glisser(engage / 2, ce, croupier, { fondu: true }); glisser(retour, ce, maison, { fondu: !toi }); }
-    else if (issue === "egalite") glisser(engage, ce, maison, { fondu: !toi });
+    if (issue === "bust" || issue === "perd") glisser(engage, ce, croupier, { fondu: true, toi, fin: () => { if (toi) rendreTapis(); } });
+    else if (issue === "abandon") { glisser(engage / 2, ce, croupier, { fondu: true, toi }); glisser(retour, ce, maison, { fondu: !toi, toi, fin: () => { if (toi) rendreTapis(); } }); }
+    else if (issue === "egalite") glisser(engage, ce, maison, { fondu: !toi, toi, fin: () => { if (toi) rendreTapis(); } });
     else {  // gagne · blackjack : le croupier paie devant le cercle, puis tout part chez le joueur
-      glisser(montant, croupier, ce, { fin: () => { if (toi) { lueur(si); son("jetons"); }
-        glisser(retour, ce, maison, { fondu: !toi, duree: 460, fin: () => { if (toi) rendreTapis(); } }); } });
+      glisser(montant, croupier, ce, { toi, fin: () => { if (toi) { lueur(si); son("jetons"); }
+        glisser(retour, ce, maison, { fondu: !toi, toi, duree: 460, fin: () => { if (toi) rendreTapis(); } }); } });
       return;
     }
-    if (toi) { rendreTapis(); son("jetons"); }
+    if (toi) son("jetons");
   });
 });
 document.addEventListener("sabot:assurance-fin", e => {
@@ -455,7 +506,7 @@ document.addEventListener("sabot:assurance-fin", e => {
   });
 });
 document.addEventListener("sabot:manche-fin", () => {
-  J.phase = "reglement"; $("v-table").dataset.phase = "reglement"; rendreTapis(); rendreCoach();
+  J.phase = "reglement"; $("v-table").dataset.phase = "reglement"; rendreCoach();
   const d = J.attente + 1150; J.attente = 0;
   setTimeout(() => { if (!T.enJeu && !T.occupe) ouvrirMises(); }, reduit() ? 80 : d);
 });

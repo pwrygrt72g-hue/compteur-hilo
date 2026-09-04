@@ -8,9 +8,12 @@
      table). Chaque articulation est DEUX groupes : le parent pose le pivot par
      un translate, l'enfant porte la rotation. Jamais de transform-origin sur un
      <g> : la rotation autour de (0,0) est vraie par construction, partout.
-   · Les bras sont à l'ÉCHELLE HUMAINE (1,15 × la carrure), pas à celle de la
+   · Les bras sont à l'ÉCHELLE HUMAINE (1,2 × la carrure), pas à celle de la
      spec (0,58 ×) : mesuré le 04/09, à 1280 × 800 le sabot est à 82 px et 79 px
      de l'épaule, soit ~200 unités de rig. Un bras plus court n'y arrive pas.
+     Rallongés de 8 unités par segment le 05/09 : à 135 px de portée pour 162 de
+     bras, les deux bras faisaient un T tendu (« bras-tubes », les critiques).
+     Avec 177, le coude se plie.
    · Une pose se CALCULE (cinématique inverse à deux os, coude toujours vers
      l'extérieur, portée bornée — un bras trop court se tend, il ne se casse
      pas). Aucune pose n'est écrite en dur : le sabot et la défausse sont lus
@@ -100,13 +103,17 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
 </g></g></g>
 <!-- ── BRAS GAUCHE-ÉCRAN (côté défausse) : épaule > coude > poignet ────── -->
 <g transform="translate(150,148)"><g id="@crBrasG">
- <path d="M0-18c-10 0-17 6-17 14l4 108c0 7 6 11 13 11s13-4 13-11l4-108c0-8-7-14-17-14z" fill="var(--cr-manche,#1E242A)"/>
- <g transform="translate(0,112)"><g id="@crAvantG">
-  <path d="M0-14c-9 0-15 6-14 13l3 90c0 6 5 9 11 9s11-3 11-9l3-90c1-7-5-13-14-13z" fill="var(--cr-manche,#1E242A)"/>
-  <path d="M-13-4c4 5 22 5 26 0l-1 14c-5 3-19 3-24 0z" fill="#000" opacity=".28" stroke="none"/>
-  <path d="M-6 10h4l-1 70h-4z" fill="#000" opacity=".16" stroke="none"/>
-  <path d="M-12 84h24l-1 8h-22z" fill="var(--cr-poignet,#F1ECE0)"/>
-  <g transform="translate(0,96)"><g id="@crMainG">
+ <path d="M0-18c-11 0-18 6-18 14l4 116c0 7 6 11 14 11s14-4 14-11l4-116c0-8-7-14-18-14z" fill="var(--cr-manche,#1E242A)"/>
+ <path d="M-9-12c-3 3 -5 7 -5 12l3 106" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="5" stroke-linecap="round"/>
+ <path d="M-14 104c5 6 23 6 28 0" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="2.4"/>
+ <g transform="translate(0,120)"><g id="@crAvantG">
+  <path d="M0-14c-10 0-16 6-15 13l3 98c0 6 5 9 12 9s12-3 12-9l3-98c1-7-5-13-15-13z" fill="var(--cr-manche,#1E242A)"/>
+  <path d="M-14-4c4 5 24 5 28 0l-1 14c-5 3-21 3-26 0z" fill="#000" opacity=".30" stroke="none"/>
+  <path d="M-14 6c4 4 24 4 28 0l-1 5c-5 2-21 2-26 0z" fill="#fff" opacity=".07" stroke="none"/>
+  <path d="M-7-4c-3 3 -4 6 -4 10l3 82" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="4" stroke-linecap="round"/>
+  <path d="M-6 12h4l-1 76h-4z" fill="#000" opacity=".14" stroke="none"/>
+  <path d="M-13 92h26l-1 8h-24z" fill="var(--cr-poignet,#F1ECE0)"/>
+  <g transform="translate(0,104)"><g id="@crMainG">
    <path d="M0-3c-9 0-13 5-13 12 0 9 5 16 13 18 8-2 13-9 13-18 0-7-4-12-13-12z" fill="var(--cr-peau,#D6A579)"/>
    <path d="M12 5c4 2 5 6 3 9-2 3-5 3-8 1" fill="var(--cr-peau,#D6A579)"/>
   </g></g>
@@ -114,13 +121,17 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
 </g></g>
 <!-- ── BRAS DROITE-ÉCRAN (côté sabot) : celui qui distribue ───────────── -->
 <g transform="translate(270,148)"><g id="@crBrasD">
- <path d="M0-18c-10 0-17 6-17 14l4 108c0 7 6 11 13 11s13-4 13-11l4-108c0-8-7-14-17-14z" fill="var(--cr-manche,#1E242A)"/>
- <g transform="translate(0,112)"><g id="@crAvantD">
-  <path d="M0-14c-9 0-15 6-14 13l3 90c0 6 5 9 11 9s11-3 11-9l3-90c1-7-5-13-14-13z" fill="var(--cr-manche,#1E242A)"/>
-  <path d="M-13-4c4 5 22 5 26 0l-1 14c-5 3-19 3-24 0z" fill="#000" opacity=".28" stroke="none"/>
-  <path d="M-6 10h4l-1 70h-4z" fill="#000" opacity=".16" stroke="none"/>
-  <path d="M-12 84h24l-1 8h-22z" fill="var(--cr-poignet,#F1ECE0)"/>
-  <g transform="translate(0,96)"><g id="@crMainD">
+ <path d="M0-18c-11 0-18 6-18 14l4 116c0 7 6 11 14 11s14-4 14-11l4-116c0-8-7-14-18-14z" fill="var(--cr-manche,#1E242A)"/>
+ <path d="M9-12c3 3 5 7 5 12l3 106" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="5" stroke-linecap="round"/>
+ <path d="M-14 104c5 6 23 6 28 0" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="2.4"/>
+ <g transform="translate(0,120)"><g id="@crAvantD">
+  <path d="M0-14c-10 0-16 6-15 13l3 98c0 6 5 9 12 9s12-3 12-9l3-98c1-7-5-13-15-13z" fill="var(--cr-manche,#1E242A)"/>
+  <path d="M-14-4c4 5 24 5 28 0l-1 14c-5 3-21 3-26 0z" fill="#000" opacity=".30" stroke="none"/>
+  <path d="M-14 6c4 4 24 4 28 0l-1 5c-5 2-21 2-26 0z" fill="#fff" opacity=".07" stroke="none"/>
+  <path d="M7-4c3 3 4 6 4 10l3 82" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="4" stroke-linecap="round"/>
+  <path d="M-6 12h4l-1 76h-4z" fill="#000" opacity=".14" stroke="none"/>
+  <path d="M-13 92h26l-1 8h-24z" fill="var(--cr-poignet,#F1ECE0)"/>
+  <g transform="translate(0,104)"><g id="@crMainD">
    <path d="M0-3c-9 0-13 5-13 12 0 9 5 16 13 18 8-2 13-9 13-18 0-7-4-12-13-12z" fill="var(--cr-peau,#D6A579)"/>
    <path d="M-12 5c-4 2-5 6-3 9 2 3 5 3 8 1" fill="var(--cr-peau,#D6A579)"/>
   </g></g>
@@ -235,10 +246,10 @@ const crRepos = () => crPerso().repos || "neutre";
 const crAuRepos = () => CR.emotion === "neutre" || CR.emotion === crRepos();
 
 /* ── L'état ──────────────────────────────────────────────────────────── */
-const CR = { id: "", el: null, scene: null, bulle: null, visible: false, salue: false, fixe: false,
+const CR = { id: "", el: null, scene: null, bulle: null, mains: null, mainsEl: null, hm: {}, visible: false, salue: false, fixe: false,
   j: {}, seg: {}, an: {}, arme: false, base: "neutre", emotion: "neutre", jeton: 0, gestes: 0,
   dernier: {}, gains: 0, pertes: 0, mises: [], derniereAlerte: -9, minuteurs: [] };
-const CR_SEG = { L1: 112, L2: 108 };      // épaule→coude, coude→centre de la paume
+const CR_SEG = { L1: 120, L2: 116 };      // épaule→coude, coude→centre de la paume
 const CR_EPAULE = { G: [150, 148], D: [270, 148] };
 
 const crQ = s => CR.el ? CR.el.querySelector(s) : null;
@@ -254,6 +265,66 @@ function crLook(svg, c, prefixe) {
   // neutre, par le même chemin que les émotions (crVisage la conserve).
   ["crSourcilG", "crSourcilD"].forEach(k => { const e = svg.querySelector("#" + prefixe + k); if (e) e.style.transform = `scaleY(${c.sourcils || 1})`; });
 }
+/* ── Les mains SUR LE FEUTRE ─────────────────────────────────────────────
+   Mesuré le 05/09 : les avant-bras du rig, posés sur le feutre, croisaient les
+   cartes du croupier (le coude gauche sur sa carte visible, l'avant-bras droit sur
+   sa carte cachée) et faisaient des tubes raides — « épouvantail », « bras-tuyaux »
+   (les critiques). Un croupier vu de sa place a les coudes DERRIÈRE le rail : on
+   voit ses épaules au-dessus, et ses mains sur le feutre. Le rig est donc COUPÉ au
+   rail (clip-path, style.css) et chaque main est un élément HTML DANS le feutre :
+   une manche qui sort de sous le rail, un poignet, une main vue de dessus. Elle va
+   exactement où la cinématique l'envoie — plus de portée bornée. Le bras du rig
+   continue de s'orienter vers la cible (l'épaule suit), on n'en voit que la
+   naissance. Le pouce est du côté du corps : la main de droite à l'écran est la
+   main GAUCHE du croupier (le sabot est à sa gauche, comme dans un vrai casino). */
+const CR_MAIN_SVG = cote => `<svg viewBox="0 0 50 32" class="cr-hd" aria-hidden="true" focusable="false">
+  <g${cote === "D" ? ' transform="translate(0 32) scale(1 -1)"' : ""} stroke="rgba(35,18,8,.38)" stroke-width=".9" stroke-linejoin="round">
+    <rect x="0" y="3.5" width="10" height="25" rx="2.5" fill="var(--cr-poignet,#F1ECE0)" stroke="rgba(0,0,0,.3)"/>
+    <rect x="14" y="1.4" width="16" height="7" rx="3.5" fill="var(--cr-peau,#D6A579)" transform="rotate(-36 14 4.9)"/>
+    <path d="M9 5.6h16c7 0 11 4.2 11 10.4S32 26.4 25 26.4H9z" fill="var(--cr-peau,#D6A579)"/>
+    <rect x="31" y="3.6" width="18" height="6.3" rx="3.15" fill="var(--cr-peau,#D6A579)"/>
+    <rect x="32" y="10.3" width="18" height="6.3" rx="3.15" fill="var(--cr-peau,#D6A579)"/>
+    <rect x="31.5" y="17" width="16.5" height="6" rx="3" fill="var(--cr-peau,#D6A579)"/>
+    <rect x="29.5" y="23.3" width="12.5" height="5.4" rx="2.7" fill="var(--cr-peau,#D6A579)"/>
+    <path d="M14 9c3 4.5 3 10.5 0 15" fill="none" stroke="rgba(0,0,0,.10)" stroke-width="1"/>
+  </g></svg>`;
+function monterMains() {
+  const feutre = $("feutre"); if (!feutre) return;
+  let c = $("crMains");
+  if (!c) { c = document.createElement("div"); c.className = "cr-mains"; c.id = "crMains"; c.setAttribute("aria-hidden", "true"); feutre.appendChild(c); }
+  c.innerHTML = `<div class="cr-avant cr-avant-G"><i class="cr-manche"></i>${CR_MAIN_SVG("G")}</div><div class="cr-avant cr-avant-D"><i class="cr-manche"></i>${CR_MAIN_SVG("D")}</div>`;
+  CR.mainsEl = c; CR.mains = { G: c.children[0], D: c.children[1] }; CR.hm = {};
+  if (CR.el) for (const k of ["--cr-peau", "--cr-manche", "--cr-poignet"]) c.style.setProperty(k, CR.el.style.getPropertyValue(k));
+}
+// Là où la manche sort de sous le rail : sous l'épaule, décalée vers la main (un tiers
+// du chemin, le coude est derrière le rail), juste au-dessus du feutre — coupée par lui.
+function crAncre(cote, hx, rep) {
+  const F = $("feutre").getBoundingClientRect(), S = CR_EPAULE[cote];
+  const sx = rep.x0 + (S[0] + 50) * rep.s;
+  return { x: sx + (cote === "D" ? 1 : -1) * 26 * rep.s + (hx - sx) * .35, y: F.top - 10, F };
+}
+function crAvantCourant(cote) {
+  const el = CR.mains[cote], cs = getComputedStyle(el);
+  let a = 0; try { const m = new DOMMatrixReadOnly(cs.transform); a = Math.atan2(m.b, m.a) * 180 / Math.PI; } catch (e) {}
+  return { a, d: parseFloat(cs.width) || 0 };
+}
+function crAvantHtml(cote, x, y, ms, poignet, rep) {
+  const el = CR.mains && CR.mains[cote]; if (!el) return;
+  const an = crAncre(cote, x, rep), ax = an.x - an.F.left, ay = an.y - an.F.top, hx = x - an.F.left, hy = y - an.F.top;
+  let a = Math.atan2(hy - ay, hx - ax) * 180 / Math.PI; const d = Math.max(12, Math.hypot(hx - ax, hy - ay));
+  el.style.left = ax.toFixed(1) + "px"; el.style.top = ay.toFixed(1) + "px";
+  const hd = el.querySelector(".cr-hd"), rot = `rotate(${((poignet || 0) * (cote === "D" ? 1 : -1) * .8).toFixed(1)}deg)`;
+  const de = CR.hm[cote] ? crAvantCourant(cote) : null;
+  if (CR.hm[cote] && CR.hm[cote].an) { CR.hm[cote].an.cancel(); }
+  CR.hm[cote] = { a, d };
+  if (!de || MOUVEMENT_REDUIT.on || !ms || ms < 24) { el.style.transform = `rotate(${a.toFixed(2)}deg)`; el.style.width = d.toFixed(1) + "px"; hd.style.transition = "none"; hd.style.transform = rot; return; }
+  a += 360 * Math.round((de.a - a) / 360);   // le chemin le plus court
+  const anim = el.animate([{ transform: `rotate(${de.a.toFixed(2)}deg)`, width: de.d.toFixed(1) + "px" }, { transform: `rotate(${a.toFixed(2)}deg)`, width: d.toFixed(1) + "px" }],
+    { duration: ms, easing: "cubic-bezier(.22,.72,.24,1)", fill: "forwards" });
+  CR.hm[cote].an = anim;
+  anim.finished.then(() => { if (CR.hm[cote] && CR.hm[cote].an === anim) { el.style.transform = `rotate(${a.toFixed(2)}deg)`; el.style.width = d.toFixed(1) + "px"; anim.cancel(); CR.hm[cote].an = null; } }, () => {});
+  hd.style.transition = `transform ${Math.round(ms)}ms cubic-bezier(.22,.72,.24,1)`; hd.style.transform = rot;
+}
 function monterCroupier() {
   const scene = $("croupierScene"); if (!scene) return;
   const id = crEffectif(); if (id === CR.id && CR.el) return;
@@ -261,6 +332,7 @@ function monterCroupier() {
   scene.innerHTML = crSvg("cr-");
   CR.el = scene.querySelector("svg"); CR.scene = scene;
   crLook(CR.el, c, "cr-");
+  monterMains();
   CR.j = {}; CR.seg = {}; CR.an = {}; CR.arme = false;
   CR.base = crRepos(); CR.emotion = CR.base; crVisage(EMOTIONS[CR.base]);
   crReposer(1);
@@ -304,10 +376,11 @@ function crIK(cote, px, py) {
 }
 // La main d'un côté va à un point d'ÉCRAN, en ms. Poignet en option.
 function crMainVers(cote, x, y, ms, poignet) {
-  const p = crVersRig(x, y); if (!p) return false;
+  const rep = crRepere(), p = crVersRig(x, y, rep); if (!p) return false;
   const a = crIK(cote, p.x, p.y);
   crBouger("crBras" + cote, a.bras, ms); crBouger("crAvant" + cote, a.avant, ms);
   crBouger("crMain" + cote, poignet || 0, ms);
+  crAvantHtml(cote, x, y, ms, poignet, rep);
   return true;
 }
 const crRect = id => { const e = $(id); if (!e) return null; const r = e.getBoundingClientRect(); return r.width ? r : null; };
@@ -352,44 +425,47 @@ function crReposer(ms) {
   if (!okD) { crBouger("crBrasD", -34, ms); crBouger("crAvantD", -48, ms); crBouger("crMainD", 8, ms); }
   if (!crPoserGauche(ms)) { crBouger("crBrasG", 34, ms); crBouger("crAvantG", 48, ms); crBouger("crMainG", -8, ms); }
 }
-// La main gauche SUIT la défausse : elle se déplace de ~45 px quand les cartes
-// du croupier arrivent (la rangée haute est centrée sur sa main). Posée une
-// fois avant la donne, elle finissait sur sa carte visible. Rappelée à chaque
-// carte, elle reste où elle doit être.
+// La main gauche repose À PLAT sur le feutre, sous le rack, à gauche de ses cartes :
+// un coude plié, une main posée — pas un bras tendu vers le coin de la défausse
+// (mesuré le 05/09 : pose identique au pixel sur toutes les captures). Repli sur
+// la défausse si le rack n'est pas rendu (téléphone).
 function crPoserGauche(ms) {
+  // Sur le coin bas-droit de la défausse, en diagonale depuis le rail : mesuré le
+  // 05/09, posée sous le rack elle pendait à la verticale et couvrait « Croupier ».
   const rd = crRect("defausse"); if (!rd) return false;
-  return crMainVers("G", rd.left + rd.width * .5, rd.top - 6, ms, -8);
+  return crMainVers("G", rd.right - rd.width * .18, rd.top + rd.height * .66, ms, -6);
 }
 function crArmer(ms) {
   const c = crCibleSabot(); if (!c) return false;
   CR.arme = true;
   return crMainVers("D", c.x, c.y, ms || 320, 14);
 }
-/* LE geste. Le bras reste sur le sabot et ne fait qu'un coup de poignet vers
-   le siège : l'amplitude suit la cadence, et sous ~145 ms il ne revient pas
-   au sabot, il enchaîne — ce que fait un vrai croupier lancé. */
+/* LE geste. La main part du sabot et POUSSE la carte vers le siège : elle balaie
+   jusqu'à la moitié du trajet (la portée bornée tend le bras vers le joueur), en
+   55 % du vol de la carte, puis revient au sabot. Mesuré le 05/09 avec l'ancien
+   coup de poignet de 68 px : sur toutes les captures la main était sur le sabot
+   et les cartes s'envolaient toutes seules. Sous ~145 ms de cadence il ne revient
+   pas au sabot, il enchaîne — ce que fait un vrai croupier lancé. */
 function crFlick(vers, v) {
   if (!CR.el || !CR.visible) return;
   const c = crCibleSabot(); if (!c) return;
   if (!CR.arme) crArmer(Math.min(200, v));
-  const amp = Math.max(.22, Math.min(1, v / 450));
-  // Mesuré le 04/09 : à 420 ms de geste pour 300 ms de vol, la main SUIVAIT la carte.
-  // Le geste dure 80 % du vol (--don, celui du plateau) : il pousse, il ne suit pas.
+  const amp = Math.max(.55, Math.min(1, v / 450));
   const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
-  const ms = Math.max(90, Math.min(don * .8, v * .55));
+  const ms = Math.max(90, Math.min(don * .55, v * .6));
   const dx = vers.x - c.x, dy = vers.y - c.y, d = Math.hypot(dx, dy) || 1;
-  const pas = Math.min(96, d * .3) * amp;
-  crMainVers("D", c.x + dx / d * pas, c.y + dy / d * pas, ms, -18 * amp);
+  const pas = Math.min(150, d * .5) * amp;
+  crMainVers("D", c.x + dx / d * pas, c.y + dy / d * pas, ms, -22 * amp);
   crPoserGauche(Math.max(ms, 260));
   crRegarde(vers.x, vers.y, ms * 1.3);
   CR.gestes++; const n = CR.gestes;
-  if (v > ms * 1.6) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(v * .3); }, ms + 20);
+  if (v > ms * 1.6) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(Math.max(90, v * .3)); }, ms + 20);
 }
 // Sa propre carte cachée : la main vient dessus, un coup de poignet, et repart.
 function crRetourne(el) {
   if (!CR.el || !CR.visible || !el) return;
   const r = el.getBoundingClientRect(); if (!r.width) return;
-  crMainVers("D", r.left + r.width * .5, r.top + r.height * .35, 240, -30);
+  crMainVers("D", r.left + r.width * .62, r.top + r.height * .35, 240, -30);
   crMinuteur(() => crBouger("crMainD", 30, 180), 250);
   crMinuteur(() => { if (CR.arme) crArmer(300); else crReposer(360); }, 520);
   crRegarde(r.left + r.width / 2, r.top, 260);
@@ -485,6 +561,8 @@ function crDire(texte, ms) {
   b.classList.add("on");
   clearTimeout(CR.bulleT); CR.bulleT = setTimeout(() => b.classList.remove("on"), ms || 1800);
 }
+// Fermer la bulle tout de suite : le croupier ne parle pas pendant qu'il distribue.
+function crTaire() { clearTimeout(CR.bulleT); if (CR.bulle) CR.bulle.classList.remove("on"); }
 function crReplique(genre) {
   const banque = crPerso().dit[genre] || []; if (!banque.length) return "";
   let i, g = 0; do { i = alea(banque.length); } while (banque.length > 1 && i === CR.dernier[genre] && g++ < 8);
@@ -498,7 +576,8 @@ function crEmotion(nom, o) {
   crVisage(e);
   if (e.secoue) crSecoue();
   if (e.fixe) { const toi = document.querySelector("#sieges .siege.toi"); if (toi) { const r = toi.getBoundingClientRect(); crRegarde(r.left + r.width / 2, r.top, 220); } }
-  if (o.texte) { crDire(o.texte, o.ms); crArticule(e.bouche); }
+  if (o.texte) { crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400)); crArticule(e.bouche); }
+  else crTaire();
   crMinuteur(() => { if (CR.jeton === jeton) { CR.emotion = CR.base; crVisage(EMOTIONS[CR.base] || EMOTIONS.neutre); } }, o.tenue || 2400);
 }
 // Pour les captures et la console : window.__croupierEmotion("moqueur")
@@ -564,7 +643,7 @@ function crSurveille(mise, tc) {
   }
   if (!alerte) return;
   CR.derniereAlerte = CR.gestes;
-  crEmotion("soupcon", { texte: crReplique("soupcon"), tenue: 900 + v * 500, ms: 2200 });
+  crEmotion("soupcon", { texte: crReplique("soupcon"), tenue: 1400 + v * 400, ms: 1400 + v * 400 });
 }
 
 /* ── Le bus ────────────────────────────────────────────────────────────── */
@@ -573,7 +652,7 @@ document.addEventListener("sabot:remelange", () => { if (CR.visible) crMelange()
 document.addEventListener("sabot:donne-debut", e => {
   if (!CR.el) monterCroupier();
   if (crAuRepos()) { CR.emotion = "concentre"; crVisage(EMOTIONS.concentre); }
-  CR.base = "concentre";
+  CR.base = "concentre"; crTaire();
   crArmer(320);
   const d = e.detail || {};
   const mise = d.mise !== undefined ? d.mise : crLireNombre("tMise");
@@ -620,10 +699,11 @@ document.addEventListener("sabot:manche-fin", () => {
 // pose qu'à ce moment-là, et le croupier salue à la première apparition.
 if (window.ResizeObserver && $("croupierScene")) new ResizeObserver(entries => {
   const r = entries[0].contentRect, avant = CR.visible; CR.visible = r.width > 20 && r.height > 20;
+  if (CR.mainsEl) CR.mainsEl.hidden = !CR.visible;
   if (!CR.visible) return;
   if (!CR.el) monterCroupier();
   if (!CR.arme) crReposer(avant ? 200 : 1);
-  if (!CR.salue) { CR.salue = true; crMinuteur(() => { if (crAuRepos()) crEmotion("content", { texte: crReplique("accueil"), tenue: 1600, ms: 2600 }); }, 700); }
+  if (!CR.salue) { CR.salue = true; crMinuteur(() => { if (crAuRepos()) crEmotion("content", { texte: crReplique("accueil"), tenue: 2200, ms: 2200 }); }, 700); }
 }).observe($("croupierScene"));
 addEventListener("resize", () => { if (CR.visible && !CR.arme) crReposer(1); });
 
@@ -653,7 +733,7 @@ function rendreChoixCroupier() {
     DB.croupier.id = i.value; DB.croupier.nom = DB.croupier.noms[crEffectif()] || ""; garder();
     sec.querySelectorAll(".cr-carte").forEach(l => l.classList.toggle("on", l.querySelector("input").checked));
     trait(); CR.id = ""; monterCroupier(); CR.salue = true;
-    if (CR.visible) crEmotion("content", { texte: crReplique("accueil"), tenue: 1600, ms: 2400 });
+    if (CR.visible) crEmotion("content", { texte: crReplique("accueil"), tenue: 2000, ms: 2000 });
   }));
   $("crNomSaisie").addEventListener("input", () => {
     const v = $("crNomSaisie").value.trim().slice(0, 18);

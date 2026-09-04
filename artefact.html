@@ -61,6 +61,9 @@
     --trame-clair:rgba(255,255,255,.020); --trame-sombre:rgba(0,0,0,.055);
     --cuir:#241812;
   }
+  /* Trois ors sur un même écran (nav #E0A83C, lettrage #E2B857, rail #D9B45B) : sur la
+     page de table, la pastille de nav prend l'or du feutre. */
+  :root:not([data-theme="clair"]) body.a-table{ --laiton:#E2B857 }
 }
 :root[data-theme="sombre"]{
   --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
@@ -72,6 +75,7 @@
   --trame-clair:rgba(255,255,255,.020); --trame-sombre:rgba(0,0,0,.055);
   --cuir:#241812;
 }
+:root[data-theme="sombre"] body.a-table{ --laiton:#E2B857 }
 @media (min-width:900px){ :root{ --gap:20px } }
 
 *{box-sizing:border-box}
@@ -300,15 +304,18 @@ input[type=range]{accent-color:var(--laiton);width:170px}
   --dos-carte:#7A1F2E; --lueur:rgba(216,179,106,.18); --sol:#0B0A0B; --sol-clair:#181416 }
 #v-table[data-lieu="cotai"]{ --feutre:#951C1C; --feutre-clair:#B72A26; --feutre-ombre:#560C0C;
   --rail:#1B0E0C; --rail-clair:#2E1814; --rail-liseret:#F2C15A; --or:#F2C15A; --or-fonce:#B8862B;
-  --dos-carte:#B8202A; --lueur:rgba(242,193,90,.28); --sol:#0D0707; --sol-clair:#1E1010 }
+  --dos-carte:#B8202A; --lueur:rgba(242,193,90,.28); --sol:#0D0707; --sol-clair:#1E1010;
+  --dos-motif:radial-gradient(circle, rgba(255,230,160,.45) 0 1.2px, transparent 1.8px) 0 0 / 8px 8px }
 #v-table[data-lieu="cercle"]{ --feutre:#1B2A4E; --feutre-clair:#273B6B; --feutre-ombre:#0D1530;
   --rail:#1C1210; --rail-clair:#2F1E19; --rail-liseret:#D4B46A; --or:#D4B46A;
-  --dos-carte:#1B2E5E; --lueur:rgba(212,180,106,.16); --sol:#070910; --sol-clair:#12141F }
+  --dos-carte:#1B2E5E; --lueur:rgba(212,180,106,.16); --sol:#070910; --sol-clair:#12141F;
+  --dos-motif:repeating-linear-gradient(0deg, rgba(255,246,225,.22) 0 1px, transparent 1px 5px) }
 #v-table[data-lieu="mainchaude"]{ --feutre:#1C4D2A; --feutre-clair:#27643A; --feutre-ombre:#0B2A15;
   --rail:#2A1810; --rail-clair:#43291B; --dos-carte:#2E5E3A; --lueur:rgba(226,184,87,.26) }
 #v-table[data-lieu="salonprive"]{ --feutre:#25282B; --feutre-clair:#353A3E; --feutre-ombre:#121415;
   --rail:#15110F; --rail-clair:#241C18; --rail-liseret:#C9A65A; --or:#C9A65A;
-  --dos-carte:#17181B; --lueur:rgba(201,166,90,.16); --sol:#050505; --sol-clair:#101010 }
+  --dos-carte:#17181B; --lueur:rgba(201,166,90,.16); --sol:#050505; --sol-clair:#101010;
+  --dos-motif:repeating-linear-gradient(90deg, rgba(230,199,115,.22) 0 1px, transparent 1px 6px) }
 #v-table[data-lieu="reno"]{ --feutre:#59602F; --feutre-clair:#6C7440; --feutre-ombre:#33381A;
   --rail:#4A3620; --rail-clair:#634A2E; --rail-liseret:#BFAF7A; --or:#D6C078;
   --dos-carte:#3D2B1F; --lueur:rgba(255,240,200,.10); --sol:#0F0E0B; --sol-clair:#1B1913 }
@@ -332,16 +339,19 @@ input[type=range]{accent-color:var(--laiton);width:170px}
    qu'un même halo brun sur un même fond noir. La photo du lieu (embarquée,
    créditée — cf. build.mjs), floutée et assombrie, fait la salle derrière le
    croupier ; la lueur du filament et les lampes se posent PAR-DESSUS (::after). */
-.salle .decor{ position:absolute; inset:-28px; z-index:0; pointer-events:none;
-  background:var(--photo, none) center 32% / cover no-repeat, var(--sol);
-  filter:blur(14px) brightness(.36) saturate(1.25) }
+.salle .decor{ position:absolute; inset:-12px; z-index:0; pointer-events:none;
+  background:var(--photo, none) center 20% / cover no-repeat, var(--sol);
+  filter:blur(4px) brightness(.45) saturate(1.1);
+  /* La photo s'efface vers le bas : nette autour du croupier, fondue sous le rail. */
+  mask-image:linear-gradient(#000 45%, transparent 100%); -webkit-mask-image:linear-gradient(#000 45%, transparent 100%) }
 .salle::after{
   content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
   background:
     var(--lampes),
     radial-gradient(52% 46% at 50% 8%, var(--lueur) 0%, transparent 72%),
     radial-gradient(120% 60% at 50% 100%, var(--sol-clair) 0%, transparent 60%),
-    linear-gradient(180deg, rgba(0,0,0,.18), transparent 40%, rgba(0,0,0,.35));
+    radial-gradient(ellipse 70% 60% at 50% 35%, transparent 55%, rgba(0,0,0,.75)),
+    linear-gradient(180deg, rgba(0,0,0,.14), transparent 40%, rgba(0,0,0,.35));
 }
 /* Fremont et l'Aquarium ont un tube de néon dans la salle — un seul, pas un arc-en-ciel. */
 .salle::before{
@@ -353,78 +363,66 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 #v-table[data-lieu="boulevard"] .salle, #v-table[data-lieu="mainchaude"] .salle{
   --lampes:radial-gradient(18% 12% at 22% 6%, rgba(255,200,120,.28), transparent 70%), radial-gradient(18% 12% at 78% 6%, rgba(255,200,120,.28), transparent 70%) }
 #v-table[data-lieu="cotai"]{ --lueur:rgba(242,193,90,.46) }
-#v-table[data-lieu="cotai"] .salle .decor{ filter:blur(12px) brightness(.5) saturate(1.6) }
+#v-table[data-lieu="cotai"] .salle .decor{ filter:blur(4px) brightness(.55) saturate(1.5) }
 #v-table[data-lieu="cotai"] .salle{ --lampes:repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 3px, transparent 3px 90px) }
 #v-table[data-lieu="cotai"] .tapis{ --rail:#3A0F0C; --rail-clair:#5A1A14 }
-#v-table[data-lieu="neon"] .salle .decor, #v-table[data-lieu="aquarium"] .salle .decor{ filter:blur(10px) brightness(.42) saturate(1.5) }
+#v-table[data-lieu="neon"] .salle .decor, #v-table[data-lieu="aquarium"] .salle .decor{ filter:blur(4px) brightness(.48) saturate(1.4) }
 #v-table[data-lieu="cercle"]{ --lueur:rgba(212,180,106,.24) }
-#v-table[data-lieu="cercle"] .salle .decor{ filter:blur(18px) brightness(.28) saturate(.8) }
+#v-table[data-lieu="cercle"] .salle .decor{ filter:blur(5px) brightness(.4) saturate(.9) }
 /* Le Salon Privé : cuir capitonné et or, pas un feutre gris dans le noir. */
-#v-table[data-lieu="salonprive"]{ --rail-liseret:#E6C773; --feutre:#2A2D31; --feutre-clair:#3B4046 }
+#v-table[data-lieu="salonprive"]{ --rail-liseret:#E6C773; --feutre:#2A2D31; --feutre-clair:#3B4046; --dos-carte:#2E2416 }
 #v-table[data-lieu="salonprive"] .tapis{
   background:
-    radial-gradient(circle at 14px 14px, rgba(255,255,255,.07) 0 1.2px, transparent 2.4px) 0 0 / 28px 28px,
+    radial-gradient(circle at 14px 14px, rgba(255,255,255,.22) 0 1.6px, transparent 2.8px) 0 0 / 28px 28px,
+    repeating-linear-gradient(45deg, rgba(0,0,0,.30) 0 1px, rgba(255,255,255,.06) 1px 2px, transparent 2px 28px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.30) 0 1px, rgba(255,255,255,.06) 1px 2px, transparent 2px 28px),
     linear-gradient(180deg, rgba(255,255,255,.08), transparent 18%),
     linear-gradient(180deg, #221A16 0%, #100B09 45%, #070504 100%) }
-#v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(16px) brightness(.24) saturate(.9) }
-#v-table[data-lieu="reno"] .salle .decor{ filter:blur(12px) brightness(.34) saturate(.8) sepia(.3) }
+#v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(5px) brightness(.36) saturate(.95) }
+#v-table[data-lieu="reno"] .salle .decor{ filter:blur(5px) brightness(.4) saturate(.8) sepia(.3) }
 #croupierScene{ position:absolute; left:50%; top:0; transform:translateX(-50%); z-index:1;
   width:min(560px, 80%); height:calc(var(--salle-haut) + 170px); pointer-events:none }
 #jetonsCalque{ position:absolute; inset:0; z-index:8; pointer-events:none }
 
-/* Le thème clair : la page est écrue, la salle l'était… en noir. Le sol devient
-   un parquet clair, la barre des coups prend la laque de la page. Le FEUTRE et
-   le rail ne changent pas : une table de blackjack ne blanchit pas le jour. */
-:root[data-theme="clair"] #v-table{ --sol:#D8D3C6; --sol-clair:#E9E5DA; --lueur:rgba(138,92,11,.30) }
-:root[data-theme="clair"]{
-  .salle .decor{ filter:blur(16px) brightness(1.02) saturate(.85); opacity:.5 }
-  .salle::after{ background:var(--lampes), radial-gradient(52% 46% at 50% 8%, var(--lueur) 0%, transparent 72%), linear-gradient(180deg, rgba(255,255,255,.35), transparent 45%, rgba(60,50,30,.18)) }
-  .zone-actions{ background:linear-gradient(180deg, var(--relief), var(--laque)); color:var(--os); box-shadow:inset 0 1px 0 rgba(255,255,255,.6) }
-  .btn.verre{ background:rgba(19,28,26,.06); color:var(--os); border-color:rgba(19,28,26,.16); box-shadow:none }
-  .btn.verre:hover{ background:rgba(19,28,26,.11) }
-  .btn.verre[disabled]{ color:rgba(19,28,26,.38); background:rgba(19,28,26,.03); border-color:rgba(19,28,26,.09) }
-  #bDonne[disabled]{ background:rgba(138,92,11,.10); color:rgba(19,28,26,.45); box-shadow:0 0 0 1px rgba(138,92,11,.35) inset }
-  .zone-actions .bulle{ background:var(--relief) }
-}
-@media (prefers-color-scheme:light){
-  :root:not([data-theme="sombre"]) #v-table{ --sol:#D8D3C6; --sol-clair:#E9E5DA; --lueur:rgba(138,92,11,.30) }
-  :root:not([data-theme="sombre"]){
-  .salle .decor{ filter:blur(16px) brightness(1.02) saturate(.85); opacity:.5 }
-    .salle::after{ background:var(--lampes), radial-gradient(52% 46% at 50% 8%, var(--lueur) 0%, transparent 72%), linear-gradient(180deg, rgba(255,255,255,.35), transparent 45%, rgba(60,50,30,.18)) }
-    .zone-actions{ background:linear-gradient(180deg, var(--relief), var(--laque)); color:var(--os); box-shadow:inset 0 1px 0 rgba(255,255,255,.6) }
-    .btn.verre{ background:rgba(19,28,26,.06); color:var(--os); border-color:rgba(19,28,26,.16); box-shadow:none }
-    .btn.verre:hover{ background:rgba(19,28,26,.11) }
-    .btn.verre[disabled]{ color:rgba(19,28,26,.38); background:rgba(19,28,26,.03); border-color:rgba(19,28,26,.09) }
-    #bDonne[disabled]{ background:rgba(138,92,11,.10); color:rgba(19,28,26,.45); box-shadow:0 0 0 1px rgba(138,92,11,.35) inset }
-    .zone-actions .bulle{ background:var(--relief) }
-  }
-}
+/* Le thème clair : une salle de jeu n'a pas de fenêtres. Le 05/09, en clair, la salle
+   était un panneau beige, la photo un brouillard gris, la barre des coups des pilules
+   blanches : une nappe verte sur un tableau de bord. La SCÈNE et la BARRE DES COUPS
+   restent un casino la nuit dans les deux thèmes ; seule la page autour (en-tête,
+   barre du haut, modales) s'éclaircit. Les encres de la scène sont les siennes. */
+#v-table .salle, #v-table .zone-actions{ color-scheme:dark }
+#v-table .zone-actions .bulle{ background:#FBF7EC; color:#1A1409; border-color:#C9A227 }
+#v-table .zone-actions .bulle .de{ color:#8A6A1E }
+#v-table .zone-actions .bulle .opts button{ border-color:rgba(26,20,9,.35); color:#1A1409 }
 
 /* ── La table : une demi-lune, rail de cuir, liseré doré ──────────────── */
 .tapis{
   grid-row:2; position:relative; z-index:2; height:100%; min-height:0;
-  width:min(100%, 1500px); margin:0 auto; padding:14px;
+  width:min(100%, 1800px); margin:0 auto; padding:18px 18px 22px;
   /* Le bord DROIT est celui du croupier (le rack y est encastré), l'ARC est celui
      des joueurs : on est assis autour, la demi-lune s'ouvre vers nous. Les rayons
      du bas sont relus par cartes.js (placerSieges) et table.js (rendreLettrage) :
      les sièges et le lettrage suivent la courbe RÉELLE, jamais une copie. */
   border-radius:26px 26px 46% 46% / 26px 26px 44% 44%;
   background:
-    linear-gradient(180deg, rgba(255,255,255,.10), transparent 18%),
-    linear-gradient(180deg, var(--rail-clair) 0%, var(--rail) 45%, color-mix(in oklab, var(--rail) 70%, #000) 100%);
+    linear-gradient(180deg, rgba(255,255,255,.12), transparent 16%),
+    linear-gradient(180deg, var(--rail-clair) 0%, var(--rail) 40%, #0C0806 100%);
   box-shadow:
-    0 36px 64px -22px rgba(0,0,0,.9), 0 0 0 1px rgba(0,0,0,.75),
-    inset 0 2px 0 rgba(255,255,255,.07), inset 0 -3px 0 rgba(0,0,0,.55);
+    0 36px 64px -22px rgba(0,0,0,.9), 0 18px 40px -14px #000, 0 0 0 1px rgba(0,0,0,.75),
+    inset 0 2px 0 rgba(255,255,255,.12), inset 0 -4px 8px rgba(0,0,0,.6);
 }
-.tapis::before{ content:""; position:absolute; inset:5px; border-radius:inherit; pointer-events:none; z-index:4;
+.tapis::before{ content:""; position:absolute; inset:6px; border-radius:inherit; pointer-events:none; z-index:4;
   border:1.5px solid var(--rail-liseret); opacity:.72; box-shadow:0 0 6px -2px var(--rail-liseret) }
+/* Trois sièges (le Salon Privé) sur un plateau dessiné pour six : 60 % de feutre vide.
+   La table se resserre sur ses joueurs. */
+#v-table[data-sieges="3"] .tapis{ width:min(100%, 1100px) }
+#v-table[data-sieges="4"] .tapis{ width:min(100%, 1320px) }
 .feutre{
   position:relative; height:100%; min-height:0; overflow:hidden; border-radius:inherit; z-index:2;
   background-color:var(--feutre);
   background-image:
     radial-gradient(110% 80% at 50% 0%, var(--feutre-clair) 0%, transparent 62%),
     radial-gradient(150% 120% at 50% 55%, transparent 42%, var(--feutre-ombre) 100%);
-  box-shadow:inset 0 4px 10px rgba(0,0,0,.55), inset 0 0 70px rgba(0,0,0,.22);
+  box-shadow:inset 0 4px 10px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.4), inset 0 0 70px rgba(0,0,0,.22);
   display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:2px; padding:20px 16px 8px;
 }
 /* Le grain est une TUILE de 180 px rendue une fois par l'SVG en ligne — jamais
@@ -439,7 +437,7 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 /* Les deux lignes du rail sont petites (12 px) : elles portent des RÈGLES (6 TO 5 =
    table imbattable, H17/S17). Mesuré à .62 d'opacité : 2,7:1 sur le vert. Le liseré
    du rail, plus clair, passe le seuil des 4,5:1. */
-.feutre>svg.lettrage text.rail{ fill:var(--rail-liseret); opacity:.92 }
+.feutre>svg.lettrage text.rail{ fill:#F0D48A; opacity:1; stroke:rgba(0,0,0,.6); stroke-width:1.4px }
 .feutre>*:not(svg){ position:relative; z-index:2 }
 
 /* La rangée haute passe AU-DESSUS des sièges : le sabot y a rang 3, une carte qui
@@ -455,16 +453,27 @@ input[type=range]{accent-color:var(--laiton);width:170px}
   .feutre>.annonce, .feutre>.conseil{ position:absolute; left:0; right:0; margin:0; z-index:3; pointer-events:none }
   .feutre>.annonce{ top:calc(var(--w-croupier, 89px) * 1.4 + 40px) }
   .feutre>.conseil{ top:calc(var(--w-croupier, 89px) * 1.4 + 72px) }
-  .feutre.annonce-on>svg.lettrage text.grand{ opacity:0 }
+  /* L'annonce passe DEVANT (fond lisible) et l'arc reste : mesuré le 05/09, il
+     s'allumait et s'éteignait à chaque manche, au moment où l'œil suit la carte. */
+  .feutre.annonce-on>svg.lettrage text.grand{ opacity:.35; transition:opacity .6s ease }
+  .feutre>.annonce:not(:empty){ width:max-content; max-width:min(92%, 720px); left:50%; right:auto; transform:translateX(-50%);
+    background:rgba(0,0,0,.38); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px; padding:5px 18px }
   .sabot, .defausse{ margin-top:-10px }
   .rack{ padding-bottom:14px }   /* le bas du buste du croupier passe derrière */
+}
+/* Écran bas (800 px et moins de haut) : la rangée du croupier se serre contre le rail —
+   18 px rendus à la bande où passe l'arc doré, mesurée à 4 px à 1024 × 768. */
+@media (min-width:1000px) and (max-height:820px){
+  .feutre{ padding-top:12px }
+  .rangee-haute{ margin-top:4px; min-height:calc(var(--w-croupier, 89px) * 1.4 + 2px) }
 }
 /* Le rack de jetons, planté dans le rail devant le croupier : six tubes vus de face. */
 .rack{ position:absolute; top:-2px; left:50%; transform:translateX(-50%); z-index:5;
   display:flex; gap:3px; padding:5px 6px 4px; border-radius:0 0 9px 9px;
   background:linear-gradient(180deg,#1C1512,#0E0A08); box-shadow:0 6px 12px -4px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(0,0,0,.6) }
-.rack i{ width:30px; height:18px; border-radius:3px; background:repeating-linear-gradient(90deg, var(--c) 0 3px, #F4EFE2 3px 4px);
-  box-shadow:inset 0 -3px 4px rgba(0,0,0,.5), inset 0 2px 2px rgba(255,255,255,.25) }
+.rack i{ width:calc(var(--w-croupier, 89px) * .34); height:calc(var(--w-croupier, 89px) * .2); border-radius:4px 4px 2px 2px;
+  background:repeating-linear-gradient(0deg, var(--c) 0 2px, rgba(0,0,0,.35) 2px 2.6px, var(--c) 2.6px 4px);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5), inset 3px 0 4px rgba(255,255,255,.18), inset -3px 0 4px rgba(0,0,0,.4) }
 .rack i:nth-child(1){--c:#EDE7D9} .rack i:nth-child(2){--c:#C8252B} .rack i:nth-child(3){--c:#1E7A44}
 .rack i:nth-child(4){--c:#1A1A1D} .rack i:nth-child(5){--c:#6D3D9C} .rack i:nth-child(6){--c:#E67E22}
 
@@ -496,23 +505,41 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 #dMain .carte:first-child{ position:relative; z-index:2 }
 #dMain .carte--pivot{ z-index:1 }
 #dMain .carte--pivot:not(.cachee){ z-index:3 }
-.qui{ display:flex; flex-direction:column; align-items:center; gap:2px; font-size:var(--t-micro); letter-spacing:.14em;
-  text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 82%, transparent) }
-.qui b{ font-family:"Martian Mono",monospace; font-size:var(--t-fort); color:var(--ivoire); letter-spacing:0 }
+.qui{ display:flex; flex-direction:column; align-items:center; gap:2px; font-size:clamp(11px, calc(var(--w-croupier, 89px) * .12), 14px); letter-spacing:.14em;
+  text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 94%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.5) }
+.qui b{ font-family:"Martian Mono",monospace; font-size:clamp(17px, calc(var(--w-croupier, 89px) * .2), 22px); color:var(--ivoire); letter-spacing:0 }
 /* Le sabot : une cale laquée, les cartes dedans, la carte de coupe rouge à sa
    hauteur. --reste et --coupe sont posés par la table (fractions du sabot). */
-.sabot,.defausse{ position:relative; width:62px; height:86px; flex:none; display:grid; place-items:end center; padding-bottom:3px;
-  font-family:"Martian Mono",monospace; font-size:var(--t-micro); color:color-mix(in oklab, var(--ivoire) 82%, transparent) }
+.sabot,.defausse{ --sw:calc(var(--w-croupier, 89px) * .72); --sh:calc(var(--w-croupier, 89px) * 1.02);
+  position:relative; width:var(--sw); height:var(--sh); flex:none; display:grid; place-items:end center; padding-bottom:3px;
+  font-family:"Martian Mono",monospace; font-size:clamp(10px, calc(var(--w-croupier, 89px) * .12), 13px); color:color-mix(in oklab, var(--ivoire) 88%, transparent);
+  --bois:linear-gradient(180deg,#221915,#0E0908); --liseret:var(--or-fonce) }
 .sabot{ border-radius:5px 5px 7px 7px; transform:rotate(-5deg);
-  background:linear-gradient(180deg,#221915,#0E0908); box-shadow:0 0 0 1.5px var(--or-fonce), 0 10px 18px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.1) }
-.sabot::before{ content:""; position:absolute; left:7px; right:7px; bottom:20px; height:calc(4px + var(--reste,1) * 48px); border-radius:2px;
+  background:var(--bois); box-shadow:0 0 0 1.5px var(--liseret), 0 10px 18px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.1) }
+.sabot::before{ content:""; position:absolute; left:11%; right:11%; bottom:23%; height:calc(var(--sh) * .05 + var(--reste,1) * var(--sh) * .56); border-radius:2px;
   background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px); transition:height .3s }
-.sabot::after{ content:""; position:absolute; left:6px; right:6px; bottom:calc(22px + var(--coupe,.25) * 48px); height:2px; background:#E8362F;
+.sabot::after{ content:""; position:absolute; left:9%; right:9%; bottom:calc(25% + var(--coupe,.25) * var(--sh) * .56); height:2px; background:#E8362F;
   box-shadow:0 0 5px #E8362F; opacity:calc(var(--coupe,.25) * 4) }
-.defausse{ border-radius:5px; background:rgba(0,0,0,.22); box-shadow:inset 0 0 0 1.5px color-mix(in oklab, var(--or) 55%, transparent), inset 0 0 14px rgba(0,0,0,.4) }
-.defausse i{ position:absolute; left:7px; right:7px; bottom:20px; height:calc(2px + var(--pile,0) * 48px); border-radius:2px; opacity:0;
+.defausse{ border-radius:5px; background:var(--bois);
+  box-shadow:0 0 0 1.5px var(--liseret), 0 10px 18px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.1), inset 0 0 14px rgba(0,0,0,.4) }
+.defausse::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:3px; background:var(--liseret); opacity:.7; border-radius:0 0 5px 5px }
+.defausse i{ position:absolute; left:11%; right:11%; bottom:23%; height:calc(2px + var(--pile,0) * var(--sh) * .56); border-radius:2px; opacity:0;
   transition:opacity .3s, height .3s; background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px) }
 .defausse.pleine i{ opacity:1 }
+/* Le compte de la défausse est un compte de CARTES : un glyphe de pile devant, plus petit,
+   pour qu'il ne se lise pas comme le total du croupier posé à côté. */
+.defausse .n{ font-size:.9em; opacity:.8; letter-spacing:.04em }
+.defausse .n::before{ content:"\25A4\00a0"; opacity:.7 }
+/* Le MOBILIER change avec le lieu, pas seulement la couleur : bois blond et laiton au
+   Cercle, laque noire et or au Salon Privé, plexi rouge au Cotai, chêne à Reno. */
+#v-table[data-lieu="cercle"] .sabot, #v-table[data-lieu="cercle"] .defausse{ --bois:linear-gradient(180deg,#8B6A3E,#5E4526 60%,#3E2C17); --liseret:#D9C27A }
+#v-table[data-lieu="salonprive"] .sabot, #v-table[data-lieu="salonprive"] .defausse{ --bois:linear-gradient(180deg,#151313,#050404); --liseret:#E6C773 }
+#v-table[data-lieu="cotai"] .sabot, #v-table[data-lieu="cotai"] .defausse{ --bois:linear-gradient(180deg,#B3201F,#5E0C0C 70%,#3A0606); --liseret:#F2C15A }
+#v-table[data-lieu="reno"] .sabot, #v-table[data-lieu="reno"] .defausse{ --bois:linear-gradient(180deg,#6B4A2A,#3E2A15); --liseret:#BFAF7A }
+#v-table[data-lieu="aquarium"] .sabot, #v-table[data-lieu="aquarium"] .defausse{ --bois:linear-gradient(180deg,#1E4A52,#0B2327); --liseret:#CFE3E6 }
+#v-table[data-lieu="salonprive"] .rack{ background:linear-gradient(180deg,#0E0C0B,#050404); box-shadow:0 6px 12px -4px rgba(0,0,0,.9), inset 0 1px 0 rgba(230,199,115,.35), 0 0 0 1px rgba(0,0,0,.6) }
+#v-table[data-lieu="salonprive"] .rack i{ border-radius:1px }
+#v-table[data-lieu="salonprive"] .rack-jetons{ background:linear-gradient(180deg,#1B1416,#0E0A0B 70%,#080506) }
 
 .annonce{ text-align:center; font-family:"Instrument Serif",serif; font-size:var(--t-titre); min-height:30px; margin:2px 0 0;
   color:var(--ivoire); text-shadow:0 1px 3px rgba(0,0,0,.6) }
@@ -524,19 +551,24 @@ input[type=range]{accent-color:var(--laiton);width:170px}
    que le coin extérieur de chaque siège reste sur le feutre. Un siège n'a pas de
    fond : ce n'est pas un panneau d'appli collé sur le feutre, c'est un marquage. */
 .siege{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 6px 4px; border-radius:14px; min-width:126px;
-  transition:box-shadow .2s; transform:translateY(var(--lift, 0px)) rotate(var(--tilt, 0deg)) }
+  transform:translateY(var(--lift, 0px)) rotate(var(--tilt, 0deg)) }
 .siege.toi .cercle{ box-shadow:0 0 0 2px var(--or) inset, 0 0 14px -4px var(--or); opacity:1 }
-.siege.actif{ box-shadow:0 0 0 2px var(--or) inset, 0 0 22px -6px var(--or) }
-@starting-style{ .siege.actif{ box-shadow:0 0 0 0 transparent, 0 0 0 0 transparent } }
+/* Mesuré le 05/09 : un grand rectangle doré PLUS un pointillé autour des cartes = deux
+   cadres imbriqués, penchés par --tilt et coupés par le rail. Le siège qui joue, c'est
+   son cercle qui s'allume et un plafonnier sur sa main. */
+.siege .cercle{ transition:box-shadow .3s ease, opacity .3s }
+.siege.actif .cercle{ box-shadow:0 0 0 3px var(--or) inset, 0 0 26px 2px color-mix(in oklab, var(--or) 55%, transparent); opacity:1 }
+.siege .mains::before{ content:""; position:absolute; inset:-14px; border-radius:50%; z-index:-1; opacity:0; transition:opacity .35s ease;
+  background:radial-gradient(closest-side, rgba(255,220,120,.17), transparent) }
+.siege.actif .mains::before{ opacity:1 }
 /* Le siège a SA hauteur avant même la première carte (celle d'une main + son score) :
    un siège qui grandit à la donne remonterait par-dessus le lettrage doré. */
-.siege .mains{ display:flex; gap:10px; align-items:flex-end; min-height:calc(var(--w-table, 84px) * 1.4 + 22px) }
+.siege .mains{ position:relative; display:flex; gap:10px; align-items:flex-end; min-height:calc(var(--w-table, 84px) * 1.4 + 22px) }
 .siege .m{ display:grid; grid-template-columns:auto auto; justify-content:center; align-items:center; gap:2px 6px }
 .siege .m .main{ grid-column:1 / -1 }
-.siege .m.encours .main{ outline:2px dashed color-mix(in oklab, var(--or) 70%, transparent); outline-offset:5px; border-radius:8px }
 /* Valeur de repli avant que cartes.js n'ait mesuré (dimensionnerCartes pose --w et --pas en ligne sur chaque .main). */
 .siege .main{ --w:clamp(66px, 5vw, 84px) }
-.siege .score{ font-family:"Martian Mono",monospace; font-size:var(--t-petit); color:var(--ivoire); min-height:18px; text-shadow:0 1px 2px rgba(0,0,0,.5) }
+.siege .score{ font-family:"Martian Mono",monospace; font-size:clamp(13px, calc(var(--w-table, 84px) * .16), 17px); color:var(--ivoire); min-height:18px; text-shadow:0 1px 2px rgba(0,0,0,.5) }
 .siege .issue{ font-size:var(--t-micro); letter-spacing:.07em; text-transform:uppercase; padding:1px 7px; border-radius:999px; font-weight:600 }
 .siege .issue:empty{ display:none }
 .siege .issue.neuve{ animation:bascule 160ms var(--sec) }
@@ -544,25 +576,34 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 .issue.p{ background:color-mix(in oklab,var(--cinabre) 24%,transparent); color:var(--cinabre) }
 .issue.n{ background:rgba(255,255,255,.12); color:var(--nacre) }
 .issue.bj{ background:var(--or); color:#1A1409 }
-/* Une vraie case de mise : 72 px, la pile de jetons (34 px) se lit DEDANS ; à 46 px
-   un seul jeton bouchait le cercle et une mise de 10 se lisait « 5 ». */
-.cercle{ width:clamp(52px, 4.6vw, 68px); height:clamp(52px, 4.6vw, 68px); border-radius:50%; position:relative; margin-top:3px; flex:none;
+/* Une vraie case de mise, à l'échelle de la carte (85 %) : la pile de jetons (56 % de la
+   carte, comme un vrai jeton face à une vraie carte) se lit DEDANS. */
+.cercle{ width:clamp(54px, calc(var(--w-table, 84px) * .82), 84px); height:clamp(54px, calc(var(--w-table, 84px) * .82), 84px); border-radius:50%; position:relative; margin-top:3px; flex:none;
   box-shadow:0 0 0 1.5px color-mix(in oklab, var(--or) 78%, transparent) inset, 0 0 10px -4px var(--or); opacity:.9 }
 .cercle::after{ content:""; position:absolute; inset:6px; border-radius:50%; border:1px solid color-mix(in oklab, var(--or) 40%, transparent) }
-.siege .nom{ font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 88%, transparent) }
-.siege.toi .nom{ color:var(--or) }
+/* L'appel à miser : ton cercle bat deux fois quand la mise n'est pas posée. Deux, pas l'infini. */
+@keyframes appel{ 0%,100%{ box-shadow:0 0 0 2px var(--or) inset, 0 0 14px -4px var(--or) } 50%{ box-shadow:0 0 0 3px var(--or) inset, 0 0 22px 6px color-mix(in oklab, var(--or) 60%, transparent) } }
+#v-table[data-phase="mise"] .siege.toi.appel .cercle{ animation:appel 900ms var(--sec) 2 }
+.siege .nom{ font-size:clamp(11px, calc(var(--w-table, 84px) * .13), 14px); letter-spacing:.12em; text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 88%, transparent) }
+/* « TOI » en or à 11 px faisait 4,25:1 : le nom passe en ivoire, l'or reste sur le cercle. */
+.siege.toi .nom{ color:var(--ivoire); font-weight:700; text-shadow:0 0 8px var(--or), 0 1px 2px rgba(0,0,0,.6) }
 .conseil{ text-align:center; font-size:var(--t-petit); min-height:20px; margin:2px 0 0; color:color-mix(in oklab, var(--ivoire) 88%, transparent) }
+#v-table.turbo .feutre{ cursor:default }
+#v-table[data-phase="jeu"]:not(.turbo) .feutre{ cursor:pointer }
 .conseil b{ color:var(--or) }
 
 /* ── La barre : une seule ligne, le feutre prend la place ──────────────── */
 .hud{ display:flex; align-items:center; gap:14px; padding:2px 6px 2px 16px; min-height:44px; flex-wrap:wrap; margin-bottom:8px }
 .hud-table{ display:flex; align-items:center; gap:10px; min-width:0; flex-wrap:wrap }
 .hud-table b{ font-family:"Instrument Serif",serif; font-weight:400; font-size:19px; white-space:nowrap }
+.hud-limites{ font-family:"Martian Mono",monospace; font-size:var(--t-fin); color:var(--os-eteint); white-space:nowrap;
+  padding:3px 9px; border-radius:999px; border:1px solid rgba(255,255,255,.12) }
 .hud-compte{ margin-left:auto; display:flex; gap:18px; font-family:"Martian Mono",monospace; font-size:var(--t-fin); flex-wrap:wrap }
 .hud-compte span{ display:flex; align-items:baseline; gap:6px; white-space:nowrap }
 .hud-compte i{ font-style:normal; font-family:Archivo,sans-serif; font-size:var(--t-micro); letter-spacing:.1em; text-transform:uppercase; color:var(--os-eteint) }
 .hud-compte b{ font-weight:600; min-width:3ch; text-align:right }
-.hud-compte.masque b{ color:var(--os-eteint) }
+.hud-compte.masque > span:not(#hudTapis):not(#hudMise) b{ color:var(--os-eteint) }
+#hudTapis b, #hudMise b{ color:var(--os); font-size:var(--t-petit) }
 /* Compte masqué (le cas par défaut) : quatre tirets en permanence faisaient un bandeau
    mort. On les replie en une puce ; le tapis et la mise RÉELLE restent chiffrés. */
 .hud-compte .puce-masque{ display:none; font-family:Archivo,sans-serif; font-size:var(--t-micro); letter-spacing:.08em;
@@ -577,19 +618,42 @@ input[type=range]{accent-color:var(--laiton);width:170px}
   color:var(--ivoire); border-radius:0 0 var(--r) var(--r);
   background:linear-gradient(180deg, var(--sol-clair), var(--sol)); box-shadow:inset 0 1px 0 rgba(255,255,255,.06) }
 .zone-actions .rang-btn{ display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start }
-.zone-actions .btn{ min-height:46px; padding:8px 13px; border-radius:12px; font-size:var(--t-petit); white-space:nowrap }
+.zone-actions .btn{ min-height:clamp(46px, 3.4vw, 58px); padding:8px clamp(13px, 1.3vw, 22px); border-radius:12px; font-size:clamp(13px, 1vw, 17px); white-space:nowrap }
 .zone-actions .btn kbd{ opacity:.55; font-size:10px }
-#bDonne{ background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206;
+#bDonne{ background:linear-gradient(180deg, color-mix(in oklab, var(--or) 78%, #fff), var(--or) 58%, var(--or-fonce)); color:#1A1206;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 8px 16px -8px rgba(0,0,0,.9), 0 0 0 1px rgba(0,0,0,.4) }
-#bDonne[disabled]{ opacity:1; background:rgba(226,184,87,.14); color:rgba(246,241,228,.45); box-shadow:0 0 0 1px rgba(226,184,87,.28) inset }
+/* Éteint, il est ÉTEINT : mesuré le 05/09, une bague dorée et un fond ambré en faisaient le
+   bouton le plus voyant de la barre au moment de décider — l'œil tombait sur un bouton mort. */
+#bDonne[disabled]{ opacity:1; background:rgba(255,255,255,.035); color:rgba(246,241,228,.32); box-shadow:none; border:1px solid rgba(255,255,255,.08) }
+/* On ne montre que les coups possibles, comme un croupier ne propose pas « Séparer » avant
+   la donne : pendant la mise, le rack de jetons prend la place des coups ; pendant la main,
+   « Distribuer » disparaît. */
+#v-table[data-phase="jeu"] #bDonne{ display:none }
+#v-table:not([data-phase="jeu"]) #coups .btn.verre{ display:none }
 .btn.verre{ background:rgba(255,255,255,.07); color:var(--ivoire); border:1px solid rgba(255,255,255,.14);
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:inset 0 1px 0 rgba(255,255,255,.08) }
 .btn.verre:hover{ background:rgba(255,255,255,.13); border-color:color-mix(in oklab, var(--or) 60%, transparent); filter:none }
 .btn.verre[disabled]{ opacity:1; color:rgba(246,241,228,.38); background:rgba(255,255,255,.035); border-color:rgba(255,255,255,.08); cursor:not-allowed }
-.btn.verre.mini{ min-height:44px; padding:7px 10px; font-size:var(--t-fin) }
+.btn.verre.mini{ min-height:clamp(46px, 3.4vw, 58px); padding:7px 12px; font-size:clamp(13px, .9vw, 15px) }
+/* « Nouveau sabot » jette la manche en cours : un filet le sépare des boutons de lecture. */
+#bNouveauSabot{ margin-left:8px; position:relative; border-color:color-mix(in oklab, var(--or) 45%, transparent); color:var(--or) }
+#bNouveauSabot::before{ content:""; position:absolute; left:-8px; top:6px; bottom:6px; width:1px; background:rgba(255,255,255,.14) }
 .btn.mini[aria-pressed="true"]{ color:var(--or); border-color:var(--or) }
-.rang-table{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto }
+.rang-table{ display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto }
 .zone-actions .bulle{ bottom:auto; top:-8px; transform:translate(-50%,-100%) }
+/* La barre a la MÊME hauteur pendant la mise et pendant la main : sinon le feutre, qui prend
+   la place qu'elle laisse, saute de 60 px à chaque donne (mesuré le 05/09 à 1280×800 : rack
+   à deux cadrans sur une rangée, boutons de table sur une autre, puis une seule rangée en
+   jeu). Sur ordinateur le rack ne garde que ses jetons et tient sur la rangée des coups ;
+   sous 1240 px, les boutons de table ont leur rangée à eux dans les DEUX phases. */
+@media (min-width:1000px){
+  .rack-jetons .rj-bloc{ display:none }
+  .rack-jetons{ gap:8px; padding:3px 8px }
+  /* La rangée des coups a la hauteur du rack (52 px) : sans ça, 6 px de moins en jeu. */
+  .zone-actions .rang-btn{ min-height:52px; align-items:center }
+  .btn.verre.mini{ padding:7px 11px }
+}
+@media (min-width:1000px) and (max-width:1239.98px){ .rang-table{ flex-basis:100%; justify-content:center } }
 
 /* ── Exercices ─────────────────────────────────────────────────────── */
 .scene{display:grid;place-items:center;min-height:238px;padding:16px 0 4px;position:relative}
@@ -723,15 +787,26 @@ td.U{background:var(--ardoise)}
    (une pastille devant son nom) et son tapis (sous le nom, en mono : tout le
    monde voit les jetons de tout le monde). Rien de gris : l'or et le lieu. */
 #mpNom{ min-height:44px }
-.couleurs{ display:flex; gap:4px; align-items:center; min-height:44px }
-.couleur{ width:44px; height:44px; border-radius:50%; position:relative; cursor:pointer; background:transparent }
-.couleur::before{ content:""; position:absolute; inset:7px; border-radius:50%; background:var(--c);
-  box-shadow:0 0 0 1px rgba(0,0,0,.3) inset, 0 2px 6px -2px rgba(0,0,0,.5); transition:transform .14s var(--ressort) }
-.couleur:hover::before{ transform:scale(1.1) }
-.couleur.on::before{ transform:scale(1.12); box-shadow:0 0 0 2px var(--laque), 0 0 0 4px var(--c), 0 0 0 1px rgba(0,0,0,.3) inset }
+.mp-grille{ display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:22px; align-items:start }
+.mp-ligne{ align-items:flex-end }
+.mp-grille>div>.mp-ligne:first-child{ align-items:flex-start }
+.mp-ligne label.ch .grave{ line-height:17px; margin-bottom:0 }
+.mp-ou{ align-self:center; padding-bottom:0 }
+.mp-ligne .btn.creux{ padding:10px 18px; min-height:48px }
+.mp-ligne .btn:not(.creux){ min-height:48px }
+.mp-comment{ margin-top:14px; font-size:var(--t-fin); color:var(--os-eteint) }
+.mp-comment summary{ cursor:pointer; min-height:44px; display:flex; align-items:center }
+.mp-table .tbl{ margin:0 }
+.mp-table .tbl .pied .btn{ min-height:44px }
+/* Ta couleur = un jeton du rack, cerclé d'or quand il est choisi. Pas d'arc-en-ciel. */
+.couleurs{ display:flex; gap:6px; align-items:center; min-height:44px }
+.couleur{ cursor:pointer; transition:transform .14s var(--ressort), filter .2s; filter:saturate(.75) brightness(.85) }
+.couleur:hover{ transform:translateY(-3px); filter:none }
+.couleur.on{ filter:none; transform:scale(1.08); box-shadow:0 0 0 2px var(--laque), 0 0 0 4px var(--laiton) }
+@media (max-width:860px){ .mp-grille{ grid-template-columns:1fr } }
 .siege .nom .pastille{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--c); margin-right:6px; vertical-align:1px;
   box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 0 6px -1px var(--c) }
-.siege .tapis-siege{ font-family:"Martian Mono",monospace; font-size:10px; letter-spacing:0; color:color-mix(in oklab, var(--ivoire) 62%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.5) }
+.siege .tapis-siege{ font-family:"Martian Mono",monospace; font-size:11px; letter-spacing:0; color:color-mix(in oklab, var(--ivoire) 84%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.5) }
 .siege.toi .tapis-siege{ color:color-mix(in oklab, var(--or) 85%, transparent) }
 .siege.vide .cercle{ opacity:.4 }
 .siege.vide .nom{ color:color-mix(in oklab, var(--ivoire) 45%, transparent) }
@@ -786,8 +861,9 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
    par-dessus) sont deux animations à deux images clés : aucune cassure possible.
    La carte part à l'échelle du sabot (.74 = 62/84) et en SORT, sans fondu. */
 @keyframes donne-trajet{
-  from{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(-16deg) scale(.74)}
-  to{transform:none}
+  0%{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(calc(-16deg - var(--tilt, 0deg))) scale(.74);opacity:0}
+  14%{opacity:1}
+  100%{transform:none;opacity:1}
 }
 @keyframes donne-arc{ 0%,100%{translate:0 0} 50%{translate:0 -30px} }
 /* LA ligne importante : la durée de la donne est une FRACTION de l'intervalle
@@ -861,7 +937,7 @@ body.a-table{ overflow:hidden; overscroll-behavior:none }
 body.a-table main{ padding-bottom:0 }
 /* À 1920 la table occupait 56 % de la largeur, une petite table dans un vide noir
    de 420 px de chaque côté. Un écran de salon donne une table qui emplit la vue. */
-body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)) }
+body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)) }
 
 .hud .regles{ flex-wrap:nowrap }
 
@@ -881,7 +957,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
 /* ── Poste « poche » : téléphone debout (hors périmètre : ne casse pas, c'est tout) ── */
 @media (max-width:759.98px) and (min-height:521px){
   .hud{ padding:4px 6px 4px 10px; gap:8px; margin-bottom:6px }
-  .hud .regles{ display:none }
+  .hud .regles, .hud-limites{ display:none }
   .hud-compte{ gap:10px; overflow-x:auto; scrollbar-width:none; flex-wrap:nowrap; max-width:100% }
   .hud-compte::-webkit-scrollbar{ display:none }
   .salle{ padding:0 6px 6px; --salle-haut:28px }
@@ -929,7 +1005,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
   }
   .salle{ grid-area:salle; border-radius:16px; padding:0 4px 4px; --salle-haut:0px }
   .hud{ grid-area:hud; align-self:start; flex-direction:column; align-items:stretch; gap:6px; padding:8px; margin:0 }
-  .hud .regles{ display:none }
+  .hud .regles, .hud-limites{ display:none }
   .hud-compte{ margin:0; display:grid; grid-template-columns:1fr 1fr; gap:2px 8px }
   .hud-compte span{ justify-content:space-between }
   .zone-actions{ grid-area:coups; align-self:end; border-radius:var(--r); padding:8px; gap:6px }
@@ -1014,7 +1090,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
   background-color:var(--dos-carte,#8A2420);
   background-image:
     radial-gradient(120% 90% at 50% 50%, rgba(255,255,255,.10), transparent 60%),
-    repeating-linear-gradient(45deg, rgba(255,246,225,.20) 0 1.2px, transparent 1.2px 9px),
+    var(--dos-motif, repeating-linear-gradient(45deg, rgba(255,246,225,.20) 0 1.2px, transparent 1.2px 9px)),
     repeating-linear-gradient(-45deg, rgba(255,246,225,.20) 0 1.2px, transparent 1.2px 9px),
     repeating-linear-gradient(45deg, rgba(0,0,0,.14) 0 1px, transparent 1px 4.5px);
   box-shadow:
@@ -1038,7 +1114,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
    le preserve-3d et la carte cesse de tourner. */
 .carte--pivot{ background:none; box-shadow:none }
 .carte--pivot .pivot{ position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d;
-  transform:perspective(700px) rotateY(0deg); transition:transform 520ms var(--sec) }
+  transform:perspective(700px) rotateY(0deg); transition:transform 420ms cubic-bezier(.45,0,.2,1) }
 .carte--pivot.cachee .pivot{ transform:perspective(700px) rotateY(180deg) }
 .carte .face{ position:absolute; inset:0; border-radius:inherit; backface-visibility:hidden; -webkit-backface-visibility:hidden }
 .carte .face.ar{ transform:rotateY(180deg) }
@@ -1075,20 +1151,22 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
    Un plateau de cuir sombre lisière d'or, posé sur le bord bas de la table.
    Ouvert pendant la phase de mise seulement ; il glisse sous le rail dès que
    la donne commence, pour rendre le feutre (et la ligne de stratégie). */
+/* Mesuré le 05/09 : posé SUR le feutre, il recouvrait le bas du tapis, « TOI » et la fin du
+   lettrage, pendant que la barre affichait six boutons inertes. Il vit dans la barre des
+   coups, à la place des coups, pendant la mise — un plateau de cuir sur le rail. */
 .rack-jetons{
-  position:absolute; left:50%; bottom:5px; z-index:7; transform:translate(-50%, 0);
-  display:flex; align-items:center; gap:14px; padding:4px 12px 4px 16px; border-radius:14px;
+  display:flex; align-items:center; gap:12px; padding:3px 10px 3px 14px; border-radius:14px; margin:0 auto;
   background:linear-gradient(180deg, #2C1C13, #170E0A 70%, #100906);
-  box-shadow:0 0 0 1px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 1px color-mix(in oklab, var(--or) 38%, transparent), 0 16px 30px -12px rgba(0,0,0,.9);
-  transition:transform .32s var(--ressort), opacity .22s;
+  box-shadow:0 0 0 1px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 1px color-mix(in oklab, var(--or) 38%, transparent), 0 10px 22px -12px rgba(0,0,0,.9);
+  animation:bascule 180ms var(--sec);
 }
-.rack-jetons:not(.ouvert){ transform:translate(-50%, 140%); opacity:0; pointer-events:none }
-.rj-bloc{ display:flex; flex-direction:column; align-items:flex-start; line-height:1.15; min-width:66px }
+.rack-jetons:not(.ouvert){ display:none }
+.rj-bloc{ display:flex; flex-direction:column; align-items:flex-start; line-height:1.1; min-width:66px }
 .rj-bloc .grave{ color:color-mix(in oklab, var(--or) 82%, transparent); font-size:10px; letter-spacing:.16em }
 .rj-bloc b{ color:var(--ivoire); font-size:var(--t-fort); font-weight:600; white-space:nowrap }
-.rj-bloc .rj-sous{ font-family:"Martian Mono",monospace; font-size:10px; color:color-mix(in oklab, var(--ivoire) 55%, transparent); white-space:nowrap }
-.rj-jetons{ display:flex; gap:7px; align-items:center; padding:2px 6px }
-.rj-jetons .jt{ --w:46px; cursor:pointer; transition:transform .14s var(--ressort), opacity .2s, filter .2s }
+.rj-bloc .rj-sous{ font-family:"Martian Mono",monospace; font-size:12px; color:color-mix(in oklab, var(--ivoire) 82%, transparent); white-space:nowrap }
+.rj-jetons{ display:flex; gap:6px; align-items:center; padding:0 4px }
+.rj-jetons .jt{ --w:44px; cursor:pointer; transition:transform .14s var(--ressort), opacity .2s, filter .2s }
 .rj-jetons .jt:hover:not([disabled]), .rj-jetons .jt:focus-visible{ transform:translateY(-5px) }
 .rj-jetons .jt:active:not([disabled]){ transform:translateY(-1px) scale(.96) }
 .rj-jetons .jt[disabled]{ opacity:.32; cursor:not-allowed; filter:saturate(.35) }
@@ -1121,12 +1199,16 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
 
 /* Téléphone (hors périmètre : ne casse pas, c'est tout) */
 @media (max-width:759.98px){
-  .rack-jetons{ gap:6px; padding:3px 6px; bottom:3px; max-width:calc(100% - 8px) }
-  .rj-jetons{ gap:4px; padding:0 } .rj-jetons .jt{ --w:40px }
+  .rack-jetons{ gap:6px; padding:3px 6px; max-width:100%; flex-wrap:wrap; justify-content:center }
+  .rj-jetons{ gap:4px; padding:0 } .rj-jetons .jt{ --w:44px }
   .rj-bloc{ min-width:0 } .rj-bloc .rj-sous{ display:none }
   .coach-mise{ left:10px; bottom:4px; font-size:9px }
 }
-@media (max-height:520px){ .rack-jetons{ bottom:2px } .rj-jetons .jt{ --w:40px } .coach-mise{ display:none } }
+@media (max-height:520px){ .rack-jetons{ gap:4px; padding:2px 4px } .rj-jetons .jt{ --w:44px } .coach-mise{ display:none } }
+/* Le montant de la mise, à droite du cercle : une pile se compte à la tranche, pas à l'écran. */
+.cercle .jt-montant{ position:absolute; left:100%; top:50%; transform:translateY(-50%); margin-left:5px; font-style:normal;
+  font-family:"Martian Mono",monospace; font-weight:600; font-size:clamp(11px, calc(var(--w-table, 84px) * .14), 14px); color:var(--ivoire);
+  text-shadow:0 1px 2px rgba(0,0,0,.7); white-space:nowrap; pointer-events:none; animation:bascule 160ms var(--sec) }
 
 /* ══════════════════════════════════════════════════════════════════════
    LE CROUPIER (lot Croupier) — le personnage vit dans croupier.js, sa
@@ -1162,10 +1244,30 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
 /* Au moins 150 px de haut (jamais plus de 124 % de sa bande, jamais moins que la
    bande) : à 1280 × 800 la bande fait 116 px, et un croupier de 116 px a des bras
    de 126 px — le sabot était hors de portée. Le bas du buste passe sous le rack. */
-.cr-svg{ height:clamp(100%, 150px, 124%); width:auto; overflow:visible; display:block; flex:none; filter:drop-shadow(0 10px 14px rgba(0,0,0,.6)) }
+.cr-svg{ height:clamp(100%, 150px, 124%); width:auto; overflow:visible; display:block; flex:none; filter:drop-shadow(0 6px 6px rgba(0,0,0,.7)) drop-shadow(0 14px 18px rgba(0,0,0,.5)) }
 .cr-svg g, .cr-svg path{ transform-origin:0 0; transform-box:view-box }
 .cr-svg #cr-crSourcilG, .cr-svg #cr-crSourcilD, .cr-svg .cr-joue, .cr-svg #cr-crPaupG, .cr-svg #cr-crPaupD{ transition:transform .16s ease-out, opacity .2s }
 @media (prefers-reduced-motion:reduce){ .cr-svg *{ transition:none!important } }
+/* Les mains SUR le feutre (croupier.js, monterMains) : DANS le feutre, au-dessus de
+   tout ce qui y est posé (le sabot, les cartes en vol), coupées par son bord — la
+   manche sort de sous le rail. Le rig, lui, est COUPÉ au rail : ses avant-bras
+   n'existent plus à l'écran (mesuré le 05/09, ils croisaient les cartes du croupier).
+   Chaque main est un élément tourné depuis son ancre (sous le rail) et long de la
+   distance à sa cible : la manche remplit la longueur, la main vue de dessus est au
+   bout. Tout à l'échelle du croupier (--w-croupier). */
+.feutre>.cr-mains{ position:absolute; inset:0; z-index:9; pointer-events:none; display:none }
+.feutre>.cr-mains[hidden]{ display:none }
+.cr-avant{ position:absolute; left:0; top:0; width:0; height:0; transform-origin:0 0;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.5)) }
+.cr-avant .cr-manche{ position:absolute; left:-22px; right:10px; top:calc(var(--w-croupier, 89px) * -.15); height:calc(var(--w-croupier, 89px) * .30); border-radius:999px;
+  background:linear-gradient(180deg, color-mix(in oklab, var(--cr-manche,#1E242A) 72%, #fff) 0%, var(--cr-manche,#1E242A) 42%, color-mix(in oklab, var(--cr-manche,#1E242A) 55%, #000) 100%);
+  box-shadow:inset 0 -3px 6px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12) }
+.cr-avant .cr-hd{ position:absolute; left:calc(100% - var(--w-croupier, 89px) * .25); top:calc(var(--w-croupier, 89px) * -.2);
+  width:calc(var(--w-croupier, 89px) * .62); height:calc(var(--w-croupier, 89px) * .4); transform-origin:8% 50%; overflow:visible; display:block }
+@media (min-width:1000px){
+  .feutre>.cr-mains{ display:block }
+  #croupierScene{ clip-path:inset(-140px -80px 14px -80px) }
+}
 
 /* La bulle : ivoire, Instrument Serif, une pointe vers la tête. Elle vit dans
    .salle (pas dans #croupierScene, qui est aria-hidden) pour que l'aria-live
@@ -1291,7 +1393,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
   <!-- BANDE 1 — la barre : nom de la table, trois puces, le compte en petits chiffres, ⚙.
        Discrète : elle ne vole rien au feutre. -->
   <div class="laque hud" id="hud">
-    <div class="hud-table"><b id="tNom">—</b><span class="regles" id="tRegles"></span></div>
+    <div class="hud-table"><b id="tNom">—</b><span class="regles" id="tRegles"></span><span class="hud-limites" id="rjLimites" title="Mise minimale et maximale de la table">min 10 · max 1 000</span></div>
     <div class="hud-compte" id="hudCompte" title="Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.">
       <span><i>Courant</i><b id="tRC">—</b></span>
       <span><i>Vrai</i><b id="tTC">—</b></span>
@@ -1301,7 +1403,6 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
       <span class="solde" id="hudTapis" title="Tes jetons en main"><i>Tapis</i><b id="tTapis">1 000</b><em id="tNet" hidden></em></span>
       <span id="hudMise" title="Ta mise réelle, et en unités du minimum"><i>Mise</i><b id="tMiseReelle">—</b></span>
     </div>
-    <button class="icone" id="bReglagesTable" title="Réglages de la table" aria-label="Réglages de la table">⚙</button>
   </div>
 
   <!-- BANDE 2 — la salle. Le croupier se tient derrière la table (#croupierScene est
@@ -1327,7 +1428,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
         <svg class="motif" id="motif" aria-hidden="true" focusable="false"></svg>
         <svg class="lettrage" id="lettrage" aria-hidden="true" focusable="false"></svg>
         <div class="rangee-haute">
-          <div class="defausse" id="defausse"><i></i><span id="defausseN">0</span></div>
+          <div class="defausse" id="defausse"><i></i><span class="n"><span id="defausseN">0</span></span></div>
           <div class="croupier"><div class="main" id="dMain"></div><div class="qui">Croupier <b id="dScore">·</b></div></div>
           <div class="sabot" id="sabot">312</div>
         </div>
@@ -1337,33 +1438,40 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
       </div>
     </div>
     <div id="jetonsCalque" aria-hidden="true"></div>
-    <!-- Le rack du joueur (lot Jetons) : tes jetons, posés sur le rail devant toi. Visible pendant
-         la phase de mise seulement ; il glisse sous le rail dès que la donne commence. -->
+    <p class="coach-mise" id="coachMise" aria-live="polite"></p>
+  </div>
+
+  <!-- BANDE 3 — les coups, en verre teinté sur la scène. Le principal est en or.
+       On ne montre que ce qui se joue : pendant la mise, le rack de jetons prend la place
+       des coups (un croupier ne propose pas « Séparer » avant la donne) ; pendant la main,
+       « Distribuer » disparaît. Le CSS suit #v-table[data-phase]. -->
+  <div class="zone-actions">
+    <div class="rang-btn" id="coups">
+      <button class="btn" id="bDonne">Distribuer<kbd>&#9166;</kbd></button>
+      <button class="btn verre" id="bTire" disabled>Tirer<kbd>T</kbd></button>
+      <button class="btn verre" id="bReste" disabled>Rester<kbd>R</kbd></button>
+      <button class="btn verre" id="bDouble" disabled>Doubler<kbd>D</kbd></button>
+      <button class="btn verre" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
+      <button class="btn verre" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
+    </div>
+    <!-- Le rack du joueur (lot Jetons) : tes jetons, sur le rail devant toi. Visible pendant
+         la phase de mise seulement ; il cède la place aux coups dès que la donne commence.
+         Sur ordinateur il ne porte que les jetons : le tapis, la mise et les limites sont
+         déjà dans le bandeau, et un rack à deux cadrans faisait une barre à deux rangées
+         pendant la mise, à une pendant la main — toute la table sautait de 60 px à la donne. -->
     <div class="rack-jetons" id="rackJetons" data-min="10" data-max="1000">
-      <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b><span class="rj-sous" id="rjLimites">min 10 · max 1 000</span></div>
+      <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b></div>
       <div class="rj-jetons" id="rjJetons" role="group" aria-label="Jetons à miser"></div>
       <div class="rj-bloc"><span class="grave">Mise</span><b class="cadran" id="rjMise">0</b><span class="rj-sous" id="rjUnites">—</span></div>
       <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier jeton (Retour arrière)" aria-label="Retirer le dernier jeton">&#8630;</button>
       <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
     </div>
-    <p class="coach-mise" id="coachMise" aria-live="polite"></p>
-  </div>
-
-  <!-- BANDE 3 — les coups, en verre teinté sur la scène. Le principal est en or. -->
-  <div class="zone-actions">
-    <div class="rang-btn" id="coups">
-      <button class="btn" id="bDonne">Distribuer<kbd>D</kbd></button>
-      <button class="btn verre" id="bTire" disabled>Tirer<kbd>T</kbd></button>
-      <button class="btn verre" id="bReste" disabled>Rester<kbd>R</kbd></button>
-      <button class="btn verre" id="bDouble" disabled>Doubler<kbd>B</kbd></button>
-      <button class="btn verre" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
-      <button class="btn verre" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
-    </div>
     <div class="rang-table">
       <button class="btn verre mini" id="bMontrer" aria-pressed="false">Montrer le compte</button>
       <button class="btn verre mini" id="bMonCompte">Mon compte</button>
-      <button class="btn verre mini" id="bNouveauSabot">Nouveau sabot</button>
       <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
+      <button class="btn verre mini" id="bReglagesTable" title="Cadence, aide à la décision, croupier">Croupier &amp; cadence</button>
+      <button class="btn verre mini" id="bNouveauSabot" title="Jette la manche en cours et remélange">Nouveau sabot</button>
       <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
       <button class="btn verre mini" id="bReseau" hidden>Table</button>
     </div>
@@ -1570,18 +1678,26 @@ body.a-table main, body.a-table .tete{ max-width:min(1560px, 100% - 2*var(--gap)
       <button role="tab" aria-selected="false" data-mode="course">Course au comptage</button>
     </div>
     <p class="muet" id="mpModeTexte" style="max-width:72ch;margin-top:0">Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de 1 000 jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.</p>
-    <div class="champs" style="margin-top:14px">
-      <label class="ch"><span class="grave">Ton nom</span><input type="text" id="mpNom" placeholder="Léo" maxlength="18" style="width:150px"></label>
-      <div class="ch" id="mpCouleurs"><span class="grave">Ta couleur</span><div class="couleurs" id="mpCouleurBoite" role="radiogroup" aria-label="Ta couleur"></div></div>
+    <div class="mp-grille">
+      <div>
+        <div class="champs mp-ligne" style="margin-top:14px">
+          <label class="ch"><span class="grave">Ton nom</span><input type="text" id="mpNom" placeholder="Léo" maxlength="18" style="width:150px"></label>
+          <div class="ch" id="mpCouleurs"><span class="grave">Ton jeton</span><div class="couleurs" id="mpCouleurBoite" role="radiogroup" aria-label="Ton jeton"></div></div>
+        </div>
+        <div class="champs mp-ligne" style="margin-top:14px">
+          <button class="btn" id="mpCreer">Ouvrir une table</button>
+          <span class="muet mp-ou">ou</span>
+          <label class="ch"><span class="grave">Code de la table</span><input type="text" id="mpCode" placeholder="A7K2-M9PQ" maxlength="9" autocomplete="off" spellcheck="false" style="text-transform:uppercase;width:176px;font-size:20px;letter-spacing:.12em"></label>
+          <button class="btn creux" id="mpRejoindre">Rejoindre</button>
+        </div>
+        <p class="muet" id="mpEtat" style="font-size:var(--t-petit);margin-top:12px"></p>
+        <details class="mp-comment"><summary>Comment ça marche ?</summary>
+          <p class="muet" style="font-size:var(--t-fin);margin:6px 0 0">Sans serveur : les messages transitent par un courtier public, en clair — n'y écris rien de personnel. Celui qui ouvre la table tient le sabot ; les autres jouent leur main depuis leur navigateur. Sur une page publiée dont la politique de sécurité bloque les WebSocket, la table à plusieurs ne se connecte pas : elle se joue sur la version <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">GitHub Pages</a> de l'application — le reste marche partout.</p>
+        </details>
+      </div>
+      <!-- La table où l'on va s'asseoir : la carte du salon, telle quelle (reseau.js la remplit). -->
+      <div class="mp-table" id="mpTable"></div>
     </div>
-    <div class="champs" style="margin-top:14px">
-      <button class="btn" id="mpCreer">Ouvrir une table</button>
-      <span class="muet">ou</span>
-      <label class="ch"><span class="grave">Code de la table</span><input type="text" id="mpCode" placeholder="A7K2-M9PQ" maxlength="9" autocomplete="off" spellcheck="false" style="text-transform:uppercase;width:176px;font-size:20px;letter-spacing:.12em"></label>
-      <button class="btn creux" id="mpRejoindre">Rejoindre</button>
-    </div>
-    <p class="muet" id="mpEtat" style="font-size:var(--t-petit);margin-top:12px"></p>
-    <p class="muet" style="font-size:var(--t-fin);margin-top:4px">Sans serveur : les messages transitent par un courtier public, en clair. N'y écris rien de personnel. Dans un Artifact publié, les connexions WebSocket sont bloquées : la table à plusieurs se joue sur <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">pwrygrt72g-hue.github.io/compteur-hilo</a> — le reste de l'application marche partout.</p>
   </div>
 
   <div id="mpSalon" hidden>
@@ -3104,8 +3220,10 @@ function retournerCarte(el, c) {
   el.setAttribute("aria-label", carteNom(c)); el.dataset.r = c.r; el.dataset.s = CARTES_SUITES[c.suit] || "";
   // La main du croupier arrive sur la carte à 240 ms (croupier.js) : la carte
   // pivote SOUS elle, pas avant qu'elle l'ait touchée.
+  // La tranche (90°) doit tomber sur le coup de poignet du croupier (250 ms) : départ à
+  // 240 ms, 420 ms en ease-in-out (style.css) → la tranche passe vers 450 ms, juste après.
   if (matchMedia("(prefers-reduced-motion:reduce)").matches) el.classList.remove("cachee");
-  else setTimeout(() => el.classList.remove("cachee"), 200);
+  else setTimeout(() => el.classList.remove("cachee"), 240);
 }
 document.addEventListener("sabot:croupier-revele", e => retournerCarte(e.detail.el, e.detail.carte));
 
@@ -3146,8 +3264,14 @@ function dimensionnerCartes() {
   // la rangée haute a sa hauteur d'après cette valeur, et la hauteur des sièges dépend
   // de la rangée haute — une boucle, si on lisait H. 15,5 % : 90 px sur un portable
   // (feutre de 580), 100 sur un grand écran, 66 sur une tablette couchée.
-  const feutre = $("feutre"), Hf = feutre ? feutre.clientHeight : 0;
-  if (feutre && Hf > 0) feutre.style.setProperty("--w-croupier", Math.max(70, Math.min(106, Math.round(Hf * .19))) + "px");
+  // Posées sur le PLATEAU (pas seulement le feutre) : le rack du croupier, le sabot, la
+  // défausse et les jetons (jetons.js) suivent la même échelle — à 1920 × 1080 tout ce qui
+  // était posé sur un feutre de 1456 px restait à l'échelle de 1280.
+  const feutre = $("feutre"), plateau = $("plateau"), Hf = feutre ? feutre.clientHeight : 0;
+  // Sur un feutre bas (1024 × 768 : 369 px), 19 % ne laissait AUCUN trou entre les
+  // cartes du croupier et celles des sièges (mesuré le 05/09 : 371 contre 365) — l'arc
+  // doré passait sous les cartes. Le croupier prend un peu moins, l'arc retrouve sa place.
+  if (plateau && Hf > 0) plateau.style.setProperty("--w-croupier", Math.max(58, Math.min(106, Math.round(Hf * (Hf < 430 ? .17 : .19)))) + "px");
   // Plus de bande réservée au lettrage : le plafond (62 % de la hauteur d'un siège)
   // laisse la bande de lui-même dès qu'il y a de la place, et sur un écran bas l'arc
   // passe sous les cartes — comme sur une vraie table.
@@ -3179,7 +3303,7 @@ function dimensionnerCartes() {
       m.style.setProperty("--pas", Math.max(8, pas).toFixed(1) + "px");
     });
   });
-  if (feutre) feutre.style.setProperty("--w-table", (pellicule ? Math.round(.62 * sBase) : wTable) + "px");
+  if (plateau) plateau.style.setProperty("--w-table", (pellicule ? Math.round(.62 * sBase) : wTable) + "px");
   if (!pellicule && feutre) placerSieges(box, sieges, feutre);
 }
 /* Les sièges sur l'ARC. Le rail bas est courbe : un siège du bord posé en rang
@@ -3189,20 +3313,43 @@ function dimensionnerCartes() {
    HORS transformation (offsetTop/offsetLeft), sinon on mesurerait le résultat. */
 function placerSieges(box, sieges, feutre) {
   const W = feutre.clientWidth, H = feutre.clientHeight; if (W < 320 || H < 160) return;
-  const cf = courbeFeutre(feutre, W, H), n = sieges.length, marge = 22;
-  sieges.forEach((s, i) => {
-    const ecart = i - (n - 1) / 2;
+  const cf = courbeFeutre(feutre, W, H), n = sieges.length;
+  // La marge au rail : 22 px, mais 38 dans les COINS, où court le lettrage du rail
+  // (table.js : baseline à 6 + petit du bord, lettres vers le centre) — mesuré le
+  // 05/09, « MARC » se posait sur « HIT SOFT 17 ». Le texte occupe les coins jusqu'à
+  // l'angle 126° de l'ellipse, soit x ≈ 0,42 rx du bord.
+  const petit = Math.max(11, Math.round(W * .013)), bande = 6 + petit + Math.round(petit * .75) + 6, zone = cf.rx * .42 + 16;
+  const marge = x => (x < zone || x > W - zone) ? bande : 22;
+  // Chaque PIÈCE du siège est tenue au-dessus de la courbe sur SA largeur : le cercle
+  // et le nom, en bas, sont étroits ; les cartes, en haut, sont loin du rail. Mesuré le
+  // 05/09 avec la demi-largeur de la boîte (99 px pour 65 de contenu) : les sièges
+  // intérieurs remontaient de 33 px et leurs cartes couvraient l'arc doré — pour un
+  // rail que seul le cercle, 130 px plus bas, aurait pu toucher. La remontée est
+  // prise PAR PAIRE (miroir) : « Marc » 35 px et « Léa » 23 px faisaient 11 px d'écart.
+  const wT = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--w-table")) || 84;
+  // Le haut d'une pièce dans la boîte des sièges, en sommant les offsetTop jusqu'à elle :
+  // un siège transformé peut être ou non l'offsetParent de ses pièces selon le moteur.
+  const hautDans = el => { let y = 0; for (let e = el; e && e !== box; e = e.offsetParent) y += e.offsetTop; return y; };
+  const lifts = sieges.map(s => {
     const cx = box.offsetLeft + s.offsetLeft + s.offsetWidth / 2;
-    const bas = box.offsetTop + s.offsetTop + s.offsetHeight - 4;
-    // La demi-largeur du contenu : la plus large des pièces (mains, cercle, nom).
-    let demi = 40;
-    s.querySelectorAll(".mains, .cercle, .nom").forEach(p => { demi = Math.max(demi, p.offsetWidth / 2); });
-    demi += 12;
-    const yCourbe = Math.min(cf.y(cx - demi), cf.y(cx + demi)) - marge;
-    const lift = Math.max(0, Math.round(bas - yCourbe));
-    s.style.setProperty("--lift", -lift + "px");
+    let lift = 0;
+    s.querySelectorAll(".mains, .cercle, .nom").forEach(p => {
+      // Les cartes : une largeur FIXE (un éventail de trois), sinon la 3ᵉ carte déplacerait le siège.
+      const demi = (p.classList.contains("mains") ? Math.max(p.offsetWidth, wT * 2.2) : p.offsetWidth) / 2 + 10;
+      const bas = box.offsetTop + hautDans(p) + p.offsetHeight;
+      const yCourbe = Math.min(cf.y(cx - demi) - marge(cx - demi), cf.y(cx + demi) - marge(cx + demi));
+      lift = Math.max(lift, Math.round(bas - yCourbe));
+    });
+    return lift;
+  });
+  sieges.forEach((s, i) => {
+    const ecart = i - (n - 1) / 2, j = n - 1 - i;
+    s.style.setProperty("--lift", -Math.max(lifts[i], lifts[j]) + "px");
     s.style.setProperty("--tilt", (-Math.sign(ecart) * Math.min(7, Math.abs(ecart) * 3.5)).toFixed(1) + "deg");
   });
+  // Les sièges viennent de bouger : l'arc doré se place dans le trou qu'ils laissent,
+  // et l'observateur du feutre ne voit pas un siège qui remonte. Idempotent (clé).
+  if (typeof rendreLettrage === "function") rendreLettrage();
 }
 if (window.ResizeObserver && $("sieges")) new ResizeObserver(() => dimensionnerCartes()).observe($("sieges"));
 
@@ -3319,13 +3466,27 @@ const NOMS = ["Marc", "Sonia", "Karim", "Léa", "Paul", "Nadia"];
 const vitesse = () => DB.cadence;
 // La donne INITIALE va plus vite que les tirages : douze cartes à 900 ms font
 // onze secondes d'attente avant de pouvoir jouer (mesuré le 04/09), et à 400 ms
-// avec un vol de 180 ms les cartes « tombaient » (Léo). Ici la moitié de la
-// cadence, bornée, et le vol remplit l'intervalle (--don suit --intervalle) : un
-// croupier lancé, pas un bégaiement. Les tirages, où l'on compte carte par
+// avec un vol de 180 ms les cartes « tombaient » (Léo). Mesuré à nouveau le 05/09
+// à la cadence par défaut : 5,4 s avant de voir sa main, et à 18 s le voisin
+// réfléchissait encore. Un vrai croupier distribue douze cartes en quatre
+// secondes. Ici 40 % de la cadence, entre 220 et 380 ms, et le vol remplit
+// l'intervalle (--don suit --intervalle). Les tirages, où l'on compte carte par
 // carte, gardent la cadence pleine. T.rythme > 0 = on est dans la donne initiale.
-const cadenceDonne = () => Math.max(300, Math.min(600, Math.round(vitesse() * .5)));
-const rythme = () => T.rythme || vitesse();
+const cadenceDonne = () => Math.max(220, Math.min(380, Math.round(vitesse() * .4)));
+// Le temps de réflexion d'un VOISIN : réglé à part (« rythme des voisins »), parce
+// qu'il n'a rien à voir avec la cadence à laquelle on compte les cartes.
+if (DB.voisins === undefined) DB.voisins = 450;
+const voisins = () => Math.max(120, Math.min(1500, DB.voisins || 450));
+const rythme = () => T.turbo ? 120 : (T.rythme || vitesse());
 const poserIntervalle = ms => $("plateau").style.setProperty("--intervalle", ms + "ms");
+// Une attente de la table : un clic sur le feutre pendant que les voisins jouent
+// passe tout à la vitesse minimale (T.turbo), jusqu'à ton tour ou au règlement.
+const pause = ms => dodo(T.turbo ? Math.min(ms, 90) : ms);
+function turbo(on) {
+  if (!!T.turbo === !!on) return;
+  T.turbo = !!on; poserIntervalle(rythme());
+  $("v-table").classList.toggle("turbo", T.turbo);
+}
 // Une annonce qui change ne surgit pas : elle bascule.
 function annoncer(txt) {
   const a = $("annonce"); if (a.textContent === txt) return;
@@ -3349,6 +3510,18 @@ const ISSUE_BUS = { "gagné": "gagne", "perdu": "perd", "sauté": "bust", "black
 function sauter(si, hi) {
   const h = T.sieges[si].mains[hi]; h.result = "sauté"; h.emis = true; rendreSieges();
   emettre("main-fin", { siege: si, main: hi, toi: T.sieges[si].toi, issue: "bust", montant: -(h.bet || 1) * (h.doubled ? 2 : 1) });
+  // Le croupier ramasse la main sautée tout de suite (cartes ET mise), pas au règlement :
+  // on laisse 500 ms pour LIRE le bust, puis les cartes glissent à la défausse et le
+  // badge reste seul sur le siège vide. La main garde ses cartes dans l'état (le
+  // compte les a vues) ; `ramassee` empêche seulement de les redessiner.
+  setTimeout(async () => {
+    if (h.result !== "sauté" || h.ramassee || !T.enJeu) return;
+    const hote = $(`m_${si}_${hi}`); if (!hote) return;
+    h.ramassee = true;
+    await ramasser([...hote.querySelectorAll(".carte")]);
+    if (hote.isConnected) { hote.innerHTML = ""; const sc = hote.parentNode && hote.parentNode.querySelector(".score"); if (sc) sc.textContent = ""; }
+    T.defausse += h.cards.length; h.defaussee = true; rafraichirBarre();
+  }, 500);
 }
 function abandonner(si, hi) {
   const h = T.sieges[si].mains[hi]; h.surrendered = true; h.result = "abandon"; h.emis = true; rendreSieges();
@@ -3393,7 +3566,7 @@ async function nouveauSabot(o) {
    puces — le nombre de jeux, H17/S17, 3:2 ou 6:5 — plus la mélangeuse quand
    il y en a une, parce que celle-là tue le comptage. */
 function poserLieu(t) {
-  $("v-table").dataset.lieu = t.id;
+  $("v-table").dataset.lieu = t.id; $("v-table").dataset.sieges = Math.max(1, Math.min(t.sieges, 6));
   $("tNom").textContent = t.nom + " · " + t.lieu;
   const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
   const puces = [...tmp.children], garde = puces.slice(0, 3);
@@ -3428,12 +3601,28 @@ function rendreLettrage() {
   // Tout est mesuré HORS transformation (offsetTop) : les sièges du bord sont
   // remontés sur l'arc par un transform, ce n'est pas leur place dans le flux.
   const basHaut = rangee.offsetTop + rangee.offsetHeight;
-  const basAnnonce = basHaut + 4;
-  let hautSieges = H;
-  box.querySelectorAll(".siege").forEach(sg => { hautSieges = Math.min(hautSieges, box.offsetTop + sg.offsetTop); });
-  hautSieges = Math.round(hautSieges);
+  // Le grand arc se place dans le VRAI trou entre les cartes du croupier et celles
+  // des sièges, mesuré à l'ÉCRAN : les sièges sont remontés et penchés par un
+  // transform, leur place dans le flux ne dit pas où sont leurs cartes. Mesuré le
+  // 05/09 à 1280 × 800 : la rangée du croupier finissait à 410 et les cartes des
+  // sièges 2 et 4 commençaient à 408 — l'arc calculé « entre les deux » passait sous
+  // elles. Le trou existe au CENTRE (sous la main du croupier) et sur les CÔTÉS
+  // (le sourire de l'arc remonte au-dessus des sièges intérieurs) : on contraint
+  // l'arc à la verticale de chaque siège, et la taille cède si la place manque.
+  const F = f.getBoundingClientRect();
+  const dm = $("dMain"), rdm = dm ? dm.getBoundingClientRect() : null;
+  const basCentre = Math.round(Math.max(rdm && rdm.height ? rdm.bottom - F.top : 0, rangee.offsetTop + rangee.offsetHeight - 8));
+  // La réserve d'un siège est FIXE (largeur d'un éventail de trois cartes, haut de
+  // la boîte .mains) : en phase de mise la boîte est vide, 0 px de large, et l'arc
+  // calculé sur elle changeait de place à la première carte distribuée.
+  const wT = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--w-table")) || 84;
+  const zones = [...box.querySelectorAll(".siege")].map(sg => {
+    const m = sg.querySelector(".mains") || sg, r = m.getBoundingClientRect(), rs = sg.getBoundingClientRect();
+    const cx = rs.left + rs.width / 2 - F.left, demi = Math.max(r.width / 2, wT * 1.1);
+    return { l: Math.round(cx - demi), r: Math.round(cx + demi), haut: Math.round(r.top - F.top) };
+  }).filter(z => z.r > z.l);
   const t = tableCourante(), tx = texteLettrage(t);
-  const cle = [W, H, basHaut, basAnnonce, hautSieges, t.id].join("|");
+  const cle = [W, H, basHaut, basCentre, zones.map(z => z.l + ":" + z.r + ":" + z.haut).join(","), t.id].join("|");
   if (cle === LETTRAGE.cle) return;
   // Jamais effacé au milieu d'une manche : un arc qui disparaît d'un coup se voit plus
   // qu'un arc qui passe sous une carte. Il se recalcule à la manche suivante.
@@ -3448,7 +3637,7 @@ function rendreLettrage() {
     const [x1, y1] = p(a1), [x2, y2] = p(a2);
     return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 ${a2 > a1 ? 1 : 0} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
   };
-  const petit = Math.max(9, Math.round(W * .0115)), grand = Math.max(14, Math.round(W * .021));
+  const petit = Math.max(11, Math.round(W * .013)), grand = Math.max(14, Math.round(W * .021));
   let out = "", n = 0;
   const ligne = (texte, d, a1, a2, taille, classe) => {
     n++; out += `<defs><path id="lt${n}" d="${d}"/></defs>
@@ -3460,14 +3649,31 @@ function rendreLettrage() {
   ligne(tx.croupier, arcCoin("G", 6 + petit, 179, 126), 0, 0, petit, "rail");
   ligne(tx.assurance, arcCoin("D", 6 + petit, 54, 1), 0, 0, petit, "rail");
   // Le paiement du blackjack, en grand, dans la bande entre la main du croupier
-  // et les sièges — TOUJOURS : un arc concentrique au rail (un sourire), qui passe
-  // sous une carte quand il le faut, comme sur une vraie table.
-  const place = Math.max(grand + 8, hautSieges - basAnnonce);
-  const yBas = basAnnonce + Math.max(grand + 6, Math.min(place - 4, place / 2 + grand / 2));
-  const rx = W * .34, ry = rx * .42, cy = yBas - ry, A = 40;
+  // et les sièges — TOUJOURS : un arc concentrique au rail (un sourire). Plafond :
+  // à la verticale de chaque siège, l'arc reste au-dessus de ses cartes (le point de
+  // l'arc le plus bas dans l'emprise du siège est le plus proche du centre).
+  // Plancher : au centre, le haut des lettres passe sous les cartes du croupier.
+  // Si les deux se contredisent, la taille descend jusqu'à 15 px ; en dessous, l'arc
+  // garde sa taille et passe sous une carte, comme sur une vraie table.
+  const rx = W * .34, ry = rx * .42, A = 40, cosA = Math.cos((90 - A) * Math.PI / 180);
+  let plafond = Infinity;
+  zones.forEach(z => {
+    const xp = Math.max(z.l, Math.min(z.r, W / 2)), u = Math.abs(xp - W / 2) / rx;
+    if (u >= cosA) return;
+    plafond = Math.min(plafond, z.haut - 3 + ry * (1 - Math.sqrt(1 - u * u)));
+  });
+  if (!isFinite(plafond)) plafond = H - 40;
+  let taille = grand, plancher = basCentre + 3 + taille * .78;
+  if (plafond < plancher) { taille = Math.max(15, Math.floor((plafond - basCentre - 3) / .78)); plancher = basCentre + 3 + taille * .78; }
+  // Plus de 2 px sous une carte même à 15 px : l'arc passerait sous les éventails
+  // des sièges intérieurs (vu à 1024 × 768), illisible et pris pour un défaut. On
+  // le retire, le rail garde ses deux lignes.
+  const cache = plafond < plancher - 2;
+  const yBas = plafond >= plancher ? plancher + (plafond - plancher) * .5 : plancher;
+  const cy = yBas - ry;
   const p = a => { const r = a * Math.PI / 180; return [W / 2 + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
   const [x1, y1] = p(90 + A), [x2, y2] = p(90 - A);
-  ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, 0, 0, grand, "grand");
+  if (!cache) ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, 0, 0, taille, "grand");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = out;
   // Un texte plus long que son arc est coupé aux DEUX bouts (ancré au milieu) :
@@ -3531,9 +3737,9 @@ function rendreSieges() {
       const w = document.createElement("div");
       w.className = "m" + (T.actif && T.actif.siege === si && T.actif.main === hi ? " encours" : "");
       const md = document.createElement("div"); md.className = "main"; md.id = `m_${si}_${hi}`;
-      h.cards.forEach(c => md.appendChild(carteEl(c)));
+      if (!h.ramassee) h.cards.forEach(c => md.appendChild(carteEl(c)));
       const sc = document.createElement("div"); sc.className = "score";
-      sc.textContent = h.cards.length ? E.handTotal(h.cards) + (h.doubled ? " ×2" : "") : "";
+      sc.textContent = h.cards.length && !h.ramassee ? E.handTotal(h.cards) + (h.doubled ? " ×2" : "") : "";
       const rs = document.createElement("div"); rs.className = "issue " + (ISSUE[h.result] || "");
       rs.textContent = h.result || "";
       // La pastille bascule à sa PREMIÈRE apparition seulement : rendreSieges()
@@ -3612,10 +3818,26 @@ function boutons(o) {
 // `cr` = le rect de la CARTE elle-même, mesuré avant l'animation. Mesuré sur le
 // centre de la main, la k-ième carte partait à (k − (n−1)/2)·pas du sabot — la 4ᵉ
 // carte du croupier naissait 55 px à droite du sabot.
+// ⚠️ Les sièges du bord sont TOURNÉS (--tilt, ±7°) : un vecteur calculé à l'écran
+// puis appliqué dans un siège tourné est lui-même tourné. Mesuré le 05/09 : la carte
+// de Marc naissait 88 px sous le sabot, entière sur le feutre. On exprime le vecteur
+// dans le repère du siège (inverse de sa transformation), et la rotation de la carte
+// en vol retire --tilt pour garder l'angle à l'écran.
 function animerDepuisSabot(e, cr) {
   const s = $("sabot").getBoundingClientRect();
-  e.style.setProperty("--dx", (s.left + s.width / 2 - (cr.left + cr.width / 2)) + "px");
-  e.style.setProperty("--dy", (s.top + 6 - cr.top) + "px");
+  // Le CENTRE de la carte part du centre du sabot : à l'échelle .74, elle tient tout
+  // entière dans sa boîte et en SORT. Mesuré le 05/09 avec le haut de la carte à
+  // sabot.top + 6 : centrée 20 px sous le milieu du sabot, elle dépassait de 18 px
+  // sous lui — une carte entière posée sur le feutre avant de partir.
+  let dx = s.left + s.width / 2 - (cr.left + cr.width / 2), dy = s.top + s.height * .5 - (cr.top + cr.height / 2);
+  const siege = e.closest(".siege");
+  if (siege && window.DOMMatrixReadOnly) {
+    try {
+      const inv = new DOMMatrixReadOnly(getComputedStyle(siege).transform).inverse();
+      const v = inv.transformPoint(new DOMPoint(dx, dy, 0, 0)); dx = v.x; dy = v.y;
+    } catch (err) {}
+  }
+  e.style.setProperty("--dx", dx + "px"); e.style.setProperty("--dy", dy + "px");
   e.classList.add("carte--entre");
 }
 async function tirer(main, hote, cachee, qui) {
@@ -3633,11 +3855,16 @@ async function tirer(main, hote, cachee, qui) {
   // Une carte de plus dans un siège : l'éventail se resserre pour qu'elle tienne.
   // Jamais pour le croupier : sa rangée a une géométrie fixée avant la première carte.
   if (qui && qui.siege !== "croupier") dimensionnerCartes();
-  if (!matchMedia("(prefers-reduced-motion:reduce)").matches)
+  if (!matchMedia("(prefers-reduced-motion:reduce)").matches) {
+    // Mesuré le 05/09 : la 1re carte glissait 150 ms AVANT que la 2e n'atterrisse. Elle
+    // attend les trois quarts du vol (--don) : elle bouge quand on la touche.
+    const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
     [...hote.children].slice(0, -1).forEach((x, i) => {
       const dx = avant[i] - x.getBoundingClientRect().left;
-      if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 220, easing: "cubic-bezier(.3,0,.2,1)" });
+      if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }],
+        { duration: 200, delay: Math.round(don * .75), easing: "cubic-bezier(.3,0,.2,1)", fill: "backwards" });
     });
+  }
   // Mesurée AVANT l'animation : pendant le vol, le rect de la carte est celui
   // du sabot, pas celui de son point d'arrivée.
   const cr = e.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
@@ -3656,14 +3883,19 @@ async function tirer(main, hote, cachee, qui) {
     vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
   animerDepuisSabot(e, cr); son("carte");
   if (!cachee) { T.rc += valeurCompte(c); T.vues++; }
-  rafraichirBarre(); await dodo(rythme()); return c;
+  rafraichirBarre(); await pause(rythme()); return c;
+}
+// Un score qui change ne surgit pas : il bascule, comme une pastille d'issue.
+function poserScore(el, v) {
+  if (!el) return; v = String(v); if (el.textContent === v) return;
+  el.textContent = v; el.classList.remove("bascule"); void el.offsetWidth; el.classList.add("bascule");
 }
 async function tirerSiege(si, hi) {
   const st = T.sieges[si], h = st && st.mains[hi], hote = $(`m_${si}_${hi}`);
   if (!h || !hote) return;
   await tirer(h.cards, hote, false, { siege: si, main: hi });
   const w = $(`m_${si}_${hi}`);
-  if (w && w.parentNode) w.parentNode.querySelector(".score").textContent = E.handTotal(h.cards) + (h.doubled ? " ×2" : "");
+  if (w && w.parentNode) poserScore(w.parentNode.querySelector(".score"), E.handTotal(h.cards) + (h.doubled ? " ×2" : ""));
 }
 // La carte cachée est un DOS posé dans la main : on ne la remplace pas, on la
 // RETOURNE. C'est cartes.js qui dessine la face et fait tourner le pivot, sur
@@ -3677,10 +3909,10 @@ async function revelerCachee() {
   // 200 ms, 520 ms de retournement), et le total n'apparaît qu'à mi-retournement,
   // quand la face devient lisible — pas avant que la carte ait bougé.
   emettre("croupier-revele", { carte: c, total: E.handTotal(T.croupier), el: e });
-  await dodo(reduit ? 30 : 460);
+  await pause(reduit ? 30 : 460);
   son("carte");
-  rafraichirBarre(); $("dScore").textContent = E.handTotal(T.croupier);
-  await dodo(reduit ? 30 : 440);
+  rafraichirBarre(); poserScore($("dScore"), E.handTotal(T.croupier));
+  await pause(reduit ? 30 : 440);
 }
 // Doubler et séparer engagent une seconde mise : il faut l'avoir en main (DB.tapis, lot Jetons).
 const peutPayer = (h, st) => !st.toi || typeof DB.tapis !== "number" || DB.tapis >= h.bet;
@@ -3713,7 +3945,7 @@ function actionAvecEcart(cards, up, st, h, tc) {
 
 async function distribuer() {
   if (T.occupe || T.enJeu) return;
-  T.occupe = true; boutons({}); ac();
+  T.occupe = true; turbo(false); boutons({}); ac();
   const t = tableCourante();
   // Une mélangeuse continue remet les cartes jouées dans le sabot après chaque main :
   // le compte ne s'accumule jamais. C'est la seule façon honnête de la simuler.
@@ -3731,7 +3963,7 @@ async function distribuer() {
   // Les cartes de la manche précédente sont RAMASSÉES vers la défausse, pas
   // effacées : un balayage en éventail, une carte après l'autre, puis le tas grimpe.
   await ramasser();
-  for (const st of T.sieges) for (const h of st.mains) T.defausse += h.cards.length;
+  for (const st of T.sieges) for (const h of st.mains) if (!h.defaussee) T.defausse += h.cards.length;
   T.defausse += T.croupier.length; T.croupier = []; T.actif = null;
   // Chaque siège joue la mise qu'il a posée dans son cercle (st.mise, lot Jetons) ; `|| 1` = sans jetons, une unité.
   for (const st of T.sieges) st.mains = [E.newHand([], st.mise || 1)];
@@ -3744,7 +3976,7 @@ async function distribuer() {
   for (let tour = 0; tour < 2; tour++) {
     for (let si = 0; si < T.sieges.length; si++) await tirerSiege(si, 0);
     // Sans carte cachée, le croupier ne prend qu'une carte : c'est toute la règle.
-    if (tour === 0) { await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.cardValue(T.croupier[0]); }
+    if (tour === 0) { await tirer(T.croupier, $("dMain"), false, CROUPIER); poserScore($("dScore"), E.cardValue(T.croupier[0])); }
     else if (r.holeCard) await tirer(T.croupier, $("dMain"), true, CROUPIER);
   }
   T.rythme = 0; poserIntervalle(vitesse());
@@ -3761,7 +3993,7 @@ async function distribuer() {
     }
   }
   if (r.holeCard && r.peek && E.cardValue(T.croupier[0]) >= 10) {
-    annoncer("Le croupier vérifie sa carte…"); await dodo(vitesse() * 1.4);
+    annoncer("Le croupier vérifie sa carte…"); await pause(vitesse() * 1.1);
     if (E.handTotal(T.croupier) === 21) { await revelerCachee(); annoncer("Blackjack du croupier."); T.occupe = false; return regler(); }
     annoncer("");
   }
@@ -3770,17 +4002,21 @@ async function distribuer() {
 // Le ramassage : chaque carte du feutre glisse vers la défausse, en éventail
 // (28 ms d'écart), à l'échelle du tas ; puis le DOM est vidé. En mouvement réduit,
 // rien ne vole. Le --pile de la défausse a déjà sa transition.
-async function ramasser() {
-  const cartes = [...$("feutre").querySelectorAll(".main .carte")]; if (!cartes.length) return;
-  if (matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+async function ramasser(cartes) {
+  cartes = cartes || [...$("feutre").querySelectorAll(".main .carte")]; if (!cartes.length) return;
+  if (matchMedia("(prefers-reduced-motion:reduce)").matches) {
+    cartes.forEach(c => c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: "forwards" }));
+    await dodo(130); return;
+  }
   const d = $("defausse").getBoundingClientRect(); if (!d.width) return;
+  const vite = T.turbo ? .45 : 1;
   cartes.forEach((c, i) => {
     const r = c.getBoundingClientRect();
-    c.animate([{ transform: "none", opacity: 1 },
-      { transform: `translate(${d.left + d.width / 2 - r.left - r.width / 2}px,${d.top + 8 - r.top}px) rotate(-8deg) scale(.7)`, opacity: .12 }],
-      { duration: 260, delay: i * 28, easing: "cubic-bezier(.3,0,.2,1)", fill: "forwards" });
+    c.animate([{ transform: "none", opacity: 1 }, { opacity: 1, offset: .7 },
+      { transform: `translate(${d.left + d.width / 2 - r.left - r.width / 2}px,${d.top + 8 - r.top}px) rotate(-8deg) scale(.6)`, opacity: 0 }],
+      { duration: 260 * vite, delay: i * 28 * vite, easing: "cubic-bezier(.3,0,.2,1)", fill: "forwards" });
   });
-  await dodo(260 + cartes.length * 28);
+  await dodo((260 + cartes.length * 28) * vite);
 }
 function demanderAssurance() {
   return new Promise(res => {
@@ -3812,7 +4048,7 @@ async function jouerSieges(depuis) {
       if (E.isBlackjack(h) && st.mains.length === 1) { h.result = "blackjack"; rendreSieges(); continue; }
       T.actif = { siege: si, main: hi }; marquerActif();
       emettre("tour", { siege: si, main: hi, toi: st.toi });
-      if (st.toi) { T.occupe = false; return tonTour(); }
+      if (st.toi) { T.occupe = false; turbo(false); return tonTour(); }
       await jouerAuto(si, hi);
     }
   }
@@ -3824,7 +4060,7 @@ async function jouerAuto(si, hi) {
   for (;;) {
     if (h.fromSplitAces && !r.hitSplitAces && h.cards.length === 2) break;
     const a = actionBase(h.cards, T.croupier[0], st, h);
-    await dodo(vitesse() * 1.1);
+    await pause(voisins());
     if (a === "U") { abandonner(si, hi); return; }
     if (a === "S") break;
     if (a === "P") { await separer(si, hi); h = st.mains[hi]; continue; }
@@ -3882,13 +4118,13 @@ async function jouerCroupier() {
   emettre("tour", { siege: "croupier", main: 0, toi: false });
   const vivants = T.sieges.some(st => st.mains.some(h => !h.surrendered && !E.isBust(h.cards) && !(E.isBlackjack(h) && st.mains.length === 1)));
   if (r.holeCard) await revelerCachee();
-  else { await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.handTotal(T.croupier); }
-  await dodo(vitesse() * .5);
+  else { await tirer(T.croupier, $("dMain"), false, CROUPIER); poserScore($("dScore"), E.handTotal(T.croupier)); }
+  await pause(vitesse() * .5);
   if (vivants) {
     for (;;) {
       const t = E.handTotal(T.croupier), soft = E.isSoft(T.croupier);
       if (t > 21 || t > 17 || (t === 17 && !(r.h17 && soft))) break;
-      await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.handTotal(T.croupier);
+      await tirer(T.croupier, $("dMain"), false, CROUPIER); poserScore($("dScore"), E.handTotal(T.croupier));
     }
   }
   await regler();
@@ -3906,7 +4142,7 @@ async function regler() {
     if (st.toi) { miennes.push(res.result); net += res.net; }
     if (!h.emis) fins.push({ siege: si, main: hi, toi: st.toi, issue: issues[si][hi], montant: res.net });
   }); });
-  T.solde += net;
+  T.solde += net; turbo(false);
   T.actif = null; rendreSieges(); T.mains++; T.enJeu = false; T.occupe = false; rafraichirBarre(); garder();
   annoncer(`Croupier ${dt > 21 ? "saute à " + dt : dt}. Toi : ${miennes.join(" · ")}.`);
   // Les mains d'abord, une par une, puis la manche : un écouteur peut compter
@@ -3917,6 +4153,10 @@ async function regler() {
   boutons({ donne: true });
 }
 $("bDonne").onclick = distribuer;
+$("feutre").addEventListener("click", e => {
+  if (e.target.closest("button, .bulle, input, select")) return;
+  if (T.enJeu && T.occupe && !$("v-table").dataset.reseau) turbo(true);
+});
 $("bNouveauSabot").onclick = () => nouveauSabot();
 // Les réglages d'installation — cadence, aide — se règlent une fois et n'ont
 // rien à faire sur le feutre à côté des coups qu'on joue à chaque main.
@@ -3926,6 +4166,9 @@ $("bReglagesTable").onclick = () => {
       <label class="ch"><span class="grave">Cadence du croupier</span>
         <input type="range" id="rgCadence" min="120" max="1400" step="20" value="${DB.cadence}">
         <span class="muet" id="rgCadenceL">${fr1(DB.cadence / 1000)} s par carte · donne initiale à ${fr1(cadenceDonne() / 1000)} s</span></label>
+      <label class="ch"><span class="grave">Rythme des voisins</span>
+        <input type="range" id="rgVoisins" min="120" max="1500" step="30" value="${voisins()}">
+        <span class="muet" id="rgVoisinsL">${fr1(voisins() / 1000)} s de réflexion par décision — un clic sur le feutre pendant qu'ils jouent passe en accéléré</span></label>
       <label class="ch ligne"><input type="checkbox" id="rgConseil"${DB.conseil ? " checked" : ""}>
         Afficher la stratégie de base pendant mon tour</label>
     </div>`);
@@ -3933,6 +4176,10 @@ $("bReglagesTable").onclick = () => {
     DB.cadence = +$("rgCadence").value; garder();
     $("rgCadenceL").textContent = fr1(DB.cadence / 1000) + " s par carte · donne initiale à " + fr1(cadenceDonne() / 1000) + " s";
     poserIntervalle(rythme());
+  };
+  $("rgVoisins").oninput = () => {
+    DB.voisins = +$("rgVoisins").value; garder();
+    $("rgVoisinsL").textContent = fr1(voisins() / 1000) + " s de réflexion par décision — un clic sur le feutre pendant qu'ils jouent passe en accéléré";
   };
   $("rgConseil").onchange = () => {
     DB.conseil = $("rgConseil").checked; garder();
@@ -4151,6 +4398,16 @@ function pileEl(montant, w) {
   return tas;
 }
 
+/* ── La taille des jetons POSÉS : celle de la table (--w-table, posée par cartes.js
+   sur le plateau), 56 % d'une carte pour ta pile, 46 % pour celle d'un voisin. Le
+   clone en vol a la taille d'ARRIVÉE — mesuré le 05/09, un clone de 40 px qui
+   devenait une pile de 34 au contact faisait un accroc de 15 %. */
+function tailleJeton(toi) {
+  const w = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--w-table")) || 84;
+  return Math.round(w * (toi ? .56 : .46));
+}
+const tailleRack = () => { const b = $("rjJetons").firstElementChild; return b ? (parseFloat(getComputedStyle(b).getPropertyValue("--w")) || 46) : 46; };
+
 /* ── L'état ─────────────────────────────────────────────────────────────── */
 const J = { phase: "attente", mise: 0, poses: [], attente: 0 };
 if (typeof DB.tapis !== "number" || isNaN(DB.tapis)) DB.tapis = TAPIS_DEPART;
@@ -4208,8 +4465,14 @@ function vol(o) {
     ? [{ transform: "translate(0,0)", opacity: 0 }, { transform: `translate(${dx * .3}px,${dy * .3}px)`, opacity: 1, offset: .3 }, { transform: `translate(${dx}px,${dy}px)`, opacity: 1 }]
     : [{ transform: "translate(0,0)" }, { transform: `translate(${dx}px,${dy}px)` }];
   const a = porte.animate(trajet, { duration: dur, easing: ease, fill: "forwards" });
+  // Le jeton part à la taille de là où il était (le rack : 46 px) et prend celle
+  // d'arrivée dans le premier tiers du vol — jamais au contact.
+  if (o.de && o.de !== w) porte.animate([{ scale: (o.de / w).toFixed(3) }, { scale: "1", offset: .3 }, { scale: "1" }], { duration: dur, easing: "ease-out", fill: "forwards" });
   if (!o.glisse) {
-    corps.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(300deg)" }], { duration: dur, easing: "linear", fill: "forwards" });
+    // Mesuré le 05/09 : rotation LINÉAIRE de 300° sous un porteur en cubic-bezier, les
+    // 130 dernières ms tournaient de 125° pour 20 px de course, et la pile posée est à 0°
+    // (300° ≡ −60° : le chiffre sautait au contact). Même courbe, tour complet.
+    corps.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], { duration: dur, easing: ease, fill: "forwards" });
     const porte = corps.firstElementChild;
     if (porte) porte.animate([{ transform: "translateY(0) scale(1)" }, { transform: "translateY(-26px) scale(1.1)", offset: .38 }, { transform: "translateY(0) scale(1)" }],
       { duration: dur, easing: "ease-out", fill: "forwards" });
@@ -4253,20 +4516,25 @@ function misesVisibles(st) {
 function garnirCercles() {
   T.sieges.forEach((st, si) => {
     const ce = $("cercle_" + si); if (!ce) return;
-    ce.querySelectorAll(".jt-mises").forEach(x => x.remove());
+    ce.querySelectorAll(".jt-mises, .jt-montant").forEach(x => x.remove());
     const parts = misesVisibles(st);
     ce.classList.toggle("garni", parts.length > 0);
     if (!parts.length) return;
     const box = document.createElement("div"); box.className = "jt-mises";
-    // 34 px dans un cercle de 72 : la pile se lit DANS la case, elle ne la bouche pas.
-    parts.forEach(m => box.appendChild(pileEl(m, st.toi ? 34 : 30)));
+    const w = tailleJeton(st.toi);
+    parts.forEach(m => box.appendChild(pileEl(m, w)));
     ce.appendChild(box);
+    // Le montant, en clair, à droite du cercle : une pile se compte à la tranche, et
+    // une tranche de 3 px ne se lit pas. Le croupier annonce la mise, on l'écrit.
+    const total = parts.reduce((a, b) => a + b, 0);
+    const mt = document.createElement("i"); mt.className = "jt-montant"; mt.textContent = fmtJ(total); ce.appendChild(mt);
   });
 }
 document.addEventListener("sabot:sieges", () => { detecterSeparations(); garnirCercles(); });
 
 /* ── Le rack : tes jetons, sur le rail devant toi ────────────────────────── */
-function rendreRack() {
+function rendreRack(o) {
+  o = o || {};
   const l = limites(), r = $("rackJetons"), boite = $("rjJetons");
   r.dataset.min = l.min; r.dataset.max = l.max;
   if (!boite.children.length) RACK.forEach(v => {
@@ -4279,15 +4547,22 @@ function rendreRack() {
     b.disabled = !ouvert || v > DB.tapis || J.mise + v > l.max || (l.par5 && v % 5 !== 0);
     b.title = l.par5 && v % 5 !== 0 ? "Ici les mises vont par 5" : `Poser ${fmtJ(v)} (touche ${RACK.indexOf(v) + 1})`;
   });
-  $("rjTapis").textContent = fmtJ(DB.tapis);
   $("rjLimites").textContent = `min ${fmtJ(l.min)} · max ${fmtJ(l.max)}`;
+  // Mesuré le 05/09 : les chiffres changeaient à t=0 alors que le jeton touchait le
+  // cercle à 320 ms. `differe` laisse les montants au vol : c'est lui qui les écrit.
+  if (!o.differe) rendreMontants();
+  $("bRetirer").disabled = !ouvert || !J.poses.length;
+  $("bRachat").hidden = !(ouvert && DB.tapis < l.min && J.mise === 0);
+  r.classList.toggle("ouvert", ouvert);
+}
+// Les montants du rack et de la barre : écrits ensemble, quand le jeton est arrivé.
+function rendreMontants() {
+  const l = limites();
+  $("rjTapis").textContent = fmtJ(DB.tapis);
   $("rjMise").textContent = fmtJ(J.mise);
   rendreMiseHud();
   const u = J.mise / l.min;
   $("rjUnites").textContent = J.mise ? `${fr1(u)} unité${u > 1 ? "s" : ""}` : (DB.tapis >= l.min ? "pose ta mise" : "—");
-  $("bRetirer").disabled = !ouvert || !J.poses.length;
-  $("bRachat").hidden = !(ouvert && DB.tapis < l.min && J.mise === 0);
-  r.classList.toggle("ouvert", ouvert);
   rendreTapis();
 }
 function rendreTapis() {
@@ -4310,15 +4585,17 @@ function poserJeton(v) {
   if (J.mise + v > l.max) return bandeau(`Maximum de la table : ${fmtJ(l.max)}.`);
   const si = T.sieges.indexOf(T.toi), depuis = ancreRack(v);
   engager(T.toi, v); J.mise = arr(J.mise + v); J.poses.push(v); T.toi.mise = T.mise = J.mise;
-  rendreRack(); majDonne();
-  vol({ v, w: 40, depuis, vers: ancreCercle(si), fin: () => { if (J.phase !== "mise") return; T.toi.miseVue = Math.min(J.mise, arr((T.toi.miseVue || 0) + v)); garnirCercles(); son("jetons"); } });
+  rendreRack({ differe: true }); majDonne(); appelMise();
+  vol({ v, w: tailleJeton(true), de: tailleRack(), depuis, vers: ancreCercle(si), fin: () => {
+    rendreMontants(); if (J.phase !== "mise") return;
+    T.toi.miseVue = Math.min(J.mise, arr((T.toi.miseVue || 0) + v)); garnirCercles(); son("jetons"); } });
 }
 function retirerJeton() {
   if (J.phase !== "mise" || !J.poses.length || !T.toi) return;
   const v = J.poses.pop(), si = T.sieges.indexOf(T.toi);
   J.mise = arr(J.mise - v); T.toi.mise = T.mise = J.mise; T.toi.miseVue = Math.min(T.toi.miseVue || 0, J.mise);
-  rendre(T.toi, v, v); garnirCercles(); rendreRack(); majDonne();
-  vol({ v, w: 40, depuis: ancreCercle(si), vers: ancreRack(v), fin: () => son("jetons") });
+  rendre(T.toi, v, v); garnirCercles(); rendreRack(); majDonne(); appelMise();
+  vol({ v, w: tailleJeton(true), depuis: ancreCercle(si), vers: ancreRack(v), fin: () => son("jetons") });
 }
 function poserJetonRang(k) { const b = $("rjJetons").children[k - 1]; if (b && !b.disabled) b.click(); }
 $("bRetirer").onclick = retirerJeton;
@@ -4351,6 +4628,27 @@ function miseBot(st) {
   st.derniereU = m / l.min; return m;
 }
 
+/* ── L'appel à miser ─────────────────────────────────────────────────────
+   Mesuré le 05/09 : « pose ta mise » était un 10 px gris dans le rack, pendant que
+   « Sabot neuf, mélangé, carte brûlée. » en 22 px serif dominait le feutre et que
+   « Distribuer » (éteint) était le bouton le plus voyant. La hiérarchie disait
+   « lis l'annonce, clique Distribuer » ; l'état disait « clique un jeton ». */
+let APPEL_T = null;
+function appelMise() {
+  clearTimeout(APPEL_T);
+  if ($("v-table").dataset.reseau) return;
+  const l = limites(), ok = miseValide(J.mise);
+  const toi = document.querySelector("#sieges .siege.toi");
+  if (toi) toi.classList.toggle("appel", J.phase === "mise" && !ok);
+  if (J.phase !== "mise") return;
+  if (ok) { if (/mise/i.test($("annonce").textContent)) annoncer(""); return; }
+  const dire = () => { if (J.phase === "mise" && !miseValide(J.mise) && !T.enJeu) annoncer(DB.tapis >= l.min ? `Pose ta mise · minimum ${fmtJ(l.min)}` : "Plus assez de jetons pour la mise minimale"); };
+  // On laisse lire ce que la table vient de dire (« Sabot neuf… », le règlement), puis on appelle.
+  const a = $("annonce").textContent.trim();
+  if (!a || /mise/i.test(a)) dire(); else APPEL_T = setTimeout(dire, 1600);
+}
+document.addEventListener("sabot:sieges", () => appelMise());
+
 /* ── La phase de mise ────────────────────────────────────────────────────── */
 function ouvrirMises() {
   if (T.enJeu || T.occupe) return;
@@ -4359,13 +4657,13 @@ function ouvrirMises() {
   J.phase = "mise"; J.donnee = false; J.mise = 0; J.poses = []; J.attente = 0; T.mise = 0; T.miseDonne = 0;
   $("v-table").dataset.phase = "mise";
   T.sieges.forEach(st => { st.mise = 0; st.miseVue = 0; (st.mains || []).forEach(h => { h.jParti = true; }); });
-  profilerSieges(); garnirCercles(); rendreRack(); majDonne(); rendreCoach();
+  profilerSieges(); garnirCercles(); rendreRack(); majDonne(); rendreCoach(); appelMise();
   const l = limites();
   T.sieges.forEach((st, si) => {
     if (st.toi) return;
     const m = miseBot(st); st.mise = m; engager(st, m);
     setTimeout(() => { if (J.phase !== "mise" || T.sieges[si] !== st) return;
-      vol({ montant: m, w: 36, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 380, apparait: true, fin: () => { if (J.phase === "mise" && T.sieges[si] === st) { st.miseVue = m; garnirCercles(); } } });
+      vol({ montant: m, w: tailleJeton(false), depuis: ancreMaison(si), vers: ancreCercle(si), duree: 380, apparait: true, fin: () => { if (J.phase === "mise" && T.sieges[si] === st) { st.miseVue = m; garnirCercles(); } } });
     }, 120 + si * 110);
   });
   if (DB.tapis < l.min) setTimeout(() => { if (J.phase === "mise" && DB.tapis < l.min && vue === "table") proposerRachat(); }, 600);
@@ -4449,7 +4747,7 @@ function detecterSeparations() {
   T.sieges.forEach((st, si) => st.mains.forEach(h => {
     if (h.jEngage || !h.fromSplit) return;
     h.jEngage = true; engager(st, h.bet); rendreRack();
-    vol({ montant: h.bet, w: st.toi ? 40 : 36, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
+    vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
       fin: () => { h.jVu = true; garnirCercles(); if (st.toi) son("jetons"); } });
   }));
 }
@@ -4458,7 +4756,7 @@ document.addEventListener("sabot:carte", e => {
   const { siege: si, main: hi } = e.detail; if (si === "croupier" || J.phase !== "jeu") return;
   const st = T.sieges[si], h = st && st.mains[hi]; if (!h || !h.doubled || h.jDouble || !h.jEngage) return;
   h.jDouble = true; engager(st, h.bet); rendreRack();
-  vol({ montant: h.bet, w: st.toi ? 40 : 36, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
+  vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
     fin: () => { h.jDoubleVu = true; garnirCercles(); if (st.toi) son("jetons"); } });
 });
 // L'assurance : payable ou pas, puis posée à côté de la mise.
@@ -4467,7 +4765,7 @@ document.addEventListener("sabot:assurance", e => {
   const { siege: si, main: hi, prise, montant } = e.detail; const st = T.sieges[si], h = st && st.mains[hi];
   if (!prise || !h || !montant) return;
   engager(st, montant); rendreRack();
-  vol({ montant, w: 36, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, fin: () => { h.jAssuranceVu = true; garnirCercles(); son("jetons"); } });
+  vol({ montant, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, fin: () => { h.jAssuranceVu = true; garnirCercles(); son("jetons"); } });
 });
 
 /* ── Le règlement : les gains glissent vers toi, les pertes vers le croupier ──
@@ -4475,7 +4773,7 @@ document.addEventListener("sabot:assurance", e => {
    ESPACE (140 ms) pour que le croupier paie une place après l'autre. Un bust
    arrive à l'instant, seul : il part tout de suite. */
 function enfiler(fn) { const d = reduit() ? 0 : J.attente; J.attente += 140; setTimeout(fn, d); }
-function glisser(montant, depuis, vers, o) { return vol(Object.assign({ montant, w: 38, depuis, vers, glisse: true, duree: 520 }, o || {})); }
+function glisser(montant, depuis, vers, o) { return vol(Object.assign({ montant, w: tailleJeton(o && o.toi), depuis, vers, glisse: true, duree: 520 }, o || {})); }
 document.addEventListener("sabot:main-fin", e => {
   const { siege: si, main: hi, toi, issue, montant } = e.detail;
   const st = T.sieges[si], h = st && st.mains[hi]; if (!h || h.jRegle) return; h.jRegle = true;
@@ -4485,15 +4783,15 @@ document.addEventListener("sabot:main-fin", e => {
   enfiler(() => {
     h.jParti = true; garnirCercles();
     const ce = ancreCercle(si), croupier = ancreCroupier(), maison = ancreMaison(si);
-    if (issue === "bust" || issue === "perd") glisser(engage, ce, croupier, { fondu: true });
-    else if (issue === "abandon") { glisser(engage / 2, ce, croupier, { fondu: true }); glisser(retour, ce, maison, { fondu: !toi }); }
-    else if (issue === "egalite") glisser(engage, ce, maison, { fondu: !toi });
+    if (issue === "bust" || issue === "perd") glisser(engage, ce, croupier, { fondu: true, toi, fin: () => { if (toi) rendreTapis(); } });
+    else if (issue === "abandon") { glisser(engage / 2, ce, croupier, { fondu: true, toi }); glisser(retour, ce, maison, { fondu: !toi, toi, fin: () => { if (toi) rendreTapis(); } }); }
+    else if (issue === "egalite") glisser(engage, ce, maison, { fondu: !toi, toi, fin: () => { if (toi) rendreTapis(); } });
     else {  // gagne · blackjack : le croupier paie devant le cercle, puis tout part chez le joueur
-      glisser(montant, croupier, ce, { fin: () => { if (toi) { lueur(si); son("jetons"); }
-        glisser(retour, ce, maison, { fondu: !toi, duree: 460, fin: () => { if (toi) rendreTapis(); } }); } });
+      glisser(montant, croupier, ce, { toi, fin: () => { if (toi) { lueur(si); son("jetons"); }
+        glisser(retour, ce, maison, { fondu: !toi, toi, duree: 460, fin: () => { if (toi) rendreTapis(); } }); } });
       return;
     }
-    if (toi) { rendreTapis(); son("jetons"); }
+    if (toi) son("jetons");
   });
 });
 document.addEventListener("sabot:assurance-fin", e => {
@@ -4507,7 +4805,7 @@ document.addEventListener("sabot:assurance-fin", e => {
   });
 });
 document.addEventListener("sabot:manche-fin", () => {
-  J.phase = "reglement"; $("v-table").dataset.phase = "reglement"; rendreTapis(); rendreCoach();
+  J.phase = "reglement"; $("v-table").dataset.phase = "reglement"; rendreCoach();
   const d = J.attente + 1150; J.attente = 0;
   setTimeout(() => { if (!T.enJeu && !T.occupe) ouvrirMises(); }, reduit() ? 80 : d);
 });
@@ -4533,9 +4831,12 @@ rendreRack(); rendreTapis();
      table). Chaque articulation est DEUX groupes : le parent pose le pivot par
      un translate, l'enfant porte la rotation. Jamais de transform-origin sur un
      <g> : la rotation autour de (0,0) est vraie par construction, partout.
-   · Les bras sont à l'ÉCHELLE HUMAINE (1,15 × la carrure), pas à celle de la
+   · Les bras sont à l'ÉCHELLE HUMAINE (1,2 × la carrure), pas à celle de la
      spec (0,58 ×) : mesuré le 04/09, à 1280 × 800 le sabot est à 82 px et 79 px
      de l'épaule, soit ~200 unités de rig. Un bras plus court n'y arrive pas.
+     Rallongés de 8 unités par segment le 05/09 : à 135 px de portée pour 162 de
+     bras, les deux bras faisaient un T tendu (« bras-tubes », les critiques).
+     Avec 177, le coude se plie.
    · Une pose se CALCULE (cinématique inverse à deux os, coude toujours vers
      l'extérieur, portée bornée — un bras trop court se tend, il ne se casse
      pas). Aucune pose n'est écrite en dur : le sabot et la défausse sont lus
@@ -4625,13 +4926,17 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
 </g></g></g>
 <!-- ── BRAS GAUCHE-ÉCRAN (côté défausse) : épaule > coude > poignet ────── -->
 <g transform="translate(150,148)"><g id="@crBrasG">
- <path d="M0-18c-10 0-17 6-17 14l4 108c0 7 6 11 13 11s13-4 13-11l4-108c0-8-7-14-17-14z" fill="var(--cr-manche,#1E242A)"/>
- <g transform="translate(0,112)"><g id="@crAvantG">
-  <path d="M0-14c-9 0-15 6-14 13l3 90c0 6 5 9 11 9s11-3 11-9l3-90c1-7-5-13-14-13z" fill="var(--cr-manche,#1E242A)"/>
-  <path d="M-13-4c4 5 22 5 26 0l-1 14c-5 3-19 3-24 0z" fill="#000" opacity=".28" stroke="none"/>
-  <path d="M-6 10h4l-1 70h-4z" fill="#000" opacity=".16" stroke="none"/>
-  <path d="M-12 84h24l-1 8h-22z" fill="var(--cr-poignet,#F1ECE0)"/>
-  <g transform="translate(0,96)"><g id="@crMainG">
+ <path d="M0-18c-11 0-18 6-18 14l4 116c0 7 6 11 14 11s14-4 14-11l4-116c0-8-7-14-18-14z" fill="var(--cr-manche,#1E242A)"/>
+ <path d="M-9-12c-3 3 -5 7 -5 12l3 106" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="5" stroke-linecap="round"/>
+ <path d="M-14 104c5 6 23 6 28 0" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="2.4"/>
+ <g transform="translate(0,120)"><g id="@crAvantG">
+  <path d="M0-14c-10 0-16 6-15 13l3 98c0 6 5 9 12 9s12-3 12-9l3-98c1-7-5-13-15-13z" fill="var(--cr-manche,#1E242A)"/>
+  <path d="M-14-4c4 5 24 5 28 0l-1 14c-5 3-21 3-26 0z" fill="#000" opacity=".30" stroke="none"/>
+  <path d="M-14 6c4 4 24 4 28 0l-1 5c-5 2-21 2-26 0z" fill="#fff" opacity=".07" stroke="none"/>
+  <path d="M-7-4c-3 3 -4 6 -4 10l3 82" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="4" stroke-linecap="round"/>
+  <path d="M-6 12h4l-1 76h-4z" fill="#000" opacity=".14" stroke="none"/>
+  <path d="M-13 92h26l-1 8h-24z" fill="var(--cr-poignet,#F1ECE0)"/>
+  <g transform="translate(0,104)"><g id="@crMainG">
    <path d="M0-3c-9 0-13 5-13 12 0 9 5 16 13 18 8-2 13-9 13-18 0-7-4-12-13-12z" fill="var(--cr-peau,#D6A579)"/>
    <path d="M12 5c4 2 5 6 3 9-2 3-5 3-8 1" fill="var(--cr-peau,#D6A579)"/>
   </g></g>
@@ -4639,13 +4944,17 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
 </g></g>
 <!-- ── BRAS DROITE-ÉCRAN (côté sabot) : celui qui distribue ───────────── -->
 <g transform="translate(270,148)"><g id="@crBrasD">
- <path d="M0-18c-10 0-17 6-17 14l4 108c0 7 6 11 13 11s13-4 13-11l4-108c0-8-7-14-17-14z" fill="var(--cr-manche,#1E242A)"/>
- <g transform="translate(0,112)"><g id="@crAvantD">
-  <path d="M0-14c-9 0-15 6-14 13l3 90c0 6 5 9 11 9s11-3 11-9l3-90c1-7-5-13-14-13z" fill="var(--cr-manche,#1E242A)"/>
-  <path d="M-13-4c4 5 22 5 26 0l-1 14c-5 3-19 3-24 0z" fill="#000" opacity=".28" stroke="none"/>
-  <path d="M-6 10h4l-1 70h-4z" fill="#000" opacity=".16" stroke="none"/>
-  <path d="M-12 84h24l-1 8h-22z" fill="var(--cr-poignet,#F1ECE0)"/>
-  <g transform="translate(0,96)"><g id="@crMainD">
+ <path d="M0-18c-11 0-18 6-18 14l4 116c0 7 6 11 14 11s14-4 14-11l4-116c0-8-7-14-18-14z" fill="var(--cr-manche,#1E242A)"/>
+ <path d="M9-12c3 3 5 7 5 12l3 106" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="5" stroke-linecap="round"/>
+ <path d="M-14 104c5 6 23 6 28 0" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="2.4"/>
+ <g transform="translate(0,120)"><g id="@crAvantD">
+  <path d="M0-14c-10 0-16 6-15 13l3 98c0 6 5 9 12 9s12-3 12-9l3-98c1-7-5-13-15-13z" fill="var(--cr-manche,#1E242A)"/>
+  <path d="M-14-4c4 5 24 5 28 0l-1 14c-5 3-21 3-26 0z" fill="#000" opacity=".30" stroke="none"/>
+  <path d="M-14 6c4 4 24 4 28 0l-1 5c-5 2-21 2-26 0z" fill="#fff" opacity=".07" stroke="none"/>
+  <path d="M7-4c3 3 4 6 4 10l3 82" fill="none" stroke="#fff" stroke-opacity=".10" stroke-width="4" stroke-linecap="round"/>
+  <path d="M-6 12h4l-1 76h-4z" fill="#000" opacity=".14" stroke="none"/>
+  <path d="M-13 92h26l-1 8h-24z" fill="var(--cr-poignet,#F1ECE0)"/>
+  <g transform="translate(0,104)"><g id="@crMainD">
    <path d="M0-3c-9 0-13 5-13 12 0 9 5 16 13 18 8-2 13-9 13-18 0-7-4-12-13-12z" fill="var(--cr-peau,#D6A579)"/>
    <path d="M-12 5c-4 2-5 6-3 9 2 3 5 3 8 1" fill="var(--cr-peau,#D6A579)"/>
   </g></g>
@@ -4760,10 +5069,10 @@ const crRepos = () => crPerso().repos || "neutre";
 const crAuRepos = () => CR.emotion === "neutre" || CR.emotion === crRepos();
 
 /* ── L'état ──────────────────────────────────────────────────────────── */
-const CR = { id: "", el: null, scene: null, bulle: null, visible: false, salue: false, fixe: false,
+const CR = { id: "", el: null, scene: null, bulle: null, mains: null, mainsEl: null, hm: {}, visible: false, salue: false, fixe: false,
   j: {}, seg: {}, an: {}, arme: false, base: "neutre", emotion: "neutre", jeton: 0, gestes: 0,
   dernier: {}, gains: 0, pertes: 0, mises: [], derniereAlerte: -9, minuteurs: [] };
-const CR_SEG = { L1: 112, L2: 108 };      // épaule→coude, coude→centre de la paume
+const CR_SEG = { L1: 120, L2: 116 };      // épaule→coude, coude→centre de la paume
 const CR_EPAULE = { G: [150, 148], D: [270, 148] };
 
 const crQ = s => CR.el ? CR.el.querySelector(s) : null;
@@ -4779,6 +5088,66 @@ function crLook(svg, c, prefixe) {
   // neutre, par le même chemin que les émotions (crVisage la conserve).
   ["crSourcilG", "crSourcilD"].forEach(k => { const e = svg.querySelector("#" + prefixe + k); if (e) e.style.transform = `scaleY(${c.sourcils || 1})`; });
 }
+/* ── Les mains SUR LE FEUTRE ─────────────────────────────────────────────
+   Mesuré le 05/09 : les avant-bras du rig, posés sur le feutre, croisaient les
+   cartes du croupier (le coude gauche sur sa carte visible, l'avant-bras droit sur
+   sa carte cachée) et faisaient des tubes raides — « épouvantail », « bras-tuyaux »
+   (les critiques). Un croupier vu de sa place a les coudes DERRIÈRE le rail : on
+   voit ses épaules au-dessus, et ses mains sur le feutre. Le rig est donc COUPÉ au
+   rail (clip-path, style.css) et chaque main est un élément HTML DANS le feutre :
+   une manche qui sort de sous le rail, un poignet, une main vue de dessus. Elle va
+   exactement où la cinématique l'envoie — plus de portée bornée. Le bras du rig
+   continue de s'orienter vers la cible (l'épaule suit), on n'en voit que la
+   naissance. Le pouce est du côté du corps : la main de droite à l'écran est la
+   main GAUCHE du croupier (le sabot est à sa gauche, comme dans un vrai casino). */
+const CR_MAIN_SVG = cote => `<svg viewBox="0 0 50 32" class="cr-hd" aria-hidden="true" focusable="false">
+  <g${cote === "D" ? ' transform="translate(0 32) scale(1 -1)"' : ""} stroke="rgba(35,18,8,.38)" stroke-width=".9" stroke-linejoin="round">
+    <rect x="0" y="3.5" width="10" height="25" rx="2.5" fill="var(--cr-poignet,#F1ECE0)" stroke="rgba(0,0,0,.3)"/>
+    <rect x="14" y="1.4" width="16" height="7" rx="3.5" fill="var(--cr-peau,#D6A579)" transform="rotate(-36 14 4.9)"/>
+    <path d="M9 5.6h16c7 0 11 4.2 11 10.4S32 26.4 25 26.4H9z" fill="var(--cr-peau,#D6A579)"/>
+    <rect x="31" y="3.6" width="18" height="6.3" rx="3.15" fill="var(--cr-peau,#D6A579)"/>
+    <rect x="32" y="10.3" width="18" height="6.3" rx="3.15" fill="var(--cr-peau,#D6A579)"/>
+    <rect x="31.5" y="17" width="16.5" height="6" rx="3" fill="var(--cr-peau,#D6A579)"/>
+    <rect x="29.5" y="23.3" width="12.5" height="5.4" rx="2.7" fill="var(--cr-peau,#D6A579)"/>
+    <path d="M14 9c3 4.5 3 10.5 0 15" fill="none" stroke="rgba(0,0,0,.10)" stroke-width="1"/>
+  </g></svg>`;
+function monterMains() {
+  const feutre = $("feutre"); if (!feutre) return;
+  let c = $("crMains");
+  if (!c) { c = document.createElement("div"); c.className = "cr-mains"; c.id = "crMains"; c.setAttribute("aria-hidden", "true"); feutre.appendChild(c); }
+  c.innerHTML = `<div class="cr-avant cr-avant-G"><i class="cr-manche"></i>${CR_MAIN_SVG("G")}</div><div class="cr-avant cr-avant-D"><i class="cr-manche"></i>${CR_MAIN_SVG("D")}</div>`;
+  CR.mainsEl = c; CR.mains = { G: c.children[0], D: c.children[1] }; CR.hm = {};
+  if (CR.el) for (const k of ["--cr-peau", "--cr-manche", "--cr-poignet"]) c.style.setProperty(k, CR.el.style.getPropertyValue(k));
+}
+// Là où la manche sort de sous le rail : sous l'épaule, décalée vers la main (un tiers
+// du chemin, le coude est derrière le rail), juste au-dessus du feutre — coupée par lui.
+function crAncre(cote, hx, rep) {
+  const F = $("feutre").getBoundingClientRect(), S = CR_EPAULE[cote];
+  const sx = rep.x0 + (S[0] + 50) * rep.s;
+  return { x: sx + (cote === "D" ? 1 : -1) * 26 * rep.s + (hx - sx) * .35, y: F.top - 10, F };
+}
+function crAvantCourant(cote) {
+  const el = CR.mains[cote], cs = getComputedStyle(el);
+  let a = 0; try { const m = new DOMMatrixReadOnly(cs.transform); a = Math.atan2(m.b, m.a) * 180 / Math.PI; } catch (e) {}
+  return { a, d: parseFloat(cs.width) || 0 };
+}
+function crAvantHtml(cote, x, y, ms, poignet, rep) {
+  const el = CR.mains && CR.mains[cote]; if (!el) return;
+  const an = crAncre(cote, x, rep), ax = an.x - an.F.left, ay = an.y - an.F.top, hx = x - an.F.left, hy = y - an.F.top;
+  let a = Math.atan2(hy - ay, hx - ax) * 180 / Math.PI; const d = Math.max(12, Math.hypot(hx - ax, hy - ay));
+  el.style.left = ax.toFixed(1) + "px"; el.style.top = ay.toFixed(1) + "px";
+  const hd = el.querySelector(".cr-hd"), rot = `rotate(${((poignet || 0) * (cote === "D" ? 1 : -1) * .8).toFixed(1)}deg)`;
+  const de = CR.hm[cote] ? crAvantCourant(cote) : null;
+  if (CR.hm[cote] && CR.hm[cote].an) { CR.hm[cote].an.cancel(); }
+  CR.hm[cote] = { a, d };
+  if (!de || MOUVEMENT_REDUIT.on || !ms || ms < 24) { el.style.transform = `rotate(${a.toFixed(2)}deg)`; el.style.width = d.toFixed(1) + "px"; hd.style.transition = "none"; hd.style.transform = rot; return; }
+  a += 360 * Math.round((de.a - a) / 360);   // le chemin le plus court
+  const anim = el.animate([{ transform: `rotate(${de.a.toFixed(2)}deg)`, width: de.d.toFixed(1) + "px" }, { transform: `rotate(${a.toFixed(2)}deg)`, width: d.toFixed(1) + "px" }],
+    { duration: ms, easing: "cubic-bezier(.22,.72,.24,1)", fill: "forwards" });
+  CR.hm[cote].an = anim;
+  anim.finished.then(() => { if (CR.hm[cote] && CR.hm[cote].an === anim) { el.style.transform = `rotate(${a.toFixed(2)}deg)`; el.style.width = d.toFixed(1) + "px"; anim.cancel(); CR.hm[cote].an = null; } }, () => {});
+  hd.style.transition = `transform ${Math.round(ms)}ms cubic-bezier(.22,.72,.24,1)`; hd.style.transform = rot;
+}
 function monterCroupier() {
   const scene = $("croupierScene"); if (!scene) return;
   const id = crEffectif(); if (id === CR.id && CR.el) return;
@@ -4786,6 +5155,7 @@ function monterCroupier() {
   scene.innerHTML = crSvg("cr-");
   CR.el = scene.querySelector("svg"); CR.scene = scene;
   crLook(CR.el, c, "cr-");
+  monterMains();
   CR.j = {}; CR.seg = {}; CR.an = {}; CR.arme = false;
   CR.base = crRepos(); CR.emotion = CR.base; crVisage(EMOTIONS[CR.base]);
   crReposer(1);
@@ -4829,10 +5199,11 @@ function crIK(cote, px, py) {
 }
 // La main d'un côté va à un point d'ÉCRAN, en ms. Poignet en option.
 function crMainVers(cote, x, y, ms, poignet) {
-  const p = crVersRig(x, y); if (!p) return false;
+  const rep = crRepere(), p = crVersRig(x, y, rep); if (!p) return false;
   const a = crIK(cote, p.x, p.y);
   crBouger("crBras" + cote, a.bras, ms); crBouger("crAvant" + cote, a.avant, ms);
   crBouger("crMain" + cote, poignet || 0, ms);
+  crAvantHtml(cote, x, y, ms, poignet, rep);
   return true;
 }
 const crRect = id => { const e = $(id); if (!e) return null; const r = e.getBoundingClientRect(); return r.width ? r : null; };
@@ -4877,44 +5248,47 @@ function crReposer(ms) {
   if (!okD) { crBouger("crBrasD", -34, ms); crBouger("crAvantD", -48, ms); crBouger("crMainD", 8, ms); }
   if (!crPoserGauche(ms)) { crBouger("crBrasG", 34, ms); crBouger("crAvantG", 48, ms); crBouger("crMainG", -8, ms); }
 }
-// La main gauche SUIT la défausse : elle se déplace de ~45 px quand les cartes
-// du croupier arrivent (la rangée haute est centrée sur sa main). Posée une
-// fois avant la donne, elle finissait sur sa carte visible. Rappelée à chaque
-// carte, elle reste où elle doit être.
+// La main gauche repose À PLAT sur le feutre, sous le rack, à gauche de ses cartes :
+// un coude plié, une main posée — pas un bras tendu vers le coin de la défausse
+// (mesuré le 05/09 : pose identique au pixel sur toutes les captures). Repli sur
+// la défausse si le rack n'est pas rendu (téléphone).
 function crPoserGauche(ms) {
+  // Sur le coin bas-droit de la défausse, en diagonale depuis le rail : mesuré le
+  // 05/09, posée sous le rack elle pendait à la verticale et couvrait « Croupier ».
   const rd = crRect("defausse"); if (!rd) return false;
-  return crMainVers("G", rd.left + rd.width * .5, rd.top - 6, ms, -8);
+  return crMainVers("G", rd.right - rd.width * .18, rd.top + rd.height * .66, ms, -6);
 }
 function crArmer(ms) {
   const c = crCibleSabot(); if (!c) return false;
   CR.arme = true;
   return crMainVers("D", c.x, c.y, ms || 320, 14);
 }
-/* LE geste. Le bras reste sur le sabot et ne fait qu'un coup de poignet vers
-   le siège : l'amplitude suit la cadence, et sous ~145 ms il ne revient pas
-   au sabot, il enchaîne — ce que fait un vrai croupier lancé. */
+/* LE geste. La main part du sabot et POUSSE la carte vers le siège : elle balaie
+   jusqu'à la moitié du trajet (la portée bornée tend le bras vers le joueur), en
+   55 % du vol de la carte, puis revient au sabot. Mesuré le 05/09 avec l'ancien
+   coup de poignet de 68 px : sur toutes les captures la main était sur le sabot
+   et les cartes s'envolaient toutes seules. Sous ~145 ms de cadence il ne revient
+   pas au sabot, il enchaîne — ce que fait un vrai croupier lancé. */
 function crFlick(vers, v) {
   if (!CR.el || !CR.visible) return;
   const c = crCibleSabot(); if (!c) return;
   if (!CR.arme) crArmer(Math.min(200, v));
-  const amp = Math.max(.22, Math.min(1, v / 450));
-  // Mesuré le 04/09 : à 420 ms de geste pour 300 ms de vol, la main SUIVAIT la carte.
-  // Le geste dure 80 % du vol (--don, celui du plateau) : il pousse, il ne suit pas.
+  const amp = Math.max(.55, Math.min(1, v / 450));
   const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
-  const ms = Math.max(90, Math.min(don * .8, v * .55));
+  const ms = Math.max(90, Math.min(don * .55, v * .6));
   const dx = vers.x - c.x, dy = vers.y - c.y, d = Math.hypot(dx, dy) || 1;
-  const pas = Math.min(96, d * .3) * amp;
-  crMainVers("D", c.x + dx / d * pas, c.y + dy / d * pas, ms, -18 * amp);
+  const pas = Math.min(150, d * .5) * amp;
+  crMainVers("D", c.x + dx / d * pas, c.y + dy / d * pas, ms, -22 * amp);
   crPoserGauche(Math.max(ms, 260));
   crRegarde(vers.x, vers.y, ms * 1.3);
   CR.gestes++; const n = CR.gestes;
-  if (v > ms * 1.6) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(v * .3); }, ms + 20);
+  if (v > ms * 1.6) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(Math.max(90, v * .3)); }, ms + 20);
 }
 // Sa propre carte cachée : la main vient dessus, un coup de poignet, et repart.
 function crRetourne(el) {
   if (!CR.el || !CR.visible || !el) return;
   const r = el.getBoundingClientRect(); if (!r.width) return;
-  crMainVers("D", r.left + r.width * .5, r.top + r.height * .35, 240, -30);
+  crMainVers("D", r.left + r.width * .62, r.top + r.height * .35, 240, -30);
   crMinuteur(() => crBouger("crMainD", 30, 180), 250);
   crMinuteur(() => { if (CR.arme) crArmer(300); else crReposer(360); }, 520);
   crRegarde(r.left + r.width / 2, r.top, 260);
@@ -5010,6 +5384,8 @@ function crDire(texte, ms) {
   b.classList.add("on");
   clearTimeout(CR.bulleT); CR.bulleT = setTimeout(() => b.classList.remove("on"), ms || 1800);
 }
+// Fermer la bulle tout de suite : le croupier ne parle pas pendant qu'il distribue.
+function crTaire() { clearTimeout(CR.bulleT); if (CR.bulle) CR.bulle.classList.remove("on"); }
 function crReplique(genre) {
   const banque = crPerso().dit[genre] || []; if (!banque.length) return "";
   let i, g = 0; do { i = alea(banque.length); } while (banque.length > 1 && i === CR.dernier[genre] && g++ < 8);
@@ -5023,7 +5399,8 @@ function crEmotion(nom, o) {
   crVisage(e);
   if (e.secoue) crSecoue();
   if (e.fixe) { const toi = document.querySelector("#sieges .siege.toi"); if (toi) { const r = toi.getBoundingClientRect(); crRegarde(r.left + r.width / 2, r.top, 220); } }
-  if (o.texte) { crDire(o.texte, o.ms); crArticule(e.bouche); }
+  if (o.texte) { crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400)); crArticule(e.bouche); }
+  else crTaire();
   crMinuteur(() => { if (CR.jeton === jeton) { CR.emotion = CR.base; crVisage(EMOTIONS[CR.base] || EMOTIONS.neutre); } }, o.tenue || 2400);
 }
 // Pour les captures et la console : window.__croupierEmotion("moqueur")
@@ -5089,7 +5466,7 @@ function crSurveille(mise, tc) {
   }
   if (!alerte) return;
   CR.derniereAlerte = CR.gestes;
-  crEmotion("soupcon", { texte: crReplique("soupcon"), tenue: 900 + v * 500, ms: 2200 });
+  crEmotion("soupcon", { texte: crReplique("soupcon"), tenue: 1400 + v * 400, ms: 1400 + v * 400 });
 }
 
 /* ── Le bus ────────────────────────────────────────────────────────────── */
@@ -5098,7 +5475,7 @@ document.addEventListener("sabot:remelange", () => { if (CR.visible) crMelange()
 document.addEventListener("sabot:donne-debut", e => {
   if (!CR.el) monterCroupier();
   if (crAuRepos()) { CR.emotion = "concentre"; crVisage(EMOTIONS.concentre); }
-  CR.base = "concentre";
+  CR.base = "concentre"; crTaire();
   crArmer(320);
   const d = e.detail || {};
   const mise = d.mise !== undefined ? d.mise : crLireNombre("tMise");
@@ -5145,10 +5522,11 @@ document.addEventListener("sabot:manche-fin", () => {
 // pose qu'à ce moment-là, et le croupier salue à la première apparition.
 if (window.ResizeObserver && $("croupierScene")) new ResizeObserver(entries => {
   const r = entries[0].contentRect, avant = CR.visible; CR.visible = r.width > 20 && r.height > 20;
+  if (CR.mainsEl) CR.mainsEl.hidden = !CR.visible;
   if (!CR.visible) return;
   if (!CR.el) monterCroupier();
   if (!CR.arme) crReposer(avant ? 200 : 1);
-  if (!CR.salue) { CR.salue = true; crMinuteur(() => { if (crAuRepos()) crEmotion("content", { texte: crReplique("accueil"), tenue: 1600, ms: 2600 }); }, 700); }
+  if (!CR.salue) { CR.salue = true; crMinuteur(() => { if (crAuRepos()) crEmotion("content", { texte: crReplique("accueil"), tenue: 2200, ms: 2200 }); }, 700); }
 }).observe($("croupierScene"));
 addEventListener("resize", () => { if (CR.visible && !CR.arme) crReposer(1); });
 
@@ -5178,7 +5556,7 @@ function rendreChoixCroupier() {
     DB.croupier.id = i.value; DB.croupier.nom = DB.croupier.noms[crEffectif()] || ""; garder();
     sec.querySelectorAll(".cr-carte").forEach(l => l.classList.toggle("on", l.querySelector("input").checked));
     trait(); CR.id = ""; monterCroupier(); CR.salue = true;
-    if (CR.visible) crEmotion("content", { texte: crReplique("accueil"), tenue: 1600, ms: 2400 });
+    if (CR.visible) crEmotion("content", { texte: crReplique("accueil"), tenue: 2000, ms: 2000 });
   }));
   $("crNomSaisie").addEventListener("input", () => {
     const v = $("crNomSaisie").value.trim().slice(0, 18);
@@ -5783,7 +6161,7 @@ async function ouvrirSalon(code) {
     $("mpRelais").textContent = "Relié par " + url.replace("wss://", "").split(":")[0] + ". Les messages passent en clair par un courtier public.";
     rendrePairs(); rendreClassement();
   } catch (e) {
-    $("mpEtat").innerHTML = `Aucun courtier n'a répondu. Deux causes possibles : ton réseau bloque les connexions WebSocket, ou tu es sur une page publiée dont la politique de sécurité les interdit. <b>Le reste de l'application fonctionne normalement.</b>`;
+    $("mpEtat").innerHTML = `Aucun courtier n'a répondu. Deux causes possibles : ton réseau bloque les connexions WebSocket, ou tu es sur une page publiée dont la politique de sécurité les interdit — dans ce cas, joue sur <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">la version GitHub Pages</a>. <b>Le reste de l'application fonctionne normalement.</b>`;
     son("ko");
   }
 }
@@ -5937,7 +6315,10 @@ const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, 
   mise: 0, poses: [], miseVue: {}, enVol: {}, emis: new Set(), partis: new Set(), assurPartie: new Set(), vus: new Set(),
   vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, panneauOuvert: false };
 const PAGES_URL = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
-const COULEURS = [["#E24B4B", "rouge"], ["#E2B857", "or"], ["#4FD8C0", "jade"], ["#4F8FE0", "bleu"], ["#A66BE0", "violet"], ["#E27AA8", "rose"]];
+// Ta couleur à la table = un JETON du rack (jetons.js), pas une pastille arc-en-ciel :
+// la pastille devant ton nom en prend la face. Une ancienne couleur enregistrée
+// qui n'est plus dans la liste retombe sur un jeton tiré au sort.
+const COULEURS = RACK.map(v => { const j = jetonDe(v); return [j.face, fmtJ(v), v]; });
 if (!DB.couleur || !COULEURS.some(c => c[0] === DB.couleur)) DB.couleur = COULEURS[alea(COULEURS.length)][0];
 
 /* ── Qui je suis : un identifiant par onglet, qui survit à un rechargement ──
@@ -5949,10 +6330,36 @@ function rsIdentite() {
 }
 function rendreCouleurs() {
   const b = $("mpCouleurBoite"); if (!b) return;
-  b.innerHTML = COULEURS.map(([c, n]) => `<button type="button" class="couleur${DB.couleur === c ? " on" : ""}" style="--c:${c}" role="radio" aria-checked="${DB.couleur === c}" aria-label="${n}" title="${n}" data-c="${c}"></button>`).join("");
-  b.querySelectorAll("button").forEach(x => x.onclick = () => { DB.couleur = x.dataset.c; garder(); rendreCouleurs(); });
+  b.innerHTML = "";
+  COULEURS.forEach(([c, n, v]) => {
+    const x = jetonEl(v, 44, "button"); x.type = "button"; x.classList.add("couleur"); x.classList.toggle("on", DB.couleur === c);
+    x.style.setProperty("--c", c); x.setAttribute("role", "radio"); x.setAttribute("aria-checked", DB.couleur === c); x.setAttribute("aria-label", "jeton de " + n); x.title = "Jeton de " + n; x.dataset.c = c;
+    x.onclick = () => { DB.couleur = x.dataset.c; garder(); rendreCouleurs(); };
+    b.appendChild(x);
+  });
+  rendreTableMP();
+}
+// La table où l'on va s'asseoir, à droite du formulaire : la carte du salon, telle
+// quelle (mêmes règles, même avantage maison), avec ses sièges — on voit ce qu'on ouvre.
+function rendreTableMP() {
+  const boite = $("mpTable"); if (!boite) return;
+  const t = tableCourante(), d = DONNEES.tables[t.id], ind = indiceComptable(t);
+  boite.innerHTML = `<article class="laque tbl">
+      <span class="num">Ta table · ${echap(t.lieu)}</span>
+      <h3>${echap(t.nom)}</h3>
+      <div class="jauge" title="Indice de comptabilité"><i style="width:${ind}%"></i><b>${ind}</b></div>
+      <div class="regles">${chipsRegles(t)}</div>
+      <div class="chiffres">
+        <div><b>${fr2(d.avantage)} %</b><span class="grave">avantage maison</span></div>
+        <div><b>${Math.min(t.sieges, 5)}</b><span class="grave">sièges</span></div>
+        <div><b>${fmtJ(t.mise_min)}</b><span class="grave">mise minimale</span></div>
+      </div>
+      <div class="pied"><button class="btn creux" data-vue="salon">Changer de table</button></div>
+    </article>`;
+  boite.querySelector("[data-vue]").onclick = () => aller("salon");
 }
 rendreCouleurs();
+document.addEventListener("sabot:table", rendreTableMP);
 
 /* ── Le transport : MQTT en vrai ; une usine injectée (window.__reseauTransport)
    pour la sonde et les captures, qui n'ont pas de courtier. ─────────────── */
@@ -6575,8 +6982,8 @@ document.addEventListener("keydown", e => {
   } else if (vue === "table") {
     const k = e.key.toLowerCase();
     if (k === "t") $("bTire").click(); else if (k === "r") $("bReste").click();
-    else if (k === "b") $("bDouble").click(); else if (k === "s") $("bSepare").click();
-    else if (k === "a") $("bAbandon").click(); else if (k === "d" || e.key === "Enter") $("bDonne").click();
+    else if (k === "d") $("bDouble").click(); else if (k === "s") $("bSepare").click();
+    else if (k === "a") $("bAbandon").click(); else if (e.key === "Enter" || e.key === " ") { $("bDonne").click(); e.preventDefault(); }
     // Les jetons : 1 à 6 de gauche à droite dans le rack, Retour arrière reprend le dernier posé.
     else if (/^[1-6]$/.test(e.key)) poserJetonRang(+e.key);
     // Par le BOUTON, pas la fonction : à plusieurs (reseau.js), reprendre un jeton passe par l'hôte.

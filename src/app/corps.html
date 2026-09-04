@@ -79,7 +79,7 @@
   <!-- BANDE 1 — la barre : nom de la table, trois puces, le compte en petits chiffres, ⚙.
        Discrète : elle ne vole rien au feutre. -->
   <div class="laque hud" id="hud">
-    <div class="hud-table"><b id="tNom">—</b><span class="regles" id="tRegles"></span></div>
+    <div class="hud-table"><b id="tNom">—</b><span class="regles" id="tRegles"></span><span class="hud-limites" id="rjLimites" title="Mise minimale et maximale de la table">min 10 · max 1 000</span></div>
     <div class="hud-compte" id="hudCompte" title="Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.">
       <span><i>Courant</i><b id="tRC">—</b></span>
       <span><i>Vrai</i><b id="tTC">—</b></span>
@@ -89,7 +89,6 @@
       <span class="solde" id="hudTapis" title="Tes jetons en main"><i>Tapis</i><b id="tTapis">1 000</b><em id="tNet" hidden></em></span>
       <span id="hudMise" title="Ta mise réelle, et en unités du minimum"><i>Mise</i><b id="tMiseReelle">—</b></span>
     </div>
-    <button class="icone" id="bReglagesTable" title="Réglages de la table" aria-label="Réglages de la table">⚙</button>
   </div>
 
   <!-- BANDE 2 — la salle. Le croupier se tient derrière la table (#croupierScene est
@@ -115,7 +114,7 @@
         <svg class="motif" id="motif" aria-hidden="true" focusable="false"></svg>
         <svg class="lettrage" id="lettrage" aria-hidden="true" focusable="false"></svg>
         <div class="rangee-haute">
-          <div class="defausse" id="defausse"><i></i><span id="defausseN">0</span></div>
+          <div class="defausse" id="defausse"><i></i><span class="n"><span id="defausseN">0</span></span></div>
           <div class="croupier"><div class="main" id="dMain"></div><div class="qui">Croupier <b id="dScore">·</b></div></div>
           <div class="sabot" id="sabot">312</div>
         </div>
@@ -125,33 +124,40 @@
       </div>
     </div>
     <div id="jetonsCalque" aria-hidden="true"></div>
-    <!-- Le rack du joueur (lot Jetons) : tes jetons, posés sur le rail devant toi. Visible pendant
-         la phase de mise seulement ; il glisse sous le rail dès que la donne commence. -->
+    <p class="coach-mise" id="coachMise" aria-live="polite"></p>
+  </div>
+
+  <!-- BANDE 3 — les coups, en verre teinté sur la scène. Le principal est en or.
+       On ne montre que ce qui se joue : pendant la mise, le rack de jetons prend la place
+       des coups (un croupier ne propose pas « Séparer » avant la donne) ; pendant la main,
+       « Distribuer » disparaît. Le CSS suit #v-table[data-phase]. -->
+  <div class="zone-actions">
+    <div class="rang-btn" id="coups">
+      <button class="btn" id="bDonne">Distribuer<kbd>&#9166;</kbd></button>
+      <button class="btn verre" id="bTire" disabled>Tirer<kbd>T</kbd></button>
+      <button class="btn verre" id="bReste" disabled>Rester<kbd>R</kbd></button>
+      <button class="btn verre" id="bDouble" disabled>Doubler<kbd>D</kbd></button>
+      <button class="btn verre" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
+      <button class="btn verre" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
+    </div>
+    <!-- Le rack du joueur (lot Jetons) : tes jetons, sur le rail devant toi. Visible pendant
+         la phase de mise seulement ; il cède la place aux coups dès que la donne commence.
+         Sur ordinateur il ne porte que les jetons : le tapis, la mise et les limites sont
+         déjà dans le bandeau, et un rack à deux cadrans faisait une barre à deux rangées
+         pendant la mise, à une pendant la main — toute la table sautait de 60 px à la donne. -->
     <div class="rack-jetons" id="rackJetons" data-min="10" data-max="1000">
-      <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b><span class="rj-sous" id="rjLimites">min 10 · max 1 000</span></div>
+      <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b></div>
       <div class="rj-jetons" id="rjJetons" role="group" aria-label="Jetons à miser"></div>
       <div class="rj-bloc"><span class="grave">Mise</span><b class="cadran" id="rjMise">0</b><span class="rj-sous" id="rjUnites">—</span></div>
       <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier jeton (Retour arrière)" aria-label="Retirer le dernier jeton">&#8630;</button>
       <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
     </div>
-    <p class="coach-mise" id="coachMise" aria-live="polite"></p>
-  </div>
-
-  <!-- BANDE 3 — les coups, en verre teinté sur la scène. Le principal est en or. -->
-  <div class="zone-actions">
-    <div class="rang-btn" id="coups">
-      <button class="btn" id="bDonne">Distribuer<kbd>D</kbd></button>
-      <button class="btn verre" id="bTire" disabled>Tirer<kbd>T</kbd></button>
-      <button class="btn verre" id="bReste" disabled>Rester<kbd>R</kbd></button>
-      <button class="btn verre" id="bDouble" disabled>Doubler<kbd>B</kbd></button>
-      <button class="btn verre" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
-      <button class="btn verre" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
-    </div>
     <div class="rang-table">
       <button class="btn verre mini" id="bMontrer" aria-pressed="false">Montrer le compte</button>
       <button class="btn verre mini" id="bMonCompte">Mon compte</button>
-      <button class="btn verre mini" id="bNouveauSabot">Nouveau sabot</button>
       <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
+      <button class="btn verre mini" id="bReglagesTable" title="Cadence, aide à la décision, croupier">Croupier &amp; cadence</button>
+      <button class="btn verre mini" id="bNouveauSabot" title="Jette la manche en cours et remélange">Nouveau sabot</button>
       <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
       <button class="btn verre mini" id="bReseau" hidden>Table</button>
     </div>
@@ -358,18 +364,26 @@
       <button role="tab" aria-selected="false" data-mode="course">Course au comptage</button>
     </div>
     <p class="muet" id="mpModeTexte" style="max-width:72ch;margin-top:0">Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de 1 000 jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.</p>
-    <div class="champs" style="margin-top:14px">
-      <label class="ch"><span class="grave">Ton nom</span><input type="text" id="mpNom" placeholder="Léo" maxlength="18" style="width:150px"></label>
-      <div class="ch" id="mpCouleurs"><span class="grave">Ta couleur</span><div class="couleurs" id="mpCouleurBoite" role="radiogroup" aria-label="Ta couleur"></div></div>
+    <div class="mp-grille">
+      <div>
+        <div class="champs mp-ligne" style="margin-top:14px">
+          <label class="ch"><span class="grave">Ton nom</span><input type="text" id="mpNom" placeholder="Léo" maxlength="18" style="width:150px"></label>
+          <div class="ch" id="mpCouleurs"><span class="grave">Ton jeton</span><div class="couleurs" id="mpCouleurBoite" role="radiogroup" aria-label="Ton jeton"></div></div>
+        </div>
+        <div class="champs mp-ligne" style="margin-top:14px">
+          <button class="btn" id="mpCreer">Ouvrir une table</button>
+          <span class="muet mp-ou">ou</span>
+          <label class="ch"><span class="grave">Code de la table</span><input type="text" id="mpCode" placeholder="A7K2-M9PQ" maxlength="9" autocomplete="off" spellcheck="false" style="text-transform:uppercase;width:176px;font-size:20px;letter-spacing:.12em"></label>
+          <button class="btn creux" id="mpRejoindre">Rejoindre</button>
+        </div>
+        <p class="muet" id="mpEtat" style="font-size:var(--t-petit);margin-top:12px"></p>
+        <details class="mp-comment"><summary>Comment ça marche ?</summary>
+          <p class="muet" style="font-size:var(--t-fin);margin:6px 0 0">Sans serveur : les messages transitent par un courtier public, en clair — n'y écris rien de personnel. Celui qui ouvre la table tient le sabot ; les autres jouent leur main depuis leur navigateur. Sur une page publiée dont la politique de sécurité bloque les WebSocket, la table à plusieurs ne se connecte pas : elle se joue sur la version <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">GitHub Pages</a> de l'application — le reste marche partout.</p>
+        </details>
+      </div>
+      <!-- La table où l'on va s'asseoir : la carte du salon, telle quelle (reseau.js la remplit). -->
+      <div class="mp-table" id="mpTable"></div>
     </div>
-    <div class="champs" style="margin-top:14px">
-      <button class="btn" id="mpCreer">Ouvrir une table</button>
-      <span class="muet">ou</span>
-      <label class="ch"><span class="grave">Code de la table</span><input type="text" id="mpCode" placeholder="A7K2-M9PQ" maxlength="9" autocomplete="off" spellcheck="false" style="text-transform:uppercase;width:176px;font-size:20px;letter-spacing:.12em"></label>
-      <button class="btn creux" id="mpRejoindre">Rejoindre</button>
-    </div>
-    <p class="muet" id="mpEtat" style="font-size:var(--t-petit);margin-top:12px"></p>
-    <p class="muet" style="font-size:var(--t-fin);margin-top:4px">Sans serveur : les messages transitent par un courtier public, en clair. N'y écris rien de personnel. Dans un Artifact publié, les connexions WebSocket sont bloquées : la table à plusieurs se joue sur <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">pwrygrt72g-hue.github.io/compteur-hilo</a> — le reste de l'application marche partout.</p>
   </div>
 
   <div id="mpSalon" hidden>

@@ -33,7 +33,7 @@ async function ouvrirSalon(code) {
     $("mpRelais").textContent = "Relié par " + url.replace("wss://", "").split(":")[0] + ". Les messages passent en clair par un courtier public.";
     rendrePairs(); rendreClassement();
   } catch (e) {
-    $("mpEtat").innerHTML = `Aucun courtier n'a répondu. Deux causes possibles : ton réseau bloque les connexions WebSocket, ou tu es sur une page publiée dont la politique de sécurité les interdit. <b>Le reste de l'application fonctionne normalement.</b>`;
+    $("mpEtat").innerHTML = `Aucun courtier n'a répondu. Deux causes possibles : ton réseau bloque les connexions WebSocket, ou tu es sur une page publiée dont la politique de sécurité les interdit — dans ce cas, joue sur <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">la version GitHub Pages</a>. <b>Le reste de l'application fonctionne normalement.</b>`;
     son("ko");
   }
 }

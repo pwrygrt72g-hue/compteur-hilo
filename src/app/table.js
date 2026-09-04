@@ -5,13 +5,27 @@ const NOMS = ["Marc", "Sonia", "Karim", "Léa", "Paul", "Nadia"];
 const vitesse = () => DB.cadence;
 // La donne INITIALE va plus vite que les tirages : douze cartes à 900 ms font
 // onze secondes d'attente avant de pouvoir jouer (mesuré le 04/09), et à 400 ms
-// avec un vol de 180 ms les cartes « tombaient » (Léo). Ici la moitié de la
-// cadence, bornée, et le vol remplit l'intervalle (--don suit --intervalle) : un
-// croupier lancé, pas un bégaiement. Les tirages, où l'on compte carte par
+// avec un vol de 180 ms les cartes « tombaient » (Léo). Mesuré à nouveau le 05/09
+// à la cadence par défaut : 5,4 s avant de voir sa main, et à 18 s le voisin
+// réfléchissait encore. Un vrai croupier distribue douze cartes en quatre
+// secondes. Ici 40 % de la cadence, entre 220 et 380 ms, et le vol remplit
+// l'intervalle (--don suit --intervalle). Les tirages, où l'on compte carte par
 // carte, gardent la cadence pleine. T.rythme > 0 = on est dans la donne initiale.
-const cadenceDonne = () => Math.max(300, Math.min(600, Math.round(vitesse() * .5)));
-const rythme = () => T.rythme || vitesse();
+const cadenceDonne = () => Math.max(220, Math.min(380, Math.round(vitesse() * .4)));
+// Le temps de réflexion d'un VOISIN : réglé à part (« rythme des voisins »), parce
+// qu'il n'a rien à voir avec la cadence à laquelle on compte les cartes.
+if (DB.voisins === undefined) DB.voisins = 450;
+const voisins = () => Math.max(120, Math.min(1500, DB.voisins || 450));
+const rythme = () => T.turbo ? 120 : (T.rythme || vitesse());
 const poserIntervalle = ms => $("plateau").style.setProperty("--intervalle", ms + "ms");
+// Une attente de la table : un clic sur le feutre pendant que les voisins jouent
+// passe tout à la vitesse minimale (T.turbo), jusqu'à ton tour ou au règlement.
+const pause = ms => dodo(T.turbo ? Math.min(ms, 90) : ms);
+function turbo(on) {
+  if (!!T.turbo === !!on) return;
+  T.turbo = !!on; poserIntervalle(rythme());
+  $("v-table").classList.toggle("turbo", T.turbo);
+}
 // Une annonce qui change ne surgit pas : elle bascule.
 function annoncer(txt) {
   const a = $("annonce"); if (a.textContent === txt) return;
@@ -35,6 +49,18 @@ const ISSUE_BUS = { "gagné": "gagne", "perdu": "perd", "sauté": "bust", "black
 function sauter(si, hi) {
   const h = T.sieges[si].mains[hi]; h.result = "sauté"; h.emis = true; rendreSieges();
   emettre("main-fin", { siege: si, main: hi, toi: T.sieges[si].toi, issue: "bust", montant: -(h.bet || 1) * (h.doubled ? 2 : 1) });
+  // Le croupier ramasse la main sautée tout de suite (cartes ET mise), pas au règlement :
+  // on laisse 500 ms pour LIRE le bust, puis les cartes glissent à la défausse et le
+  // badge reste seul sur le siège vide. La main garde ses cartes dans l'état (le
+  // compte les a vues) ; `ramassee` empêche seulement de les redessiner.
+  setTimeout(async () => {
+    if (h.result !== "sauté" || h.ramassee || !T.enJeu) return;
+    const hote = $(`m_${si}_${hi}`); if (!hote) return;
+    h.ramassee = true;
+    await ramasser([...hote.querySelectorAll(".carte")]);
+    if (hote.isConnected) { hote.innerHTML = ""; const sc = hote.parentNode && hote.parentNode.querySelector(".score"); if (sc) sc.textContent = ""; }
+    T.defausse += h.cards.length; h.defaussee = true; rafraichirBarre();
+  }, 500);
 }
 function abandonner(si, hi) {
   const h = T.sieges[si].mains[hi]; h.surrendered = true; h.result = "abandon"; h.emis = true; rendreSieges();
@@ -79,7 +105,7 @@ async function nouveauSabot(o) {
    puces — le nombre de jeux, H17/S17, 3:2 ou 6:5 — plus la mélangeuse quand
    il y en a une, parce que celle-là tue le comptage. */
 function poserLieu(t) {
-  $("v-table").dataset.lieu = t.id;
+  $("v-table").dataset.lieu = t.id; $("v-table").dataset.sieges = Math.max(1, Math.min(t.sieges, 6));
   $("tNom").textContent = t.nom + " · " + t.lieu;
   const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
   const puces = [...tmp.children], garde = puces.slice(0, 3);
@@ -114,12 +140,28 @@ function rendreLettrage() {
   // Tout est mesuré HORS transformation (offsetTop) : les sièges du bord sont
   // remontés sur l'arc par un transform, ce n'est pas leur place dans le flux.
   const basHaut = rangee.offsetTop + rangee.offsetHeight;
-  const basAnnonce = basHaut + 4;
-  let hautSieges = H;
-  box.querySelectorAll(".siege").forEach(sg => { hautSieges = Math.min(hautSieges, box.offsetTop + sg.offsetTop); });
-  hautSieges = Math.round(hautSieges);
+  // Le grand arc se place dans le VRAI trou entre les cartes du croupier et celles
+  // des sièges, mesuré à l'ÉCRAN : les sièges sont remontés et penchés par un
+  // transform, leur place dans le flux ne dit pas où sont leurs cartes. Mesuré le
+  // 05/09 à 1280 × 800 : la rangée du croupier finissait à 410 et les cartes des
+  // sièges 2 et 4 commençaient à 408 — l'arc calculé « entre les deux » passait sous
+  // elles. Le trou existe au CENTRE (sous la main du croupier) et sur les CÔTÉS
+  // (le sourire de l'arc remonte au-dessus des sièges intérieurs) : on contraint
+  // l'arc à la verticale de chaque siège, et la taille cède si la place manque.
+  const F = f.getBoundingClientRect();
+  const dm = $("dMain"), rdm = dm ? dm.getBoundingClientRect() : null;
+  const basCentre = Math.round(Math.max(rdm && rdm.height ? rdm.bottom - F.top : 0, rangee.offsetTop + rangee.offsetHeight - 8));
+  // La réserve d'un siège est FIXE (largeur d'un éventail de trois cartes, haut de
+  // la boîte .mains) : en phase de mise la boîte est vide, 0 px de large, et l'arc
+  // calculé sur elle changeait de place à la première carte distribuée.
+  const wT = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--w-table")) || 84;
+  const zones = [...box.querySelectorAll(".siege")].map(sg => {
+    const m = sg.querySelector(".mains") || sg, r = m.getBoundingClientRect(), rs = sg.getBoundingClientRect();
+    const cx = rs.left + rs.width / 2 - F.left, demi = Math.max(r.width / 2, wT * 1.1);
+    return { l: Math.round(cx - demi), r: Math.round(cx + demi), haut: Math.round(r.top - F.top) };
+  }).filter(z => z.r > z.l);
   const t = tableCourante(), tx = texteLettrage(t);
-  const cle = [W, H, basHaut, basAnnonce, hautSieges, t.id].join("|");
+  const cle = [W, H, basHaut, basCentre, zones.map(z => z.l + ":" + z.r + ":" + z.haut).join(","), t.id].join("|");
   if (cle === LETTRAGE.cle) return;
   // Jamais effacé au milieu d'une manche : un arc qui disparaît d'un coup se voit plus
   // qu'un arc qui passe sous une carte. Il se recalcule à la manche suivante.
@@ -134,7 +176,7 @@ function rendreLettrage() {
     const [x1, y1] = p(a1), [x2, y2] = p(a2);
     return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 ${a2 > a1 ? 1 : 0} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
   };
-  const petit = Math.max(9, Math.round(W * .0115)), grand = Math.max(14, Math.round(W * .021));
+  const petit = Math.max(11, Math.round(W * .013)), grand = Math.max(14, Math.round(W * .021));
   let out = "", n = 0;
   const ligne = (texte, d, a1, a2, taille, classe) => {
     n++; out += `<defs><path id="lt${n}" d="${d}"/></defs>
@@ -146,14 +188,31 @@ function rendreLettrage() {
   ligne(tx.croupier, arcCoin("G", 6 + petit, 179, 126), 0, 0, petit, "rail");
   ligne(tx.assurance, arcCoin("D", 6 + petit, 54, 1), 0, 0, petit, "rail");
   // Le paiement du blackjack, en grand, dans la bande entre la main du croupier
-  // et les sièges — TOUJOURS : un arc concentrique au rail (un sourire), qui passe
-  // sous une carte quand il le faut, comme sur une vraie table.
-  const place = Math.max(grand + 8, hautSieges - basAnnonce);
-  const yBas = basAnnonce + Math.max(grand + 6, Math.min(place - 4, place / 2 + grand / 2));
-  const rx = W * .34, ry = rx * .42, cy = yBas - ry, A = 40;
+  // et les sièges — TOUJOURS : un arc concentrique au rail (un sourire). Plafond :
+  // à la verticale de chaque siège, l'arc reste au-dessus de ses cartes (le point de
+  // l'arc le plus bas dans l'emprise du siège est le plus proche du centre).
+  // Plancher : au centre, le haut des lettres passe sous les cartes du croupier.
+  // Si les deux se contredisent, la taille descend jusqu'à 15 px ; en dessous, l'arc
+  // garde sa taille et passe sous une carte, comme sur une vraie table.
+  const rx = W * .34, ry = rx * .42, A = 40, cosA = Math.cos((90 - A) * Math.PI / 180);
+  let plafond = Infinity;
+  zones.forEach(z => {
+    const xp = Math.max(z.l, Math.min(z.r, W / 2)), u = Math.abs(xp - W / 2) / rx;
+    if (u >= cosA) return;
+    plafond = Math.min(plafond, z.haut - 3 + ry * (1 - Math.sqrt(1 - u * u)));
+  });
+  if (!isFinite(plafond)) plafond = H - 40;
+  let taille = grand, plancher = basCentre + 3 + taille * .78;
+  if (plafond < plancher) { taille = Math.max(15, Math.floor((plafond - basCentre - 3) / .78)); plancher = basCentre + 3 + taille * .78; }
+  // Plus de 2 px sous une carte même à 15 px : l'arc passerait sous les éventails
+  // des sièges intérieurs (vu à 1024 × 768), illisible et pris pour un défaut. On
+  // le retire, le rail garde ses deux lignes.
+  const cache = plafond < plancher - 2;
+  const yBas = plafond >= plancher ? plancher + (plafond - plancher) * .5 : plancher;
+  const cy = yBas - ry;
   const p = a => { const r = a * Math.PI / 180; return [W / 2 + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
   const [x1, y1] = p(90 + A), [x2, y2] = p(90 - A);
-  ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, 0, 0, grand, "grand");
+  if (!cache) ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, 0, 0, taille, "grand");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = out;
   // Un texte plus long que son arc est coupé aux DEUX bouts (ancré au milieu) :
@@ -217,9 +276,9 @@ function rendreSieges() {
       const w = document.createElement("div");
       w.className = "m" + (T.actif && T.actif.siege === si && T.actif.main === hi ? " encours" : "");
       const md = document.createElement("div"); md.className = "main"; md.id = `m_${si}_${hi}`;
-      h.cards.forEach(c => md.appendChild(carteEl(c)));
+      if (!h.ramassee) h.cards.forEach(c => md.appendChild(carteEl(c)));
       const sc = document.createElement("div"); sc.className = "score";
-      sc.textContent = h.cards.length ? E.handTotal(h.cards) + (h.doubled ? " ×2" : "") : "";
+      sc.textContent = h.cards.length && !h.ramassee ? E.handTotal(h.cards) + (h.doubled ? " ×2" : "") : "";
       const rs = document.createElement("div"); rs.className = "issue " + (ISSUE[h.result] || "");
       rs.textContent = h.result || "";
       // La pastille bascule à sa PREMIÈRE apparition seulement : rendreSieges()
@@ -298,10 +357,26 @@ function boutons(o) {
 // `cr` = le rect de la CARTE elle-même, mesuré avant l'animation. Mesuré sur le
 // centre de la main, la k-ième carte partait à (k − (n−1)/2)·pas du sabot — la 4ᵉ
 // carte du croupier naissait 55 px à droite du sabot.
+// ⚠️ Les sièges du bord sont TOURNÉS (--tilt, ±7°) : un vecteur calculé à l'écran
+// puis appliqué dans un siège tourné est lui-même tourné. Mesuré le 05/09 : la carte
+// de Marc naissait 88 px sous le sabot, entière sur le feutre. On exprime le vecteur
+// dans le repère du siège (inverse de sa transformation), et la rotation de la carte
+// en vol retire --tilt pour garder l'angle à l'écran.
 function animerDepuisSabot(e, cr) {
   const s = $("sabot").getBoundingClientRect();
-  e.style.setProperty("--dx", (s.left + s.width / 2 - (cr.left + cr.width / 2)) + "px");
-  e.style.setProperty("--dy", (s.top + 6 - cr.top) + "px");
+  // Le CENTRE de la carte part du centre du sabot : à l'échelle .74, elle tient tout
+  // entière dans sa boîte et en SORT. Mesuré le 05/09 avec le haut de la carte à
+  // sabot.top + 6 : centrée 20 px sous le milieu du sabot, elle dépassait de 18 px
+  // sous lui — une carte entière posée sur le feutre avant de partir.
+  let dx = s.left + s.width / 2 - (cr.left + cr.width / 2), dy = s.top + s.height * .5 - (cr.top + cr.height / 2);
+  const siege = e.closest(".siege");
+  if (siege && window.DOMMatrixReadOnly) {
+    try {
+      const inv = new DOMMatrixReadOnly(getComputedStyle(siege).transform).inverse();
+      const v = inv.transformPoint(new DOMPoint(dx, dy, 0, 0)); dx = v.x; dy = v.y;
+    } catch (err) {}
+  }
+  e.style.setProperty("--dx", dx + "px"); e.style.setProperty("--dy", dy + "px");
   e.classList.add("carte--entre");
 }
 async function tirer(main, hote, cachee, qui) {
@@ -319,11 +394,16 @@ async function tirer(main, hote, cachee, qui) {
   // Une carte de plus dans un siège : l'éventail se resserre pour qu'elle tienne.
   // Jamais pour le croupier : sa rangée a une géométrie fixée avant la première carte.
   if (qui && qui.siege !== "croupier") dimensionnerCartes();
-  if (!matchMedia("(prefers-reduced-motion:reduce)").matches)
+  if (!matchMedia("(prefers-reduced-motion:reduce)").matches) {
+    // Mesuré le 05/09 : la 1re carte glissait 150 ms AVANT que la 2e n'atterrisse. Elle
+    // attend les trois quarts du vol (--don) : elle bouge quand on la touche.
+    const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
     [...hote.children].slice(0, -1).forEach((x, i) => {
       const dx = avant[i] - x.getBoundingClientRect().left;
-      if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 220, easing: "cubic-bezier(.3,0,.2,1)" });
+      if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }],
+        { duration: 200, delay: Math.round(don * .75), easing: "cubic-bezier(.3,0,.2,1)", fill: "backwards" });
     });
+  }
   // Mesurée AVANT l'animation : pendant le vol, le rect de la carte est celui
   // du sabot, pas celui de son point d'arrivée.
   const cr = e.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
@@ -342,14 +422,19 @@ async function tirer(main, hote, cachee, qui) {
     vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
   animerDepuisSabot(e, cr); son("carte");
   if (!cachee) { T.rc += valeurCompte(c); T.vues++; }
-  rafraichirBarre(); await dodo(rythme()); return c;
+  rafraichirBarre(); await pause(rythme()); return c;
+}
+// Un score qui change ne surgit pas : il bascule, comme une pastille d'issue.
+function poserScore(el, v) {
+  if (!el) return; v = String(v); if (el.textContent === v) return;
+  el.textContent = v; el.classList.remove("bascule"); void el.offsetWidth; el.classList.add("bascule");
 }
 async function tirerSiege(si, hi) {
   const st = T.sieges[si], h = st && st.mains[hi], hote = $(`m_${si}_${hi}`);
   if (!h || !hote) return;
   await tirer(h.cards, hote, false, { siege: si, main: hi });
   const w = $(`m_${si}_${hi}`);
-  if (w && w.parentNode) w.parentNode.querySelector(".score").textContent = E.handTotal(h.cards) + (h.doubled ? " ×2" : "");
+  if (w && w.parentNode) poserScore(w.parentNode.querySelector(".score"), E.handTotal(h.cards) + (h.doubled ? " ×2" : ""));
 }
 // La carte cachée est un DOS posé dans la main : on ne la remplace pas, on la
 // RETOURNE. C'est cartes.js qui dessine la face et fait tourner le pivot, sur
@@ -363,10 +448,10 @@ async function revelerCachee() {
   // 200 ms, 520 ms de retournement), et le total n'apparaît qu'à mi-retournement,
   // quand la face devient lisible — pas avant que la carte ait bougé.
   emettre("croupier-revele", { carte: c, total: E.handTotal(T.croupier), el: e });
-  await dodo(reduit ? 30 : 460);
+  await pause(reduit ? 30 : 460);
   son("carte");
-  rafraichirBarre(); $("dScore").textContent = E.handTotal(T.croupier);
-  await dodo(reduit ? 30 : 440);
+  rafraichirBarre(); poserScore($("dScore"), E.handTotal(T.croupier));
+  await pause(reduit ? 30 : 440);
 }
 // Doubler et séparer engagent une seconde mise : il faut l'avoir en main (DB.tapis, lot Jetons).
 const peutPayer = (h, st) => !st.toi || typeof DB.tapis !== "number" || DB.tapis >= h.bet;
@@ -399,7 +484,7 @@ function actionAvecEcart(cards, up, st, h, tc) {
 
 async function distribuer() {
   if (T.occupe || T.enJeu) return;
-  T.occupe = true; boutons({}); ac();
+  T.occupe = true; turbo(false); boutons({}); ac();
   const t = tableCourante();
   // Une mélangeuse continue remet les cartes jouées dans le sabot après chaque main :
   // le compte ne s'accumule jamais. C'est la seule façon honnête de la simuler.
@@ -417,7 +502,7 @@ async function distribuer() {
   // Les cartes de la manche précédente sont RAMASSÉES vers la défausse, pas
   // effacées : un balayage en éventail, une carte après l'autre, puis le tas grimpe.
   await ramasser();
-  for (const st of T.sieges) for (const h of st.mains) T.defausse += h.cards.length;
+  for (const st of T.sieges) for (const h of st.mains) if (!h.defaussee) T.defausse += h.cards.length;
   T.defausse += T.croupier.length; T.croupier = []; T.actif = null;
   // Chaque siège joue la mise qu'il a posée dans son cercle (st.mise, lot Jetons) ; `|| 1` = sans jetons, une unité.
   for (const st of T.sieges) st.mains = [E.newHand([], st.mise || 1)];
@@ -430,7 +515,7 @@ async function distribuer() {
   for (let tour = 0; tour < 2; tour++) {
     for (let si = 0; si < T.sieges.length; si++) await tirerSiege(si, 0);
     // Sans carte cachée, le croupier ne prend qu'une carte : c'est toute la règle.
-    if (tour === 0) { await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.cardValue(T.croupier[0]); }
+    if (tour === 0) { await tirer(T.croupier, $("dMain"), false, CROUPIER); poserScore($("dScore"), E.cardValue(T.croupier[0])); }
     else if (r.holeCard) await tirer(T.croupier, $("dMain"), true, CROUPIER);
   }
   T.rythme = 0; poserIntervalle(vitesse());
@@ -447,7 +532,7 @@ async function distribuer() {
     }
   }
   if (r.holeCard && r.peek && E.cardValue(T.croupier[0]) >= 10) {
-    annoncer("Le croupier vérifie sa carte…"); await dodo(vitesse() * 1.4);
+    annoncer("Le croupier vérifie sa carte…"); await pause(vitesse() * 1.1);
     if (E.handTotal(T.croupier) === 21) { await revelerCachee(); annoncer("Blackjack du croupier."); T.occupe = false; return regler(); }
     annoncer("");
   }
@@ -456,17 +541,21 @@ async function distribuer() {
 // Le ramassage : chaque carte du feutre glisse vers la défausse, en éventail
 // (28 ms d'écart), à l'échelle du tas ; puis le DOM est vidé. En mouvement réduit,
 // rien ne vole. Le --pile de la défausse a déjà sa transition.
-async function ramasser() {
-  const cartes = [...$("feutre").querySelectorAll(".main .carte")]; if (!cartes.length) return;
-  if (matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+async function ramasser(cartes) {
+  cartes = cartes || [...$("feutre").querySelectorAll(".main .carte")]; if (!cartes.length) return;
+  if (matchMedia("(prefers-reduced-motion:reduce)").matches) {
+    cartes.forEach(c => c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: "forwards" }));
+    await dodo(130); return;
+  }
   const d = $("defausse").getBoundingClientRect(); if (!d.width) return;
+  const vite = T.turbo ? .45 : 1;
   cartes.forEach((c, i) => {
     const r = c.getBoundingClientRect();
-    c.animate([{ transform: "none", opacity: 1 },
-      { transform: `translate(${d.left + d.width / 2 - r.left - r.width / 2}px,${d.top + 8 - r.top}px) rotate(-8deg) scale(.7)`, opacity: .12 }],
-      { duration: 260, delay: i * 28, easing: "cubic-bezier(.3,0,.2,1)", fill: "forwards" });
+    c.animate([{ transform: "none", opacity: 1 }, { opacity: 1, offset: .7 },
+      { transform: `translate(${d.left + d.width / 2 - r.left - r.width / 2}px,${d.top + 8 - r.top}px) rotate(-8deg) scale(.6)`, opacity: 0 }],
+      { duration: 260 * vite, delay: i * 28 * vite, easing: "cubic-bezier(.3,0,.2,1)", fill: "forwards" });
   });
-  await dodo(260 + cartes.length * 28);
+  await dodo((260 + cartes.length * 28) * vite);
 }
 function demanderAssurance() {
   return new Promise(res => {
@@ -498,7 +587,7 @@ async function jouerSieges(depuis) {
       if (E.isBlackjack(h) && st.mains.length === 1) { h.result = "blackjack"; rendreSieges(); continue; }
       T.actif = { siege: si, main: hi }; marquerActif();
       emettre("tour", { siege: si, main: hi, toi: st.toi });
-      if (st.toi) { T.occupe = false; return tonTour(); }
+      if (st.toi) { T.occupe = false; turbo(false); return tonTour(); }
       await jouerAuto(si, hi);
     }
   }
@@ -510,7 +599,7 @@ async function jouerAuto(si, hi) {
   for (;;) {
     if (h.fromSplitAces && !r.hitSplitAces && h.cards.length === 2) break;
     const a = actionBase(h.cards, T.croupier[0], st, h);
-    await dodo(vitesse() * 1.1);
+    await pause(voisins());
     if (a === "U") { abandonner(si, hi); return; }
     if (a === "S") break;
     if (a === "P") { await separer(si, hi); h = st.mains[hi]; continue; }
@@ -568,13 +657,13 @@ async function jouerCroupier() {
   emettre("tour", { siege: "croupier", main: 0, toi: false });
   const vivants = T.sieges.some(st => st.mains.some(h => !h.surrendered && !E.isBust(h.cards) && !(E.isBlackjack(h) && st.mains.length === 1)));
   if (r.holeCard) await revelerCachee();
-  else { await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.handTotal(T.croupier); }
-  await dodo(vitesse() * .5);
+  else { await tirer(T.croupier, $("dMain"), false, CROUPIER); poserScore($("dScore"), E.handTotal(T.croupier)); }
+  await pause(vitesse() * .5);
   if (vivants) {
     for (;;) {
       const t = E.handTotal(T.croupier), soft = E.isSoft(T.croupier);
       if (t > 21 || t > 17 || (t === 17 && !(r.h17 && soft))) break;
-      await tirer(T.croupier, $("dMain"), false, CROUPIER); $("dScore").textContent = E.handTotal(T.croupier);
+      await tirer(T.croupier, $("dMain"), false, CROUPIER); poserScore($("dScore"), E.handTotal(T.croupier));
     }
   }
   await regler();
@@ -592,7 +681,7 @@ async function regler() {
     if (st.toi) { miennes.push(res.result); net += res.net; }
     if (!h.emis) fins.push({ siege: si, main: hi, toi: st.toi, issue: issues[si][hi], montant: res.net });
   }); });
-  T.solde += net;
+  T.solde += net; turbo(false);
   T.actif = null; rendreSieges(); T.mains++; T.enJeu = false; T.occupe = false; rafraichirBarre(); garder();
   annoncer(`Croupier ${dt > 21 ? "saute à " + dt : dt}. Toi : ${miennes.join(" · ")}.`);
   // Les mains d'abord, une par une, puis la manche : un écouteur peut compter
@@ -603,6 +692,10 @@ async function regler() {
   boutons({ donne: true });
 }
 $("bDonne").onclick = distribuer;
+$("feutre").addEventListener("click", e => {
+  if (e.target.closest("button, .bulle, input, select")) return;
+  if (T.enJeu && T.occupe && !$("v-table").dataset.reseau) turbo(true);
+});
 $("bNouveauSabot").onclick = () => nouveauSabot();
 // Les réglages d'installation — cadence, aide — se règlent une fois et n'ont
 // rien à faire sur le feutre à côté des coups qu'on joue à chaque main.
@@ -612,6 +705,9 @@ $("bReglagesTable").onclick = () => {
       <label class="ch"><span class="grave">Cadence du croupier</span>
         <input type="range" id="rgCadence" min="120" max="1400" step="20" value="${DB.cadence}">
         <span class="muet" id="rgCadenceL">${fr1(DB.cadence / 1000)} s par carte · donne initiale à ${fr1(cadenceDonne() / 1000)} s</span></label>
+      <label class="ch"><span class="grave">Rythme des voisins</span>
+        <input type="range" id="rgVoisins" min="120" max="1500" step="30" value="${voisins()}">
+        <span class="muet" id="rgVoisinsL">${fr1(voisins() / 1000)} s de réflexion par décision — un clic sur le feutre pendant qu'ils jouent passe en accéléré</span></label>
       <label class="ch ligne"><input type="checkbox" id="rgConseil"${DB.conseil ? " checked" : ""}>
         Afficher la stratégie de base pendant mon tour</label>
     </div>`);
@@ -619,6 +715,10 @@ $("bReglagesTable").onclick = () => {
     DB.cadence = +$("rgCadence").value; garder();
     $("rgCadenceL").textContent = fr1(DB.cadence / 1000) + " s par carte · donne initiale à " + fr1(cadenceDonne() / 1000) + " s";
     poserIntervalle(rythme());
+  };
+  $("rgVoisins").oninput = () => {
+    DB.voisins = +$("rgVoisins").value; garder();
+    $("rgVoisinsL").textContent = fr1(voisins() / 1000) + " s de réflexion par décision — un clic sur le feutre pendant qu'ils jouent passe en accéléré";
   };
   $("rgConseil").onchange = () => {
     DB.conseil = $("rgConseil").checked; garder();

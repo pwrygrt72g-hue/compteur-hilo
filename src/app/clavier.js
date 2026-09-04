@@ -17,8 +17,8 @@ document.addEventListener("keydown", e => {
   } else if (vue === "table") {
     const k = e.key.toLowerCase();
     if (k === "t") $("bTire").click(); else if (k === "r") $("bReste").click();
-    else if (k === "b") $("bDouble").click(); else if (k === "s") $("bSepare").click();
-    else if (k === "a") $("bAbandon").click(); else if (k === "d" || e.key === "Enter") $("bDonne").click();
+    else if (k === "d") $("bDouble").click(); else if (k === "s") $("bSepare").click();
+    else if (k === "a") $("bAbandon").click(); else if (e.key === "Enter" || e.key === " ") { $("bDonne").click(); e.preventDefault(); }
     // Les jetons : 1 à 6 de gauche à droite dans le rack, Retour arrière reprend le dernier posé.
     else if (/^[1-6]$/.test(e.key)) poserJetonRang(+e.key);
     // Par le BOUTON, pas la fonction : à plusieurs (reseau.js), reprendre un jeton passe par l'hôte.
