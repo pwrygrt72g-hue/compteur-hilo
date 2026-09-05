@@ -228,6 +228,18 @@ input[type=range]{accent-color:var(--laiton);width:170px}
    la ligne des autres — une ligne de libellés brisée au milieu d'une rangée de six. */
 label.ch select, label.ch input[type=text], label.ch input[type=number]{min-height:44px}
 label.ch input[type=range]{height:44px;margin:0}
+/* La case à cocher est DESSINÉE (la native fait 13 px et vient d'un tableur) : une laque
+   de 20 px, un filet, et la coche en nacre sur laiton quand elle est prise. La cible du
+   doigt reste le label entier (44 px de haut, .ch.ligne) — cliquer le texte coche la case. */
+label.ch.ligne{cursor:pointer;user-select:none}
+label.ch.ligne input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:20px;height:20px;margin:0;
+  border:1.5px solid var(--bord);border-radius:6px;background:var(--laque);cursor:pointer;position:relative;
+  transition:background .15s,border-color .15s,box-shadow .15s}
+label.ch.ligne:hover input[type=checkbox]{border-color:var(--laiton)}
+label.ch.ligne input[type=checkbox]:checked{background:var(--laiton);border-color:var(--laiton);box-shadow:0 0 0 3px var(--halo)}
+label.ch.ligne input[type=checkbox]::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;
+  border:solid var(--nacre);border-width:0 2px 2px 0;transform:rotate(45deg) scale(0);transform-origin:center;transition:transform .15s}
+label.ch.ligne input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1)}
 .champs{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-start}
 .champs > .btn, .champs > p{align-self:center}
 .onglets{display:inline-flex;border:1px solid var(--bord);border-radius:999px;padding:3px;gap:2px;margin-bottom:14px}

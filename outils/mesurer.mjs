@@ -73,9 +73,13 @@ const SONDE = `(() => {
   }).slice(0, 4).map(e => (e.id ? "#" + e.id : e.className && typeof e.className === "string" ? "." + e.className.split(" ")[0] : e.tagName));
   const y = s => { const e = q(s); if (!e) return null; const r = e.getBoundingClientRect(); return Math.round(r.bottom); };
   const h = s => { const e = q(s); if (!e) return null; return Math.round(e.getBoundingClientRect().height); };
+  // Une case à cocher ou un bouton radio DANS un <label> : c'est le label qui reçoit le
+  // doigt (cliquer le texte coche la case), donc c'est LUI qu'on mesure — nommé par l'id
+  // de la case, pour retrouver le champ. Une case nue, hors label, reste mesurée telle quelle.
+  const cible = e => (e.matches("input[type=checkbox],input[type=radio]") && e.closest("label")) || e;
   const petits = [...document.querySelectorAll("button:not([hidden]), input, select, summary")]
-    .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.height < 44 || r.width < 24); })
-    .map(e => (e.id || e.className || e.tagName) + " " + Math.round(e.getBoundingClientRect().width) + "×" + Math.round(e.getBoundingClientRect().height));
+    .filter(e => { const r = cible(e).getBoundingClientRect(); return r.width > 0 && (r.height < 44 || r.width < 24); })
+    .map(e => { const r = cible(e).getBoundingClientRect(); return (e.id || e.className || e.tagName) + " " + Math.round(r.width) + "×" + Math.round(r.height); });
   const largeurDoc = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth);
   return { vw, vh, doc, defile: Math.max(0, doc - vh), ecrans: +(doc / vh).toFixed(2),
     deborde: largeurDoc > vw + 1 ? dep : [], largeurDoc, hEntete: h("header"),
