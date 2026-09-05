@@ -255,7 +255,12 @@ function dimensionnerCartes() {
   // La largeur « de la table » : celle d'une main de deux dans un siège ordinaire.
   // Plafond : une carte ne prend pas plus de 62 % de la hauteur qui lui revient —
   // 84 px sur un portable (1280 × 800), 100 px sur un grand écran (1920 × 1080).
-  const plafond = Math.min(100, Math.max(84, (H - chrome) / 1.4 * .62));
+  // Sur un feutre BAS (moins de 520 px) avec cinq sièges et plus, le plancher descend à
+  // 72 : mesuré le 05/09 à 1280 × 800, les cartes des sièges du bord (84 px, remontées de
+  // 92 px sur l'arc) montaient au niveau de celles du croupier, et l'arc doré était pincé
+  // à 8 px entre les deux rangées. Une table de casino a les joueurs SOUS le croupier.
+  const plancher = n >= 5 && Hf > 0 && Hf < 520 ? 72 : 84;
+  const plafond = Math.min(100, Math.max(plancher, (H - chrome) / 1.4 * .62));
   const sBase = (pellicule ? sieges[0].clientWidth : partage) - 12;
   const wTable = Math.max(40, Math.round(Math.min(plafond, wHaut, .62 * sBase)));
   sieges.forEach(s => {
@@ -269,10 +274,13 @@ function dimensionnerCartes() {
     mains.forEach(m => {
       let w;
       if (pellicule) { m.style.removeProperty("--w"); w = parseFloat(getComputedStyle(m).getPropertyValue("--w")) || 44; }
-      // Plein sur une main de deux ; au-delà, on accepte de ne voir que 26 % de chaque
-      // carte avant de la rapetisser — c'est ce que fait un croupier qui resserre un jeu.
-      else { w = Math.max(40, Math.round(Math.min(wTable, Wmain / (1 + (kmax - 1) * .26)))); m.style.setProperty("--w", w + "px"); }
-      const c = m.children.length, pas = c > 1 ? Math.min(.44 * w, (Wmain - w) / (c - 1)) : .44 * w;
+      // Plein sur une main de deux ; au-delà, on montre au moins 34 % de chaque carte —
+      // la colonne d'indice entière (rang ET enseigne) — et on rapetisse la carte d'abord
+      // (plancher 58 px) ; si ça ne tient toujours pas, l'éventail DÉBORDE du siège plutôt
+      // que d'écraser les rangs. Mesuré le 05/09 au Cotai (sept sièges, mains de quatre) :
+      // à 15 px de pas, « 3 3 10 3 » et « 4 4 5 R » ne se lisaient plus.
+      else { w = Math.max(58, Math.round(Math.min(wTable, Wmain / (1 + (kmax - 1) * .34)))); m.style.setProperty("--w", w + "px"); }
+      const c = m.children.length, pas = c > 1 ? Math.max(.34 * w, Math.min(.44 * w, (Wmain - w) / (c - 1))) : .44 * w;
       m.style.setProperty("--pas", Math.max(8, pas).toFixed(1) + "px");
     });
   });

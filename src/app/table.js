@@ -48,6 +48,9 @@ const ISSUE_BUS = { "gagné": "gagne", "perdu": "perd", "sauté": "bust", "black
 // suite, pas au règlement. `emis` évite de les annoncer deux fois.
 function sauter(si, hi) {
   const h = T.sieges[si].mains[hi]; h.result = "sauté"; h.emis = true; rendreSieges();
+  // Ton propre bust s'ENTEND : mesuré le 05/09, seul le croupier réagissait (la bulle),
+  // et elle disparaissait pendant qu'on regardait ses cartes partir à la défausse.
+  if (T.sieges[si].toi) son("ko");
   emettre("main-fin", { siege: si, main: hi, toi: T.sieges[si].toi, issue: "bust", montant: -(h.bet || 1) * (h.doubled ? 2 : 1) });
   // Le croupier ramasse la main sautée tout de suite (cartes ET mise), pas au règlement :
   // on laisse 500 ms pour LIRE le bust, puis les cartes glissent à la défausse et le
@@ -59,8 +62,16 @@ function sauter(si, hi) {
     h.ramassee = true;
     await ramasser([...hote.querySelectorAll(".carte")]);
     if (hote.isConnected) { hote.innerHTML = ""; const sc = hote.parentNode && hote.parentNode.querySelector(".score"); if (sc) sc.textContent = ""; }
+    // Les cartes parties, la pastille « Sauté » flottait seule au-dessus d'un cercle vide,
+    // sans rien à quoi se rapporter (les critiques, 05/09). Elle se pose DANS la case de
+    // mise, là où la mise vient d'être ramassée : c'est la place qui a perdu (style.css).
+    marquerSaute(si);
     T.defausse += h.cards.length; h.defaussee = true; rafraichirBarre();
   }, 500);
+}
+function marquerSaute(si) {
+  const st = T.sieges[si], d = $("sieges") && $("sieges").children[si]; if (!st || !d) return;
+  d.classList.toggle("saute", st.mains.length > 0 && st.mains.every(h => h.ramassee));
 }
 function abandonner(si, hi) {
   const h = T.sieges[si].mains[hi]; h.surrendered = true; h.result = "abandon"; h.emis = true; rendreSieges();
@@ -151,45 +162,92 @@ function rendreLettrage() {
   // la boîte .mains) : en phase de mise la boîte est vide, 0 px de large, et l'arc
   // calculé sur elle changeait de place à la première carte distribuée.
   const wT = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--w-table")) || 84;
-  const zones = [...box.querySelectorAll(".siege")].map(sg => {
+  const sieges = [...box.querySelectorAll(".siege")];
+  const zones = sieges.map(sg => {
     const m = sg.querySelector(".mains") || sg, r = m.getBoundingClientRect(), rs = sg.getBoundingClientRect();
     const cx = rs.left + rs.width / 2 - F.left, demi = Math.max(r.width / 2, wT * 1.1);
     return { l: Math.round(cx - demi), r: Math.round(cx + demi), haut: Math.round(r.top - F.top) };
-  }).filter(z => z.r > z.l);
+  });
+  // Les deux lignes du rail évitent le siège ENTIER, tel qu'il est à l'écran (transform
+  // compris) : la vignette vidéo (visio.js) et le tapis sous le nom (reseau.js) élargissent
+  // et abaissent les sièges du bord bien au-delà de leurs cartes. Mesuré le 05/09 à
+  // plusieurs : « DEALER MUST HIT SOFT 17 » traversait « JOUEUR 1 000 » et sa vignette.
+  // …mais PAS le rectangle du siège entier : à cinq sièges sur 1 096 px, chacun fait 214 px
+  // de large pour 80 px de contenu, et sa réserve de cartes (.mains, vide en phase de mise)
+  // remplit tout le coin — mesuré le 05/09 en solo, plus AUCUNE ligne de rail ne tenait.
+  // L'obstacle, c'est ce qui se VOIT : le cercle, le nom, les cartes, la vignette, le tapis ;
+  // plus la réserve des cartes, à sa largeur RÉELLE (celle des zones), pour que l'arc ne
+  // passe pas sous une carte qui n'est pas encore distribuée.
+  const enScreen = e => { const r = e.getBoundingClientRect(); return { l: r.left - F.left, t: r.top - F.top, r: r.right - F.left, b: r.bottom - F.top }; };
+  const obstacles = sieges.flatMap((sg, i) => {
+    const z = zones[i], m = sg.querySelector(".mains");
+    const pieces = [...sg.querySelectorAll(".cercle, .nom, .score, .issue, .carte, .visage, .jt-montant, .tapis-siege, .rangee-bas")].map(enScreen);
+    if (z && m) { const rm = enScreen(m); pieces.push({ l: z.l, r: z.r, t: rm.t, b: rm.b }); }
+    return pieces;
+  }).filter(z => z.r > z.l && z.b > z.t);
+  const touche = (x, y) => obstacles.some(z => x >= z.l - 8 && x <= z.r + 8 && y >= z.t - 4 && y <= z.b + 4);
   const t = tableCourante(), tx = texteLettrage(t);
-  const cle = [W, H, basHaut, basCentre, zones.map(z => z.l + ":" + z.r + ":" + z.haut).join(","), t.id].join("|");
+  const cle = [W, H, basHaut, basCentre, zones.map(z => z.l + ":" + z.r + ":" + z.haut).join(","), obstacles.map(z => Math.round(z.l) + ":" + Math.round(z.b)).join(","), t.id].join("|");
   if (cle === LETTRAGE.cle) return;
   // Jamais effacé au milieu d'une manche : un arc qui disparaît d'un coup se voit plus
-  // qu'un arc qui passe sous une carte. Il se recalcule à la manche suivante.
-  if (T.enJeu && LETTRAGE.cle && LETTRAGE.cle !== "vide" && LETTRAGE.cle.split("|")[0] === String(W)) return;
+  // qu'un arc qui passe sous une carte. Il se recalcule à la manche suivante — SAUF si
+  // le feutre a changé de taille : un viewBox périmé étire et décale tout le lettrage
+  // (mesuré le 05/09 à plusieurs : la barre des coups passait sur deux rangées, le
+  // feutre perdait 54 px, et l'arc du rail traversait les noms des sièges).
+  if (T.enJeu && LETTRAGE.cle && LETTRAGE.cle !== "vide") {
+    const [w0, h0] = LETTRAGE.cle.split("|");
+    if (w0 === String(W) && h0 === String(H)) return;
+  }
   LETTRAGE.cle = cle;
   // Le rail bas = deux quarts d'ellipse (les coins) et un bord droit entre eux —
   // la courbe RÉELLE du feutre, relue dans son border-radius (cf. courbeFeutre).
   const cf = courbeFeutre(f, W, H);
+  const pointCoin = (cote, d, a) => {
+    const rx = cf.rx - d, ry = cf.ry - d, cx = cote === "G" ? cf.rx : W - cf.rx, r = a * Math.PI / 180;
+    return [cx + rx * Math.cos(r), cf.cy + ry * Math.sin(r)];
+  };
   const arcCoin = (cote, d, a1, a2) => {
-    const rx = cf.rx - d, ry = cf.ry - d, cx = cote === "G" ? cf.rx : W - cf.rx, cy = cf.cy;
-    const p = a => { const r = a * Math.PI / 180; return [cx + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
-    const [x1, y1] = p(a1), [x2, y2] = p(a2);
+    const rx = cf.rx - d, ry = cf.ry - d;
+    const [x1, y1] = pointCoin(cote, d, a1), [x2, y2] = pointCoin(cote, d, a2);
     return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 ${a2 > a1 ? 1 : 0} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
   };
   const petit = Math.max(11, Math.round(W * .013)), grand = Math.max(14, Math.round(W * .021));
+  // Un arc de coin, du bord (`ext`) vers l'intérieur (`int`), arrêté au premier degré où
+  // la bande des lettres (la ligne de base et le haut des capitales) entre dans un siège.
+  // Trop court pour porter une règle lisible (moins de 26°) : pas de ligne du tout —
+  // une règle tronquée se lit comme un défaut, une règle absente ne se lit pas.
+  const arcLibre = (cote, d, ext, int) => {
+    const pas = Math.sign(int - ext); let fin = ext;
+    for (let a = ext; pas > 0 ? a <= int : a >= int; a += pas) {
+      // La bande des lettres : la ligne de base et le HAUT DES CAPITALES (.7 em pour
+      // Archivo, pas .85 : à 1280 × 800 la marge en trop butait sur le nom du siège de
+      // coin, « DEALER MUST HIT SOFT 17 » disparaissait à gauche, « INSURANCE » restait à droite).
+      const [x0, y0] = pointCoin(cote, d, a), [x1, y1] = pointCoin(cote, d + petit * .7, a);
+      if (touche(x0, y0) || touche(x1, y1)) break;
+      fin = a;
+    }
+    if (Math.abs(fin - ext) < 26) return null;
+    return cote === "G" ? arcCoin("G", d, ext, fin) : arcCoin("D", d, fin, ext);
+  };
   let out = "", n = 0;
-  const ligne = (texte, d, a1, a2, taille, classe) => {
+  const ligne = (texte, d, taille, classe) => {
+    if (!d) return;
     n++; out += `<defs><path id="lt${n}" d="${d}"/></defs>
       <text class="${classe}" font-size="${taille}"><textPath href="#lt${n}" startOffset="50%" text-anchor="middle">${echap(texte)}</textPath></text>`;
   };
   // Le long de l'arc bas, de part et d'autre des sièges : la règle du croupier à
   // gauche, l'assurance à droite (180 = le bord gauche, 90 = le bas, 0 = le bord
   // droit ; on lit de gauche à droite, le haut des lettres vers le centre).
-  ligne(tx.croupier, arcCoin("G", 6 + petit, 179, 126), 0, 0, petit, "rail");
-  ligne(tx.assurance, arcCoin("D", 6 + petit, 54, 1), 0, 0, petit, "rail");
+  ligne(tx.croupier, arcLibre("G", 6 + petit, 179, 126), petit, "rail");
+  ligne(tx.assurance, arcLibre("D", 6 + petit, 1, 54), petit, "rail");
   // Le paiement du blackjack, en grand, dans la bande entre la main du croupier
   // et les sièges — TOUJOURS : un arc concentrique au rail (un sourire). Plafond :
   // à la verticale de chaque siège, l'arc reste au-dessus de ses cartes (le point de
   // l'arc le plus bas dans l'emprise du siège est le plus proche du centre).
   // Plancher : au centre, le haut des lettres passe sous les cartes du croupier.
-  // Si les deux se contredisent, la taille descend jusqu'à 15 px ; en dessous, l'arc
-  // garde sa taille et passe sous une carte, comme sur une vraie table.
+  // Si les deux se contredisent, la taille descend ; sous 80 % de sa taille, l'arc
+  // n'est PAS dessiné : un arc pincé à 15 px entre deux rangées de cartes est
+  // illisible et fait fouillis (les critiques, 05/09) — le rail garde ses deux lignes.
   const rx = W * .34, ry = rx * .42, A = 40, cosA = Math.cos((90 - A) * Math.PI / 180);
   let plafond = Infinity;
   zones.forEach(z => {
@@ -200,20 +258,21 @@ function rendreLettrage() {
   if (!isFinite(plafond)) plafond = H - 40;
   let taille = grand, plancher = basCentre + 3 + taille * .78;
   if (plafond < plancher) { taille = Math.max(15, Math.floor((plafond - basCentre - 3) / .78)); plancher = basCentre + 3 + taille * .78; }
-  // Plus de 2 px sous une carte même à 15 px : l'arc passerait sous les éventails
-  // des sièges intérieurs (vu à 1024 × 768), illisible et pris pour un défaut. On
-  // le retire, le rail garde ses deux lignes.
-  const cache = plafond < plancher - 2;
+  const cache = plafond < plancher - 2 || taille < Math.max(16, grand * .8) || plafond - basCentre < taille * 1.6;
   const yBas = plafond >= plancher ? plancher + (plafond - plancher) * .5 : plancher;
   const cy = yBas - ry;
   const p = a => { const r = a * Math.PI / 180; return [W / 2 + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
   const [x1, y1] = p(90 + A), [x2, y2] = p(90 - A);
-  if (!cache) ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, 0, 0, taille, "grand");
+  if (!cache) ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, taille, "grand");
+  // La bande où vivent l'annonce et le conseil (style.css) : celle du grand arc, sous la
+  // main du croupier — jamais une hauteur codée en dur qui tomberait sur les cartes.
+  f.style.setProperty("--bande-haut", Math.round(basCentre + 2) + "px");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = out;
   // Un texte plus long que son arc est coupé aux DEUX bouts (ancré au milieu) :
   // « DEALER MUST STAND ON ALL 17 » perdait son D à Macao. On réduit la taille
-  // jusqu'à ce qu'il tienne, plutôt que d'écraser les lettres.
+  // jusqu'à ce qu'il tienne, plutôt que d'écraser les lettres ; sous 9,5 px (un arc
+  // raccourci par un siège) on retire la ligne, elle ne se lirait plus.
   svg.querySelectorAll("text").forEach(tx => {
     const tp = tx.querySelector("textPath"), chemin = svg.querySelector(tp.getAttribute("href"));
     if (!chemin || !chemin.getTotalLength || !tx.getComputedTextLength) return;
@@ -222,6 +281,7 @@ function rendreLettrage() {
       taille = Math.max(8, Math.floor(taille * L / tx.getComputedTextLength() * 100) / 100);
       tx.setAttribute("font-size", taille);
     }
+    if (taille < 9.5) tx.remove();
   });
 }
 // Deux lieux ont un motif tissé dans le feutre : les losanges de la laque de
@@ -287,6 +347,7 @@ function rendreSieges() {
     const ce = document.createElement("div"); ce.className = "cercle"; ce.id = "cercle_" + si; ce.dataset.siege = si;
     const nm = document.createElement("div"); nm.className = "nom serre"; nm.textContent = st.nom;
     d.style.setProperty("--ecart", (si - (T.sieges.length - 1) / 2).toFixed(1));   // signé : négatif à gauche
+    if (st.mains.length && st.mains.every(h => h.ramassee)) d.classList.add("saute");
     d.append(hs, ce, nm); el.appendChild(d);
   });
   dimensionnerCartes();
@@ -358,6 +419,20 @@ function boutons(o) {
 // de Marc naissait 88 px sous le sabot, entière sur le feutre. On exprime le vecteur
 // dans le repère du siège (inverse de sa transformation), et la rotation de la carte
 // en vol retire --tilt pour garder l'angle à l'écran.
+// Ce que la carte reçoit : sa durée et son retard, FIGÉS en ligne sur l'élément. Mesuré le
+// 05/09 en rAF : `--don` dérive de `--intervalle`, et `poserIntervalle()` en fin de donne
+// (ou à chaque turbo) RETIMAIT une animation terminée (fill both) qui rejouait ses 20 %
+// finaux — la carte cachée sautait de 10 px, 80 ms après s'être posée. Une animation finie
+// ne dépend plus de rien : la classe part à `animationend`, la pose de repos est
+// transform:none, la même que la dernière image.
+// La durée suit la DISTANCE : 6,7 px/ms au départ pour Marc (112 px par image à 60 Hz),
+// c'était une carte qui se matérialise à 230 px du sabot, pas une carte qui en sort.
+function dureeVol(d) {
+  const cs = getComputedStyle($("plateau"));
+  const don = parseFloat(cs.getPropertyValue("--don")) || 300, slot = parseFloat(cs.getPropertyValue("--intervalle")) || 450;
+  return Math.round(Math.max(120, Math.min(slot * .9, don * (.65 + .6 * Math.min(1.2, d / 600)))));
+}
+const DELAI_VOL = 40;   // ms : la main du croupier part en même temps que la carte (croupier.js)
 function animerDepuisSabot(e, cr) {
   const s = $("sabot").getBoundingClientRect();
   // Le CENTRE de la carte part du centre du sabot : à l'échelle .74, elle tient tout
@@ -373,7 +448,11 @@ function animerDepuisSabot(e, cr) {
     } catch (err) {}
   }
   e.style.setProperty("--dx", dx + "px"); e.style.setProperty("--dy", dy + "px");
+  const duree = dureeVol(Math.hypot(dx, dy));
+  e.style.animationDuration = duree + "ms"; e.style.animationDelay = DELAI_VOL + "ms";
+  e.addEventListener("animationend", () => { e.classList.remove("carte--entre"); e.style.animationDuration = ""; e.style.animationDelay = ""; }, { once: true });
   e.classList.add("carte--entre");
+  return { duree, delai: DELAI_VOL };
 }
 async function tirer(main, hote, cachee, qui) {
   // Filet de sécurité : plutôt remélanger que distribuer une carte inexistante.
@@ -390,16 +469,6 @@ async function tirer(main, hote, cachee, qui) {
   // Une carte de plus dans un siège : l'éventail se resserre pour qu'elle tienne.
   // Jamais pour le croupier : sa rangée a une géométrie fixée avant la première carte.
   if (qui && qui.siege !== "croupier") dimensionnerCartes();
-  if (!matchMedia("(prefers-reduced-motion:reduce)").matches) {
-    // Mesuré le 05/09 : la 1re carte glissait 150 ms AVANT que la 2e n'atterrisse. Elle
-    // attend les trois quarts du vol (--don) : elle bouge quand on la touche.
-    const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
-    [...hote.children].slice(0, -1).forEach((x, i) => {
-      const dx = avant[i] - x.getBoundingClientRect().left;
-      if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }],
-        { duration: 200, delay: Math.round(don * .75), easing: "cubic-bezier(.3,0,.2,1)", fill: "backwards" });
-    });
-  }
   // Mesurée AVANT l'animation : pendant le vol, le rect de la carte est celui
   // du sabot, pas celui de son point d'arrivée.
   const cr = e.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
@@ -410,13 +479,23 @@ async function tirer(main, hote, cachee, qui) {
     const dispo = bloc.clientWidth - (qui ? qui.offsetWidth : 0), w = e.offsetWidth || 84, k = hote.children.length;
     hote.style.setProperty("--pas", Math.max(w * .3, Math.min(w * .62, (dispo - w) / (k - 1))).toFixed(1) + "px");
   }
-  // La main du croupier part D'ABORD (l'événement), la carte suit 30 ms plus tard
-  // (animation-delay) : le geste pousse la carte, il ne la suit pas.
+  const vol = animerDepuisSabot(e, cr);
+  if (!matchMedia("(prefers-reduced-motion:reduce)").matches) {
+    // Mesuré le 05/09 : la 1re carte glissait 150 ms AVANT que la 2e n'atterrisse. Elle
+    // attend les trois quarts du vol RÉEL de la carte : elle bouge quand on la touche.
+    [...hote.children].slice(0, -1).forEach((x, i) => {
+      const dx = avant[i] - x.getBoundingClientRect().left;
+      if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }],
+        { duration: 200, delay: Math.round(vol.delai + vol.duree * .72), easing: "cubic-bezier(.3,0,.2,1)", fill: "backwards" });
+    });
+  }
+  // La main du croupier part AVEC la carte (même retard, croupier.js lit `duree` et
+  // `delai`) : le geste pousse la carte pendant la première moitié du vol.
   emettre("carte", { siege: qui ? qui.siege : "croupier", main: qui ? qui.main : 0, index: main.length - 1,
-    carte: c, cachee: !!cachee, el: e,
+    carte: c, cachee: !!cachee, el: e, duree: vol.duree, delai: vol.delai,
     depuis: { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 },
     vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
-  animerDepuisSabot(e, cr); son("carte");
+  son("carte");
   if (!cachee) { T.rc += valeurCompte(c); T.vues++; }
   rafraichirBarre(); await pause(rythme()); return c;
 }
@@ -508,6 +587,10 @@ async function distribuer() {
   emettre("donne-debut", { table: t.id, sieges: T.sieges.length });
   const r = reglesTable();
   T.rythme = cadenceDonne(); poserIntervalle(T.rythme);
+  // La main du croupier va au sabot (croupier.js, 320 ms) AVANT que la première carte n'en
+  // sorte : mesuré le 05/09 en rAF, elle partait 40 ms après le clic, la main encore à
+  // 110 px du sabot — la carte voyageait seule, la main courait derrière.
+  if (!matchMedia("(prefers-reduced-motion:reduce)").matches && matchMedia("(min-width:1000px)").matches) await pause(260);
   for (let tour = 0; tour < 2; tour++) {
     for (let si = 0; si < T.sieges.length; si++) await tirerSiege(si, 0);
     // Sans carte cachée, le croupier ne prend qu'une carte : c'est toute la règle.
@@ -722,6 +805,16 @@ $("bReglagesTable").onclick = () => {
   };
 };
 $("bMonCompte").onclick = () => demanderMonCompte(false);
+// Le menu « Plus » de la barre des coups (sous 1400 px, style.css) : les utilitaires qu'on
+// n'ouvre pas à chaque main. Un clic dedans le referme ; Échap et un clic dehors aussi.
+{
+  const plus = $("plusTable"), b = $("bPlus");
+  const poser = on => { plus.classList.toggle("ouvert", on); b.setAttribute("aria-expanded", on ? "true" : "false"); };
+  b.onclick = e => { e.stopPropagation(); poser(!plus.classList.contains("ouvert")); };
+  $("plusMenu").addEventListener("click", e => { if (e.target.closest("button")) poser(false); });
+  document.addEventListener("click", e => { if (plus.classList.contains("ouvert") && !e.target.closest("#plusTable")) poser(false); });
+  addEventListener("keydown", e => { if (e.key === "Escape" && plus.classList.contains("ouvert")) { poser(false); b.focus(); } });
+}
 // Le compte est figé à l'ouverture : le sabot peut être remélangé pendant
 // que la question est à l'écran, la réponse doit rester celle qu'on a posée.
 function demanderMonCompte(finSabot) {

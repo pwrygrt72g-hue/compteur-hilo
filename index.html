@@ -243,9 +243,11 @@ body.au-hall main{ max-width:none; padding:0 0 56px }
 .hall-int{ max-width:min(1400px, 100% - 2*max(var(--gap), var(--sg), var(--sd))); margin:0 auto }
 
 /* ── Le héros : la photo bord à bord, le titre posé dessus ─────────────── */
+/* Un tiers de l'écran, pas 92 % (mesuré le 05/09 : 586 px sur 800 pour répéter le nom de
+   l'en-tête, les neuf tables sous le pli). Le titre est la promesse, le prénom un clic. */
 .hall-heros{ position:relative; isolation:isolate; overflow:hidden; color:#F6F2E8; background:#070D0C;
-  min-height:clamp(440px, 66vh, 700px); display:flex; align-items:flex-end;
-  padding:clamp(48px,7vh,80px) 0 clamp(36px,5vh,56px) }
+  min-height:clamp(340px, 50vh, 560px); display:flex; align-items:flex-end;
+  padding:clamp(36px,5vh,56px) 0 clamp(28px,4vh,44px) }
 .hall-heros>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 62%; z-index:-2;
   filter:brightness(.7) saturate(1.05) }
 /* Vignette, puis le bas qui s'assombrit : le titre et le prénom se lisent sur toute photo. */
@@ -255,16 +257,25 @@ body.au-hall main{ max-width:none; padding:0 0 56px }
     linear-gradient(180deg, rgba(7,13,12,.42) 0%, rgba(7,13,12,0) 26%, rgba(7,13,12,.5) 62%, rgba(7,13,12,.86) 100%) }
 .hall-heros-int{ width:100%; position:relative; z-index:1; text-shadow:0 1px 2px rgba(0,0,0,.6), 0 8px 30px rgba(0,0,0,.45) }
 .hall-kicker{ color:rgba(246,242,232,.74) }
-.hall-titre{ font-size:clamp(72px, 9.5vw, 150px); line-height:.9; letter-spacing:-.015em; margin:8px 0 16px }
-.hall-phrase{ max-width:58ch; font-size:var(--t-fort); line-height:1.45; color:rgba(246,242,232,.88); margin:0 0 20px }
-.hall-salut{ font-family:"Instrument Serif",Georgia,serif; font-size:1.3em; color:#F3C866 }
-.hall-salut:not(:empty)::after{ content:" " }
-.hall-entree{ display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; text-shadow:none }
+.hall-titre{ font-size:clamp(44px, 5.6vw, 92px); line-height:.96; letter-spacing:-.012em; margin:6px 0 14px; text-wrap:balance }
+.hall-phrase{ max-width:54ch; font-size:var(--t-fort); line-height:1.45; color:rgba(246,242,232,.88); margin:0 0 18px }
+.hall-entree{ display:flex; gap:10px 22px; align-items:center; flex-wrap:wrap; text-shadow:none }
 .hall-entree .grave{ color:rgba(246,242,232,.74) }
-.hall-entree #prenom{ min-width:180px; min-height:48px; background:rgba(0,0,0,.42); border-color:rgba(255,255,255,.3); color:#F6F2E8;
+/* La salutation EST le bouton du prénom : « Bonsoir, Léo. » se clique, le champ s'ouvre à côté. */
+.hall-qui{ display:inline-flex; align-items:baseline; gap:10px; background:none; border:0; padding:4px 2px; min-height:44px; cursor:pointer;
+  color:#F3C866; font-family:"Instrument Serif",Georgia,serif; font-size:clamp(20px, 1.6vw, 26px); line-height:1.1; border-radius:6px }
+.hall-qui .hall-salut{ border-bottom:1px dashed rgba(243,200,102,.55); padding-bottom:1px }
+.hall-qui .hall-crayon{ font-family:Archivo,sans-serif; font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase;
+  color:rgba(246,242,232,.62); opacity:0; transition:opacity .15s }
+.hall-qui:hover .hall-crayon, .hall-qui:focus-visible .hall-crayon, .hall-qui[aria-expanded="true"] .hall-crayon{ opacity:1 }
+.hall-qui:hover .hall-salut{ border-bottom-style:solid }
+.hall-qui:focus-visible{ outline:2px solid #F3C866; outline-offset:2px }
+.hall-prenom{ display:flex; align-items:center; gap:10px; animation:bascule 160ms var(--sec) }
+.hall-prenom[hidden]{ display:none }
+.hall-entree #prenom{ min-width:160px; width:180px; min-height:44px; background:rgba(0,0,0,.42); border-color:rgba(255,255,255,.3); color:#F6F2E8;
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px) }
 .hall-entree #prenom::placeholder{ color:rgba(246,242,232,.45) }
-.hall-entree .btn{ min-height:48px; background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206;
+.hall-entree .btn{ min-height:48px; padding:0 22px; background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 10px 22px -10px rgba(0,0,0,.9) }
 /* L'éventail : cinq cartes tirées au hasard, posées sur le comptoir à droite du titre. */
 .eventail{ position:absolute; right:clamp(16px, 7vw, 140px); bottom:clamp(28px, 6vh, 72px); width:340px; height:240px; z-index:1; pointer-events:none;
@@ -292,24 +303,29 @@ div.salle-carte{ cursor:default }
 .salle-carte:hover, .salle-porte:hover .salle-carte, .salle-carte:focus-visible{ transform:translateY(-4px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px color-mix(in oklab, var(--laiton) 60%, transparent), 0 28px 44px -20px rgba(0,0,0,.9) }
 .salle-carte:focus-visible{ outline:2px solid var(--laiton); outline-offset:3px }
-.salle-carte>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; transform:scale(1.03);
+.salle-carte>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:var(--pos, 50% 50%); z-index:-2; transform:scale(1.03);
   filter:brightness(.78) saturate(1.05); transition:transform .7s var(--sec), filter .3s }
 .salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo, .salle-carte:focus-visible>.photo{ transform:scale(1.08); filter:brightness(.98) saturate(1.12) }
 .salle-carte>.voile{ position:absolute; inset:0; z-index:-1; pointer-events:none;
-  background:linear-gradient(180deg, rgba(7,13,12,.28) 0%, rgba(7,13,12,0) 30%, rgba(7,13,12,.42) 56%, rgba(7,13,12,.93) 100%) }
+  background:linear-gradient(180deg, rgba(7,13,12,.5) 0%, rgba(7,13,12,.06) 30%, rgba(7,13,12,.44) 54%, rgba(7,13,12,.94) 100%) }
 .salle-carte .bas, .salle-carte .haut{ position:absolute; left:20px; right:20px; display:flex; text-shadow:0 1px 2px rgba(0,0,0,.7) }
-.salle-carte .bas{ bottom:16px; flex-direction:column; gap:6px }
+.salle-carte .bas{ bottom:16px; flex-direction:column; gap:5px }
+/* L'appel, au coin : une porte qu'on survole dit ce qu'elle fait. */
+.salle-carte .asseoir-cta{ position:absolute; right:18px; bottom:16px; z-index:1; font-size:var(--t-petit); font-weight:600; letter-spacing:.02em; color:#F3C866;
+  text-shadow:0 1px 2px rgba(0,0,0,.8); opacity:0; transform:translateX(-6px); transition:opacity .2s, transform .25s var(--sec); white-space:nowrap }
+.salle-carte:hover .asseoir-cta, .salle-porte:hover .asseoir-cta, .salle-carte:focus-visible .asseoir-cta{ opacity:1; transform:none }
+@media (min-width:1000px){ .salle-carte .bas{ right:118px } }
 .salle-carte .haut{ top:14px; right:96px; align-items:center; gap:10px }
 .salle-carte .lieu, .salle-carte .num{ font-size:var(--t-micro); letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:rgba(246,242,232,.74) }
 .salle-carte .nom{ font-family:"Instrument Serif",Georgia,serif; font-size:clamp(26px, 2.1vw, 34px); line-height:1.02; text-wrap:balance }
-.salle-carte .sous{ font-size:var(--t-petit); line-height:1.4; color:rgba(246,242,232,.84); max-width:52ch }
+.salle-carte .sous{ font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:clamp(15px, 1.1vw, 17px); line-height:1.3; color:rgba(246,242,232,.9); max-width:40ch; text-wrap:pretty }
 .salle-carte .regles{ margin-top:2px }
 .salle-carte .regle{ border-color:rgba(255,255,255,.32); color:rgba(246,242,232,.92); background:rgba(0,0,0,.36);
   backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px) }
 .salle-carte .regle.bien{ color:#5FE0C6; border-color:rgba(95,224,198,.62) }
 .salle-carte .regle.mal{ color:#FF9B7A; border-color:rgba(255,155,122,.62) }
 .salle-carte .chiffres{ display:flex; gap:18px; flex-wrap:wrap; font-size:var(--t-fin); color:rgba(246,242,232,.74); margin-top:2px }
-.salle-carte .chiffres b{ font-family:"Martian Mono",monospace; font-weight:600; font-size:var(--t-petit); color:#F6F2E8; margin-right:5px; letter-spacing:-.02em }
+.salle-carte .chiffres b{ font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:clamp(18px, 1.3vw, 21px); color:#F6F2E8; margin-right:6px; letter-spacing:0 }
 .salle-carte .etat, .salle-carte .tampon{ font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; font-weight:700;
   padding:5px 10px; border-radius:999px; white-space:nowrap; text-shadow:none }
 .salle-carte .etat{ background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206; box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 6px 14px -8px #000 }
@@ -370,8 +386,8 @@ div.salle-carte{ cursor:default }
   .salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo{ transform:scale(1.03) }
 }
 @media (max-width:860px){
-  .hall-heros{ min-height:min(78vh, 560px) }
-  .hall-titre{ font-size:clamp(56px, 16vw, 92px) }
+  .hall-heros{ min-height:min(60vh, 480px) }
+  .hall-titre{ font-size:clamp(40px, 11vw, 72px) }
   .eventail{ display:none }
   .salle-carte.grande{ min-height:220px }
 }
@@ -437,20 +453,25 @@ div.salle-carte{ cursor:default }
    qu'un même halo brun sur un même fond noir. La photo du lieu (embarquée,
    créditée — cf. build.mjs), floutée et assombrie, fait la salle derrière le
    croupier ; la lueur du filament et les lampes se posent PAR-DESSUS (::after). */
-.salle .decor{ position:absolute; inset:-18px; z-index:0; pointer-events:none;
+.salle .decor{ position:absolute; inset:-12px; z-index:0; pointer-events:none;
   background:var(--photo, none) center 30% / cover no-repeat, var(--sol);
-  filter:blur(7px) brightness(.36) saturate(1.1);
-  /* La photo fait toute la salle : pleine autour du croupier, retenue à 55 % sous le
+  /* Un flou de profondeur de champ (2,5 px), pas un brouillard (7 px) : mesuré le 05/09,
+     derrière le croupier on ne distinguait plus une salle — un halo brun. Les lampes,
+     les colonnes et les silhouettes se devinent ; le croupier reste net devant. */
+  filter:blur(2.5px) brightness(.5) saturate(1.12);
+  /* La photo fait toute la salle : pleine autour du croupier, retenue à 40 % sous le
      rail — un fond de salle, pas un mur noir. Le feutre garde son contraste : il est opaque. */
-  mask-image:linear-gradient(#000 38%, rgba(0,0,0,.55) 100%); -webkit-mask-image:linear-gradient(#000 38%, rgba(0,0,0,.55) 100%) }
+  mask-image:linear-gradient(#000 40%, rgba(0,0,0,.4) 100%); -webkit-mask-image:linear-gradient(#000 40%, rgba(0,0,0,.4) 100%) }
 .salle::after{
   content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
   background:
     var(--lampes),
+    /* le plafonnier du croupier : un cône de lumière chaude tombe sur lui et sur le rail */
+    radial-gradient(34% 62% at 50% -4%, rgba(255,232,190,.2) 0%, rgba(255,232,190,.06) 45%, transparent 72%),
     radial-gradient(52% 46% at 50% 8%, var(--lueur) 0%, transparent 72%),
     radial-gradient(120% 60% at 50% 100%, var(--sol-clair) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 60% at 50% 35%, transparent 55%, rgba(0,0,0,.75)),
-    linear-gradient(180deg, rgba(0,0,0,.14), transparent 40%, rgba(0,0,0,.35));
+    radial-gradient(ellipse 74% 64% at 50% 35%, transparent 58%, rgba(0,0,0,.7)),
+    linear-gradient(180deg, rgba(0,0,0,.1), transparent 40%, rgba(0,0,0,.35));
 }
 /* Fremont et l'Aquarium ont un tube de néon dans la salle — un seul, pas un arc-en-ciel. */
 .salle::before{
@@ -462,12 +483,12 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="boulevard"] .salle, #v-table[data-lieu="mainchaude"] .salle{
   --lampes:radial-gradient(18% 12% at 22% 6%, rgba(255,200,120,.28), transparent 70%), radial-gradient(18% 12% at 78% 6%, rgba(255,200,120,.28), transparent 70%) }
 #v-table[data-lieu="cotai"]{ --lueur:rgba(242,193,90,.46) }
-#v-table[data-lieu="cotai"] .salle .decor{ filter:blur(7px) brightness(.44) saturate(1.5) }
+#v-table[data-lieu="cotai"] .salle .decor{ filter:blur(2.5px) brightness(.52) saturate(1.45) }
 #v-table[data-lieu="cotai"] .salle{ --lampes:repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 3px, transparent 3px 90px) }
 #v-table[data-lieu="cotai"] .tapis{ --rail:#3A0F0C; --rail-clair:#5A1A14 }
-#v-table[data-lieu="neon"] .salle .decor, #v-table[data-lieu="aquarium"] .salle .decor{ filter:blur(7px) brightness(.4) saturate(1.4) }
+#v-table[data-lieu="neon"] .salle .decor, #v-table[data-lieu="aquarium"] .salle .decor{ filter:blur(2.5px) brightness(.5) saturate(1.35) }
 #v-table[data-lieu="cercle"]{ --lueur:rgba(212,180,106,.24) }
-#v-table[data-lieu="cercle"] .salle .decor{ filter:blur(8px) brightness(.34) saturate(.9) }
+#v-table[data-lieu="cercle"] .salle .decor{ filter:blur(3px) brightness(.46) saturate(.95) }
 /* Le Salon Privé : cuir capitonné et or, pas un feutre gris dans le noir. */
 #v-table[data-lieu="salonprive"]{ --rail-liseret:#E6C773; --feutre:#2A2D31; --feutre-clair:#3B4046; --dos-carte:#2E2416 }
 #v-table[data-lieu="salonprive"] .tapis{
@@ -477,11 +498,15 @@ div.salle-carte{ cursor:default }
     repeating-linear-gradient(-45deg, rgba(0,0,0,.30) 0 1px, rgba(255,255,255,.06) 1px 2px, transparent 2px 28px),
     linear-gradient(180deg, rgba(255,255,255,.08), transparent 18%),
     linear-gradient(180deg, #221A16 0%, #100B09 45%, #070504 100%) }
-#v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(8px) brightness(.34) saturate(1) }
-#v-table[data-lieu="reno"] .salle .decor{ filter:blur(8px) brightness(.34) saturate(.8) sepia(.3) }
+#v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(3px) brightness(.44) saturate(1) }
+#v-table[data-lieu="reno"] .salle .decor{ filter:blur(3px) brightness(.46) saturate(.85) sepia(.25) }
 #croupierScene{ position:absolute; left:50%; top:0; transform:translateX(-50%); z-index:1;
   width:min(560px, 80%); height:calc(var(--salle-haut) + 170px); pointer-events:none }
-#jetonsCalque{ position:absolute; inset:0; z-index:8; pointer-events:none }
+/* Le calque des jetons couvre la VUE entière — salle ET barre des coups — et vit hors de
+   .salle (overflow:hidden) : mesuré le 05/09, le jeton décollait sous le bord de la salle,
+   tranché ~100 ms, puis « sortait du sol » entre deux sièges. Il part du jeton cliqué. */
+#v-table{ position:relative }
+#jetonsCalque{ position:absolute; inset:0; z-index:9; pointer-events:none; overflow:visible }
 
 /* Le thème clair : une salle de jeu n'a pas de fenêtres. Le 05/09, en clair, la salle
    était un panneau beige, la photo un brouillard gris, la barre des coups des pilules
@@ -550,11 +575,15 @@ div.salle-carte{ cursor:default }
 @media (min-width:1000px){
   .feutre{ grid-template-rows:auto minmax(0,1fr) }
   .feutre>.annonce, .feutre>.conseil{ position:absolute; left:0; right:0; margin:0; z-index:3; pointer-events:none }
-  .feutre>.annonce{ top:calc(var(--w-croupier, 89px) * 1.4 + 40px) }
-  .feutre>.conseil{ top:calc(var(--w-croupier, 89px) * 1.4 + 72px) }
-  /* L'annonce passe DEVANT (fond lisible) et l'arc reste : mesuré le 05/09, il
-     s'allumait et s'éteignait à chaque manche, au moment où l'œil suit la carte. */
-  .feutre.annonce-on>svg.lettrage text.grand{ opacity:.35; transition:opacity .6s ease }
+  /* --bande-haut est posé par rendreLettrage (table.js) : le bas RÉEL de la rangée du
+     croupier. Une hauteur déduite de --w-croupier plaçait la pastille sur les cartes de
+     « Toi » à 1280 × 800 (mesuré le 05/09 : pastille à 156 px, cartes à 176). */
+  .feutre>.annonce{ top:calc(var(--bande-haut, calc(var(--w-croupier, 89px) * 1.4 + 40px)) + 4px) }
+  .feutre>.conseil{ top:calc(var(--bande-haut, calc(var(--w-croupier, 89px) * 1.4 + 40px)) + 38px) }
+  /* L'annonce passe DEVANT et l'arc S'EFFACE : à .35 il restait un fantôme doré que la
+     pastille coupait en deux (les critiques, 05/09). Un fondu lent, pas un clignotement. */
+  .feutre.annonce-on>svg.lettrage text.grand{ opacity:0; transition:opacity .5s ease }
+  .feutre>svg.lettrage text.grand{ transition:opacity .9s ease .2s }
   .feutre>.annonce:not(:empty){ width:max-content; max-width:min(92%, 720px); left:50%; right:auto; transform:translateX(-50%);
     background:rgba(0,0,0,.38); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px; padding:5px 18px }
   .sabot, .defausse{ margin-top:-10px }
@@ -644,7 +673,7 @@ div.salle-carte{ cursor:default }
   color:var(--ivoire); text-shadow:0 1px 3px rgba(0,0,0,.6) }
 /* Les sièges, en bas, chacun avec son cercle de mise doré ; les sièges du bord
    remontent un peu (--ecart posé par la table) : on est assis autour, pas en rang. */
-.sieges{ display:flex; justify-content:center; align-items:flex-end; gap:12px; flex-wrap:wrap; min-height:0; padding:0 4px 2px }
+.sieges{ display:flex; justify-content:center; align-items:flex-end; align-self:end; gap:12px; flex-wrap:wrap; min-height:0; padding:0 4px 2px }
 /* Chaque siège suit l'ARC du rail : --lift (remontée) et --tilt (inclinaison vers
    le centre) sont calculés par cartes.js d'après la courbe réelle du feutre, pour
    que le coin extérieur de chaque siège reste sur le feutre. Un siège n'a pas de
@@ -671,9 +700,17 @@ div.salle-carte{ cursor:default }
 .siege .issue{ font-size:var(--t-micro); letter-spacing:.07em; text-transform:uppercase; padding:1px 7px; border-radius:999px; font-weight:600 }
 .siege .issue:empty{ display:none }
 .siege .issue.neuve{ animation:bascule 160ms var(--sec) }
-.issue.g{ background:color-mix(in oklab,var(--jade) 26%,transparent); color:var(--jade) }
-.issue.p{ background:color-mix(in oklab,var(--cinabre) 24%,transparent); color:var(--cinabre) }
-.issue.n{ background:rgba(255,255,255,.12); color:var(--nacre) }
+/* Des fonds OPAQUES : sur le feutre, une teinte à 24 % donnait 2,9:1 (mesuré le 05/09
+   sur « Sauté »). Ici ≥ 8:1, et la pastille se lit sur les neuf feutres. */
+.issue.g{ background:rgba(4,34,26,.92); color:#5FE0C6; box-shadow:0 0 0 1px rgba(95,224,198,.4) }
+.issue.p{ background:rgba(46,10,5,.92); color:#FF9B7A; box-shadow:0 0 0 1px rgba(255,155,122,.4) }
+.issue.n{ background:rgba(0,0,0,.62); color:#F6F1E4; box-shadow:0 0 0 1px rgba(255,255,255,.18) }
+/* Un siège SAUTÉ : ses cartes sont ramassées, la pastille flottait seule au-dessus du cercle.
+   Le mot va DANS le cercle de mise, où il y avait la mise — c'est là qu'on regarde. */
+.siege.saute .issue{ display:none }
+.siege.saute .cercle{ opacity:.72 }
+.siege.saute .cercle::before{ content:"Sauté"; position:absolute; inset:0; display:grid; place-items:center; z-index:1;
+  font-size:var(--t-micro); letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:rgba(246,241,228,.82) }
 .issue.bj{ background:var(--or); color:#1A1409 }
 /* Une vraie case de mise, à l'échelle de la carte (85 %) : la pile de jetons (56 % de la
    carte, comme un vrai jeton face à une vraie carte) se lit DEDANS. */
@@ -713,17 +750,22 @@ div.salle-carte{ cursor:default }
 
 /* ── Les coups : verre teinté sur la scène, le principal en or ─────────── */
 .zone-actions{ position:relative; z-index:5; padding:10px 12px; padding-bottom:max(10px,var(--sb));
-  display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between;
+  display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:flex-start;
   color:var(--ivoire); border-radius:0 0 var(--r) var(--r);
   background:linear-gradient(180deg, var(--sol-clair), var(--sol)); box-shadow:inset 0 1px 0 rgba(255,255,255,.06) }
 .zone-actions .rang-btn{ display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start }
 .zone-actions .btn{ min-height:clamp(46px, 3.4vw, 58px); padding:8px clamp(13px, 1.3vw, 22px); border-radius:12px; font-size:clamp(13px, 1vw, 17px); white-space:nowrap }
 .zone-actions .btn kbd{ opacity:.55; font-size:10px }
-#bDonne{ background:linear-gradient(180deg, color-mix(in oklab, var(--or) 78%, #fff), var(--or) 58%, var(--or-fonce)); color:#1A1206;
+/* TROIS poids, du plus fort au plus discret : « Distribuer » en or, accolé au rack (c'est
+   LE geste de la phase de mise) ; les décisions en ivoire plein (Tirer, Rester… c'est LE
+   geste de la main) ; les utilitaires à droite en filet, plus petits. Mesuré le 05/09 : le
+   seul bouton doré était « Nouveau sabot », et Tirer pesait autant que « Reçu du sabot ». */
+#bDonne{ background:linear-gradient(180deg, color-mix(in oklab, var(--or) 78%, #fff), var(--or) 58%, var(--or-fonce)); color:#1A1206; font-weight:600;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 8px 16px -8px rgba(0,0,0,.9), 0 0 0 1px rgba(0,0,0,.4) }
-/* Éteint, il est ÉTEINT : mesuré le 05/09, une bague dorée et un fond ambré en faisaient le
-   bouton le plus voyant de la barre au moment de décider — l'œil tombait sur un bouton mort. */
-#bDonne[disabled]{ opacity:1; background:rgba(255,255,255,.035); color:rgba(246,241,228,.32); box-shadow:none; border:1px solid rgba(255,255,255,.08) }
+/* Éteint, il est ÉTEINT — mais LISIBLE (5:1) : un pointillé dit « pose ta mise d'abord ».
+   À 2,7:1 (mesuré le 05/09) on ne lisait plus ce qu'on attendait de nous. */
+#bDonne[disabled]{ opacity:1; background:rgba(255,255,255,.03); color:rgba(246,241,228,.6); box-shadow:none; border:1px dashed rgba(246,241,228,.34) }
+#bDonne[disabled] kbd{ opacity:.4 }
 /* On ne montre que les coups possibles, comme un croupier ne propose pas « Séparer » avant
    la donne : pendant la mise, le rack de jetons prend la place des coups ; pendant la main,
    « Distribuer » disparaît. */
@@ -733,12 +775,41 @@ div.salle-carte{ cursor:default }
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:inset 0 1px 0 rgba(255,255,255,.08) }
 .btn.verre:hover{ background:rgba(255,255,255,.13); border-color:color-mix(in oklab, var(--or) 60%, transparent); filter:none }
 .btn.verre[disabled]{ opacity:1; color:rgba(246,241,228,.38); background:rgba(255,255,255,.035); border-color:rgba(255,255,255,.08); cursor:not-allowed }
+/* Les décisions de la main, en ivoire plein : ce sont elles qu'on joue. */
+#coups .btn.verre:not([disabled]){ background:linear-gradient(180deg,#FBF7EC,#EDE4CC); color:#1A1409; border-color:rgba(0,0,0,.4); font-weight:600;
+  box-shadow:inset 0 1px 0 #fff, 0 8px 16px -8px rgba(0,0,0,.9); backdrop-filter:none; -webkit-backdrop-filter:none }
+#coups .btn.verre:not([disabled]):hover{ background:#fff; border-color:rgba(0,0,0,.5) }
+#coups .btn.verre:not([disabled]) kbd{ opacity:.6 }
 .btn.verre.mini{ min-height:clamp(46px, 3.4vw, 58px); padding:7px 12px; font-size:clamp(13px, .9vw, 15px) }
-/* « Nouveau sabot » jette la manche en cours : un filet le sépare des boutons de lecture. */
-#bNouveauSabot{ margin-left:8px; position:relative; border-color:color-mix(in oklab, var(--or) 45%, transparent); color:var(--or) }
+/* Les utilitaires : un filet, 44 px de haut, un ton plus bas. Ils ne se jouent pas. */
+.rang-table .btn.verre.mini{ min-height:44px; padding:6px 12px; font-size:13px; background:transparent; color:rgba(246,241,228,.74);
+  border-color:rgba(255,255,255,.14); box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none }
+.rang-table .btn.verre.mini:hover{ background:rgba(255,255,255,.08); color:var(--ivoire) }
+/* « Nouveau sabot » jette la manche en cours : un filet le sépare des autres — sans or,
+   l'or est réservé à « Distribuer ». */
+#bNouveauSabot{ margin-left:8px; position:relative; border-color:rgba(255,255,255,.14); color:rgba(246,241,228,.74) }
 #bNouveauSabot::before{ content:""; position:absolute; left:-8px; top:6px; bottom:6px; width:1px; background:rgba(255,255,255,.14) }
-.btn.mini[aria-pressed="true"]{ color:var(--or); border-color:var(--or) }
-.rang-table{ display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto }
+.btn.mini[aria-pressed="true"], .rang-table .btn.verre.mini[aria-pressed="true"]{ color:var(--or); border-color:var(--or) }
+.rang-table{ display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto; align-items:center }
+/* Le menu « Plus » : sous 1400 px, cinq utilitaires derrière un bouton ; au-delà, ils
+   sont tous sur la rangée (display:contents — le menu n'existe pas). */
+.plus{ position:relative; display:contents }
+.plus-menu{ display:contents }
+.plus-btn .chevron{ display:inline-block; width:7px; height:7px; margin-left:6px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+  transform:rotate(-135deg) translate(-2px,2px); transition:transform .15s }
+.plus.ouvert .plus-btn .chevron{ transform:rotate(45deg) translate(-2px,-2px) }
+#bPlus{ display:none }
+@media (max-width:1399.98px){
+  .plus{ display:block }
+  #bPlus{ display:inline-flex }
+  .plus-menu{ display:none; position:absolute; right:0; bottom:calc(100% + 8px); z-index:30; flex-direction:column; align-items:stretch; gap:4px; min-width:220px;
+    padding:8px; border-radius:14px; background:linear-gradient(180deg,#171B1F,#0E1114); border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 18px 40px -16px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.6); animation:bascule 140ms var(--sec) }
+  .plus.ouvert .plus-menu{ display:flex }
+  .plus-menu .btn.verre.mini{ width:100%; justify-content:flex-start; text-align:left; padding:8px 12px }
+  .plus-menu #bNouveauSabot{ margin-left:0; margin-top:4px }
+  .plus-menu #bNouveauSabot::before{ left:8px; right:8px; top:-4px; bottom:auto; width:auto; height:1px }
+}
 .zone-actions .bulle{ bottom:auto; top:-8px; transform:translate(-50%,-100%) }
 /* La barre a la MÊME hauteur pendant la mise et pendant la main : sinon le feutre, qui prend
    la place qu'elle laisse, saute de 60 px à chaque donne (mesuré le 05/09 à 1280×800 : rack
@@ -747,12 +818,20 @@ div.salle-carte{ cursor:default }
    sous 1240 px, les boutons de table ont leur rangée à eux dans les DEUX phases. */
 @media (min-width:1000px){
   .rack-jetons .rj-bloc{ display:none }
+  /* À gauche, comme les coups qui prendront sa place : « Distribuer » lui est accolé. */
   .rack-jetons{ gap:8px; padding:3px 8px }
+  .zone-actions .rack-jetons{ margin:0 }   /* la règle générale (plus bas) le centre : margin:0 auto */
   /* La rangée des coups a la hauteur du rack (52 px) : sans ça, 6 px de moins en jeu. */
   .zone-actions .rang-btn{ min-height:52px; align-items:center }
   .btn.verre.mini{ padding:7px 11px }
 }
-@media (min-width:1000px) and (max-width:1239.98px){ .rang-table{ flex-basis:100%; justify-content:center } }
+/* Entre 1000 et 1240 px, les raccourcis clavier sortent des boutons et les coups se
+   serrent : tout tient sur UNE rangée (la deuxième volait 54 px au feutre, mesuré le 05/09). */
+@media (min-width:1000px) and (max-width:1239.98px){
+  .zone-actions .btn kbd{ display:none }
+  .zone-actions .btn{ padding:8px 12px }
+  .zone-actions{ gap:8px }
+}
 
 /* ── Exercices ─────────────────────────────────────────────────────── */
 .scene{display:grid;place-items:center;min-height:238px;padding:16px 0 4px;position:relative}
@@ -957,10 +1036,12 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
    (transform) et la PORTANCE (translate, une propriété séparée qui se compose
    par-dessus) sont deux animations à deux images clés : aucune cassure possible.
    La carte part à l'échelle du sabot (.74 = 62/84) et en SORT, sans fondu. */
+/* Mesuré le 05/09 en rAF : avec un fondu 0 → 1 sur les 14 premiers pour-cent et une
+   courbe qui part vite (.2,.6), la carte n'apparaissait qu'à ~230 px du sabot — elle se
+   MATÉRIALISAIT en l'air. Pleine opacité dès l'image zéro : elle sort DU sabot. */
 @keyframes donne-trajet{
-  0%{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(calc(-16deg - var(--tilt, 0deg))) scale(.74);opacity:0}
-  14%{opacity:1}
-  100%{transform:none;opacity:1}
+  0%{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(calc(-16deg - var(--tilt, 0deg))) scale(.74)}
+  100%{transform:none}
 }
 @keyframes donne-arc{ 0%,100%{translate:0 0} 50%{translate:0 -30px} }
 /* LA ligne importante : la durée de la donne est une FRACTION de l'intervalle
@@ -970,8 +1051,9 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 /* Sur la table, la carte VOLE (on ne compte pas une carte en vol dans un exercice,
    mais ici on regarde une donne) : environ la moitié de la cadence, bornée. */
 .plateau{--don:clamp(150ms, calc(var(--intervalle,450ms) * .72), 420ms)}
-.carte--entre{animation:donne-trajet var(--don,150ms) cubic-bezier(.2,.6,.3,1) both, donne-arc var(--don,150ms) ease-in-out both;
-  animation-delay:30ms}
+/* Durée et délai sont posés en ligne par table.js (animerDepuisSabot) : la main du croupier
+   suit la même horloge. La courbe (.4,0,.2,1) accélère depuis le sabot puis freine à l'arrivée. */
+.carte--entre{animation:donne-trajet var(--don,150ms) cubic-bezier(.4,0,.2,1) both, donne-arc var(--don,150ms) ease-in-out both}
 /* Une carte qui change de largeur (l'éventail se resserre) glisse, elle ne saute pas. */
 .carte{ transition:width .25s var(--sec) }
 @keyframes bascule{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -1307,8 +1389,11 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
    défausse se rapprochent de ses mains (gap 16 au lieu de 34) : à +200 px du
    centre, aucun bras à cette échelle ne les atteignait. */
 @media (min-width:1000px){
-  #v-table{ --salle-haut:clamp(64px, calc(30svh - 136px), 190px) }
-  .rangee-haute{ gap:16px }
+  /* Au moins 96 px : à 1280 × 800 la bande faisait 104 px et les cheveux du croupier
+     touchaient le bord de la salle (mesuré le 05/09). */
+  #v-table{ --salle-haut:clamp(96px, calc(30svh - 120px), 190px) }
+  /* Le sabot et la défausse laissent la place des mains au repos entre eux et le rack. */
+  .rangee-haute{ gap:44px }
   .croupier{ min-width:0 }
   .siege{ min-width:0 }
   .sieges{ padding:0 3% 2px }
@@ -1320,7 +1405,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
    l'œil : table · feutre et cartes (2) · croupier (3) · liseré (4) · rack (5)
    · jetons en vol (8). Un seul rang change, rien d'autre ne bouge. */
 .tapis{ z-index:auto }
-#croupierScene{ z-index:3; width:min(760px, 92%); height:calc(var(--salle-haut) + 12px); overflow:visible;
+#croupierScene{ z-index:3; width:min(760px, 92%); top:6px; height:calc(var(--salle-haut) + 6px); overflow:visible;
   display:flex; justify-content:center; align-items:flex-start }
 /* L'<svg> prend TOUTE la hauteur de la bande ; sa largeur suit le viewBox (520 × 200),
    donc l'échelle est exacte et croupier.js peut convertir un point d'écran en
@@ -1329,7 +1414,10 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 /* Au moins 150 px de haut (jamais plus de 124 % de sa bande, jamais moins que la
    bande) : à 1280 × 800 la bande fait 116 px, et un croupier de 116 px a des bras
    de 126 px — le sabot était hors de portée. Le bas du buste passe sous le rack. */
-.cr-svg{ height:clamp(100%, 150px, 124%); width:auto; overflow:visible; display:block; flex:none; filter:drop-shadow(0 6px 6px rgba(0,0,0,.7)) drop-shadow(0 14px 18px rgba(0,0,0,.5)) }
+/* Au moins 170 px (jamais plus de 142 % de sa bande) : à 1280 × 800 la bande fait 116 px et
+   un croupier de 150 px avait une tête de 40 px — sa moue, ses sourcils, rien ne se lisait
+   (mesuré le 05/09). Le bas du buste passe sous le rack, ses bras sont ancrés au rail. */
+.cr-svg{ height:clamp(100%, 170px, 142%); width:auto; overflow:visible; display:block; flex:none; filter:drop-shadow(0 6px 6px rgba(0,0,0,.7)) drop-shadow(0 14px 18px rgba(0,0,0,.5)) }
 .cr-svg g, .cr-svg path{ transform-origin:0 0; transform-box:view-box }
 .cr-svg #cr-crSourcilG, .cr-svg #cr-crSourcilD, .cr-svg .cr-joue, .cr-svg #cr-crPaupG, .cr-svg #cr-crPaupD{ transition:transform .16s ease-out, opacity .2s }
 @media (prefers-reduced-motion:reduce){ .cr-svg *{ transition:none!important } }
@@ -1344,7 +1432,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .feutre>.cr-mains[hidden]{ display:none }
 .cr-avant{ position:absolute; left:0; top:0; width:0; height:0; transform-origin:0 0;
   filter:drop-shadow(0 5px 5px rgba(0,0,0,.5)) }
-.cr-avant .cr-manche{ position:absolute; left:-22px; right:10px; top:calc(var(--w-croupier, 89px) * -.15); height:calc(var(--w-croupier, 89px) * .30); border-radius:999px;
+.cr-avant .cr-manche{ position:absolute; left:-22px; right:10px; top:calc(var(--w-croupier, 89px) * -.135); height:calc(var(--w-croupier, 89px) * .27); border-radius:999px;
   background:linear-gradient(180deg, color-mix(in oklab, var(--cr-manche,#1E242A) 72%, #fff) 0%, var(--cr-manche,#1E242A) 42%, color-mix(in oklab, var(--cr-manche,#1E242A) 55%, #000) 100%);
   box-shadow:inset 0 -3px 6px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12) }
 .cr-avant .cr-hd{ position:absolute; left:calc(100% - var(--w-croupier, 89px) * .25); top:calc(var(--w-croupier, 89px) * -.2);
@@ -1357,9 +1445,9 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 /* La bulle : ivoire, Instrument Serif, une pointe vers la tête. Elle vit dans
    .salle (pas dans #croupierScene, qui est aria-hidden) pour que l'aria-live
    soit lu. Position posée par croupier.js, à droite du visage. */
-.cr-bulle{ position:absolute; z-index:6; max-width:min(300px, 34%); padding:8px 13px 9px; border-radius:16px 16px 16px 4px;
+.cr-bulle{ position:absolute; z-index:6; max-width:min(360px, 40%); padding:10px 16px 11px; border-radius:18px 18px 18px 5px;
   background:linear-gradient(180deg,#FBF7EC,#EFE7D2); color:#1A1409;
-  font-family:"Instrument Serif",Georgia,serif; font-size:19px; line-height:1.15; text-wrap:balance;
+  font-family:"Instrument Serif",Georgia,serif; font-size:clamp(20px, 1.4vw, 24px); line-height:1.15; text-wrap:balance;
   box-shadow:0 10px 24px -10px rgba(0,0,0,.85), 0 0 0 1px rgba(0,0,0,.35), inset 0 1px 0 #fff;
   opacity:0; transform:translate(-4px,6px) scale(.96); transform-origin:0 100%;
   transition:opacity .16s ease-out, transform .18s var(--ressort, ease-out); pointer-events:none }
@@ -1508,13 +1596,18 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 <section class="vue" id="v-accueil">
   <div class="hall-heros" id="hallHeros" data-photo="hall">
     <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async">
+    <!-- Le titre est la PROMESSE, pas la marque : « Le Sabot » est déjà dans l'en-tête, 40 px
+         plus haut (mesuré le 05/09 : le héros prenait 586 des 800 px pour répéter ce nom, et
+         les tables tombaient sous le pli). Le prénom se donne en un clic sur la salutation,
+         pas dans un formulaire qu'on remplit en rentrant de soirée. -->
     <div class="hall-int hall-heros-int">
-      <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
-      <h1 class="hall-titre">Le Sabot</h1>
-      <p class="hall-phrase"><span class="hall-salut" id="hallSalut"></span>Neuf tables de casino, une salle d'entraînement, un salon privé. Le compte est masqué : c'est à toi de le tenir.</p>
+      <span class="grave hall-kicker">Le Sabot · entraînement au comptage de cartes</span>
+      <h1 class="hall-titre">Le compte est masqué.<br>À toi de le tenir.</h1>
+      <p class="hall-phrase">Neuf tables de casino, une salle d'entraînement, un salon privé — et un croupier qui te regarde miser.</p>
       <div class="hall-entree">
-        <label class="ch"><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" autocomplete="given-name"></label>
         <button class="btn" data-hall="lesTables">Voir les tables</button>
+        <button class="hall-qui" id="hallQui" aria-expanded="false" aria-controls="hallPrenom" title="Changer de prénom"><span class="hall-salut" id="hallSalut"></span><span class="hall-crayon" aria-hidden="true">modifier</span></button>
+        <label class="ch hall-prenom" id="hallPrenom" hidden><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" autocomplete="given-name"></label>
       </div>
     </div>
     <div class="eventail" id="eventail" aria-hidden="true"></div>
@@ -1647,7 +1740,6 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
         <p class="conseil" id="conseil"></p>
       </div>
     </div>
-    <div id="jetonsCalque" aria-hidden="true"></div>
     <p class="coach-mise" id="coachMise" aria-live="polite"></p>
   </div>
 
@@ -1656,6 +1748,20 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
        des coups (un croupier ne propose pas « Séparer » avant la donne) ; pendant la main,
        « Distribuer » disparaît. Le CSS suit #v-table[data-phase]. -->
   <div class="zone-actions">
+    <!-- Le rack du joueur (lot Jetons) : tes jetons, sur le rail devant toi. Visible pendant
+         la phase de mise seulement ; il cède la place aux coups dès que la donne commence.
+         Sur ordinateur il ne porte que les jetons : le tapis, la mise et les limites sont
+         déjà dans le bandeau, et un rack à deux cadrans faisait une barre à deux rangées
+         pendant la mise, à une pendant la main — toute la table sautait de 60 px à la donne.
+         Il est AVANT les coups : « Distribuer » lui est accolé (mesuré le 05/09, le bouton
+         était seul dans le coin gauche, le rack au centre, et l'œil ne reliait pas les deux). -->
+    <div class="rack-jetons" id="rackJetons" data-min="10" data-max="1000">
+      <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b></div>
+      <div class="rj-jetons" id="rjJetons" role="group" aria-label="Jetons à miser"></div>
+      <div class="rj-bloc"><span class="grave">Mise</span><b class="cadran" id="rjMise">0</b><span class="rj-sous" id="rjUnites">—</span></div>
+      <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier jeton (Retour arrière)" aria-label="Retirer le dernier jeton">&#8630;</button>
+      <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
+    </div>
     <div class="rang-btn" id="coups">
       <button class="btn" id="bDonne">Distribuer<kbd>&#9166;</kbd></button>
       <button class="btn verre" id="bTire" disabled>Tirer<kbd>T</kbd></button>
@@ -1664,32 +1770,35 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
       <button class="btn verre" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
       <button class="btn verre" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
     </div>
-    <!-- Le rack du joueur (lot Jetons) : tes jetons, sur le rail devant toi. Visible pendant
-         la phase de mise seulement ; il cède la place aux coups dès que la donne commence.
-         Sur ordinateur il ne porte que les jetons : le tapis, la mise et les limites sont
-         déjà dans le bandeau, et un rack à deux cadrans faisait une barre à deux rangées
-         pendant la mise, à une pendant la main — toute la table sautait de 60 px à la donne. -->
-    <div class="rack-jetons" id="rackJetons" data-min="10" data-max="1000">
-      <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b></div>
-      <div class="rj-jetons" id="rjJetons" role="group" aria-label="Jetons à miser"></div>
-      <div class="rj-bloc"><span class="grave">Mise</span><b class="cadran" id="rjMise">0</b><span class="rj-sous" id="rjUnites">—</span></div>
-      <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier jeton (Retour arrière)" aria-label="Retirer le dernier jeton">&#8630;</button>
-      <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
-    </div>
-    <div class="rang-table">
+    <!-- Les utilitaires de la table, à droite, en retrait : ils ne se jouent pas à chaque main.
+         « Montrer le compte » et « Caméra » restent toujours à portée ; le reste vit dans un
+         menu « Plus » sous 1400 px (mesuré le 05/09 à 1280 × 800 à plusieurs : sept boutons
+         passaient sur une deuxième rangée et volaient 54 px au feutre). Les identifiants ne
+         bougent pas : la sonde, le banc et reseau.js les cliquent tels quels. -->
+    <div class="rang-table" id="rangTable">
       <button class="btn verre mini" id="bMontrer" aria-pressed="false">Montrer le compte</button>
-      <button class="btn verre mini" id="bMonCompte">Mon compte</button>
-      <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
-      <button class="btn verre mini" id="bReglagesTable" title="Cadence, aide à la décision, croupier">Croupier &amp; cadence</button>
-      <button class="btn verre mini" id="bNouveauSabot" title="Jette la manche en cours et remélange">Nouveau sabot</button>
-      <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
-      <button class="btn verre mini" id="bReseau" hidden>Table</button>
       <!-- Ta caméra (visio.js) : tes amis te voient sur ton siège. Vidéo seule, JAMAIS de micro —
            on compte en silence. Mémorisé (DB.camera). Caché en solo. -->
       <button class="btn verre mini" id="bCamera" hidden aria-pressed="false" title="Ta caméra, pour que tes amis te voient sur ton siège — vidéo seule, jamais de micro">Caméra</button>
+      <div class="plus" id="plusTable">
+        <button class="btn verre mini plus-btn" id="bPlus" aria-expanded="false" aria-controls="plusMenu" title="Plus d'options">Plus <span class="chevron" aria-hidden="true"></span></button>
+        <div class="plus-menu" id="plusMenu">
+          <button class="btn verre mini" id="bMonCompte">Mon compte</button>
+          <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
+          <button class="btn verre mini" id="bReglagesTable" title="Cadence, aide à la décision, croupier">Croupier &amp; cadence</button>
+          <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
+          <button class="btn verre mini" id="bReseau" hidden>Table</button>
+          <button class="btn verre mini creux" id="bNouveauSabot" title="Jette la manche en cours et remélange">Nouveau sabot</button>
+        </div>
+      </div>
     </div>
     <div id="boiteAssurance"></div>
   </div>
+  <!-- Le calque des jetons qui volent : au niveau de la VUE, pas de la salle. Mesuré le 05/09 :
+       le jeton partait du rack (y = 764) dans une salle qui s'arrête à 728 — tranché par le
+       bord pendant un tiers du vol, puis « sorti du sol » entre deux sièges. Ici il couvre la
+       salle et la barre des coups, et le vol part vraiment du jeton cliqué. -->
+  <div id="jetonsCalque" aria-hidden="true"></div>
 </section>
 
 <!-- ════════════════════ EXERCICES ════════════════════ -->
@@ -3798,10 +3907,18 @@ $("son").onclick = () => { DB.son = !DB.son; garder(); rendreSon(); if (DB.son) 
 $("prenom").value = DB.prenom;
 $("prenom").oninput = () => { DB.prenom = $("prenom").value; garder(); rendreSalut(); };
 // Le hall salue par le prénom : « Bonsoir, Léo. » avant l'heure de fermeture, jamais un « Bonjour » à minuit.
+// Sans prénom, la salutation POSE la question — c'est elle qu'on clique pour répondre : le champ
+// n'apparaît qu'à ce moment-là (le 05/09, un formulaire « Ton prénom » attendait sous le titre).
 function rendreSalut() {
   const e = $("hallSalut"); if (!e) return;
-  const p = prenom(), h = new Date().getHours();
-  e.textContent = p ? (h >= 18 || h < 5 ? "Bonsoir, " : "Bonjour, ") + p + "." : "";
+  const p = prenom(), h = new Date().getHours(), bon = h >= 18 || h < 5 ? "Bonsoir" : "Bonjour";
+  e.textContent = p ? bon + ", " + p + "." : bon + ". Ton prénom ?";
+}
+if ($("hallQui")) {
+  const montrer = on => { $("hallPrenom").hidden = !on; $("hallQui").setAttribute("aria-expanded", on ? "true" : "false"); if (on) { $("prenom").focus(); $("prenom").select(); } };
+  $("hallQui").onclick = () => montrer($("hallPrenom").hidden);
+  $("prenom").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); montrer(false); $("hallQui").focus(); } });
+  $("prenom").addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== $("prenom")) montrer(false); }, 120));
 }
 
 $("sys").innerHTML = Object.entries(DONNEES.systemes).map(([k, s]) => `<option value="${k}">${s.nom}</option>`).join("");
@@ -4085,7 +4202,12 @@ function dimensionnerCartes() {
   // La largeur « de la table » : celle d'une main de deux dans un siège ordinaire.
   // Plafond : une carte ne prend pas plus de 62 % de la hauteur qui lui revient —
   // 84 px sur un portable (1280 × 800), 100 px sur un grand écran (1920 × 1080).
-  const plafond = Math.min(100, Math.max(84, (H - chrome) / 1.4 * .62));
+  // Sur un feutre BAS (moins de 520 px) avec cinq sièges et plus, le plancher descend à
+  // 72 : mesuré le 05/09 à 1280 × 800, les cartes des sièges du bord (84 px, remontées de
+  // 92 px sur l'arc) montaient au niveau de celles du croupier, et l'arc doré était pincé
+  // à 8 px entre les deux rangées. Une table de casino a les joueurs SOUS le croupier.
+  const plancher = n >= 5 && Hf > 0 && Hf < 520 ? 72 : 84;
+  const plafond = Math.min(100, Math.max(plancher, (H - chrome) / 1.4 * .62));
   const sBase = (pellicule ? sieges[0].clientWidth : partage) - 12;
   const wTable = Math.max(40, Math.round(Math.min(plafond, wHaut, .62 * sBase)));
   sieges.forEach(s => {
@@ -4099,10 +4221,13 @@ function dimensionnerCartes() {
     mains.forEach(m => {
       let w;
       if (pellicule) { m.style.removeProperty("--w"); w = parseFloat(getComputedStyle(m).getPropertyValue("--w")) || 44; }
-      // Plein sur une main de deux ; au-delà, on accepte de ne voir que 26 % de chaque
-      // carte avant de la rapetisser — c'est ce que fait un croupier qui resserre un jeu.
-      else { w = Math.max(40, Math.round(Math.min(wTable, Wmain / (1 + (kmax - 1) * .26)))); m.style.setProperty("--w", w + "px"); }
-      const c = m.children.length, pas = c > 1 ? Math.min(.44 * w, (Wmain - w) / (c - 1)) : .44 * w;
+      // Plein sur une main de deux ; au-delà, on montre au moins 34 % de chaque carte —
+      // la colonne d'indice entière (rang ET enseigne) — et on rapetisse la carte d'abord
+      // (plancher 58 px) ; si ça ne tient toujours pas, l'éventail DÉBORDE du siège plutôt
+      // que d'écraser les rangs. Mesuré le 05/09 au Cotai (sept sièges, mains de quatre) :
+      // à 15 px de pas, « 3 3 10 3 » et « 4 4 5 R » ne se lisaient plus.
+      else { w = Math.max(58, Math.round(Math.min(wTable, Wmain / (1 + (kmax - 1) * .34)))); m.style.setProperty("--w", w + "px"); }
+      const c = m.children.length, pas = c > 1 ? Math.max(.34 * w, Math.min(.44 * w, (Wmain - w) / (c - 1))) : .44 * w;
       m.style.setProperty("--pas", Math.max(8, pas).toFixed(1) + "px");
     });
   });
@@ -4209,6 +4334,10 @@ function tableMorte(t) {
 }
 const tamponCourt = t => t.blackjackPays < 1.5 ? "À fuir · 6:5" : "À fuir · mélangeuse";
 const photoDe = cle => (window.PHOTOS || {})[cle] || "";
+// Le point focal d'une photo qui n'est pas au centre : le Front de Mer, c'est 60 % de ciel
+// bleu plat en haut (source 1600 × 900) — cadrée au centre, la porte était un rectangle bleu
+// entre deux portes chaudes (les critiques, 05/09). La ville éclairée est en bas.
+const PHOTO_POS = { frontdemer: "50% 84%", boulevard: "50% 60%", aquarium: "50% 40%" };
 // Un sabot est ENTAMÉ dès qu'une main a été jouée ou qu'une donne est en cours : la
 // porte de cette table dit « Reprendre » et ne remélange pas quand on la pousse.
 const sabotEntame = () => T.mains > 0 || T.enJeu;
@@ -4223,15 +4352,17 @@ function carteTableHtml(t, o) {
   const nomAccessible = (o.reprise ? "Reprendre ta place à " : "S'asseoir à ") + t.nom + ", " + t.lieu + (mort ? " — " + mort : "");
   return `<article class="salle-porte ${mort ? "brulee" : ""}" ${mort ? `data-tampon="${echap(mort)}"` : ""}>
     <${balise} class="salle-carte porte" ${o.inerte ? "" : `data-asseoir="${t.id}" aria-label="${echap(nomAccessible)}"`}>
-      ${ph ? `<img class="photo" src="${ph}" alt="" aria-hidden="true" loading="lazy" decoding="async">` : ""}<span class="voile"></span>
+      ${ph ? `<img class="photo" src="${ph}" alt="" aria-hidden="true" loading="lazy" decoding="async"${PHOTO_POS[t.id] ? ` style="--pos:${PHOTO_POS[t.id]}"` : ""}>` : ""}<span class="voile"></span>
       <span class="haut"><span class="num">${o.n ? "Table " + o.n : "Ta table"}</span>${o.reprise ? `<span class="etat">Reprendre</span>` : mort ? `<span class="tampon" title="${echap(mort)}">${tamponCourt(t)}</span>` : ""}</span>
       <span class="bas">
         <span class="lieu">${echap(t.lieu)}</span><span class="nom">${echap(t.nom)}</span>
+        <span class="sous">« ${echap(t.lecon)} »</span>
         <span class="regles">${pucesCourtes(t)}</span>
         <span class="chiffres"><span><b>${fr2(d.avantage)} %</b>avantage maison</span><span><b>${fmtJ(t.mise_min)} – ${fmtJ(t.mise_max)}</b>mises</span></span>
       </span>
+      ${o.inerte ? "" : `<span class="asseoir-cta" aria-hidden="true">${o.reprise ? "Reprendre" : "S'asseoir"} &rarr;</span>`}
     </${balise}>
-    ${o.inerte ? "" : `<button class="pourquoi" data-pourquoi="${t.id}" title="Pourquoi cette table ?" aria-label="Pourquoi ${echap(t.nom)} ?"><i>Pourquoi</i></button>`}
+    ${o.inerte ? "" : `<button class="pourquoi" data-pourquoi="${t.id}" title="Pourquoi cette table ? La leçon, en détail" aria-label="Pourquoi ${echap(t.nom)} ?"><i>Pourquoi&nbsp;?</i></button>`}
   </article>`;
 }
 function rendreSalon() {
@@ -4369,6 +4500,9 @@ const ISSUE_BUS = { "gagné": "gagne", "perdu": "perd", "sauté": "bust", "black
 // suite, pas au règlement. `emis` évite de les annoncer deux fois.
 function sauter(si, hi) {
   const h = T.sieges[si].mains[hi]; h.result = "sauté"; h.emis = true; rendreSieges();
+  // Ton propre bust s'ENTEND : mesuré le 05/09, seul le croupier réagissait (la bulle),
+  // et elle disparaissait pendant qu'on regardait ses cartes partir à la défausse.
+  if (T.sieges[si].toi) son("ko");
   emettre("main-fin", { siege: si, main: hi, toi: T.sieges[si].toi, issue: "bust", montant: -(h.bet || 1) * (h.doubled ? 2 : 1) });
   // Le croupier ramasse la main sautée tout de suite (cartes ET mise), pas au règlement :
   // on laisse 500 ms pour LIRE le bust, puis les cartes glissent à la défausse et le
@@ -4380,8 +4514,16 @@ function sauter(si, hi) {
     h.ramassee = true;
     await ramasser([...hote.querySelectorAll(".carte")]);
     if (hote.isConnected) { hote.innerHTML = ""; const sc = hote.parentNode && hote.parentNode.querySelector(".score"); if (sc) sc.textContent = ""; }
+    // Les cartes parties, la pastille « Sauté » flottait seule au-dessus d'un cercle vide,
+    // sans rien à quoi se rapporter (les critiques, 05/09). Elle se pose DANS la case de
+    // mise, là où la mise vient d'être ramassée : c'est la place qui a perdu (style.css).
+    marquerSaute(si);
     T.defausse += h.cards.length; h.defaussee = true; rafraichirBarre();
   }, 500);
+}
+function marquerSaute(si) {
+  const st = T.sieges[si], d = $("sieges") && $("sieges").children[si]; if (!st || !d) return;
+  d.classList.toggle("saute", st.mains.length > 0 && st.mains.every(h => h.ramassee));
 }
 function abandonner(si, hi) {
   const h = T.sieges[si].mains[hi]; h.surrendered = true; h.result = "abandon"; h.emis = true; rendreSieges();
@@ -4472,45 +4614,92 @@ function rendreLettrage() {
   // la boîte .mains) : en phase de mise la boîte est vide, 0 px de large, et l'arc
   // calculé sur elle changeait de place à la première carte distribuée.
   const wT = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--w-table")) || 84;
-  const zones = [...box.querySelectorAll(".siege")].map(sg => {
+  const sieges = [...box.querySelectorAll(".siege")];
+  const zones = sieges.map(sg => {
     const m = sg.querySelector(".mains") || sg, r = m.getBoundingClientRect(), rs = sg.getBoundingClientRect();
     const cx = rs.left + rs.width / 2 - F.left, demi = Math.max(r.width / 2, wT * 1.1);
     return { l: Math.round(cx - demi), r: Math.round(cx + demi), haut: Math.round(r.top - F.top) };
-  }).filter(z => z.r > z.l);
+  });
+  // Les deux lignes du rail évitent le siège ENTIER, tel qu'il est à l'écran (transform
+  // compris) : la vignette vidéo (visio.js) et le tapis sous le nom (reseau.js) élargissent
+  // et abaissent les sièges du bord bien au-delà de leurs cartes. Mesuré le 05/09 à
+  // plusieurs : « DEALER MUST HIT SOFT 17 » traversait « JOUEUR 1 000 » et sa vignette.
+  // …mais PAS le rectangle du siège entier : à cinq sièges sur 1 096 px, chacun fait 214 px
+  // de large pour 80 px de contenu, et sa réserve de cartes (.mains, vide en phase de mise)
+  // remplit tout le coin — mesuré le 05/09 en solo, plus AUCUNE ligne de rail ne tenait.
+  // L'obstacle, c'est ce qui se VOIT : le cercle, le nom, les cartes, la vignette, le tapis ;
+  // plus la réserve des cartes, à sa largeur RÉELLE (celle des zones), pour que l'arc ne
+  // passe pas sous une carte qui n'est pas encore distribuée.
+  const enScreen = e => { const r = e.getBoundingClientRect(); return { l: r.left - F.left, t: r.top - F.top, r: r.right - F.left, b: r.bottom - F.top }; };
+  const obstacles = sieges.flatMap((sg, i) => {
+    const z = zones[i], m = sg.querySelector(".mains");
+    const pieces = [...sg.querySelectorAll(".cercle, .nom, .score, .issue, .carte, .visage, .jt-montant, .tapis-siege, .rangee-bas")].map(enScreen);
+    if (z && m) { const rm = enScreen(m); pieces.push({ l: z.l, r: z.r, t: rm.t, b: rm.b }); }
+    return pieces;
+  }).filter(z => z.r > z.l && z.b > z.t);
+  const touche = (x, y) => obstacles.some(z => x >= z.l - 8 && x <= z.r + 8 && y >= z.t - 4 && y <= z.b + 4);
   const t = tableCourante(), tx = texteLettrage(t);
-  const cle = [W, H, basHaut, basCentre, zones.map(z => z.l + ":" + z.r + ":" + z.haut).join(","), t.id].join("|");
+  const cle = [W, H, basHaut, basCentre, zones.map(z => z.l + ":" + z.r + ":" + z.haut).join(","), obstacles.map(z => Math.round(z.l) + ":" + Math.round(z.b)).join(","), t.id].join("|");
   if (cle === LETTRAGE.cle) return;
   // Jamais effacé au milieu d'une manche : un arc qui disparaît d'un coup se voit plus
-  // qu'un arc qui passe sous une carte. Il se recalcule à la manche suivante.
-  if (T.enJeu && LETTRAGE.cle && LETTRAGE.cle !== "vide" && LETTRAGE.cle.split("|")[0] === String(W)) return;
+  // qu'un arc qui passe sous une carte. Il se recalcule à la manche suivante — SAUF si
+  // le feutre a changé de taille : un viewBox périmé étire et décale tout le lettrage
+  // (mesuré le 05/09 à plusieurs : la barre des coups passait sur deux rangées, le
+  // feutre perdait 54 px, et l'arc du rail traversait les noms des sièges).
+  if (T.enJeu && LETTRAGE.cle && LETTRAGE.cle !== "vide") {
+    const [w0, h0] = LETTRAGE.cle.split("|");
+    if (w0 === String(W) && h0 === String(H)) return;
+  }
   LETTRAGE.cle = cle;
   // Le rail bas = deux quarts d'ellipse (les coins) et un bord droit entre eux —
   // la courbe RÉELLE du feutre, relue dans son border-radius (cf. courbeFeutre).
   const cf = courbeFeutre(f, W, H);
+  const pointCoin = (cote, d, a) => {
+    const rx = cf.rx - d, ry = cf.ry - d, cx = cote === "G" ? cf.rx : W - cf.rx, r = a * Math.PI / 180;
+    return [cx + rx * Math.cos(r), cf.cy + ry * Math.sin(r)];
+  };
   const arcCoin = (cote, d, a1, a2) => {
-    const rx = cf.rx - d, ry = cf.ry - d, cx = cote === "G" ? cf.rx : W - cf.rx, cy = cf.cy;
-    const p = a => { const r = a * Math.PI / 180; return [cx + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
-    const [x1, y1] = p(a1), [x2, y2] = p(a2);
+    const rx = cf.rx - d, ry = cf.ry - d;
+    const [x1, y1] = pointCoin(cote, d, a1), [x2, y2] = pointCoin(cote, d, a2);
     return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 ${a2 > a1 ? 1 : 0} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
   };
   const petit = Math.max(11, Math.round(W * .013)), grand = Math.max(14, Math.round(W * .021));
+  // Un arc de coin, du bord (`ext`) vers l'intérieur (`int`), arrêté au premier degré où
+  // la bande des lettres (la ligne de base et le haut des capitales) entre dans un siège.
+  // Trop court pour porter une règle lisible (moins de 26°) : pas de ligne du tout —
+  // une règle tronquée se lit comme un défaut, une règle absente ne se lit pas.
+  const arcLibre = (cote, d, ext, int) => {
+    const pas = Math.sign(int - ext); let fin = ext;
+    for (let a = ext; pas > 0 ? a <= int : a >= int; a += pas) {
+      // La bande des lettres : la ligne de base et le HAUT DES CAPITALES (.7 em pour
+      // Archivo, pas .85 : à 1280 × 800 la marge en trop butait sur le nom du siège de
+      // coin, « DEALER MUST HIT SOFT 17 » disparaissait à gauche, « INSURANCE » restait à droite).
+      const [x0, y0] = pointCoin(cote, d, a), [x1, y1] = pointCoin(cote, d + petit * .7, a);
+      if (touche(x0, y0) || touche(x1, y1)) break;
+      fin = a;
+    }
+    if (Math.abs(fin - ext) < 26) return null;
+    return cote === "G" ? arcCoin("G", d, ext, fin) : arcCoin("D", d, fin, ext);
+  };
   let out = "", n = 0;
-  const ligne = (texte, d, a1, a2, taille, classe) => {
+  const ligne = (texte, d, taille, classe) => {
+    if (!d) return;
     n++; out += `<defs><path id="lt${n}" d="${d}"/></defs>
       <text class="${classe}" font-size="${taille}"><textPath href="#lt${n}" startOffset="50%" text-anchor="middle">${echap(texte)}</textPath></text>`;
   };
   // Le long de l'arc bas, de part et d'autre des sièges : la règle du croupier à
   // gauche, l'assurance à droite (180 = le bord gauche, 90 = le bas, 0 = le bord
   // droit ; on lit de gauche à droite, le haut des lettres vers le centre).
-  ligne(tx.croupier, arcCoin("G", 6 + petit, 179, 126), 0, 0, petit, "rail");
-  ligne(tx.assurance, arcCoin("D", 6 + petit, 54, 1), 0, 0, petit, "rail");
+  ligne(tx.croupier, arcLibre("G", 6 + petit, 179, 126), petit, "rail");
+  ligne(tx.assurance, arcLibre("D", 6 + petit, 1, 54), petit, "rail");
   // Le paiement du blackjack, en grand, dans la bande entre la main du croupier
   // et les sièges — TOUJOURS : un arc concentrique au rail (un sourire). Plafond :
   // à la verticale de chaque siège, l'arc reste au-dessus de ses cartes (le point de
   // l'arc le plus bas dans l'emprise du siège est le plus proche du centre).
   // Plancher : au centre, le haut des lettres passe sous les cartes du croupier.
-  // Si les deux se contredisent, la taille descend jusqu'à 15 px ; en dessous, l'arc
-  // garde sa taille et passe sous une carte, comme sur une vraie table.
+  // Si les deux se contredisent, la taille descend ; sous 80 % de sa taille, l'arc
+  // n'est PAS dessiné : un arc pincé à 15 px entre deux rangées de cartes est
+  // illisible et fait fouillis (les critiques, 05/09) — le rail garde ses deux lignes.
   const rx = W * .34, ry = rx * .42, A = 40, cosA = Math.cos((90 - A) * Math.PI / 180);
   let plafond = Infinity;
   zones.forEach(z => {
@@ -4521,20 +4710,21 @@ function rendreLettrage() {
   if (!isFinite(plafond)) plafond = H - 40;
   let taille = grand, plancher = basCentre + 3 + taille * .78;
   if (plafond < plancher) { taille = Math.max(15, Math.floor((plafond - basCentre - 3) / .78)); plancher = basCentre + 3 + taille * .78; }
-  // Plus de 2 px sous une carte même à 15 px : l'arc passerait sous les éventails
-  // des sièges intérieurs (vu à 1024 × 768), illisible et pris pour un défaut. On
-  // le retire, le rail garde ses deux lignes.
-  const cache = plafond < plancher - 2;
+  const cache = plafond < plancher - 2 || taille < Math.max(16, grand * .8) || plafond - basCentre < taille * 1.6;
   const yBas = plafond >= plancher ? plancher + (plafond - plancher) * .5 : plancher;
   const cy = yBas - ry;
   const p = a => { const r = a * Math.PI / 180; return [W / 2 + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
   const [x1, y1] = p(90 + A), [x2, y2] = p(90 - A);
-  if (!cache) ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, 0, 0, taille, "grand");
+  if (!cache) ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, taille, "grand");
+  // La bande où vivent l'annonce et le conseil (style.css) : celle du grand arc, sous la
+  // main du croupier — jamais une hauteur codée en dur qui tomberait sur les cartes.
+  f.style.setProperty("--bande-haut", Math.round(basCentre + 2) + "px");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = out;
   // Un texte plus long que son arc est coupé aux DEUX bouts (ancré au milieu) :
   // « DEALER MUST STAND ON ALL 17 » perdait son D à Macao. On réduit la taille
-  // jusqu'à ce qu'il tienne, plutôt que d'écraser les lettres.
+  // jusqu'à ce qu'il tienne, plutôt que d'écraser les lettres ; sous 9,5 px (un arc
+  // raccourci par un siège) on retire la ligne, elle ne se lirait plus.
   svg.querySelectorAll("text").forEach(tx => {
     const tp = tx.querySelector("textPath"), chemin = svg.querySelector(tp.getAttribute("href"));
     if (!chemin || !chemin.getTotalLength || !tx.getComputedTextLength) return;
@@ -4543,6 +4733,7 @@ function rendreLettrage() {
       taille = Math.max(8, Math.floor(taille * L / tx.getComputedTextLength() * 100) / 100);
       tx.setAttribute("font-size", taille);
     }
+    if (taille < 9.5) tx.remove();
   });
 }
 // Deux lieux ont un motif tissé dans le feutre : les losanges de la laque de
@@ -4608,6 +4799,7 @@ function rendreSieges() {
     const ce = document.createElement("div"); ce.className = "cercle"; ce.id = "cercle_" + si; ce.dataset.siege = si;
     const nm = document.createElement("div"); nm.className = "nom serre"; nm.textContent = st.nom;
     d.style.setProperty("--ecart", (si - (T.sieges.length - 1) / 2).toFixed(1));   // signé : négatif à gauche
+    if (st.mains.length && st.mains.every(h => h.ramassee)) d.classList.add("saute");
     d.append(hs, ce, nm); el.appendChild(d);
   });
   dimensionnerCartes();
@@ -4679,6 +4871,20 @@ function boutons(o) {
 // de Marc naissait 88 px sous le sabot, entière sur le feutre. On exprime le vecteur
 // dans le repère du siège (inverse de sa transformation), et la rotation de la carte
 // en vol retire --tilt pour garder l'angle à l'écran.
+// Ce que la carte reçoit : sa durée et son retard, FIGÉS en ligne sur l'élément. Mesuré le
+// 05/09 en rAF : `--don` dérive de `--intervalle`, et `poserIntervalle()` en fin de donne
+// (ou à chaque turbo) RETIMAIT une animation terminée (fill both) qui rejouait ses 20 %
+// finaux — la carte cachée sautait de 10 px, 80 ms après s'être posée. Une animation finie
+// ne dépend plus de rien : la classe part à `animationend`, la pose de repos est
+// transform:none, la même que la dernière image.
+// La durée suit la DISTANCE : 6,7 px/ms au départ pour Marc (112 px par image à 60 Hz),
+// c'était une carte qui se matérialise à 230 px du sabot, pas une carte qui en sort.
+function dureeVol(d) {
+  const cs = getComputedStyle($("plateau"));
+  const don = parseFloat(cs.getPropertyValue("--don")) || 300, slot = parseFloat(cs.getPropertyValue("--intervalle")) || 450;
+  return Math.round(Math.max(120, Math.min(slot * .9, don * (.65 + .6 * Math.min(1.2, d / 600)))));
+}
+const DELAI_VOL = 40;   // ms : la main du croupier part en même temps que la carte (croupier.js)
 function animerDepuisSabot(e, cr) {
   const s = $("sabot").getBoundingClientRect();
   // Le CENTRE de la carte part du centre du sabot : à l'échelle .74, elle tient tout
@@ -4694,7 +4900,11 @@ function animerDepuisSabot(e, cr) {
     } catch (err) {}
   }
   e.style.setProperty("--dx", dx + "px"); e.style.setProperty("--dy", dy + "px");
+  const duree = dureeVol(Math.hypot(dx, dy));
+  e.style.animationDuration = duree + "ms"; e.style.animationDelay = DELAI_VOL + "ms";
+  e.addEventListener("animationend", () => { e.classList.remove("carte--entre"); e.style.animationDuration = ""; e.style.animationDelay = ""; }, { once: true });
   e.classList.add("carte--entre");
+  return { duree, delai: DELAI_VOL };
 }
 async function tirer(main, hote, cachee, qui) {
   // Filet de sécurité : plutôt remélanger que distribuer une carte inexistante.
@@ -4711,16 +4921,6 @@ async function tirer(main, hote, cachee, qui) {
   // Une carte de plus dans un siège : l'éventail se resserre pour qu'elle tienne.
   // Jamais pour le croupier : sa rangée a une géométrie fixée avant la première carte.
   if (qui && qui.siege !== "croupier") dimensionnerCartes();
-  if (!matchMedia("(prefers-reduced-motion:reduce)").matches) {
-    // Mesuré le 05/09 : la 1re carte glissait 150 ms AVANT que la 2e n'atterrisse. Elle
-    // attend les trois quarts du vol (--don) : elle bouge quand on la touche.
-    const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
-    [...hote.children].slice(0, -1).forEach((x, i) => {
-      const dx = avant[i] - x.getBoundingClientRect().left;
-      if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }],
-        { duration: 200, delay: Math.round(don * .75), easing: "cubic-bezier(.3,0,.2,1)", fill: "backwards" });
-    });
-  }
   // Mesurée AVANT l'animation : pendant le vol, le rect de la carte est celui
   // du sabot, pas celui de son point d'arrivée.
   const cr = e.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
@@ -4731,13 +4931,23 @@ async function tirer(main, hote, cachee, qui) {
     const dispo = bloc.clientWidth - (qui ? qui.offsetWidth : 0), w = e.offsetWidth || 84, k = hote.children.length;
     hote.style.setProperty("--pas", Math.max(w * .3, Math.min(w * .62, (dispo - w) / (k - 1))).toFixed(1) + "px");
   }
-  // La main du croupier part D'ABORD (l'événement), la carte suit 30 ms plus tard
-  // (animation-delay) : le geste pousse la carte, il ne la suit pas.
+  const vol = animerDepuisSabot(e, cr);
+  if (!matchMedia("(prefers-reduced-motion:reduce)").matches) {
+    // Mesuré le 05/09 : la 1re carte glissait 150 ms AVANT que la 2e n'atterrisse. Elle
+    // attend les trois quarts du vol RÉEL de la carte : elle bouge quand on la touche.
+    [...hote.children].slice(0, -1).forEach((x, i) => {
+      const dx = avant[i] - x.getBoundingClientRect().left;
+      if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }],
+        { duration: 200, delay: Math.round(vol.delai + vol.duree * .72), easing: "cubic-bezier(.3,0,.2,1)", fill: "backwards" });
+    });
+  }
+  // La main du croupier part AVEC la carte (même retard, croupier.js lit `duree` et
+  // `delai`) : le geste pousse la carte pendant la première moitié du vol.
   emettre("carte", { siege: qui ? qui.siege : "croupier", main: qui ? qui.main : 0, index: main.length - 1,
-    carte: c, cachee: !!cachee, el: e,
+    carte: c, cachee: !!cachee, el: e, duree: vol.duree, delai: vol.delai,
     depuis: { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 },
     vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
-  animerDepuisSabot(e, cr); son("carte");
+  son("carte");
   if (!cachee) { T.rc += valeurCompte(c); T.vues++; }
   rafraichirBarre(); await pause(rythme()); return c;
 }
@@ -4829,6 +5039,10 @@ async function distribuer() {
   emettre("donne-debut", { table: t.id, sieges: T.sieges.length });
   const r = reglesTable();
   T.rythme = cadenceDonne(); poserIntervalle(T.rythme);
+  // La main du croupier va au sabot (croupier.js, 320 ms) AVANT que la première carte n'en
+  // sorte : mesuré le 05/09 en rAF, elle partait 40 ms après le clic, la main encore à
+  // 110 px du sabot — la carte voyageait seule, la main courait derrière.
+  if (!matchMedia("(prefers-reduced-motion:reduce)").matches && matchMedia("(min-width:1000px)").matches) await pause(260);
   for (let tour = 0; tour < 2; tour++) {
     for (let si = 0; si < T.sieges.length; si++) await tirerSiege(si, 0);
     // Sans carte cachée, le croupier ne prend qu'une carte : c'est toute la règle.
@@ -5043,6 +5257,16 @@ $("bReglagesTable").onclick = () => {
   };
 };
 $("bMonCompte").onclick = () => demanderMonCompte(false);
+// Le menu « Plus » de la barre des coups (sous 1400 px, style.css) : les utilitaires qu'on
+// n'ouvre pas à chaque main. Un clic dedans le referme ; Échap et un clic dehors aussi.
+{
+  const plus = $("plusTable"), b = $("bPlus");
+  const poser = on => { plus.classList.toggle("ouvert", on); b.setAttribute("aria-expanded", on ? "true" : "false"); };
+  b.onclick = e => { e.stopPropagation(); poser(!plus.classList.contains("ouvert")); };
+  $("plusMenu").addEventListener("click", e => { if (e.target.closest("button")) poser(false); });
+  document.addEventListener("click", e => { if (plus.classList.contains("ouvert") && !e.target.closest("#plusTable")) poser(false); });
+  addEventListener("keydown", e => { if (e.key === "Escape" && plus.classList.contains("ouvert")) { poser(false); b.focus(); } });
+}
 // Le compte est figé à l'ouverture : le sabot peut être remélangé pendant
 // que la question est à l'écran, la réponse doit rester celle qu'on a posée.
 function demanderMonCompte(finSabot) {
@@ -5285,13 +5509,17 @@ function rendre(st, engage, retour) {
   else st.tapis = arr((typeof st.tapis === "number" ? st.tapis : TAPIS_DEPART) + retour);
 }
 
-/* ── Les ancres : tout en coordonnées de la salle (#jetonsCalque la couvre) ── */
-const salleRect = () => $("salle").getBoundingClientRect();
+/* ── Les ancres : tout en coordonnées de la VUE (#jetonsCalque la couvre, salle ET barre
+   des coups). Mesuré le 05/09 avec un calque limité à la salle : le jeton du rack (y = 764)
+   décollait sous une salle qui s'arrêtait à 728, tranché par le bord pendant ~100 ms, puis
+   « sortait du sol » entre deux sièges. Le vol part du jeton qu'on a cliqué. ── */
+const salleRect = () => $("v-table").getBoundingClientRect();
 function centre(el) { const s = salleRect(), r = el.getBoundingClientRect(); return { x: r.left + r.width / 2 - s.left, y: r.top + r.height / 2 - s.top }; }
 const ancreCercle = si => { const e = $("cercle_" + si); return e ? centre(e) : { x: salleRect().width / 2, y: salleRect().height * .8 }; };
 const ancreCroupier = () => { const e = $("rack"); return e && e.offsetWidth ? centre(e) : { x: salleRect().width / 2, y: 30 }; };
 // Le rack fermé est sous le rail : les jetons en partent (ou y rentrent) par le bas.
-const ancreRack = v => { const b = $("rjJetons").querySelector(`[data-v="${v}"]`) || $("rjJetons"); const c = centre(b); if (!$("rackJetons").classList.contains("ouvert")) c.y = salleRect().height + 40; return c; };
+const ancreRack = v => { const b = $("rjJetons").querySelector(`[data-v="${v}"]`) || $("rjJetons"); const c = centre(b);
+  if (!$("rackJetons").classList.contains("ouvert")) { const s = salleRect(); c.x = s.width / 2; c.y = s.height + 40; } return c; };
 // « Chez soi » : ton rack pour toi ; pour un voisin, le rail juste sous son nom.
 const ancreMaison = si => { const st = T.sieges[si]; if (st && st.toi) return ancreRack(25); const c = ancreCercle(si); return { x: c.x, y: c.y + 72 }; };
 
@@ -5440,6 +5668,10 @@ function poserJeton(v) {
   if (v > DB.tapis) return bandeau("Il ne te reste pas ça en main.");
   if (J.mise + v > l.max) return bandeau(`Maximum de la table : ${fmtJ(l.max)}.`);
   const si = T.sieges.indexOf(T.toi), depuis = ancreRack(v);
+  // L'accusé du clic : le jeton du rack se soulève, le clone part de sa place. Sans ça rien
+  // ne reliait le clic au jeton qui vole (mesuré le 05/09).
+  const bouton = $("rjJetons").querySelector(`[data-v="${v}"]`);
+  if (bouton && !reduit()) { const a = bouton.animate([{ transform: "translateY(0)" }, { transform: "translateY(-7px)", offset: .4 }, { transform: "none" }], { duration: 200, easing: "ease-out" }); a.finished.then(() => a.cancel(), () => {}); }
   engager(T.toi, v); J.mise = arr(J.mise + v); J.poses.push(v); T.toi.mise = T.mise = J.mise;
   rendreRack({ differe: true }); majDonne(); appelMise();
   vol({ v, w: tailleJeton(true), de: tailleRack(), depuis, vers: ancreCercle(si), fin: () => {
@@ -5929,6 +6161,7 @@ const CR = { id: "", el: null, scene: null, bulle: null, mains: null, mainsEl: n
   j: {}, seg: {}, an: {}, arme: false, base: "neutre", emotion: "neutre", jeton: 0, gestes: 0,
   dernier: {}, gains: 0, pertes: 0, mises: [], derniereAlerte: -9, minuteurs: [] };
 const CR_SEG = { L1: 120, L2: 116 };      // épaule→coude, coude→centre de la paume
+const CR_RESSORT = "cubic-bezier(.22,.72,.24,1)";
 const CR_EPAULE = { G: [150, 148], D: [270, 148] };
 
 const crQ = s => CR.el ? CR.el.querySelector(s) : null;
@@ -5975,34 +6208,75 @@ function monterMains() {
   CR.mainsEl = c; CR.mains = { G: c.children[0], D: c.children[1] }; CR.hm = {};
   if (CR.el) for (const k of ["--cr-peau", "--cr-manche", "--cr-poignet"]) c.style.setProperty(k, CR.el.style.getPropertyValue(k));
 }
-// Là où la manche sort de sous le rail : sous l'épaule, décalée vers la main (un tiers
-// du chemin, le coude est derrière le rail), juste au-dessus du feutre — coupée par lui.
-function crAncre(cote, hx, rep) {
+// Là où la manche sort de sous le rail : EXACTEMENT là où le bras du rig y entre. Mesuré le
+// 05/09 : le haut du bras partait à ~35° dans le rack et la manche ressortait dessous à un
+// autre angle, décalée — « des prothèses ». On prolonge le dernier segment visible du rig
+// (le bras si le coude est déjà sous le rail, l'avant-bras sinon) jusqu'à la ligne
+// d'ancrage, juste au-dessus du feutre : l'œil recolle les deux segments en un seul coude,
+// caché sous le rail. `ik` (crIK) donne le coude et les directions ; sans lui, on retombe
+// sur l'estimation d'avant (un tiers du chemin vers la main).
+function crAncre(cote, hx, rep, ik) {
   const F = $("feutre").getBoundingClientRect(), S = CR_EPAULE[cote];
-  const sx = rep.x0 + (S[0] + 50) * rep.s;
-  return { x: sx + (cote === "D" ? 1 : -1) * 26 * rep.s + (hx - sx) * .35, y: F.top - 10, F };
+  const sx = rep.x0 + (S[0] + 50) * rep.s, y = F.top - 10;
+  let x = sx + (cote === "D" ? 1 : -1) * 26 * rep.s + (hx - sx) * .35;
+  if (ik) {
+    const yA = (y - rep.y0) / rep.s + 14;                        // la ligne d'ancrage, en unités de rig
+    const sousRail = ik.coude[1] >= yA - 6;                       // le coude est déjà caché
+    const [px, py] = sousRail ? S : ik.coude, dir = sousRail ? ik.dir1 : ik.dir2;
+    const sy = Math.sin(dir);
+    if (sy > .12 && yA > py) {                                     // le segment DESCEND vers le rail
+      const xr = px + (yA - py) / sy * Math.cos(dir);
+      const xe = rep.x0 + (xr + 50) * rep.s;
+      if (Math.abs(xe - sx) < 220 * rep.s) x = xe;
+    }
+  }
+  return { x, y, F };
 }
 function crAvantCourant(cote) {
   const el = CR.mains[cote], cs = getComputedStyle(el);
   let a = 0; try { const m = new DOMMatrixReadOnly(cs.transform); a = Math.atan2(m.b, m.a) * 180 / Math.PI; } catch (e) {}
   return { a, d: parseFloat(cs.width) || 0 };
 }
-function crAvantHtml(cote, x, y, ms, poignet, rep) {
+function crAvantHtml(cote, x, y, ms, poignet, rep, ik, o) {
   const el = CR.mains && CR.mains[cote]; if (!el) return;
-  const an = crAncre(cote, x, rep), ax = an.x - an.F.left, ay = an.y - an.F.top, hx = x - an.F.left, hy = y - an.F.top;
+  o = o || {};
+  const an = crAncre(cote, x, rep, ik), ax = an.x - an.F.left, ay = an.y - an.F.top, hx = x - an.F.left, hy = y - an.F.top;
   let a = Math.atan2(hy - ay, hx - ax) * 180 / Math.PI; const d = Math.max(12, Math.hypot(hx - ax, hy - ay));
+  // L'ANCRE bouge d'un geste à l'autre (elle suit le coude du rig, cf. crAncre) : le départ
+  // de l'animation est la position À L'ÉCRAN de la main, reconvertie depuis la nouvelle ancre.
+  // Repartir de l'ancien angle et de l'ancienne longueur depuis une ancre déplacée de 60 px
+  // faisait SAUTER la main de 60 px à l'image où la carte naissait (mesuré le 05/09 en rAF).
+  const de0 = CR.hm[cote] ? crAvantCourant(cote) : null, ax0 = parseFloat(el.style.left), ay0 = parseFloat(el.style.top);
   el.style.left = ax.toFixed(1) + "px"; el.style.top = ay.toFixed(1) + "px";
   const hd = el.querySelector(".cr-hd"), rot = `rotate(${((poignet || 0) * (cote === "D" ? 1 : -1) * .8).toFixed(1)}deg)`;
-  const de = CR.hm[cote] ? crAvantCourant(cote) : null;
+  let de = de0;
+  if (de0 && Number.isFinite(ax0) && Number.isFinite(ay0)) {
+    const r0 = de0.a * Math.PI / 180, tx = ax0 + de0.d * Math.cos(r0), ty = ay0 + de0.d * Math.sin(r0);
+    de = { a: Math.atan2(ty - ay, tx - ax) * 180 / Math.PI, d: Math.max(12, Math.hypot(tx - ax, ty - ay)) };
+  }
   if (CR.hm[cote] && CR.hm[cote].an) { CR.hm[cote].an.cancel(); }
   CR.hm[cote] = { a, d };
   if (!de || MOUVEMENT_REDUIT.on || !ms || ms < 24) { el.style.transform = `rotate(${a.toFixed(2)}deg)`; el.style.width = d.toFixed(1) + "px"; hd.style.transition = "none"; hd.style.transform = rot; return; }
   a += 360 * Math.round((de.a - a) / 360);   // le chemin le plus court
-  const anim = el.animate([{ transform: `rotate(${de.a.toFixed(2)}deg)`, width: de.d.toFixed(1) + "px" }, { transform: `rotate(${a.toFixed(2)}deg)`, width: d.toFixed(1) + "px" }],
-    { duration: ms, easing: "cubic-bezier(.22,.72,.24,1)", fill: "forwards" });
+  // La main va TOUT DROIT à l'écran : huit images clés le long du segment départ → cible,
+  // chacune reconvertie en (angle, longueur). Interpoler l'angle et la longueur eux-mêmes
+  // faisait décrire au bout du bras un ARC qui plongeait sous la carte (mesuré le 05/09 :
+  // la main à 95 px sous une carte qu'elle était censée pousser).
+  const r0 = de.a * Math.PI / 180, tx0 = ax + de.d * Math.cos(r0), ty0 = ay + de.d * Math.sin(r0), N = 8, images = [];
+  let prec = de.a;
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, px = tx0 + (hx - tx0) * u, py = ty0 + (hy - ty0) * u;
+    let ai = Math.atan2(py - ay, px - ax) * 180 / Math.PI; ai += 360 * Math.round((prec - ai) / 360); prec = ai;
+    images.push({ transform: `rotate(${ai.toFixed(2)}deg)`, width: Math.max(12, Math.hypot(px - ax, py - ay)).toFixed(1) + "px" });
+  }
+  // fill:"both" — pendant le RETARD (le geste attend la carte, o.delai), la main tient sa
+  // position de départ. Avec "forwards", elle retombait sur le style sous-jacent (la pose
+  // cuite d'avant) : mesuré le 05/09 en rAF, la main SAUTAIT de 110 px à l'image où la
+  // carte naissait, puis revenait — un tremblement à chaque carte.
+  const anim = el.animate(images, { duration: ms, delay: o.delai || 0, easing: o.easing || CR_RESSORT, fill: "both" });
   CR.hm[cote].an = anim;
   anim.finished.then(() => { if (CR.hm[cote] && CR.hm[cote].an === anim) { el.style.transform = `rotate(${a.toFixed(2)}deg)`; el.style.width = d.toFixed(1) + "px"; anim.cancel(); CR.hm[cote].an = null; } }, () => {});
-  hd.style.transition = `transform ${Math.round(ms)}ms cubic-bezier(.22,.72,.24,1)`; hd.style.transform = rot;
+  hd.style.transition = `transform ${Math.round(ms)}ms ${o.easing || CR_RESSORT} ${o.delai || 0}ms`; hd.style.transform = rot;
 }
 function monterCroupier() {
   const scene = $("croupierScene"); if (!scene) return;
@@ -6051,15 +6325,17 @@ function crIK(cote, px, py) {
   const dir2 = Math.atan2(S[1] + dy - ey, S[0] + dx - ex);
   const th = f => Math.atan2(-Math.cos(f), Math.sin(f)) * 180 / Math.PI;
   const t1 = th(dir1); let t2 = th(dir2) - t1; t2 = ((t2 + 540) % 360) - 180;
-  return { bras: t1, avant: t2 };
+  return { bras: t1, avant: t2, coude: [ex, ey], dir1, dir2 };
 }
 // La main d'un côté va à un point d'ÉCRAN, en ms. Poignet en option.
-function crMainVers(cote, x, y, ms, poignet) {
+// `o` en option : { delai, easing } — le même retard et la même courbe pour le rig ET la
+// main HTML, sinon les deux moitiés du bras ne partent pas ensemble.
+function crMainVers(cote, x, y, ms, poignet, o) {
   const rep = crRepere(), p = crVersRig(x, y, rep); if (!p) return false;
   const a = crIK(cote, p.x, p.y);
-  crBouger("crBras" + cote, a.bras, ms); crBouger("crAvant" + cote, a.avant, ms);
-  crBouger("crMain" + cote, poignet || 0, ms);
-  crAvantHtml(cote, x, y, ms, poignet, rep);
+  crBouger("crBras" + cote, a.bras, ms, o); crBouger("crAvant" + cote, a.avant, ms, o);
+  crBouger("crMain" + cote, poignet || 0, ms, o);
+  crAvantHtml(cote, x, y, ms, poignet, rep, a, o);
   return true;
 }
 const crRect = id => { const e = $(id); if (!e) return null; const r = e.getBoundingClientRect(); return r.width ? r : null; };
@@ -6078,14 +6354,15 @@ function crCourant(cle) {
   const [d0, d1] = CR.seg[cle] || [0, 0];
   return d0 + (d1 - d0) * (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
 }
-function crBouger(cle, a, ms) {
+function crBouger(cle, a, ms, o) {
   const e = crQ("#cr-" + cle); if (!e) return;
+  o = o || {};
   const de = crCourant(cle); CR.j[cle] = a;
   if (CR.an[cle]) { CR.an[cle].cancel(); CR.an[cle] = null; }
   if (MOUVEMENT_REDUIT.on || !ms || ms < 24 || Math.abs(a - de) < .05) { e.style.transform = FORME(cle, a); return; }
   CR.seg[cle] = [de, a];
   const an = e.animate([{ transform: FORME(cle, de) }, { transform: FORME(cle, a) }],
-    { duration: ms, easing: "cubic-bezier(.22,.72,.24,1)", fill: "forwards" });
+    { duration: ms, delay: o.delai || 0, easing: o.easing || CR_RESSORT, fill: "both" });
   an.finished.then(() => { if (CR.an[cle] === an) { e.style.transform = FORME(cle, CR.j[cle]); an.cancel(); CR.an[cle] = null; } }, () => {});
   CR.an[cle] = an;
 }
@@ -6097,10 +6374,12 @@ function crReposer(ms) {
   ms = ms === undefined ? 340 : ms; CR.arme = false;
   const rs = crRect("sabot"), rd = crRect("defausse");
   if (!crRepere()) return;
-  // Une main posée sur le sabot, l'autre sur la défausse : jamais sur sa carte
-  // visible ni sur son nom (mesuré le 04/09 : à côté de la défausse, la main
-  // gauche couvrait le coin de sa carte).
-  const okD = rs && crMainVers("D", rs.left + rs.width * .38, rs.top + rs.height * .5, ms, 8);
+  // Les mains reposent ENTRE le rack et les boîtes, juste sous le rail, à plat — pas
+  // sur les boîtes (mesuré le 05/09 : deux mains qui AGRIPPENT deux boîtes noires se
+  // lisent comme des prothèses), et pas non plus AU-DELÀ (posées à l'extérieur du sabot
+  // et de la défausse, les manches faisaient deux diagonales noires de 250 px en V à
+  // travers le feutre). Coudes sortis, mains devant soi : la pose d'un croupier qui attend.
+  const okD = rs && crMainVers("D", rs.left - rs.width * .5, rs.top + rs.height * .25, ms, 6);
   if (!okD) { crBouger("crBrasD", -34, ms); crBouger("crAvantD", -48, ms); crBouger("crMainD", 8, ms); }
   if (!crPoserGauche(ms)) { crBouger("crBrasG", 34, ms); crBouger("crAvantG", 48, ms); crBouger("crMainG", -8, ms); }
 }
@@ -6109,10 +6388,10 @@ function crReposer(ms) {
 // (mesuré le 05/09 : pose identique au pixel sur toutes les captures). Repli sur
 // la défausse si le rack n'est pas rendu (téléphone).
 function crPoserGauche(ms) {
-  // Sur le coin bas-droit de la défausse, en diagonale depuis le rail : mesuré le
-  // 05/09, posée sous le rack elle pendait à la verticale et couvrait « Croupier ».
+  // À gauche de la défausse, à plat : mesuré le 05/09, posée sous le rack elle pendait
+  // à la verticale et couvrait « Croupier » ; posée SUR la défausse elle l'agrippait.
   const rd = crRect("defausse"); if (!rd) return false;
-  return crMainVers("G", rd.right - rd.width * .18, rd.top + rd.height * .66, ms, -6);
+  return crMainVers("G", rd.right + rd.width * .5, rd.top + rd.height * .25, ms, -6);
 }
 function crArmer(ms) {
   const c = crCibleSabot(); if (!c) return false;
@@ -6125,20 +6404,32 @@ function crArmer(ms) {
    coup de poignet de 68 px : sur toutes les captures la main était sur le sabot
    et les cartes s'envolaient toutes seules. Sous ~145 ms de cadence il ne revient
    pas au sabot, il enchaîne — ce que fait un vrai croupier lancé. */
-function crFlick(vers, v) {
+/* Mesuré le 05/09 en rAF (18 vols) : la main balayait 120 px en 142 ms sur une courbe à
+   départ rapide pendant que la carte, retardée puis lancée en 6,7 px/ms, était déjà à
+   130 px devant elle à sa première image visible. La main poussait de l'air.
+   Le geste suit maintenant LA carte : même retard (`delai`), même courbe à démarrage doux,
+   55 % de sa durée et 45 % de son trajet — la main accompagne la carte sur la première
+   moitié du vol, puis la carte continue seule, comme lancée. `duree`/`delai` viennent de
+   l'événement (table.js les fige sur la carte) ; sans eux, l'ancien barème. */
+function crFlick(vers, v, o) {
   if (!CR.el || !CR.visible) return;
   const c = crCibleSabot(); if (!c) return;
+  o = o || {};
   if (!CR.arme) crArmer(Math.min(200, v));
-  const amp = Math.max(.55, Math.min(1, v / 450));
-  const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
-  const ms = Math.max(90, Math.min(don * .55, v * .6));
   const dx = vers.x - c.x, dy = vers.y - c.y, d = Math.hypot(dx, dy) || 1;
-  const pas = Math.min(150, d * .5) * amp;
-  crMainVers("D", c.x + dx / d * pas, c.y + dy / d * pas, ms, -22 * amp);
+  let ms, pas, opt;
+  if (o.duree) { ms = Math.max(80, Math.round(o.duree * .55)); pas = Math.min(260, d * .45); opt = { delai: o.delai || 0, easing: "cubic-bezier(.4,0,.2,1)" }; }
+  else {
+    const amp = Math.max(.55, Math.min(1, v / 450));
+    const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
+    ms = Math.max(90, Math.min(don * .55, v * .6)); pas = Math.min(150, d * .5) * amp; opt = {};
+  }
+  crMainVers("D", c.x + dx / d * pas, c.y + dy / d * pas, ms, -22, opt);
   crPoserGauche(Math.max(ms, 260));
   crRegarde(vers.x, vers.y, ms * 1.3);
   CR.gestes++; const n = CR.gestes;
-  if (v > ms * 1.6) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(Math.max(90, v * .3)); }, ms + 20);
+  const retour = ms + (opt.delai || 0) + 20;
+  if (v > retour + 70) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(Math.max(90, Math.min(v - retour - 30, v * .3))); }, retour);
 }
 // Sa propre carte cachée : la main vient dessus, un coup de poignet, et repart.
 function crRetourne(el) {
@@ -6183,7 +6474,10 @@ const EMOTIONS = {
   neutre: { sg: [0, 0], sd: [0, 0], bouche: "calme", joues: 0, plisse: [0, 0] },
   concentre: { sg: [1.6, 3], sd: [1.6, -3], bouche: "ferme", joues: 0, plisse: [.22, .22] },
   content: { sg: [-1, -3], sd: [-1, 3], bouche: "sourire", joues: .2, plisse: [0, 0] },
-  moqueur: { sg: [-3.6, -9], sd: [2, 5], bouche: "encoin", joues: .15, plisse: [.06, .42] },
+  // Moqueur : mesuré le 05/09 à l'échelle de la table (tête de 50 px), il était
+  // indiscernable de « content » (une paupière de 2,4 px). Sourcil gauche haut, le droit
+  // bas, l'œil droit à demi fermé, et la tête PENCHE (crEmotion).
+  moqueur: { sg: [-6, -16], sd: [3, 8], bouche: "encoin", joues: .15, plisse: [.06, .5], penche: 8 },
   agace: { sg: [4, 13], sd: [4, -13], bouche: "boude", joues: .55, plisse: [.35, .35] },
   furieux: { sg: [6.5, 22], sd: [6.5, -22], bouche: "furieux", joues: .95, plisse: [.45, .45], secoue: true },
   soupcon: { sg: [3, 7], sd: [3.6, -5], bouche: "ferme", joues: 0, plisse: [.55, .55], fixe: true },
@@ -6254,6 +6548,7 @@ function crEmotion(nom, o) {
   CR.emotion = nom; const jeton = ++CR.jeton;
   crVisage(e);
   if (e.secoue) crSecoue();
+  if (e.penche && !MOUVEMENT_REDUIT.on) { crBouger("crTete", e.penche, 220); crMinuteur(() => { if (CR.jeton === jeton) crBouger("crTete", 0, 420); }, (o.tenue || 2400) - 300); }
   if (e.fixe) { const toi = document.querySelector("#sieges .siege.toi"); if (toi) { const r = toi.getBoundingClientRect(); crRegarde(r.left + r.width / 2, r.top, 220); } }
   if (o.texte) { crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400)); crArticule(e.bouche); }
   else crTaire();
@@ -6338,7 +6633,7 @@ document.addEventListener("sabot:donne-debut", e => {
   const tc = d.tc !== undefined ? d.tc : (d.compte !== undefined ? d.compte : crLireNombre("tTC"));
   crSurveille(mise, tc);
 });
-document.addEventListener("sabot:carte", e => { const d = e.detail || {}; if (d.vers) crFlick(d.vers, rythme()); });
+document.addEventListener("sabot:carte", e => { const d = e.detail || {}; if (d.vers) crFlick(d.vers, rythme(), { duree: d.duree, delai: d.delai }); });
 document.addEventListener("sabot:tour", e => {
   const d = e.detail || {}; if (!CR.el || !CR.visible) return;
   if (d.siege === "croupier") { const r = crRect("dMain"); if (r) crRegarde(r.left + r.width / 2, r.top + r.height, 260); return; }
@@ -6353,16 +6648,18 @@ document.addEventListener("sabot:main-fin", e => {
     if (d.issue === "bust" && CR.emotion === CR.base) { crVisage(EMOTIONS.moqueur); crMinuteur(() => { if (CR.emotion === CR.base) crVisage(EMOTIONS[CR.base]); }, 900); }
     return;
   }
+  // La réaction se LIT : 2,6 s de bulle et 3 s de visage. À 1,8 s (mesuré le 05/09) la
+  // bulle partait pile quand on regardait ses cartes filer à la défausse.
   if (d.issue === "bust" || d.issue === "perd") {
     CR.pertes++; CR.gains = 0;
     const piquant = CR.id === "lin" ? Math.min(.95, .3 + .3 * CR.pertes) : c.piquant;
-    crEmotion("moqueur", { texte: Math.random() < piquant ? crReplique("moqueur") : "" });
+    crEmotion("moqueur", { texte: Math.random() < piquant ? crReplique("moqueur") : "", ms: 2600, tenue: 3000 });
   } else if (d.issue === "gagne") {
     CR.gains++; CR.pertes = 0;
-    if (CR.gains >= 3) crEmotion("furieux", { texte: crReplique("serie"), tenue: 2800 });
-    else crEmotion("agace", { texte: Math.random() < c.colere ? crReplique("agace") : "" });
+    if (CR.gains >= 3) crEmotion("furieux", { texte: crReplique("serie"), ms: 2800, tenue: 3200 });
+    else crEmotion("agace", { texte: Math.random() < c.colere ? crReplique("agace") : "", ms: 2200, tenue: 2600 });
   } else if (d.issue === "blackjack") {
-    CR.gains++; CR.pertes = 0; crEmotion("furieux", { texte: crReplique("furieux"), tenue: 2800 });
+    CR.gains++; CR.pertes = 0; crEmotion("furieux", { texte: crReplique("furieux"), ms: 2800, tenue: 3200 });
   } else if (d.issue === "abandon") {
     crEmotion("moqueur", { texte: Math.random() < c.piquant * .7 ? crReplique("abandon") : "" });
   } else if (d.issue === "egalite") {

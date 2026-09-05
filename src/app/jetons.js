@@ -130,13 +130,17 @@ function rendre(st, engage, retour) {
   else st.tapis = arr((typeof st.tapis === "number" ? st.tapis : TAPIS_DEPART) + retour);
 }
 
-/* ── Les ancres : tout en coordonnées de la salle (#jetonsCalque la couvre) ── */
-const salleRect = () => $("salle").getBoundingClientRect();
+/* ── Les ancres : tout en coordonnées de la VUE (#jetonsCalque la couvre, salle ET barre
+   des coups). Mesuré le 05/09 avec un calque limité à la salle : le jeton du rack (y = 764)
+   décollait sous une salle qui s'arrêtait à 728, tranché par le bord pendant ~100 ms, puis
+   « sortait du sol » entre deux sièges. Le vol part du jeton qu'on a cliqué. ── */
+const salleRect = () => $("v-table").getBoundingClientRect();
 function centre(el) { const s = salleRect(), r = el.getBoundingClientRect(); return { x: r.left + r.width / 2 - s.left, y: r.top + r.height / 2 - s.top }; }
 const ancreCercle = si => { const e = $("cercle_" + si); return e ? centre(e) : { x: salleRect().width / 2, y: salleRect().height * .8 }; };
 const ancreCroupier = () => { const e = $("rack"); return e && e.offsetWidth ? centre(e) : { x: salleRect().width / 2, y: 30 }; };
 // Le rack fermé est sous le rail : les jetons en partent (ou y rentrent) par le bas.
-const ancreRack = v => { const b = $("rjJetons").querySelector(`[data-v="${v}"]`) || $("rjJetons"); const c = centre(b); if (!$("rackJetons").classList.contains("ouvert")) c.y = salleRect().height + 40; return c; };
+const ancreRack = v => { const b = $("rjJetons").querySelector(`[data-v="${v}"]`) || $("rjJetons"); const c = centre(b);
+  if (!$("rackJetons").classList.contains("ouvert")) { const s = salleRect(); c.x = s.width / 2; c.y = s.height + 40; } return c; };
 // « Chez soi » : ton rack pour toi ; pour un voisin, le rail juste sous son nom.
 const ancreMaison = si => { const st = T.sieges[si]; if (st && st.toi) return ancreRack(25); const c = ancreCercle(si); return { x: c.x, y: c.y + 72 }; };
 
@@ -285,6 +289,10 @@ function poserJeton(v) {
   if (v > DB.tapis) return bandeau("Il ne te reste pas ça en main.");
   if (J.mise + v > l.max) return bandeau(`Maximum de la table : ${fmtJ(l.max)}.`);
   const si = T.sieges.indexOf(T.toi), depuis = ancreRack(v);
+  // L'accusé du clic : le jeton du rack se soulève, le clone part de sa place. Sans ça rien
+  // ne reliait le clic au jeton qui vole (mesuré le 05/09).
+  const bouton = $("rjJetons").querySelector(`[data-v="${v}"]`);
+  if (bouton && !reduit()) { const a = bouton.animate([{ transform: "translateY(0)" }, { transform: "translateY(-7px)", offset: .4 }, { transform: "none" }], { duration: 200, easing: "ease-out" }); a.finished.then(() => a.cancel(), () => {}); }
   engager(T.toi, v); J.mise = arr(J.mise + v); J.poses.push(v); T.toi.mise = T.mise = J.mise;
   rendreRack({ differe: true }); majDonne(); appelMise();
   vol({ v, w: tailleJeton(true), de: tailleRack(), depuis, vers: ancreCercle(si), fin: () => {

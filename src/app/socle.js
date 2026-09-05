@@ -210,10 +210,18 @@ $("son").onclick = () => { DB.son = !DB.son; garder(); rendreSon(); if (DB.son) 
 $("prenom").value = DB.prenom;
 $("prenom").oninput = () => { DB.prenom = $("prenom").value; garder(); rendreSalut(); };
 // Le hall salue par le prénom : « Bonsoir, Léo. » avant l'heure de fermeture, jamais un « Bonjour » à minuit.
+// Sans prénom, la salutation POSE la question — c'est elle qu'on clique pour répondre : le champ
+// n'apparaît qu'à ce moment-là (le 05/09, un formulaire « Ton prénom » attendait sous le titre).
 function rendreSalut() {
   const e = $("hallSalut"); if (!e) return;
-  const p = prenom(), h = new Date().getHours();
-  e.textContent = p ? (h >= 18 || h < 5 ? "Bonsoir, " : "Bonjour, ") + p + "." : "";
+  const p = prenom(), h = new Date().getHours(), bon = h >= 18 || h < 5 ? "Bonsoir" : "Bonjour";
+  e.textContent = p ? bon + ", " + p + "." : bon + ". Ton prénom ?";
+}
+if ($("hallQui")) {
+  const montrer = on => { $("hallPrenom").hidden = !on; $("hallQui").setAttribute("aria-expanded", on ? "true" : "false"); if (on) { $("prenom").focus(); $("prenom").select(); } };
+  $("hallQui").onclick = () => montrer($("hallPrenom").hidden);
+  $("prenom").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); montrer(false); $("hallQui").focus(); } });
+  $("prenom").addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== $("prenom")) montrer(false); }, 120));
 }
 
 $("sys").innerHTML = Object.entries(DONNEES.systemes).map(([k, s]) => `<option value="${k}">${s.nom}</option>`).join("");

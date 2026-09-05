@@ -250,6 +250,7 @@ const CR = { id: "", el: null, scene: null, bulle: null, mains: null, mainsEl: n
   j: {}, seg: {}, an: {}, arme: false, base: "neutre", emotion: "neutre", jeton: 0, gestes: 0,
   dernier: {}, gains: 0, pertes: 0, mises: [], derniereAlerte: -9, minuteurs: [] };
 const CR_SEG = { L1: 120, L2: 116 };      // épaule→coude, coude→centre de la paume
+const CR_RESSORT = "cubic-bezier(.22,.72,.24,1)";
 const CR_EPAULE = { G: [150, 148], D: [270, 148] };
 
 const crQ = s => CR.el ? CR.el.querySelector(s) : null;
@@ -296,34 +297,75 @@ function monterMains() {
   CR.mainsEl = c; CR.mains = { G: c.children[0], D: c.children[1] }; CR.hm = {};
   if (CR.el) for (const k of ["--cr-peau", "--cr-manche", "--cr-poignet"]) c.style.setProperty(k, CR.el.style.getPropertyValue(k));
 }
-// Là où la manche sort de sous le rail : sous l'épaule, décalée vers la main (un tiers
-// du chemin, le coude est derrière le rail), juste au-dessus du feutre — coupée par lui.
-function crAncre(cote, hx, rep) {
+// Là où la manche sort de sous le rail : EXACTEMENT là où le bras du rig y entre. Mesuré le
+// 05/09 : le haut du bras partait à ~35° dans le rack et la manche ressortait dessous à un
+// autre angle, décalée — « des prothèses ». On prolonge le dernier segment visible du rig
+// (le bras si le coude est déjà sous le rail, l'avant-bras sinon) jusqu'à la ligne
+// d'ancrage, juste au-dessus du feutre : l'œil recolle les deux segments en un seul coude,
+// caché sous le rail. `ik` (crIK) donne le coude et les directions ; sans lui, on retombe
+// sur l'estimation d'avant (un tiers du chemin vers la main).
+function crAncre(cote, hx, rep, ik) {
   const F = $("feutre").getBoundingClientRect(), S = CR_EPAULE[cote];
-  const sx = rep.x0 + (S[0] + 50) * rep.s;
-  return { x: sx + (cote === "D" ? 1 : -1) * 26 * rep.s + (hx - sx) * .35, y: F.top - 10, F };
+  const sx = rep.x0 + (S[0] + 50) * rep.s, y = F.top - 10;
+  let x = sx + (cote === "D" ? 1 : -1) * 26 * rep.s + (hx - sx) * .35;
+  if (ik) {
+    const yA = (y - rep.y0) / rep.s + 14;                        // la ligne d'ancrage, en unités de rig
+    const sousRail = ik.coude[1] >= yA - 6;                       // le coude est déjà caché
+    const [px, py] = sousRail ? S : ik.coude, dir = sousRail ? ik.dir1 : ik.dir2;
+    const sy = Math.sin(dir);
+    if (sy > .12 && yA > py) {                                     // le segment DESCEND vers le rail
+      const xr = px + (yA - py) / sy * Math.cos(dir);
+      const xe = rep.x0 + (xr + 50) * rep.s;
+      if (Math.abs(xe - sx) < 220 * rep.s) x = xe;
+    }
+  }
+  return { x, y, F };
 }
 function crAvantCourant(cote) {
   const el = CR.mains[cote], cs = getComputedStyle(el);
   let a = 0; try { const m = new DOMMatrixReadOnly(cs.transform); a = Math.atan2(m.b, m.a) * 180 / Math.PI; } catch (e) {}
   return { a, d: parseFloat(cs.width) || 0 };
 }
-function crAvantHtml(cote, x, y, ms, poignet, rep) {
+function crAvantHtml(cote, x, y, ms, poignet, rep, ik, o) {
   const el = CR.mains && CR.mains[cote]; if (!el) return;
-  const an = crAncre(cote, x, rep), ax = an.x - an.F.left, ay = an.y - an.F.top, hx = x - an.F.left, hy = y - an.F.top;
+  o = o || {};
+  const an = crAncre(cote, x, rep, ik), ax = an.x - an.F.left, ay = an.y - an.F.top, hx = x - an.F.left, hy = y - an.F.top;
   let a = Math.atan2(hy - ay, hx - ax) * 180 / Math.PI; const d = Math.max(12, Math.hypot(hx - ax, hy - ay));
+  // L'ANCRE bouge d'un geste à l'autre (elle suit le coude du rig, cf. crAncre) : le départ
+  // de l'animation est la position À L'ÉCRAN de la main, reconvertie depuis la nouvelle ancre.
+  // Repartir de l'ancien angle et de l'ancienne longueur depuis une ancre déplacée de 60 px
+  // faisait SAUTER la main de 60 px à l'image où la carte naissait (mesuré le 05/09 en rAF).
+  const de0 = CR.hm[cote] ? crAvantCourant(cote) : null, ax0 = parseFloat(el.style.left), ay0 = parseFloat(el.style.top);
   el.style.left = ax.toFixed(1) + "px"; el.style.top = ay.toFixed(1) + "px";
   const hd = el.querySelector(".cr-hd"), rot = `rotate(${((poignet || 0) * (cote === "D" ? 1 : -1) * .8).toFixed(1)}deg)`;
-  const de = CR.hm[cote] ? crAvantCourant(cote) : null;
+  let de = de0;
+  if (de0 && Number.isFinite(ax0) && Number.isFinite(ay0)) {
+    const r0 = de0.a * Math.PI / 180, tx = ax0 + de0.d * Math.cos(r0), ty = ay0 + de0.d * Math.sin(r0);
+    de = { a: Math.atan2(ty - ay, tx - ax) * 180 / Math.PI, d: Math.max(12, Math.hypot(tx - ax, ty - ay)) };
+  }
   if (CR.hm[cote] && CR.hm[cote].an) { CR.hm[cote].an.cancel(); }
   CR.hm[cote] = { a, d };
   if (!de || MOUVEMENT_REDUIT.on || !ms || ms < 24) { el.style.transform = `rotate(${a.toFixed(2)}deg)`; el.style.width = d.toFixed(1) + "px"; hd.style.transition = "none"; hd.style.transform = rot; return; }
   a += 360 * Math.round((de.a - a) / 360);   // le chemin le plus court
-  const anim = el.animate([{ transform: `rotate(${de.a.toFixed(2)}deg)`, width: de.d.toFixed(1) + "px" }, { transform: `rotate(${a.toFixed(2)}deg)`, width: d.toFixed(1) + "px" }],
-    { duration: ms, easing: "cubic-bezier(.22,.72,.24,1)", fill: "forwards" });
+  // La main va TOUT DROIT à l'écran : huit images clés le long du segment départ → cible,
+  // chacune reconvertie en (angle, longueur). Interpoler l'angle et la longueur eux-mêmes
+  // faisait décrire au bout du bras un ARC qui plongeait sous la carte (mesuré le 05/09 :
+  // la main à 95 px sous une carte qu'elle était censée pousser).
+  const r0 = de.a * Math.PI / 180, tx0 = ax + de.d * Math.cos(r0), ty0 = ay + de.d * Math.sin(r0), N = 8, images = [];
+  let prec = de.a;
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, px = tx0 + (hx - tx0) * u, py = ty0 + (hy - ty0) * u;
+    let ai = Math.atan2(py - ay, px - ax) * 180 / Math.PI; ai += 360 * Math.round((prec - ai) / 360); prec = ai;
+    images.push({ transform: `rotate(${ai.toFixed(2)}deg)`, width: Math.max(12, Math.hypot(px - ax, py - ay)).toFixed(1) + "px" });
+  }
+  // fill:"both" — pendant le RETARD (le geste attend la carte, o.delai), la main tient sa
+  // position de départ. Avec "forwards", elle retombait sur le style sous-jacent (la pose
+  // cuite d'avant) : mesuré le 05/09 en rAF, la main SAUTAIT de 110 px à l'image où la
+  // carte naissait, puis revenait — un tremblement à chaque carte.
+  const anim = el.animate(images, { duration: ms, delay: o.delai || 0, easing: o.easing || CR_RESSORT, fill: "both" });
   CR.hm[cote].an = anim;
   anim.finished.then(() => { if (CR.hm[cote] && CR.hm[cote].an === anim) { el.style.transform = `rotate(${a.toFixed(2)}deg)`; el.style.width = d.toFixed(1) + "px"; anim.cancel(); CR.hm[cote].an = null; } }, () => {});
-  hd.style.transition = `transform ${Math.round(ms)}ms cubic-bezier(.22,.72,.24,1)`; hd.style.transform = rot;
+  hd.style.transition = `transform ${Math.round(ms)}ms ${o.easing || CR_RESSORT} ${o.delai || 0}ms`; hd.style.transform = rot;
 }
 function monterCroupier() {
   const scene = $("croupierScene"); if (!scene) return;
@@ -372,15 +414,17 @@ function crIK(cote, px, py) {
   const dir2 = Math.atan2(S[1] + dy - ey, S[0] + dx - ex);
   const th = f => Math.atan2(-Math.cos(f), Math.sin(f)) * 180 / Math.PI;
   const t1 = th(dir1); let t2 = th(dir2) - t1; t2 = ((t2 + 540) % 360) - 180;
-  return { bras: t1, avant: t2 };
+  return { bras: t1, avant: t2, coude: [ex, ey], dir1, dir2 };
 }
 // La main d'un côté va à un point d'ÉCRAN, en ms. Poignet en option.
-function crMainVers(cote, x, y, ms, poignet) {
+// `o` en option : { delai, easing } — le même retard et la même courbe pour le rig ET la
+// main HTML, sinon les deux moitiés du bras ne partent pas ensemble.
+function crMainVers(cote, x, y, ms, poignet, o) {
   const rep = crRepere(), p = crVersRig(x, y, rep); if (!p) return false;
   const a = crIK(cote, p.x, p.y);
-  crBouger("crBras" + cote, a.bras, ms); crBouger("crAvant" + cote, a.avant, ms);
-  crBouger("crMain" + cote, poignet || 0, ms);
-  crAvantHtml(cote, x, y, ms, poignet, rep);
+  crBouger("crBras" + cote, a.bras, ms, o); crBouger("crAvant" + cote, a.avant, ms, o);
+  crBouger("crMain" + cote, poignet || 0, ms, o);
+  crAvantHtml(cote, x, y, ms, poignet, rep, a, o);
   return true;
 }
 const crRect = id => { const e = $(id); if (!e) return null; const r = e.getBoundingClientRect(); return r.width ? r : null; };
@@ -399,14 +443,15 @@ function crCourant(cle) {
   const [d0, d1] = CR.seg[cle] || [0, 0];
   return d0 + (d1 - d0) * (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
 }
-function crBouger(cle, a, ms) {
+function crBouger(cle, a, ms, o) {
   const e = crQ("#cr-" + cle); if (!e) return;
+  o = o || {};
   const de = crCourant(cle); CR.j[cle] = a;
   if (CR.an[cle]) { CR.an[cle].cancel(); CR.an[cle] = null; }
   if (MOUVEMENT_REDUIT.on || !ms || ms < 24 || Math.abs(a - de) < .05) { e.style.transform = FORME(cle, a); return; }
   CR.seg[cle] = [de, a];
   const an = e.animate([{ transform: FORME(cle, de) }, { transform: FORME(cle, a) }],
-    { duration: ms, easing: "cubic-bezier(.22,.72,.24,1)", fill: "forwards" });
+    { duration: ms, delay: o.delai || 0, easing: o.easing || CR_RESSORT, fill: "both" });
   an.finished.then(() => { if (CR.an[cle] === an) { e.style.transform = FORME(cle, CR.j[cle]); an.cancel(); CR.an[cle] = null; } }, () => {});
   CR.an[cle] = an;
 }
@@ -418,10 +463,12 @@ function crReposer(ms) {
   ms = ms === undefined ? 340 : ms; CR.arme = false;
   const rs = crRect("sabot"), rd = crRect("defausse");
   if (!crRepere()) return;
-  // Une main posée sur le sabot, l'autre sur la défausse : jamais sur sa carte
-  // visible ni sur son nom (mesuré le 04/09 : à côté de la défausse, la main
-  // gauche couvrait le coin de sa carte).
-  const okD = rs && crMainVers("D", rs.left + rs.width * .38, rs.top + rs.height * .5, ms, 8);
+  // Les mains reposent ENTRE le rack et les boîtes, juste sous le rail, à plat — pas
+  // sur les boîtes (mesuré le 05/09 : deux mains qui AGRIPPENT deux boîtes noires se
+  // lisent comme des prothèses), et pas non plus AU-DELÀ (posées à l'extérieur du sabot
+  // et de la défausse, les manches faisaient deux diagonales noires de 250 px en V à
+  // travers le feutre). Coudes sortis, mains devant soi : la pose d'un croupier qui attend.
+  const okD = rs && crMainVers("D", rs.left - rs.width * .5, rs.top + rs.height * .25, ms, 6);
   if (!okD) { crBouger("crBrasD", -34, ms); crBouger("crAvantD", -48, ms); crBouger("crMainD", 8, ms); }
   if (!crPoserGauche(ms)) { crBouger("crBrasG", 34, ms); crBouger("crAvantG", 48, ms); crBouger("crMainG", -8, ms); }
 }
@@ -430,10 +477,10 @@ function crReposer(ms) {
 // (mesuré le 05/09 : pose identique au pixel sur toutes les captures). Repli sur
 // la défausse si le rack n'est pas rendu (téléphone).
 function crPoserGauche(ms) {
-  // Sur le coin bas-droit de la défausse, en diagonale depuis le rail : mesuré le
-  // 05/09, posée sous le rack elle pendait à la verticale et couvrait « Croupier ».
+  // À gauche de la défausse, à plat : mesuré le 05/09, posée sous le rack elle pendait
+  // à la verticale et couvrait « Croupier » ; posée SUR la défausse elle l'agrippait.
   const rd = crRect("defausse"); if (!rd) return false;
-  return crMainVers("G", rd.right - rd.width * .18, rd.top + rd.height * .66, ms, -6);
+  return crMainVers("G", rd.right + rd.width * .5, rd.top + rd.height * .25, ms, -6);
 }
 function crArmer(ms) {
   const c = crCibleSabot(); if (!c) return false;
@@ -446,20 +493,32 @@ function crArmer(ms) {
    coup de poignet de 68 px : sur toutes les captures la main était sur le sabot
    et les cartes s'envolaient toutes seules. Sous ~145 ms de cadence il ne revient
    pas au sabot, il enchaîne — ce que fait un vrai croupier lancé. */
-function crFlick(vers, v) {
+/* Mesuré le 05/09 en rAF (18 vols) : la main balayait 120 px en 142 ms sur une courbe à
+   départ rapide pendant que la carte, retardée puis lancée en 6,7 px/ms, était déjà à
+   130 px devant elle à sa première image visible. La main poussait de l'air.
+   Le geste suit maintenant LA carte : même retard (`delai`), même courbe à démarrage doux,
+   55 % de sa durée et 45 % de son trajet — la main accompagne la carte sur la première
+   moitié du vol, puis la carte continue seule, comme lancée. `duree`/`delai` viennent de
+   l'événement (table.js les fige sur la carte) ; sans eux, l'ancien barème. */
+function crFlick(vers, v, o) {
   if (!CR.el || !CR.visible) return;
   const c = crCibleSabot(); if (!c) return;
+  o = o || {};
   if (!CR.arme) crArmer(Math.min(200, v));
-  const amp = Math.max(.55, Math.min(1, v / 450));
-  const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
-  const ms = Math.max(90, Math.min(don * .55, v * .6));
   const dx = vers.x - c.x, dy = vers.y - c.y, d = Math.hypot(dx, dy) || 1;
-  const pas = Math.min(150, d * .5) * amp;
-  crMainVers("D", c.x + dx / d * pas, c.y + dy / d * pas, ms, -22 * amp);
+  let ms, pas, opt;
+  if (o.duree) { ms = Math.max(80, Math.round(o.duree * .55)); pas = Math.min(260, d * .45); opt = { delai: o.delai || 0, easing: "cubic-bezier(.4,0,.2,1)" }; }
+  else {
+    const amp = Math.max(.55, Math.min(1, v / 450));
+    const don = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--don")) || 300;
+    ms = Math.max(90, Math.min(don * .55, v * .6)); pas = Math.min(150, d * .5) * amp; opt = {};
+  }
+  crMainVers("D", c.x + dx / d * pas, c.y + dy / d * pas, ms, -22, opt);
   crPoserGauche(Math.max(ms, 260));
   crRegarde(vers.x, vers.y, ms * 1.3);
   CR.gestes++; const n = CR.gestes;
-  if (v > ms * 1.6) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(Math.max(90, v * .3)); }, ms + 20);
+  const retour = ms + (opt.delai || 0) + 20;
+  if (v > retour + 70) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(Math.max(90, Math.min(v - retour - 30, v * .3))); }, retour);
 }
 // Sa propre carte cachée : la main vient dessus, un coup de poignet, et repart.
 function crRetourne(el) {
@@ -504,7 +563,10 @@ const EMOTIONS = {
   neutre: { sg: [0, 0], sd: [0, 0], bouche: "calme", joues: 0, plisse: [0, 0] },
   concentre: { sg: [1.6, 3], sd: [1.6, -3], bouche: "ferme", joues: 0, plisse: [.22, .22] },
   content: { sg: [-1, -3], sd: [-1, 3], bouche: "sourire", joues: .2, plisse: [0, 0] },
-  moqueur: { sg: [-3.6, -9], sd: [2, 5], bouche: "encoin", joues: .15, plisse: [.06, .42] },
+  // Moqueur : mesuré le 05/09 à l'échelle de la table (tête de 50 px), il était
+  // indiscernable de « content » (une paupière de 2,4 px). Sourcil gauche haut, le droit
+  // bas, l'œil droit à demi fermé, et la tête PENCHE (crEmotion).
+  moqueur: { sg: [-6, -16], sd: [3, 8], bouche: "encoin", joues: .15, plisse: [.06, .5], penche: 8 },
   agace: { sg: [4, 13], sd: [4, -13], bouche: "boude", joues: .55, plisse: [.35, .35] },
   furieux: { sg: [6.5, 22], sd: [6.5, -22], bouche: "furieux", joues: .95, plisse: [.45, .45], secoue: true },
   soupcon: { sg: [3, 7], sd: [3.6, -5], bouche: "ferme", joues: 0, plisse: [.55, .55], fixe: true },
@@ -575,6 +637,7 @@ function crEmotion(nom, o) {
   CR.emotion = nom; const jeton = ++CR.jeton;
   crVisage(e);
   if (e.secoue) crSecoue();
+  if (e.penche && !MOUVEMENT_REDUIT.on) { crBouger("crTete", e.penche, 220); crMinuteur(() => { if (CR.jeton === jeton) crBouger("crTete", 0, 420); }, (o.tenue || 2400) - 300); }
   if (e.fixe) { const toi = document.querySelector("#sieges .siege.toi"); if (toi) { const r = toi.getBoundingClientRect(); crRegarde(r.left + r.width / 2, r.top, 220); } }
   if (o.texte) { crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400)); crArticule(e.bouche); }
   else crTaire();
@@ -659,7 +722,7 @@ document.addEventListener("sabot:donne-debut", e => {
   const tc = d.tc !== undefined ? d.tc : (d.compte !== undefined ? d.compte : crLireNombre("tTC"));
   crSurveille(mise, tc);
 });
-document.addEventListener("sabot:carte", e => { const d = e.detail || {}; if (d.vers) crFlick(d.vers, rythme()); });
+document.addEventListener("sabot:carte", e => { const d = e.detail || {}; if (d.vers) crFlick(d.vers, rythme(), { duree: d.duree, delai: d.delai }); });
 document.addEventListener("sabot:tour", e => {
   const d = e.detail || {}; if (!CR.el || !CR.visible) return;
   if (d.siege === "croupier") { const r = crRect("dMain"); if (r) crRegarde(r.left + r.width / 2, r.top + r.height, 260); return; }
@@ -674,16 +737,18 @@ document.addEventListener("sabot:main-fin", e => {
     if (d.issue === "bust" && CR.emotion === CR.base) { crVisage(EMOTIONS.moqueur); crMinuteur(() => { if (CR.emotion === CR.base) crVisage(EMOTIONS[CR.base]); }, 900); }
     return;
   }
+  // La réaction se LIT : 2,6 s de bulle et 3 s de visage. À 1,8 s (mesuré le 05/09) la
+  // bulle partait pile quand on regardait ses cartes filer à la défausse.
   if (d.issue === "bust" || d.issue === "perd") {
     CR.pertes++; CR.gains = 0;
     const piquant = CR.id === "lin" ? Math.min(.95, .3 + .3 * CR.pertes) : c.piquant;
-    crEmotion("moqueur", { texte: Math.random() < piquant ? crReplique("moqueur") : "" });
+    crEmotion("moqueur", { texte: Math.random() < piquant ? crReplique("moqueur") : "", ms: 2600, tenue: 3000 });
   } else if (d.issue === "gagne") {
     CR.gains++; CR.pertes = 0;
-    if (CR.gains >= 3) crEmotion("furieux", { texte: crReplique("serie"), tenue: 2800 });
-    else crEmotion("agace", { texte: Math.random() < c.colere ? crReplique("agace") : "" });
+    if (CR.gains >= 3) crEmotion("furieux", { texte: crReplique("serie"), ms: 2800, tenue: 3200 });
+    else crEmotion("agace", { texte: Math.random() < c.colere ? crReplique("agace") : "", ms: 2200, tenue: 2600 });
   } else if (d.issue === "blackjack") {
-    CR.gains++; CR.pertes = 0; crEmotion("furieux", { texte: crReplique("furieux"), tenue: 2800 });
+    CR.gains++; CR.pertes = 0; crEmotion("furieux", { texte: crReplique("furieux"), ms: 2800, tenue: 3200 });
   } else if (d.issue === "abandon") {
     crEmotion("moqueur", { texte: Math.random() < c.piquant * .7 ? crReplique("abandon") : "" });
   } else if (d.issue === "egalite") {

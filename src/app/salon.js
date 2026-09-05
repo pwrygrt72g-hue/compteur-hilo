@@ -46,6 +46,10 @@ function tableMorte(t) {
 }
 const tamponCourt = t => t.blackjackPays < 1.5 ? "À fuir · 6:5" : "À fuir · mélangeuse";
 const photoDe = cle => (window.PHOTOS || {})[cle] || "";
+// Le point focal d'une photo qui n'est pas au centre : le Front de Mer, c'est 60 % de ciel
+// bleu plat en haut (source 1600 × 900) — cadrée au centre, la porte était un rectangle bleu
+// entre deux portes chaudes (les critiques, 05/09). La ville éclairée est en bas.
+const PHOTO_POS = { frontdemer: "50% 84%", boulevard: "50% 60%", aquarium: "50% 40%" };
 // Un sabot est ENTAMÉ dès qu'une main a été jouée ou qu'une donne est en cours : la
 // porte de cette table dit « Reprendre » et ne remélange pas quand on la pousse.
 const sabotEntame = () => T.mains > 0 || T.enJeu;
@@ -60,15 +64,17 @@ function carteTableHtml(t, o) {
   const nomAccessible = (o.reprise ? "Reprendre ta place à " : "S'asseoir à ") + t.nom + ", " + t.lieu + (mort ? " — " + mort : "");
   return `<article class="salle-porte ${mort ? "brulee" : ""}" ${mort ? `data-tampon="${echap(mort)}"` : ""}>
     <${balise} class="salle-carte porte" ${o.inerte ? "" : `data-asseoir="${t.id}" aria-label="${echap(nomAccessible)}"`}>
-      ${ph ? `<img class="photo" src="${ph}" alt="" aria-hidden="true" loading="lazy" decoding="async">` : ""}<span class="voile"></span>
+      ${ph ? `<img class="photo" src="${ph}" alt="" aria-hidden="true" loading="lazy" decoding="async"${PHOTO_POS[t.id] ? ` style="--pos:${PHOTO_POS[t.id]}"` : ""}>` : ""}<span class="voile"></span>
       <span class="haut"><span class="num">${o.n ? "Table " + o.n : "Ta table"}</span>${o.reprise ? `<span class="etat">Reprendre</span>` : mort ? `<span class="tampon" title="${echap(mort)}">${tamponCourt(t)}</span>` : ""}</span>
       <span class="bas">
         <span class="lieu">${echap(t.lieu)}</span><span class="nom">${echap(t.nom)}</span>
+        <span class="sous">« ${echap(t.lecon)} »</span>
         <span class="regles">${pucesCourtes(t)}</span>
         <span class="chiffres"><span><b>${fr2(d.avantage)} %</b>avantage maison</span><span><b>${fmtJ(t.mise_min)} – ${fmtJ(t.mise_max)}</b>mises</span></span>
       </span>
+      ${o.inerte ? "" : `<span class="asseoir-cta" aria-hidden="true">${o.reprise ? "Reprendre" : "S'asseoir"} &rarr;</span>`}
     </${balise}>
-    ${o.inerte ? "" : `<button class="pourquoi" data-pourquoi="${t.id}" title="Pourquoi cette table ?" aria-label="Pourquoi ${echap(t.nom)} ?"><i>Pourquoi</i></button>`}
+    ${o.inerte ? "" : `<button class="pourquoi" data-pourquoi="${t.id}" title="Pourquoi cette table ? La leçon, en détail" aria-label="Pourquoi ${echap(t.nom)} ?"><i>Pourquoi&nbsp;?</i></button>`}
   </article>`;
 }
 function rendreSalon() {

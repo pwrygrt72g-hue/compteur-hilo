@@ -55,13 +55,18 @@
 <section class="vue" id="v-accueil">
   <div class="hall-heros" id="hallHeros" data-photo="hall">
     <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async">
+    <!-- Le titre est la PROMESSE, pas la marque : « Le Sabot » est déjà dans l'en-tête, 40 px
+         plus haut (mesuré le 05/09 : le héros prenait 586 des 800 px pour répéter ce nom, et
+         les tables tombaient sous le pli). Le prénom se donne en un clic sur la salutation,
+         pas dans un formulaire qu'on remplit en rentrant de soirée. -->
     <div class="hall-int hall-heros-int">
-      <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
-      <h1 class="hall-titre">Le Sabot</h1>
-      <p class="hall-phrase"><span class="hall-salut" id="hallSalut"></span>Neuf tables de casino, une salle d'entraînement, un salon privé. Le compte est masqué : c'est à toi de le tenir.</p>
+      <span class="grave hall-kicker">Le Sabot · entraînement au comptage de cartes</span>
+      <h1 class="hall-titre">Le compte est masqué.<br>À toi de le tenir.</h1>
+      <p class="hall-phrase">Neuf tables de casino, une salle d'entraînement, un salon privé — et un croupier qui te regarde miser.</p>
       <div class="hall-entree">
-        <label class="ch"><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" autocomplete="given-name"></label>
         <button class="btn" data-hall="lesTables">Voir les tables</button>
+        <button class="hall-qui" id="hallQui" aria-expanded="false" aria-controls="hallPrenom" title="Changer de prénom"><span class="hall-salut" id="hallSalut"></span><span class="hall-crayon" aria-hidden="true">modifier</span></button>
+        <label class="ch hall-prenom" id="hallPrenom" hidden><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" autocomplete="given-name"></label>
       </div>
     </div>
     <div class="eventail" id="eventail" aria-hidden="true"></div>
@@ -194,7 +199,6 @@
         <p class="conseil" id="conseil"></p>
       </div>
     </div>
-    <div id="jetonsCalque" aria-hidden="true"></div>
     <p class="coach-mise" id="coachMise" aria-live="polite"></p>
   </div>
 
@@ -203,6 +207,20 @@
        des coups (un croupier ne propose pas « Séparer » avant la donne) ; pendant la main,
        « Distribuer » disparaît. Le CSS suit #v-table[data-phase]. -->
   <div class="zone-actions">
+    <!-- Le rack du joueur (lot Jetons) : tes jetons, sur le rail devant toi. Visible pendant
+         la phase de mise seulement ; il cède la place aux coups dès que la donne commence.
+         Sur ordinateur il ne porte que les jetons : le tapis, la mise et les limites sont
+         déjà dans le bandeau, et un rack à deux cadrans faisait une barre à deux rangées
+         pendant la mise, à une pendant la main — toute la table sautait de 60 px à la donne.
+         Il est AVANT les coups : « Distribuer » lui est accolé (mesuré le 05/09, le bouton
+         était seul dans le coin gauche, le rack au centre, et l'œil ne reliait pas les deux). -->
+    <div class="rack-jetons" id="rackJetons" data-min="10" data-max="1000">
+      <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b></div>
+      <div class="rj-jetons" id="rjJetons" role="group" aria-label="Jetons à miser"></div>
+      <div class="rj-bloc"><span class="grave">Mise</span><b class="cadran" id="rjMise">0</b><span class="rj-sous" id="rjUnites">—</span></div>
+      <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier jeton (Retour arrière)" aria-label="Retirer le dernier jeton">&#8630;</button>
+      <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
+    </div>
     <div class="rang-btn" id="coups">
       <button class="btn" id="bDonne">Distribuer<kbd>&#9166;</kbd></button>
       <button class="btn verre" id="bTire" disabled>Tirer<kbd>T</kbd></button>
@@ -211,32 +229,35 @@
       <button class="btn verre" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
       <button class="btn verre" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
     </div>
-    <!-- Le rack du joueur (lot Jetons) : tes jetons, sur le rail devant toi. Visible pendant
-         la phase de mise seulement ; il cède la place aux coups dès que la donne commence.
-         Sur ordinateur il ne porte que les jetons : le tapis, la mise et les limites sont
-         déjà dans le bandeau, et un rack à deux cadrans faisait une barre à deux rangées
-         pendant la mise, à une pendant la main — toute la table sautait de 60 px à la donne. -->
-    <div class="rack-jetons" id="rackJetons" data-min="10" data-max="1000">
-      <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b></div>
-      <div class="rj-jetons" id="rjJetons" role="group" aria-label="Jetons à miser"></div>
-      <div class="rj-bloc"><span class="grave">Mise</span><b class="cadran" id="rjMise">0</b><span class="rj-sous" id="rjUnites">—</span></div>
-      <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier jeton (Retour arrière)" aria-label="Retirer le dernier jeton">&#8630;</button>
-      <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
-    </div>
-    <div class="rang-table">
+    <!-- Les utilitaires de la table, à droite, en retrait : ils ne se jouent pas à chaque main.
+         « Montrer le compte » et « Caméra » restent toujours à portée ; le reste vit dans un
+         menu « Plus » sous 1400 px (mesuré le 05/09 à 1280 × 800 à plusieurs : sept boutons
+         passaient sur une deuxième rangée et volaient 54 px au feutre). Les identifiants ne
+         bougent pas : la sonde, le banc et reseau.js les cliquent tels quels. -->
+    <div class="rang-table" id="rangTable">
       <button class="btn verre mini" id="bMontrer" aria-pressed="false">Montrer le compte</button>
-      <button class="btn verre mini" id="bMonCompte">Mon compte</button>
-      <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
-      <button class="btn verre mini" id="bReglagesTable" title="Cadence, aide à la décision, croupier">Croupier &amp; cadence</button>
-      <button class="btn verre mini" id="bNouveauSabot" title="Jette la manche en cours et remélange">Nouveau sabot</button>
-      <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
-      <button class="btn verre mini" id="bReseau" hidden>Table</button>
       <!-- Ta caméra (visio.js) : tes amis te voient sur ton siège. Vidéo seule, JAMAIS de micro —
            on compte en silence. Mémorisé (DB.camera). Caché en solo. -->
       <button class="btn verre mini" id="bCamera" hidden aria-pressed="false" title="Ta caméra, pour que tes amis te voient sur ton siège — vidéo seule, jamais de micro">Caméra</button>
+      <div class="plus" id="plusTable">
+        <button class="btn verre mini plus-btn" id="bPlus" aria-expanded="false" aria-controls="plusMenu" title="Plus d'options">Plus <span class="chevron" aria-hidden="true"></span></button>
+        <div class="plus-menu" id="plusMenu">
+          <button class="btn verre mini" id="bMonCompte">Mon compte</button>
+          <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
+          <button class="btn verre mini" id="bReglagesTable" title="Cadence, aide à la décision, croupier">Croupier &amp; cadence</button>
+          <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
+          <button class="btn verre mini" id="bReseau" hidden>Table</button>
+          <button class="btn verre mini creux" id="bNouveauSabot" title="Jette la manche en cours et remélange">Nouveau sabot</button>
+        </div>
+      </div>
     </div>
     <div id="boiteAssurance"></div>
   </div>
+  <!-- Le calque des jetons qui volent : au niveau de la VUE, pas de la salle. Mesuré le 05/09 :
+       le jeton partait du rack (y = 764) dans une salle qui s'arrête à 728 — tranché par le
+       bord pendant un tiers du vol, puis « sorti du sol » entre deux sièges. Ici il couvre la
+       salle et la barre des coups, et le vol part vraiment du jeton cliqué. -->
+  <div id="jetonsCalque" aria-hidden="true"></div>
 </section>
 
 <!-- ════════════════════ EXERCICES ════════════════════ -->
