@@ -553,7 +553,7 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(3px) brightness(.44) saturate(1) }
 #v-table[data-lieu="reno"] .salle .decor{ filter:blur(3px) brightness(.46) saturate(.85) sepia(.25) }
 #croupierScene{ position:absolute; left:50%; top:0; transform:translateX(-50%); z-index:1;
-  width:min(560px, 80%); height:calc(var(--salle-haut) + 170px); pointer-events:none }
+  width:min(560px, 80%); height:var(--salle-haut); pointer-events:none; display:flex; justify-content:center; align-items:flex-end }
 /* Le calque des jetons couvre la VUE entière — salle ET barre des coups — et vit hors de
    .salle (overflow:hidden) : mesuré le 05/09, le jeton décollait sous le bord de la salle,
    tranché ~100 ms, puis « sortait du sol » entre deux sièges. Il part du jeton cliqué. */
@@ -591,7 +591,9 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
     0 36px 64px -22px rgba(0,0,0,.9), 0 18px 40px -14px #000, 0 0 0 1px rgba(0,0,0,.75),
     inset 0 2px 0 rgba(255,255,255,.12), inset 0 -4px 8px rgba(0,0,0,.6);
 }
-.tapis::before{ content:""; position:absolute; inset:6px; border-radius:inherit; pointer-events:none; z-index:4;
+/* z-index 3 : SOUS le croupier (4) — ses avant-bras passent par-dessus le rail, et un
+   filet d'or tracé au travers d'une manche la coupait en deux (mesuré le 05/09). */
+.tapis::before{ content:""; position:absolute; inset:6px; border-radius:inherit; pointer-events:none; z-index:3;
   border:1.5px solid var(--rail-liseret); opacity:.72; box-shadow:0 0 6px -2px var(--rail-liseret) }
 /* Trois sièges (le Salon Privé) sur un plateau dessiné pour six : 60 % de feutre vide.
    La table se resserre sur ses joueurs. */
@@ -1546,58 +1548,35 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
    défausse se rapprochent de ses mains (gap 16 au lieu de 34) : à +200 px du
    centre, aucun bras à cette échelle ne les atteignait. */
 @media (min-width:1000px){
-  /* Au moins 96 px : à 1280 × 800 la bande faisait 104 px et les cheveux du croupier
-     touchaient le bord de la salle (mesuré le 05/09). */
-  #v-table{ --salle-haut:clamp(96px, calc(30svh - 120px), 190px) }
+  /* La bande EST la hauteur du croupier (version 2 : le rig fait 100 % de la bande, le bord
+     de table est sa ligne y = 200) : 138 px à 1280 × 800, 169 à 900, 220 à 1080 — une tête
+     de 65 à 103 px, qui grandit avec la table. Les sièges gardent ≥ 200 px partout (banc). */
+  #v-table{ --salle-haut:clamp(104px, calc(31svh - 110px), 220px) }
   /* Le sabot et la défausse laissent la place des mains au repos entre eux et le rack. */
   .rangee-haute{ gap:44px }
   .croupier{ min-width:0 }
   .siege{ min-width:0 }
   .sieges{ padding:0 3% 2px }
 }
-/* Le croupier est DEVANT la table (ses mains sont sur le feutre) mais DERRIÈRE
-   le rack de jetons, qui cache la coupe de son buste. Pour ça, .tapis ne doit
-   plus être un contexte d'empilement : son z-index passe à auto, et .rack (5)
-   comme .feutre (2) prennent rang dans la salle. Ordre obtenu, du fond vers
-   l'œil : table · feutre et cartes (2) · croupier (3) · liseré (4) · rack (5)
-   · jetons en vol (8). Un seul rang change, rien d'autre ne bouge. */
+/* Le croupier est DERRIÈRE la table (son buste s'arrête au bord, le rack cache sa
+   coupe) et ses AVANT-BRAS passent par-dessus le rail jusqu'au feutre. Pour ça,
+   .tapis ne doit pas être un contexte d'empilement : son z-index passe à auto, et
+   .rack (5) comme .feutre (2) prennent rang dans la salle. Ordre obtenu, du fond
+   vers l'œil : table · feutre et cartes (2) · liseré (3) · croupier (4) · rack (5)
+   · jetons en vol (9). Le liseré est passé sous lui (une manche coupée par un filet
+   d'or, mesuré le 05/09) ; rien d'autre ne bouge. */
 .tapis{ z-index:auto }
-#croupierScene{ z-index:3; width:min(760px, 92%); top:6px; height:calc(var(--salle-haut) + 6px); overflow:visible;
-  display:flex; justify-content:center; align-items:flex-start }
-/* L'<svg> prend TOUTE la hauteur de la bande ; sa largeur suit le viewBox (520 × 200),
-   donc l'échelle est exacte et croupier.js peut convertir un point d'écran en
-   unités de rig sans getScreenCTM. overflow:visible : les bras dépassent la
-   ligne de table pour atteindre le feutre, c'est voulu. */
-/* Au moins 150 px de haut (jamais plus de 124 % de sa bande, jamais moins que la
-   bande) : à 1280 × 800 la bande fait 116 px, et un croupier de 116 px a des bras
-   de 126 px — le sabot était hors de portée. Le bas du buste passe sous le rack. */
-/* Au moins 170 px (jamais plus de 142 % de sa bande) : à 1280 × 800 la bande fait 116 px et
-   un croupier de 150 px avait une tête de 40 px — sa moue, ses sourcils, rien ne se lisait
-   (mesuré le 05/09). Le bas du buste passe sous le rack, ses bras sont ancrés au rail. */
-.cr-svg{ height:clamp(100%, 170px, 142%); width:auto; overflow:visible; display:block; flex:none; filter:drop-shadow(0 6px 6px rgba(0,0,0,.7)) drop-shadow(0 14px 18px rgba(0,0,0,.5)) }
+#croupierScene{ z-index:4; width:min(760px, 92%) }
+/* L'<svg> fait EXACTEMENT la hauteur de la bande, collé au bord de la table (flex-end) :
+   sa ligne y = 200 est le haut du rail, sa largeur suit le viewBox (520 × 200), donc
+   l'échelle est bande / 200 et croupier.js convertit un point d'écran en unités de rig
+   sans getScreenCTM. overflow:visible : les bras dépassent la ligne de table pour
+   atteindre le feutre, c'est voulu — et rien ne les coupe (version 2 : plus de clip au
+   rail, plus de mains HTML dans le feutre ; le bras est entier, dans le rig). */
+.cr-svg{ height:100%; width:auto; overflow:visible; display:block; flex:none; filter:drop-shadow(0 5px 5px rgba(0,0,0,.6)) drop-shadow(0 16px 20px rgba(0,0,0,.45)) }
 .cr-svg g, .cr-svg path{ transform-origin:0 0; transform-box:view-box }
 .cr-svg #cr-crSourcilG, .cr-svg #cr-crSourcilD, .cr-svg .cr-joue, .cr-svg #cr-crPaupG, .cr-svg #cr-crPaupD{ transition:transform .16s ease-out, opacity .2s }
 @media (prefers-reduced-motion:reduce){ .cr-svg *{ transition:none!important } }
-/* Les mains SUR le feutre (croupier.js, monterMains) : DANS le feutre, au-dessus de
-   tout ce qui y est posé (le sabot, les cartes en vol), coupées par son bord — la
-   manche sort de sous le rail. Le rig, lui, est COUPÉ au rail : ses avant-bras
-   n'existent plus à l'écran (mesuré le 05/09, ils croisaient les cartes du croupier).
-   Chaque main est un élément tourné depuis son ancre (sous le rail) et long de la
-   distance à sa cible : la manche remplit la longueur, la main vue de dessus est au
-   bout. Tout à l'échelle du croupier (--w-croupier). */
-.feutre>.cr-mains{ position:absolute; inset:0; z-index:9; pointer-events:none; display:none }
-.feutre>.cr-mains[hidden]{ display:none }
-.cr-avant{ position:absolute; left:0; top:0; width:0; height:0; transform-origin:0 0;
-  filter:drop-shadow(0 5px 5px rgba(0,0,0,.5)) }
-.cr-avant .cr-manche{ position:absolute; left:-22px; right:10px; top:calc(var(--w-croupier, 89px) * -.135); height:calc(var(--w-croupier, 89px) * .27); border-radius:999px;
-  background:linear-gradient(180deg, color-mix(in oklab, var(--cr-manche,#1E242A) 72%, #fff) 0%, var(--cr-manche,#1E242A) 42%, color-mix(in oklab, var(--cr-manche,#1E242A) 55%, #000) 100%);
-  box-shadow:inset 0 -3px 6px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12) }
-.cr-avant .cr-hd{ position:absolute; left:calc(100% - var(--w-croupier, 89px) * .25); top:calc(var(--w-croupier, 89px) * -.2);
-  width:calc(var(--w-croupier, 89px) * .62); height:calc(var(--w-croupier, 89px) * .4); transform-origin:8% 50%; overflow:visible; display:block }
-@media (min-width:1000px){
-  .feutre>.cr-mains{ display:block }
-  #croupierScene{ clip-path:inset(-140px -80px 14px -80px) }
-}
 
 /* La bulle : ivoire, Instrument Serif, une pointe vers la tête. Elle vit dans
    .salle (pas dans #croupierScene, qui est aria-hidden) pour que l'aria-live
