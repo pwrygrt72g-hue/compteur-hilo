@@ -61,26 +61,30 @@ const JETONOTHEQUE = `<svg id="jetonotheque" width="0" height="0" aria-hidden="t
 <linearGradient id="jt-relief" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".40"/><stop offset=".40" stop-color="#fff" stop-opacity="0"/><stop offset=".70" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></linearGradient>
 <radialGradient id="jt-inlay" cx=".5" cy=".36" r=".72"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".15"/></radialGradient>
 <radialGradient id="jt-bombe" cx=".5" cy=".5" r=".5"><stop offset=".76" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></radialGradient>
+<radialGradient id="jt-reflet" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset=".55" stop-color="#fff" stop-opacity=".10"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
 </defs></svg>`;
 document.body.insertAdjacentHTML("afterbegin", JETONOTHEQUE);
 
 const jetonDe = v => JETONS.find(x => x.v === v) || JETONS[0];
 function jetonSvg(v) {
   const j = jetonDe(v), txt = v === 2.5 ? "2,50" : String(v);
-  const fs = txt.length >= 4 ? 19 : txt.length === 3 ? 25 : 30;
+  // Le chiffre se lit à 1280 (un jeton posé fait 42 px ; « 1000 » à 19/100 faisait 8 px) : l'inlay
+  // prend 31 de rayon et le chiffre 21 / 27 / 33 selon sa longueur.
+  const fs = txt.length >= 4 ? 21 : txt.length === 3 ? 27 : 33;
   // preserveAspectRatio="none" : dans une pile la face est écrasée en ellipse (plongée) ; ailleurs
   // la boîte est carrée et rien ne change. Le dessin vit dans <g class="jt-face"> : c'est LUI qui
   // tourne en vol (jetons.js, vol), pas la boîte — une ellipse qui tournerait basculerait.
   return `<svg class="jt-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><g class="jt-face">
 <circle cx="50" cy="50" r="49" fill="${j.face}"/>
-<use href="#jt-marques" fill="${j.marque}"/>
+<use href="#jt-marques" fill="${j.marque}" stroke="rgba(0,0,0,.32)" stroke-width=".7"/>
 <circle cx="50" cy="50" r="49" fill="url(#jt-bombe)"/>
-<circle cx="50" cy="50" r="40.5" fill="none" stroke="${j.marque}" stroke-opacity=".5" stroke-width="1.1"/>
-<circle cx="50" cy="50" r="33" fill="none" stroke="${j.marque}" stroke-width="2"/>
-<circle cx="50" cy="50" r="29.5" fill="#F7F2E5"/>
-<circle cx="50" cy="50" r="29.5" fill="url(#jt-inlay)"/>
+<circle cx="50" cy="50" r="41.5" fill="none" stroke="${j.marque}" stroke-opacity=".5" stroke-width="1.1"/>
+<circle cx="50" cy="50" r="34.5" fill="none" stroke="${j.marque}" stroke-width="2"/>
+<circle cx="50" cy="50" r="31" fill="#F7F2E5"/>
+<circle cx="50" cy="50" r="31" fill="url(#jt-inlay)"/>
 <text x="50" y="50.5" text-anchor="middle" dominant-baseline="central" font-size="${fs}" fill="${j.texte}">${txt}</text>
 <circle cx="50" cy="50" r="49" fill="url(#jt-relief)"/>
+<ellipse cx="50" cy="24" rx="27" ry="9" fill="url(#jt-reflet)"/>
 <circle cx="50" cy="50" r="48.6" fill="none" stroke="${j.bord || "#000"}" stroke-opacity="${j.bord ? "1" : ".45"}" stroke-width="1"/>
 </g></svg>`;
 }
@@ -181,6 +185,9 @@ function vol(o) {
     ? [{ transform: "translate(0,0)", opacity: 0 }, { transform: `translate(${dx * .3}px,${dy * .3}px)`, opacity: 1, offset: .3 }, { transform: `translate(${dx}px,${dy}px)`, opacity: 1 }]
     : [{ transform: "translate(0,0)" }, { transform: `translate(${dx}px,${dy}px)` }];
   const a = porte.animate(trajet, { duration: dur, easing: ease, fill: "forwards" });
+  // Le jeton qu'on prend claque en partant (socle.js) ; les jetons d'un voisin, ou un paiement
+  // qui glisse, à mi-voix. L'arrivée tinte dans le rappel `fin` de chaque appelant.
+  if (dur > 1) son("jeton", { gain: o.doux ? .45 : o.glisse ? .7 : 1 });
   // Le jeton part à la taille de là où il était (le rack : 46 px) et prend celle
   // d'arrivée dans le premier tiers du vol — jamais au contact.
   // Mesuré le 05/09 : de 46 à 25 px dans le premier tiers, le jeton « fondait » en partant. Sur 60 %.
@@ -313,6 +320,9 @@ function poserJeton(v) {
   // L'accusé du clic : le jeton du rack se soulève, le clone part de sa place. Sans ça rien
   // ne reliait le clic au jeton qui vole (mesuré le 05/09).
   const bouton = $("rjJetons").querySelector(`[data-v="${v}"]`);
+  // Le jeton CHOISI reste soulevé dans le rack (style.css, .choisi) : on voit lequel on vient de poser.
+  $("rjJetons").querySelectorAll(".choisi").forEach(b => { if (b !== bouton) b.classList.remove("choisi"); });
+  if (bouton) bouton.classList.add("choisi");
   if (bouton && !reduit()) { const a = bouton.animate([{ transform: "translateY(0)" }, { transform: "translateY(-7px)", offset: .4 }, { transform: "none" }], { duration: 200, easing: "ease-out" }); a.finished.then(() => a.cancel(), () => {}); }
   engager(T.toi, v); J.mise = arr(J.mise + v); J.poses.push(v); T.toi.mise = T.mise = J.mise;
   // L'ÉTAT tout de suite (Distribuer s'ouvre au clic, une ligne) ; le DESSIN à l'image suivante.
@@ -407,6 +417,7 @@ function ouvrirMises() {
   // Ce qui traînait encore sur le feutre revient en main (main interrompue, table changée).
   if (DB.engage > 0) { DB.tapis = arr(DB.tapis + DB.engage); DB.engage = 0; garder(); }
   J.phase = "mise"; J.donnee = false; J.mise = 0; J.poses = []; J.attente = 0; J.appele = false; T.mise = 0; T.miseDonne = 0;
+  $("rjJetons").querySelectorAll(".choisi").forEach(b => b.classList.remove("choisi"));
   $("v-table").dataset.phase = "mise";
   T.sieges.forEach(st => { st.mise = 0; st.miseVue = 0; (st.mains || []).forEach(h => { h.jParti = true; }); });
   profilerSieges(); garnirCercles(); rendreRack(); majDonne(); rendreCoach(); appelMise();
@@ -415,7 +426,7 @@ function ouvrirMises() {
     if (st.toi) return;
     const m = miseBot(st); st.mise = m; engager(st, m);
     setTimeout(() => { if (J.phase !== "mise" || T.sieges[si] !== st) return;
-      vol({ montant: m, w: tailleJeton(false), depuis: ancreMaison(si), vers: ancreCercle(si), duree: 380, apparait: true, fin: () => { if (J.phase === "mise" && T.sieges[si] === st) { st.miseVue = m; garnirCercles(); } } });
+      vol({ montant: m, w: tailleJeton(false), depuis: ancreMaison(si), vers: ancreCercle(si), duree: 380, apparait: true, doux: true, fin: () => { if (J.phase === "mise" && T.sieges[si] === st) { st.miseVue = m; garnirCercles(); } } });
     }, 120 + si * 110);
   });
   if (DB.tapis < l.min) setTimeout(() => { if (J.phase === "mise" && DB.tapis < l.min && vue === "table") proposerRachat(); }, 600);
@@ -507,7 +518,7 @@ function detecterSeparations() {
   T.sieges.forEach((st, si) => st.mains.forEach(h => {
     if (h.jEngage || !h.fromSplit) return;
     h.jEngage = true; engager(st, h.bet); rendreRack();
-    vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
+    vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, doux: !st.toi,
       fin: () => { h.jVu = true; garnirCercles(); if (st.toi) son("jetons"); } });
   }));
 }
@@ -516,7 +527,7 @@ document.addEventListener("sabot:carte", e => {
   const { siege: si, main: hi } = e.detail; if (si === "croupier" || J.phase !== "jeu") return;
   const st = T.sieges[si], h = st && st.mains[hi]; if (!h || !h.doubled || h.jDouble || !h.jEngage) return;
   h.jDouble = true; engager(st, h.bet); rendreRack();
-  vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
+  vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, doux: !st.toi,
     fin: () => { h.jDoubleVu = true; garnirCercles(); if (st.toi) son("jetons"); } });
 });
 // L'assurance : payable ou pas, puis posée à côté de la mise.
@@ -525,7 +536,7 @@ document.addEventListener("sabot:assurance", e => {
   const { siege: si, main: hi, prise, montant } = e.detail; const st = T.sieges[si], h = st && st.mains[hi];
   if (!prise || !h || !montant) return;
   engager(st, montant); rendreRack();
-  vol({ montant, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, fin: () => { h.jAssuranceVu = true; garnirCercles(); son("jetons"); } });
+  vol({ montant, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, doux: !st.toi, fin: () => { h.jAssuranceVu = true; garnirCercles(); son("jetons"); } });
 });
 
 /* ── Le règlement : les gains glissent vers toi, les pertes vers le croupier ──
@@ -533,7 +544,7 @@ document.addEventListener("sabot:assurance", e => {
    ESPACE (140 ms) pour que le croupier paie une place après l'autre. Un bust
    arrive à l'instant, seul : il part tout de suite. */
 function enfiler(fn) { const d = reduit() ? 0 : J.attente; J.attente += 140; setTimeout(fn, d); }
-function glisser(montant, depuis, vers, o) { return vol(Object.assign({ montant, w: tailleJeton(o && o.toi), depuis, vers, glisse: true, duree: 520 }, o || {})); }
+function glisser(montant, depuis, vers, o) { return vol(Object.assign({ montant, w: tailleJeton(o && o.toi), depuis, vers, glisse: true, duree: 520, doux: !(o && o.toi) }, o || {})); }
 document.addEventListener("sabot:main-fin", e => {
   const { siege: si, main: hi, toi, issue, montant } = e.detail;
   const st = T.sieges[si], h = st && st.mains[hi]; if (!h || h.jRegle) return; h.jRegle = true;

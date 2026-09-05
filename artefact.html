@@ -520,7 +520,9 @@ div.salle-carte{ cursor:default }
   /* Un flou de profondeur de champ (2,5 px), pas un brouillard (7 px) : mesuré le 05/09,
      derrière le croupier on ne distinguait plus une salle — un halo brun. Les lampes,
      les colonnes et les silhouettes se devinent ; le croupier reste net devant. */
-  filter:blur(2.5px) brightness(.5) saturate(1.12);
+  /* Mesuré le 05/09 (lot Son & matière) : à .5 les lustres et les néons ne se devinaient plus,
+     à .62 le croupier se détachait mal. .56 avec un peu de contraste : la salle vit, la bulle se lit. */
+  filter:blur(2.2px) brightness(.56) contrast(1.08) saturate(1.15);
   /* La photo fait toute la salle : pleine autour du croupier, retenue à 40 % sous le
      rail — un fond de salle, pas un mur noir. Le feutre garde son contraste : il est opaque. */
   mask-image:linear-gradient(#000 40%, rgba(0,0,0,.4) 100%); -webkit-mask-image:linear-gradient(#000 40%, rgba(0,0,0,.4) 100%) }
@@ -528,9 +530,11 @@ div.salle-carte{ cursor:default }
   content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
   background:
     var(--lampes),
-    /* le plafonnier du croupier : un cône de lumière chaude tombe sur lui et sur le rail */
-    radial-gradient(34% 62% at 50% -4%, rgba(255,232,190,.2) 0%, rgba(255,232,190,.06) 45%, transparent 72%),
+    /* LA LAMPE : un cône de lumière chaude tombe du plafond sur le croupier, sur le rail, et
+       éclaire davantage le milieu du feutre (le feutre a son propre halo, .feutre) */
+    radial-gradient(30% 74% at 50% -8%, rgba(255,232,190,.30) 0%, rgba(255,232,190,.10) 42%, transparent 70%),
     radial-gradient(52% 46% at 50% 8%, var(--lueur) 0%, transparent 72%),
+    radial-gradient(70% 50% at 50% 34%, rgba(255,226,170,.09), transparent 70%),
     radial-gradient(120% 60% at 50% 100%, var(--sol-clair) 0%, transparent 60%),
     radial-gradient(ellipse 74% 64% at 50% 35%, transparent 58%, rgba(0,0,0,.7)),
     linear-gradient(180deg, rgba(0,0,0,.1), transparent 40%, rgba(0,0,0,.35));
@@ -594,17 +598,33 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
      du bas sont relus par cartes.js (placerSieges) et table.js (rendreLettrage) :
      les sièges et le lettrage suivent la courbe RÉELLE, jamais une copie. */
   border-radius:26px 26px 46% 46% / 26px 26px 44% 44%;
+  /* Du CUIR : le reflet spéculaire de la lampe en haut au centre (une bande claire qui
+     s'éteint sur les côtés), une arête de lumière, deux trames fines croisées pour le grain
+     (le vrai grain est un calque de bruit, svg.grain-cuir), et les flancs qui s'assombrissent. */
   background:
-    linear-gradient(180deg, rgba(255,255,255,.12), transparent 16%),
+    radial-gradient(64% 36px at 50% 0%, rgba(255,238,205,.40), rgba(255,238,205,.10) 58%, transparent 100%),
+    linear-gradient(180deg, rgba(255,255,255,.14), transparent 16%),
+    repeating-linear-gradient(63deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-58deg, rgba(0,0,0,.10) 0 1px, transparent 1px 4px),
+    linear-gradient(90deg, rgba(0,0,0,.30), transparent 9%, transparent 91%, rgba(0,0,0,.30)),
     linear-gradient(180deg, var(--rail-clair) 0%, var(--rail) 40%, #0C0806 100%);
   box-shadow:
     0 36px 64px -22px rgba(0,0,0,.9), 0 18px 40px -14px #000, 0 0 0 1px rgba(0,0,0,.75),
-    inset 0 2px 0 rgba(255,255,255,.12), inset 0 -4px 8px rgba(0,0,0,.6);
+    inset 0 2px 0 rgba(255,255,255,.14), inset 0 -4px 8px rgba(0,0,0,.6);
 }
+/* Le grain du cuir : la tuile de bruit du feutre (#grainP), en calque fondu sur le rail,
+   SOUS le feutre (rang 2) et sous le liseré. Une fois rendue, jamais un filtre vivant. */
+.tapis>svg.grain-cuir{ position:absolute; inset:0; width:100%; height:100%; border-radius:inherit; pointer-events:none; z-index:1;
+  mix-blend-mode:overlay; opacity:.62 }
+/* Les COUTURES : un pointillé clair à 13 px du bord, entre le filet d'or et le feutre. */
+.tapis::after{ content:""; position:absolute; inset:13px; border-radius:inherit; pointer-events:none; z-index:3;
+  border:1.5px dashed rgba(255,228,184,.28) }
 /* z-index 3 : SOUS le croupier (4) — ses avant-bras passent par-dessus le rail, et un
    filet d'or tracé au travers d'une manche la coupait en deux (mesuré le 05/09). */
 .tapis::before{ content:""; position:absolute; inset:6px; border-radius:inherit; pointer-events:none; z-index:3;
-  border:1.5px solid var(--rail-liseret); opacity:.72; box-shadow:0 0 6px -2px var(--rail-liseret) }
+  border:1.5px solid var(--rail-liseret); opacity:.78; box-shadow:0 0 6px -2px var(--rail-liseret);
+  /* le DOUBLE filet : un second trait, plus fin, 3 px à l'intérieur (l'outline suit l'arrondi) */
+  outline:1px solid color-mix(in oklab, var(--rail-liseret) 62%, transparent); outline-offset:-4.5px }
 /* Trois sièges (le Salon Privé) sur un plateau dessiné pour six : 60 % de feutre vide.
    La table se resserre sur ses joueurs. */
 /* …mais elle suit l'écran (mesuré le 05/09 à 1920 : bridée à 1100 px, la table faisait 57 % de la
@@ -614,10 +634,16 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 .feutre{
   position:relative; height:100%; min-height:0; overflow:hidden; border-radius:inherit; z-index:2;
   background-color:var(--feutre);
+  /* Sous la lampe : le milieu du feutre, devant le croupier, reçoit plus de lumière que les
+     bords ; le poil du feutre est BROSSÉ en diagonale (deux trames à 112°, à peine visibles —
+     c'est le grain SVG qui fait la matière, les trames donnent le sens du brossage). */
   background-image:
+    radial-gradient(58% 64% at 50% 12%, rgba(255,236,196,.19) 0%, rgba(255,236,196,.06) 48%, transparent 76%),
+    repeating-linear-gradient(112deg, rgba(255,255,255,.024) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(112deg, rgba(0,0,0,.03) 0 1px, transparent 1px 11px),
     radial-gradient(110% 80% at 50% 0%, var(--feutre-clair) 0%, transparent 62%),
     radial-gradient(150% 120% at 50% 55%, transparent 42%, var(--feutre-ombre) 100%);
-  box-shadow:inset 0 4px 10px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.4), inset 0 0 70px rgba(0,0,0,.22);
+  box-shadow:inset 0 4px 10px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.4), inset 0 0 70px rgba(0,0,0,.22), inset 0 -34px 60px -44px rgba(0,0,0,.4);
   display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:2px; padding:20px 16px 8px;
 }
 /* Le grain est une TUILE de 180 px rendue une fois par l'SVG en ligne — jamais
@@ -730,12 +756,20 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   position:relative; width:var(--sw); height:var(--sh); flex:none; display:grid; place-items:end center; padding-bottom:3px;
   font-family:"Martian Mono",monospace; font-size:clamp(10px, calc(var(--w-croupier, 89px) * .12), 13px); color:color-mix(in oklab, var(--ivoire) 88%, transparent);
   --bois:linear-gradient(180deg,#221915,#0E0908); --liseret:var(--or-fonce) }
+/* Le CHROME du sabot : un capot poli en haut (trois tons de métal), un cadre clair-sombre-clair
+   autour, et le filet du lieu (--liseret) juste dedans. La cale reste en bois du lieu. */
 .sabot{ border-radius:5px 5px 7px 7px; transform:rotate(-5deg);
-  background:var(--bois); box-shadow:0 0 0 1.5px var(--liseret), 0 10px 18px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.1) }
+  background:
+    linear-gradient(180deg, #E8ECEF 0, #BFC6CC 3.5%, #7A8188 7%, rgba(0,0,0,.4) 7.6%, transparent 8.6%),
+    linear-gradient(90deg, rgba(255,255,255,.10), transparent 28%, transparent 72%, rgba(0,0,0,.28)),
+    var(--bois);
+  box-shadow:0 0 0 1px var(--liseret), 0 0 0 2.5px #C6CCD2, 0 0 0 3.5px #43484E, 0 1px 0 4px rgba(255,255,255,.07),
+    0 12px 20px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.14) }
 .sabot::before{ content:""; position:absolute; left:11%; right:11%; bottom:23%; height:calc(var(--sh) * .05 + var(--reste,1) * var(--sh) * .56); border-radius:2px;
   background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px); transition:height .3s }
-.sabot::after{ content:""; position:absolute; left:9%; right:9%; bottom:calc(25% + var(--coupe,.25) * var(--sh) * .56); height:2px; background:#E8362F;
-  box-shadow:0 0 5px #E8362F; opacity:calc(var(--coupe,.25) * 4) }
+/* La carte de coupe : rouge, plus large que la pile (elle dépasse), un léger halo. */
+.sabot::after{ content:""; position:absolute; left:5%; right:5%; bottom:calc(25% + var(--coupe,.25) * var(--sh) * .56); height:3px; border-radius:1px;
+  background:linear-gradient(90deg,#C8251E,#F5493D 45%,#C8251E); box-shadow:0 0 6px rgba(240,58,46,.85), 0 1px 0 rgba(0,0,0,.55); opacity:calc(var(--coupe,.25) * 4) }
 .defausse{ border-radius:5px; background:var(--bois);
   box-shadow:0 0 0 1.5px var(--liseret), 0 10px 18px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.1), inset 0 0 14px rgba(0,0,0,.4) }
 .defausse::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:3px; background:var(--liseret); opacity:.7; border-radius:0 0 5px 5px }
@@ -787,7 +821,14 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 .siege.actif .cercle{ box-shadow:0 0 0 3px var(--or) inset, 0 0 26px 2px color-mix(in oklab, var(--or) 55%, transparent); opacity:1 }
 .siege .mains::before{ content:""; position:absolute; inset:-14px; border-radius:50%; z-index:-1; opacity:0; transition:opacity .35s ease;
   background:radial-gradient(closest-side, rgba(255,220,120,.17), transparent) }
-.siege.actif .mains::before{ opacity:1 }
+.siege.actif .mains::before{ opacity:1; animation:respire-siege 2s ease-in-out infinite }
+@keyframes respire-siege{ 0%,100%{ opacity:.55; transform:scale(.97) } 50%{ opacity:1; transform:scale(1.04) } }
+.siege.actif .cercle{ animation:respire-cercle 2s ease-in-out infinite }
+@keyframes respire-cercle{
+  0%,100%{ box-shadow:0 0 0 3px var(--or) inset, 0 0 18px 0 color-mix(in oklab, var(--or) 40%, transparent) }
+  50%{ box-shadow:0 0 0 3px var(--or) inset, 0 0 30px 4px color-mix(in oklab, var(--or) 64%, transparent) } }
+/* Le score qui COMPTE (table.js, poserScore) : un tic par point, une lueur le temps du compte. */
+.score.compte, .qui b.compte{ text-shadow:0 0 9px rgba(255,220,120,.7), 0 1px 2px rgba(0,0,0,.5) }
 /* Le siège a SA hauteur avant même la première carte (celle d'une main + son score) :
    un siège qui grandit à la donne remonterait par-dessus le lettrage doré. */
 /* La place des cartes est réservée à leur hauteur EN JEU (carte × 1,4, plus le score et ses
@@ -831,6 +872,24 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 /* « TOI » en or à 11 px faisait 4,25:1 : le nom passe en ivoire, l'or reste sur le cercle. */
 .siege.toi .nom{ color:var(--ivoire); font-weight:700; text-shadow:0 0 8px var(--or), 0 1px 2px rgba(0,0,0,.6) }
 .conseil{ text-align:center; font-size:var(--t-petit); min-height:20px; margin:2px 0 0; color:color-mix(in oklab, var(--ivoire) 88%, transparent) }
+/* LE VERDICT (table.js, inscrireVerdict) : « Gagné », « Sauté », « Blackjack »… en Instrument
+   Serif italique, posé au-dessus de tes cartes (left/top en ligne). Il s'INSCRIT de gauche à
+   droite (un clip qui s'ouvre, comme une plume qui écrit), tient, puis s'efface en montant. */
+.feutre>.verdict{ position:absolute; z-index:6; left:50%; top:45%; transform:translate(-50%,-100%); margin:0; pointer-events:none;
+  font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:clamp(30px, 3.1vw, 58px); line-height:1.05; letter-spacing:.01em; white-space:nowrap;
+  color:var(--ivoire); opacity:0; padding:0 .12em;
+  text-shadow:0 2px 0 rgba(0,0,0,.35), 0 6px 22px rgba(0,0,0,.65), 0 0 34px color-mix(in oklab, var(--or) 50%, transparent) }
+.feutre>.verdict.g, .feutre>.verdict.bj{ color:var(--or) }
+.feutre>.verdict.bj{ font-size:clamp(34px, 3.6vw, 66px) }
+.feutre>.verdict.p{ color:#FF9B7A }
+.feutre>.verdict.on{ animation:verdict-inscrit 2.3s cubic-bezier(.3,0,.2,1) both }
+@keyframes verdict-inscrit{
+  0%{ opacity:1; clip-path:inset(-30% 100% -30% -4%); translate:0 6px; filter:blur(0) }
+  30%{ opacity:1; clip-path:inset(-30% -8% -30% -4%); translate:0 0 }
+  74%{ opacity:1; clip-path:inset(-30% -8% -30% -4%); translate:0 0; filter:blur(0) }
+  100%{ opacity:0; clip-path:inset(-30% -8% -30% -4%); translate:0 -16px; filter:blur(4px) } }
+@media (prefers-reduced-motion:reduce){ .feutre>.verdict.on{ animation:none; opacity:1 } }
+@media (max-width:999.98px){ .feutre>.verdict{ font-size:24px } .feutre>.verdict.bj{ font-size:28px } }
 #v-table.turbo .feutre{ cursor:default }
 #v-table[data-phase="jeu"]:not(.turbo) .feutre{ cursor:pointer }
 .conseil b{ color:var(--or) }
@@ -886,6 +945,11 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 #coups .btn.verre:not([disabled]){ background:linear-gradient(180deg,#FBF7EC,#EDE4CC); color:#1A1409; border-color:rgba(0,0,0,.4); font-weight:600;
   box-shadow:inset 0 1px 0 #fff, 0 8px 16px -8px rgba(0,0,0,.9); backdrop-filter:none; -webkit-backdrop-filter:none }
 #coups .btn.verre:not([disabled]):hover{ background:#fff; border-color:rgba(0,0,0,.5) }
+/* Pressé, un bouton de coup s'ENFONCE d'un pixel et perd son relief le temps du clic. */
+.zone-actions .btn{ transition:filter .15s, transform .08s, box-shadow .08s, background .12s }
+.zone-actions .btn:not([disabled]):active{ transform:translateY(1px) scale(.985); filter:brightness(.94) }
+#coups .btn.verre:not([disabled]):active{ background:linear-gradient(180deg,#EDE4CC,#E3D8BC); box-shadow:inset 0 2px 5px rgba(0,0,0,.28), 0 2px 5px -4px rgba(0,0,0,.9) }
+#bDonne:not([disabled]):active{ box-shadow:inset 0 2px 6px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.4) }
 #coups .btn.verre:not([disabled]) kbd{ opacity:.6 }
 /* « Abandon » se joue une fois sur cinquante : plus petit, en retrait, à droite du groupe. */
 #coups #bAbandon{ margin-left:6px; min-height:44px; padding:6px 12px; font-size:13px; align-self:center }
@@ -1468,10 +1532,12 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .jt-pile .jt::before{ content:""; position:absolute; left:1.5%; right:1.5%; top:calc(var(--w) * var(--plongee) * .5); bottom:0;
   border-radius:0 0 50% 50% / 0 0 100% 100%;
   background:
-    linear-gradient(90deg, rgba(0,0,0,.28), transparent 22%, transparent 78%, rgba(0,0,0,.4)),
-    linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.26) 62%, rgba(0,0,0,.5)),
-    repeating-linear-gradient(90deg, var(--face,#888) 0 calc(var(--w) * .155), var(--marque,#eee) calc(var(--w) * .155) calc(var(--w) * .235));
-  box-shadow:inset 0 -1px 0 rgba(0,0,0,.6), inset 0 0 0 .5px rgba(0,0,0,.35) }
+    linear-gradient(90deg, rgba(0,0,0,.30), transparent 20%, transparent 80%, rgba(0,0,0,.42)),
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.02) 22%, rgba(0,0,0,.28) 64%, rgba(0,0,0,.52)),
+    repeating-linear-gradient(90deg,
+      var(--face,#888) 0 calc(var(--w) * .146), rgba(0,0,0,.42) calc(var(--w) * .146) calc(var(--w) * .154),
+      var(--marque,#eee) calc(var(--w) * .154) calc(var(--w) * .227), rgba(0,0,0,.42) calc(var(--w) * .227) calc(var(--w) * .235));
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 0 .5px rgba(0,0,0,.35) }
 
 /* Dans le cercle de mise : la pile est posée au centre, elle dépasse vers le haut. */
 .cercle .jt-mises{ position:absolute; left:50%; bottom:5px; transform:translateX(-50%); display:flex; align-items:flex-end; gap:3px; z-index:3;
@@ -1500,6 +1566,9 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .rj-jetons{ display:flex; gap:6px; align-items:center; padding:0 4px }
 .rj-jetons .jt{ --w:44px; cursor:pointer; transition:transform .14s var(--ressort), opacity .2s, filter .2s }
 .rj-jetons .jt:hover:not([disabled]), .rj-jetons .jt:focus-visible{ transform:translateY(-5px) }
+/* Le jeton qu'on vient de poser reste SOULEVÉ dans le rack, son ombre dessous : on voit lequel on joue. */
+.rj-jetons .jt.choisi{ transform:translateY(-6px); filter:drop-shadow(0 7px 5px rgba(0,0,0,.55)) }
+.rj-jetons .jt.choisi:hover:not([disabled]){ transform:translateY(-8px) }
 .rj-jetons .jt:active:not([disabled]){ transform:translateY(-1px) scale(.96) }
 .rj-jetons .jt[disabled]{ opacity:.32; cursor:not-allowed; filter:saturate(.35) }
 .rj-retirer{ min-width:44px; min-height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.14); color:var(--ivoire);
@@ -1714,6 +1783,9 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
       <button class="btn creux" id="theme" title="Th&#232;me clair ou sombre" aria-label="Changer de th&#232;me">&#9689; Th&#232;me</button>
       <button class="btn creux" id="son" title="Sons" aria-label="Activer ou couper les sons">&#9834; Sons</button>
     </div>
+    <!-- Le volume g&#233;n&#233;ral des sons (socle.js, DB.volume) : un seul curseur, en plus de la coupure. -->
+    <label class="ch" id="volumeBloc"><span class="grave">Volume des sons <em id="volumeL" class="cadran" style="font-style:normal;font-size:var(--t-petit);color:var(--os)">60 %</em></span>
+      <input type="range" id="volume" min="0" max="100" step="5" value="60" title="Volume des sons" aria-label="Volume des sons"></label>
     <!-- Le relais vidéo (visio.js) : sans lui, la visio de la table passe en direct (STUN
          seul) et ne traverse ni la 4G ni un réseau strict. Les identifiants viennent d'un
          service que l'utilisateur choisit ; ils vivent dans DB.turn, jamais dans le code. -->
@@ -1864,6 +1936,8 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
     <div class="decor" aria-hidden="true"></div>
     <div id="croupierScene" aria-hidden="true"></div>
     <div class="tapis plateau" id="plateau">
+      <!-- Le grain du cuir du rail : la même tuile de bruit que le feutre (#grainP), en calque. -->
+      <svg class="grain-cuir" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#grainP)"/></svg>
       <div class="rack" id="rack" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <div class="feutre" id="feutre">
         <svg class="grain" aria-hidden="true" focusable="false"><defs>
@@ -1886,6 +1960,8 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
         <p class="annonce" id="annonce"></p>
         <div class="sieges" id="sieges"></div>
         <p class="conseil" id="conseil"></p>
+        <!-- Le verdict de TA main (table.js) : un mot en serif qui s'inscrit au-dessus de tes cartes, puis s'efface. -->
+        <div class="verdict" id="verdict" aria-hidden="true"></div>
       </div>
     </div>
     <p class="coach-mise" id="coachMise" aria-live="polite"></p>
@@ -3931,40 +4007,161 @@ const tableCourante = () => DONNEES.catalogue.find(t => t.id === DB.table) || DO
 const donneesTable = () => DONNEES.tables[tableCourante().id];
 const prenom = () => DB.prenom.trim();
 
-/* ── Sons : discrets, synthétisés, jamais un fichier ─────────────────── */
-let AC = null;
-function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
-  if (AC && AC.state === "suspended") AC.resume(); return AC; }
-function son(genre) {
-  if (!DB.son) return; const a = ac(); if (!a) return; const t = a.currentTime;
-  if (genre === "carte") {
-    const n = a.createBuffer(1, a.sampleRate * .06, a.sampleRate), d = n.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.6);
-    const s = a.createBufferSource(); s.buffer = n;
-    const f = a.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 2500; f.Q.value = .8;
-    const g = a.createGain(); g.gain.value = .3; s.connect(f).connect(g).connect(a.destination); s.start(t); return;
-  }
-  if (genre === "jetons" || genre === "raclement") {
-    // Jetons : deux claquements d'argile très brefs. Raclement : le souffle grave des
-    // cartes qu'on rassemble au remélange. Du bruit filtré, jamais un fichier.
-    const j = genre === "jetons", dur = j ? .05 : .32;
-    for (const dt of (j ? [0, .055] : [0])) {
-      const n = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate), d = n.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, j ? 3.2 : 1.6);
-      const s = a.createBufferSource(); s.buffer = n;
-      const f = a.createBiquadFilter(); f.type = j ? "bandpass" : "lowpass"; f.frequency.value = j ? 3800 : 900; f.Q.value = j ? 1.4 : .5;
-      const g = a.createGain(); g.gain.value = j ? .22 : .16;
-      s.connect(f).connect(g).connect(a.destination); s.start(t + dt);
-    }
-    return;
-  }
-  const o = a.createOscillator(), g = a.createGain(); o.type = "sine";
-  o.frequency.setValueAtTime(genre === "ok" ? 880 : genre === "ko" ? 220 : genre === "alerte" ? 440 : 560, t);
-  g.gain.setValueAtTime(.0001, t);
-  g.gain.exponentialRampToValueAtTime(genre === "ko" ? .16 : .11, t + .01);
-  g.gain.exponentialRampToValueAtTime(.0001, t + (genre === "ko" ? .24 : .12));
-  o.connect(g).connect(a.destination); o.start(t); o.stop(t + .3);
+/* ── Sons : synthétisés, jamais un fichier ───────────────────────────────
+   Tout est fabriqué au vol par WebAudio : du bruit filtré pour ce qui frotte
+   (une carte qui sort du sabot, le raclement du mélange), des impulsions courtes
+   pour ce qui claque (une carte qui se pose, des jetons qui tintent), des
+   oscillateurs pour ce qui sonne (le blackjack, le gain, le bust).
+   · Rien ne part avant un geste : le contexte n'est CRÉÉ qu'au premier pointeur
+     ou à la première touche (règle d'autoplay des navigateurs). Hors geste, un
+     son demandé est noté au journal et se tait.
+   · Jamais deux fois le même son à l'identique : chaque genre tire une hauteur
+     à ±8 %, différente de la précédente (variation).
+   · Un seul volume général (DB.volume, 0-100, défaut 60), réglé dans ⚙, en plus
+     de la coupure DB.son. La courbe est en puissance 1,6 : 60 sonne « moyen ».
+   · Chaque son a UN nom, et le bus les déclenche : sabot:carte (la pose, calée
+     sur l'arrivée de la carte), sabot:main-fin (gain, bust, blackjack), les
+     jetons qui volent (jetons.js, vol). synthese() est pure — un contexte, une
+     sortie, un instant — ce qui la rend mesurable hors ligne (outils/ecouter.mjs). */
+if (typeof DB.volume !== "number" || isNaN(DB.volume)) DB.volume = 60;
+let AC = null, MG = null;
+const SON_JOURNAL = [], SON_TRACE = []; window.__sonJournal = SON_JOURNAL; window.__sonTrace = SON_TRACE;   // les genres joués (et horodatés), pour la sonde
+const volumeGain = () => Math.pow(Math.max(0, Math.min(100, DB.volume)) / 100, 1.6);
+function ac() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); MG = AC.createGain(); MG.gain.value = volumeGain(); MG.connect(AC.destination); } catch (e) { AC = null; } }
+  if (AC && AC.state === "suspended") AC.resume().catch(() => {});
+  return AC;
 }
+// Le premier geste réveille le contexte (créé DANS le geste : c'est ce que la règle exige).
+["pointerdown", "keydown"].forEach(ev => document.addEventListener(ev, () => { ac(); }, { capture: true, passive: true }));
+const DERNIERE_HAUTEUR = {}, DERNIER_INSTANT = {};
+function variation(genre) {
+  let k, g = 0; do { k = .92 + Math.random() * .16; } while (Math.abs(k - (DERNIERE_HAUTEUR[genre] || 0)) < .015 && g++ < 12);
+  DERNIERE_HAUTEUR[genre] = k; return k;
+}
+// Une seconde de bruit blanc, fabriquée une fois par contexte : chaque son en lit une tranche au hasard.
+const BRUITS = new WeakMap();
+function bruitBuffer(a) {
+  let b = BRUITS.get(a); if (b) return b;
+  b = a.createBuffer(1, a.sampleRate, a.sampleRate); const d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  BRUITS.set(a, b); return b;
+}
+// Une enveloppe : attaque linéaire, puis décroissance exponentielle (constante de temps `dec`).
+function enveloppe(a, t, g, att, dec) {
+  const n = a.createGain(); n.gain.setValueAtTime(0.0001, t);
+  n.gain.linearRampToValueAtTime(g, t + att); n.gain.setTargetAtTime(0.0001, t + att, dec); return n;
+}
+// Du bruit filtré. o : { f, q, type, g, att, dec, dur, k }
+function bruit(a, sortie, t, o) {
+  const s = a.createBufferSource(); s.buffer = bruitBuffer(a);
+  const f = a.createBiquadFilter(); f.type = o.type || "bandpass"; f.frequency.value = (o.f || 2500) * (o.k || 1); f.Q.value = o.q || 1;
+  const g = enveloppe(a, t, o.g || .2, o.att || .003, o.dec || .02);
+  s.connect(f).connect(g).connect(sortie); s.start(t, Math.random() * .4); s.stop(t + (o.dur || .12) + .05);
+}
+// Une note. o : { f, type, g, att, dec, dur, k, vers (glissando exponentiel vers cette fréquence) }
+function ton(a, sortie, t, o) {
+  const os = a.createOscillator(); os.type = o.type || "sine";
+  const f0 = (o.f || 440) * (o.k || 1); os.frequency.setValueAtTime(f0, t);
+  if (o.vers) os.frequency.exponentialRampToValueAtTime(o.vers * (o.k || 1), t + (o.dur || .2));
+  const g = enveloppe(a, t, o.g || .1, o.att || .005, o.dec || .08);
+  os.connect(g).connect(sortie); os.start(t); os.stop(t + (o.dur || .2) + (o.dec || .08) * 6);
+}
+/* La partition. `a` est un contexte (réel ou hors ligne), `sortie` un nœud, `t` l'instant.
+   Rend la durée approximative du son, en secondes (pour la mesure). */
+function synthese(a, sortie, genre, t, k) {
+  k = k || 1;
+  switch (genre) {
+    case "carte":      // une carte qui SORT du sabot : un chuintement passe-bande de 60 ms
+      bruit(a, sortie, t, { f: 2600, q: .7, g: .21, att: .006, dec: .016, dur: .07, k });
+      bruit(a, sortie, t + .01, { f: 6500, q: .5, type: "highpass", g: .05, att: .004, dec: .012, dur: .05, k });
+      return .08;
+    case "pose":       // la carte qui se POSE : un clic feutré, presque rien
+      bruit(a, sortie, t, { f: 820, q: .9, type: "lowpass", g: .34, att: .002, dec: .009, dur: .04, k });
+      bruit(a, sortie, t, { f: 2100, q: 1.6, g: .10, att: .001, dec: .004, dur: .02, k });
+      return .05;
+    case "jeton":      // UN jeton qu'on prend ou qu'on lâche : un claquement d'argile, sec
+      bruit(a, sortie, t, { f: 3900, q: 2.2, g: .17, att: .001, dec: .011, dur: .05, k });
+      ton(a, sortie, t, { f: 2950, type: "sine", g: .055, att: .001, dec: .026, dur: .04, k });
+      return .07;
+    case "jetons": {   // des jetons qui tintent : deux ou trois impulsions amorties, chacune à sa hauteur
+      const n = 2 + (Math.random() < .5 ? 1 : 0); let dt = 0, fin = 0;
+      for (let i = 0; i < n; i++) {
+        const kk = k * (.96 + Math.random() * .08), ti = t + dt;
+        bruit(a, sortie, ti, { f: 4300, q: 3, g: .15, att: .001, dec: .010, dur: .05, k: kk });
+        ton(a, sortie, ti, { f: 2500 + Math.random() * 900, type: "triangle", g: .06, att: .001, dec: .042, dur: .06, k: kk });
+        ton(a, sortie, ti, { f: 5300, type: "sine", g: .028, att: .001, dec: .03, dur: .05, k: kk });
+        fin = dt + .12; dt += .04 + Math.random() * .025;
+      }
+      return fin;
+    }
+    case "raclement": { // le mélange : un riffle qui accélère, puis les cartes qu'on égalise en deux tapes
+      bruit(a, sortie, t, { f: 700, q: .5, type: "lowpass", g: .09, att: .04, dec: .16, dur: .55, k });
+      let dt = 0, pas = .026;
+      for (let i = 0; i < 26 && dt < .48; i++) { bruit(a, sortie, t + dt, { f: 1500 + i * 25, q: 1.2, g: .18, att: .0015, dec: .0055, dur: .03, k }); dt += pas; pas = Math.max(.010, pas * .95); }
+      bruit(a, sortie, t + .60, { f: 520, q: .8, type: "lowpass", g: .24, att: .002, dec: .02, dur: .06, k });
+      bruit(a, sortie, t + .71, { f: 520, q: .8, type: "lowpass", g: .20, att: .002, dec: .018, dur: .06, k });
+      return .85;
+    }
+    case "blackjack":  // une note douce : trois partiels, attaque lente, longue traîne
+      ton(a, sortie, t, { f: 880, g: .15, att: .025, dec: .32, dur: .9, k });
+      ton(a, sortie, t + .02, { f: 1320, g: .07, att: .03, dec: .22, dur: .7, k });
+      ton(a, sortie, t + .04, { f: 1760, g: .035, att: .03, dec: .16, dur: .5, k });
+      ton(a, sortie, t + .18, { f: 1174.7, g: .06, att: .03, dec: .28, dur: .7, k });
+      return 1.6;
+    case "bust":       // un boum sourd : un glissando grave, un souffle, et c'est tout
+      ton(a, sortie, t, { f: 150, vers: 42, g: .62, att: .004, dec: .16, dur: .26, k });
+      bruit(a, sortie, t, { f: 380, q: .6, type: "lowpass", g: .22, att: .002, dec: .05, dur: .16, k });
+      return .9;
+    case "gain": {     // un accord bref, majeur, égrené : do, mi, sol — et l'octave qui s'éteint
+      [[523.25, 0], [659.25, .035], [783.99, .07]].forEach(([f, dt]) => {
+        ton(a, sortie, t + dt, { f, type: "triangle", g: .10, att: .006, dec: .17, dur: .3, k });
+        ton(a, sortie, t + dt, { f: f * 2, type: "sine", g: .03, att: .006, dec: .22, dur: .3, k });
+      });
+      return .9;
+    }
+    case "ok": ton(a, sortie, t, { f: 880, g: .11, att: .01, dec: .045, dur: .12, k }); return .3;
+    case "ko": ton(a, sortie, t, { f: 220, g: .16, att: .01, dec: .09, dur: .24, k }); return .5;
+    case "alerte": ton(a, sortie, t, { f: 440, g: .11, att: .01, dec: .05, dur: .12, k }); return .3;
+    default: ton(a, sortie, t, { f: 560, g: .11, att: .01, dec: .05, dur: .12, k }); return .3;
+  }
+}
+// son(genre, { apres: secondes, gain: 0-1 }) — `apres` cale le son sur une arrivée (la pose d'une carte).
+function son(genre, o) {
+  if (!DB.son) return; o = o || {};
+  // Les verdicts (deux mains séparées gagnent d'un coup) ne sonnent qu'une fois par instant.
+  const now = performance.now();
+  if ((genre === "gain" || genre === "bust" || genre === "blackjack") && now - (DERNIER_INSTANT[genre] || -1e9) < 150) return;
+  DERNIER_INSTANT[genre] = now;
+  SON_JOURNAL.push(genre); if (SON_JOURNAL.length > 400) SON_JOURNAL.shift();
+  SON_TRACE.push(genre + (o.apres ? "+" + Math.round(o.apres * 1000) : "") + "@" + Math.round(now)); if (SON_TRACE.length > 400) SON_TRACE.shift();
+  if (!AC || AC.state !== "running" || !MG) return;   // pas de geste encore, ou onglet endormi : on se tait
+  const sortie = o.gain !== undefined && o.gain !== 1 ? (() => { const g = AC.createGain(); g.gain.value = o.gain; g.connect(MG); return g; })() : MG;
+  try { synthese(AC, sortie, genre, AC.currentTime + (o.apres || 0), variation(genre)); } catch (e) { log("son", e); }
+}
+function log(quoi, e) { try { console.debug(quoi, e); } catch (x) {} }
+function appliquerVolume() { if (MG && AC) MG.gain.setTargetAtTime(volumeGain(), AC.currentTime, .02); }
+// Mesure hors ligne (outils/ecouter.mjs) : rend le son dans un OfflineAudioContext et en donne le relief.
+window.__rendreSon = async genre => {
+  const dur = 2, sr = 44100, oc = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, sr * dur, sr);
+  const annonce = synthese(oc, oc.destination, genre, .05, 1);
+  const b = await oc.startRendering(), d = b.getChannelData(0);
+  let crete = 0, dernier = 0, somme = 0;
+  for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > crete) crete = v; if (v > .004) dernier = i; somme += v * v; }
+  return { genre, crete: +crete.toFixed(3), rms: +Math.sqrt(somme / d.length).toFixed(4), duree: +((dernier / sr) - .05).toFixed(3), annonce };
+};
+/* Le bus : la pose d'une carte est calée sur son ARRIVÉE (retard + durée du vol, posés par
+   table.js sur le detail) ; tes verdicts sonnent quand le croupier PAIE (au tempo de jetons.js :
+   J.attente est le retard de ce siège — lu ici AVANT que jetons.js ne l'incrémente, puisque
+   ce fichier est concaténé avant lui). */
+document.addEventListener("sabot:carte", e => { const d = e.detail || {}; son("pose", { apres: ((d.delai || 0) + (d.duree || 0)) / 1000 }); });
+document.addEventListener("sabot:main-fin", e => {
+  const d = e.detail || {}; if (!d.toi) return;
+  const attente = (typeof J === "object" && J && typeof J.attente === "number") ? J.attente / 1000 : 0;
+  if (d.issue === "bust") son("bust");
+  else if (d.issue === "blackjack") son("blackjack", { apres: attente + .12 });
+  else if (d.issue === "gagne") son("gain", { apres: attente + .1 });
+});
 function bandeau(msg, ms) {
   const d = document.createElement("div"); d.className = "bandeau-bas"; d.textContent = msg;
   document.body.appendChild(d); setTimeout(() => d.remove(), ms || 2600);
@@ -4060,8 +4257,16 @@ function appliquerTheme() {
 }
 $("theme").onclick = () => { DB.theme = DB.theme === "" ? "sombre" : DB.theme === "sombre" ? "clair" : ""; garder(); appliquerTheme(); };
 function rendreSon() { $("son").textContent = DB.son ? "♪ Sons activés" : "✕ Sons coupés";
-  $("son").classList.toggle("eteint", !DB.son); }
-$("son").onclick = () => { DB.son = !DB.son; garder(); rendreSon(); if (DB.son) son("ok"); };
+  $("son").classList.toggle("eteint", !DB.son);
+  const v = $("volume"); if (v) { v.value = DB.volume; v.disabled = !DB.son; if ($("volumeL")) $("volumeL").textContent = DB.volume + " %"; } }
+$("son").onclick = () => { DB.son = !DB.son; garder(); rendreSon(); if (DB.son) son("jetons"); };
+// Le volume général (0-100, défaut 60) : le curseur vit dans ⚙ avec le bouton Sons. Il
+// s'entend pendant qu'on le règle — un tintement de jetons, pas plus d'un tous les 160 ms.
+let VOLUME_T = 0;
+if ($("volume")) $("volume").oninput = () => {
+  DB.volume = +$("volume").value; garder(); rendreSon(); appliquerVolume();
+  const now = performance.now(); if (now - VOLUME_T > 160) { VOLUME_T = now; son("jetons"); }
+};
 $("prenom").value = DB.prenom;
 $("prenom").oninput = () => { DB.prenom = $("prenom").value; garder(); rendreSalut(); };
 // Le hall salue par le prénom : « Bonsoir, Léo. » avant l'heure de fermeture, jamais un « Bonjour » à minuit.
@@ -4725,9 +4930,9 @@ const ISSUE_BUS = { "gagné": "gagne", "perdu": "perd", "sauté": "bust", "black
 // suite, pas au règlement. `emis` évite de les annoncer deux fois.
 function sauter(si, hi) {
   const h = T.sieges[si].mains[hi]; h.result = "sauté"; h.emis = true; rendreSieges();
-  // Ton propre bust s'ENTEND : mesuré le 05/09, seul le croupier réagissait (la bulle),
-  // et elle disparaissait pendant qu'on regardait ses cartes partir à la défausse.
-  if (T.sieges[si].toi) son("ko");
+  // Ton propre bust s'ENTEND (un boum sourd) et se LIT (le verdict sur tes cartes) : les deux
+  // sont branchés sur le bus « sabot:main-fin » (socle.js, et inscrireVerdict plus bas), pour
+  // que la table à plusieurs (reseau.js) les ait aussi sans une ligne de plus.
   emettre("main-fin", { siege: si, main: hi, toi: T.sieges[si].toi, issue: "bust", montant: -(h.bet || 1) * (h.doubled ? 2 : 1) });
   // Le croupier ramasse la main sautée tout de suite (cartes ET mise), pas au règlement :
   // on laisse 500 ms pour LIRE le bust, puis les cartes glissent à la défausse et le
@@ -5221,10 +5426,25 @@ async function tirer(main, hote, cachee, qui) {
   if (!cachee) { T.rc += valeurCompte(c); T.vues++; }
   rafraichirBarre(); await pause(rythme()); return c;
 }
-// Un score qui change ne surgit pas : il bascule, comme une pastille d'issue.
+// Un score qui change ne surgit pas : il COMPTE — un tic par point, 250 ms en tout, du total
+// d'avant (ou de zéro, pour une première carte) jusqu'au nouveau. En mouvement réduit, ou quand
+// la valeur n'est pas un nombre, il s'écrit d'un coup. Les tics sont des minuteurs, pas des rAF :
+// sous temps virtuel (la sonde) seule la première image est livrée, et un score resterait à
+// mi-chemin ; le dernier minuteur écrit toujours la valeur exacte.
+const SCORE_TICS = new WeakMap();
 function poserScore(el, v) {
-  if (!el) return; v = String(v); if (el.textContent === v) return;
-  el.textContent = v; el.classList.remove("bascule"); void el.offsetWidth; el.classList.add("bascule");
+  if (!el) return; v = String(v); if (el.textContent === v && !SCORE_TICS.has(el)) return;
+  clearInterval(SCORE_TICS.get(el)); SCORE_TICS.delete(el);
+  const m = /^(\d+)(.*)$/.exec(v), av = /^(\d+)/.exec(el.textContent || "");
+  const reduit = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const fin = () => { el.textContent = v; el.classList.remove("bascule"); void el.offsetWidth; el.classList.add("bascule"); };
+  if (!m || reduit) return fin();
+  const cible = +m[1], suffixe = m[2] || "", depart = av ? +av[1] : 0, n = Math.abs(cible - depart);
+  if (!n) return fin();
+  const sens = Math.sign(cible - depart), pas = Math.max(12, Math.round(250 / n)); let k = 0;
+  el.textContent = depart + suffixe; el.classList.add("compte");
+  const tic = setInterval(() => { k++; if (k >= n) { clearInterval(tic); SCORE_TICS.delete(el); el.classList.remove("compte"); fin(); return; } el.textContent = (depart + sens * k) + suffixe; }, pas);
+  SCORE_TICS.set(el, tic);
 }
 async function tirerSiege(si, hi) {
   const st = T.sieges[si], h = st && st.mains[hi], hote = $(`m_${si}_${hi}`);
@@ -5497,6 +5717,34 @@ async function regler() {
   boutons({ donne: true });
 }
 $("bDonne").onclick = distribuer;
+/* ── Le verdict de TA main : un mot en serif, au-dessus de tes cartes, qui s'INSCRIT (un balayage
+   de gauche à droite, comme une plume) puis s'efface. Branché sur le bus « sabot:main-fin », donc
+   valable pour la table à plusieurs aussi. Calé sur le paiement de ce siège (J.attente, lu avant que
+   jetons.js ne l'incrémente : table.js est concaténé avant lui), pour que le mot, les jetons et la
+   note tombent ensemble ; un bust et un abandon, eux, s'inscrivent à l'instant. */
+const VERDICT_MOT = { bust: "Sauté", perd: "Perdu", gagne: "Gagné", blackjack: "Blackjack", egalite: "Égalité", abandon: "Abandon" };
+const VERDICT_TON = { bust: "p", perd: "p", gagne: "g", blackjack: "bj", egalite: "n", abandon: "n" };
+let VERDICT_T = null, VERDICT_D = null;
+function inscrireVerdict(issue, retard) {
+  const v = $("verdict"), f = $("feutre"); if (!v || !f || !VERDICT_MOT[issue]) return;
+  clearTimeout(VERDICT_D);
+  VERDICT_D = setTimeout(() => {
+    if ($("v-table").hidden) return;
+    const F = f.getBoundingClientRect(), toi = document.querySelector("#sieges .siege.toi .mains");
+    const r = toi && toi.getBoundingClientRect();
+    if (r && r.width) { v.style.left = Math.round(r.left + r.width / 2 - F.left) + "px"; v.style.top = Math.round(r.top - F.top - 4) + "px"; }
+    else { v.style.left = "50%"; v.style.top = "45%"; }
+    clearTimeout(VERDICT_T);
+    v.className = "verdict " + VERDICT_TON[issue]; v.textContent = VERDICT_MOT[issue];
+    void v.offsetWidth; v.classList.add("on");   // relance l'animation même si le mot est le même
+    VERDICT_T = setTimeout(() => { v.classList.remove("on"); }, 2300);
+  }, retard || 0);
+}
+document.addEventListener("sabot:main-fin", e => {
+  const d = e.detail || {}; if (!d.toi) return;
+  const attente = (d.issue === "bust" || d.issue === "abandon") ? 0 : ((typeof J === "object" && J && typeof J.attente === "number") ? J.attente : 0) + 60;
+  inscrireVerdict(d.issue, attente);
+});
 $("feutre").addEventListener("click", e => {
   if (e.target.closest("button, .bulle, input, select")) return;
   if (T.enJeu && T.occupe && !$("v-table").dataset.reseau) turbo(true);
@@ -5714,26 +5962,30 @@ const JETONOTHEQUE = `<svg id="jetonotheque" width="0" height="0" aria-hidden="t
 <linearGradient id="jt-relief" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".40"/><stop offset=".40" stop-color="#fff" stop-opacity="0"/><stop offset=".70" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></linearGradient>
 <radialGradient id="jt-inlay" cx=".5" cy=".36" r=".72"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".15"/></radialGradient>
 <radialGradient id="jt-bombe" cx=".5" cy=".5" r=".5"><stop offset=".76" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></radialGradient>
+<radialGradient id="jt-reflet" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset=".55" stop-color="#fff" stop-opacity=".10"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
 </defs></svg>`;
 document.body.insertAdjacentHTML("afterbegin", JETONOTHEQUE);
 
 const jetonDe = v => JETONS.find(x => x.v === v) || JETONS[0];
 function jetonSvg(v) {
   const j = jetonDe(v), txt = v === 2.5 ? "2,50" : String(v);
-  const fs = txt.length >= 4 ? 19 : txt.length === 3 ? 25 : 30;
+  // Le chiffre se lit à 1280 (un jeton posé fait 42 px ; « 1000 » à 19/100 faisait 8 px) : l'inlay
+  // prend 31 de rayon et le chiffre 21 / 27 / 33 selon sa longueur.
+  const fs = txt.length >= 4 ? 21 : txt.length === 3 ? 27 : 33;
   // preserveAspectRatio="none" : dans une pile la face est écrasée en ellipse (plongée) ; ailleurs
   // la boîte est carrée et rien ne change. Le dessin vit dans <g class="jt-face"> : c'est LUI qui
   // tourne en vol (jetons.js, vol), pas la boîte — une ellipse qui tournerait basculerait.
   return `<svg class="jt-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><g class="jt-face">
 <circle cx="50" cy="50" r="49" fill="${j.face}"/>
-<use href="#jt-marques" fill="${j.marque}"/>
+<use href="#jt-marques" fill="${j.marque}" stroke="rgba(0,0,0,.32)" stroke-width=".7"/>
 <circle cx="50" cy="50" r="49" fill="url(#jt-bombe)"/>
-<circle cx="50" cy="50" r="40.5" fill="none" stroke="${j.marque}" stroke-opacity=".5" stroke-width="1.1"/>
-<circle cx="50" cy="50" r="33" fill="none" stroke="${j.marque}" stroke-width="2"/>
-<circle cx="50" cy="50" r="29.5" fill="#F7F2E5"/>
-<circle cx="50" cy="50" r="29.5" fill="url(#jt-inlay)"/>
+<circle cx="50" cy="50" r="41.5" fill="none" stroke="${j.marque}" stroke-opacity=".5" stroke-width="1.1"/>
+<circle cx="50" cy="50" r="34.5" fill="none" stroke="${j.marque}" stroke-width="2"/>
+<circle cx="50" cy="50" r="31" fill="#F7F2E5"/>
+<circle cx="50" cy="50" r="31" fill="url(#jt-inlay)"/>
 <text x="50" y="50.5" text-anchor="middle" dominant-baseline="central" font-size="${fs}" fill="${j.texte}">${txt}</text>
 <circle cx="50" cy="50" r="49" fill="url(#jt-relief)"/>
+<ellipse cx="50" cy="24" rx="27" ry="9" fill="url(#jt-reflet)"/>
 <circle cx="50" cy="50" r="48.6" fill="none" stroke="${j.bord || "#000"}" stroke-opacity="${j.bord ? "1" : ".45"}" stroke-width="1"/>
 </g></svg>`;
 }
@@ -5834,6 +6086,9 @@ function vol(o) {
     ? [{ transform: "translate(0,0)", opacity: 0 }, { transform: `translate(${dx * .3}px,${dy * .3}px)`, opacity: 1, offset: .3 }, { transform: `translate(${dx}px,${dy}px)`, opacity: 1 }]
     : [{ transform: "translate(0,0)" }, { transform: `translate(${dx}px,${dy}px)` }];
   const a = porte.animate(trajet, { duration: dur, easing: ease, fill: "forwards" });
+  // Le jeton qu'on prend claque en partant (socle.js) ; les jetons d'un voisin, ou un paiement
+  // qui glisse, à mi-voix. L'arrivée tinte dans le rappel `fin` de chaque appelant.
+  if (dur > 1) son("jeton", { gain: o.doux ? .45 : o.glisse ? .7 : 1 });
   // Le jeton part à la taille de là où il était (le rack : 46 px) et prend celle
   // d'arrivée dans le premier tiers du vol — jamais au contact.
   // Mesuré le 05/09 : de 46 à 25 px dans le premier tiers, le jeton « fondait » en partant. Sur 60 %.
@@ -5966,6 +6221,9 @@ function poserJeton(v) {
   // L'accusé du clic : le jeton du rack se soulève, le clone part de sa place. Sans ça rien
   // ne reliait le clic au jeton qui vole (mesuré le 05/09).
   const bouton = $("rjJetons").querySelector(`[data-v="${v}"]`);
+  // Le jeton CHOISI reste soulevé dans le rack (style.css, .choisi) : on voit lequel on vient de poser.
+  $("rjJetons").querySelectorAll(".choisi").forEach(b => { if (b !== bouton) b.classList.remove("choisi"); });
+  if (bouton) bouton.classList.add("choisi");
   if (bouton && !reduit()) { const a = bouton.animate([{ transform: "translateY(0)" }, { transform: "translateY(-7px)", offset: .4 }, { transform: "none" }], { duration: 200, easing: "ease-out" }); a.finished.then(() => a.cancel(), () => {}); }
   engager(T.toi, v); J.mise = arr(J.mise + v); J.poses.push(v); T.toi.mise = T.mise = J.mise;
   // L'ÉTAT tout de suite (Distribuer s'ouvre au clic, une ligne) ; le DESSIN à l'image suivante.
@@ -6060,6 +6318,7 @@ function ouvrirMises() {
   // Ce qui traînait encore sur le feutre revient en main (main interrompue, table changée).
   if (DB.engage > 0) { DB.tapis = arr(DB.tapis + DB.engage); DB.engage = 0; garder(); }
   J.phase = "mise"; J.donnee = false; J.mise = 0; J.poses = []; J.attente = 0; J.appele = false; T.mise = 0; T.miseDonne = 0;
+  $("rjJetons").querySelectorAll(".choisi").forEach(b => b.classList.remove("choisi"));
   $("v-table").dataset.phase = "mise";
   T.sieges.forEach(st => { st.mise = 0; st.miseVue = 0; (st.mains || []).forEach(h => { h.jParti = true; }); });
   profilerSieges(); garnirCercles(); rendreRack(); majDonne(); rendreCoach(); appelMise();
@@ -6068,7 +6327,7 @@ function ouvrirMises() {
     if (st.toi) return;
     const m = miseBot(st); st.mise = m; engager(st, m);
     setTimeout(() => { if (J.phase !== "mise" || T.sieges[si] !== st) return;
-      vol({ montant: m, w: tailleJeton(false), depuis: ancreMaison(si), vers: ancreCercle(si), duree: 380, apparait: true, fin: () => { if (J.phase === "mise" && T.sieges[si] === st) { st.miseVue = m; garnirCercles(); } } });
+      vol({ montant: m, w: tailleJeton(false), depuis: ancreMaison(si), vers: ancreCercle(si), duree: 380, apparait: true, doux: true, fin: () => { if (J.phase === "mise" && T.sieges[si] === st) { st.miseVue = m; garnirCercles(); } } });
     }, 120 + si * 110);
   });
   if (DB.tapis < l.min) setTimeout(() => { if (J.phase === "mise" && DB.tapis < l.min && vue === "table") proposerRachat(); }, 600);
@@ -6160,7 +6419,7 @@ function detecterSeparations() {
   T.sieges.forEach((st, si) => st.mains.forEach(h => {
     if (h.jEngage || !h.fromSplit) return;
     h.jEngage = true; engager(st, h.bet); rendreRack();
-    vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
+    vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, doux: !st.toi,
       fin: () => { h.jVu = true; garnirCercles(); if (st.toi) son("jetons"); } });
   }));
 }
@@ -6169,7 +6428,7 @@ document.addEventListener("sabot:carte", e => {
   const { siege: si, main: hi } = e.detail; if (si === "croupier" || J.phase !== "jeu") return;
   const st = T.sieges[si], h = st && st.mains[hi]; if (!h || !h.doubled || h.jDouble || !h.jEngage) return;
   h.jDouble = true; engager(st, h.bet); rendreRack();
-  vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi,
+  vol({ montant: h.bet, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, doux: !st.toi,
     fin: () => { h.jDoubleVu = true; garnirCercles(); if (st.toi) son("jetons"); } });
 });
 // L'assurance : payable ou pas, puis posée à côté de la mise.
@@ -6178,7 +6437,7 @@ document.addEventListener("sabot:assurance", e => {
   const { siege: si, main: hi, prise, montant } = e.detail; const st = T.sieges[si], h = st && st.mains[hi];
   if (!prise || !h || !montant) return;
   engager(st, montant); rendreRack();
-  vol({ montant, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, fin: () => { h.jAssuranceVu = true; garnirCercles(); son("jetons"); } });
+  vol({ montant, w: tailleJeton(st.toi), de: st.toi ? tailleRack() : 0, depuis: ancreMaison(si), vers: ancreCercle(si), duree: 360, apparait: !st.toi, doux: !st.toi, fin: () => { h.jAssuranceVu = true; garnirCercles(); son("jetons"); } });
 });
 
 /* ── Le règlement : les gains glissent vers toi, les pertes vers le croupier ──
@@ -6186,7 +6445,7 @@ document.addEventListener("sabot:assurance", e => {
    ESPACE (140 ms) pour que le croupier paie une place après l'autre. Un bust
    arrive à l'instant, seul : il part tout de suite. */
 function enfiler(fn) { const d = reduit() ? 0 : J.attente; J.attente += 140; setTimeout(fn, d); }
-function glisser(montant, depuis, vers, o) { return vol(Object.assign({ montant, w: tailleJeton(o && o.toi), depuis, vers, glisse: true, duree: 520 }, o || {})); }
+function glisser(montant, depuis, vers, o) { return vol(Object.assign({ montant, w: tailleJeton(o && o.toi), depuis, vers, glisse: true, duree: 520, doux: !(o && o.toi) }, o || {})); }
 document.addEventListener("sabot:main-fin", e => {
   const { siege: si, main: hi, toi, issue, montant } = e.detail;
   const st = T.sieges[si], h = st && st.mains[hi]; if (!h || h.jRegle) return; h.jRegle = true;
@@ -8233,8 +8492,8 @@ function rsEffetCarte(f, delai) {
     const hote = f.siege === "croupier" ? $("dMain") : $(`m_${f.siege}_${f.main}`); if (!hote) return;
     const el = hote.children[f.index]; if (!el || el.classList.contains("carte--entre")) return;
     const cr = el.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
-    animerDepuisSabot(el, cr); son("carte");
-    emettre("carte", { siege: f.siege, main: f.main, index: f.index, carte: f.carte, cachee: !!f.cachee, el,
+    const v = animerDepuisSabot(el, cr); son("carte");
+    emettre("carte", { siege: f.siege, main: f.main, index: f.index, carte: f.carte, cachee: !!f.cachee, el, duree: v.duree, delai: v.delai,
       depuis: { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 }, vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
   }, delai);
 }

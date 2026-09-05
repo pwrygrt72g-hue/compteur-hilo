@@ -53,9 +53,9 @@ const ISSUE_BUS = { "gagné": "gagne", "perdu": "perd", "sauté": "bust", "black
 // suite, pas au règlement. `emis` évite de les annoncer deux fois.
 function sauter(si, hi) {
   const h = T.sieges[si].mains[hi]; h.result = "sauté"; h.emis = true; rendreSieges();
-  // Ton propre bust s'ENTEND : mesuré le 05/09, seul le croupier réagissait (la bulle),
-  // et elle disparaissait pendant qu'on regardait ses cartes partir à la défausse.
-  if (T.sieges[si].toi) son("ko");
+  // Ton propre bust s'ENTEND (un boum sourd) et se LIT (le verdict sur tes cartes) : les deux
+  // sont branchés sur le bus « sabot:main-fin » (socle.js, et inscrireVerdict plus bas), pour
+  // que la table à plusieurs (reseau.js) les ait aussi sans une ligne de plus.
   emettre("main-fin", { siege: si, main: hi, toi: T.sieges[si].toi, issue: "bust", montant: -(h.bet || 1) * (h.doubled ? 2 : 1) });
   // Le croupier ramasse la main sautée tout de suite (cartes ET mise), pas au règlement :
   // on laisse 500 ms pour LIRE le bust, puis les cartes glissent à la défausse et le
@@ -549,10 +549,25 @@ async function tirer(main, hote, cachee, qui) {
   if (!cachee) { T.rc += valeurCompte(c); T.vues++; }
   rafraichirBarre(); await pause(rythme()); return c;
 }
-// Un score qui change ne surgit pas : il bascule, comme une pastille d'issue.
+// Un score qui change ne surgit pas : il COMPTE — un tic par point, 250 ms en tout, du total
+// d'avant (ou de zéro, pour une première carte) jusqu'au nouveau. En mouvement réduit, ou quand
+// la valeur n'est pas un nombre, il s'écrit d'un coup. Les tics sont des minuteurs, pas des rAF :
+// sous temps virtuel (la sonde) seule la première image est livrée, et un score resterait à
+// mi-chemin ; le dernier minuteur écrit toujours la valeur exacte.
+const SCORE_TICS = new WeakMap();
 function poserScore(el, v) {
-  if (!el) return; v = String(v); if (el.textContent === v) return;
-  el.textContent = v; el.classList.remove("bascule"); void el.offsetWidth; el.classList.add("bascule");
+  if (!el) return; v = String(v); if (el.textContent === v && !SCORE_TICS.has(el)) return;
+  clearInterval(SCORE_TICS.get(el)); SCORE_TICS.delete(el);
+  const m = /^(\d+)(.*)$/.exec(v), av = /^(\d+)/.exec(el.textContent || "");
+  const reduit = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const fin = () => { el.textContent = v; el.classList.remove("bascule"); void el.offsetWidth; el.classList.add("bascule"); };
+  if (!m || reduit) return fin();
+  const cible = +m[1], suffixe = m[2] || "", depart = av ? +av[1] : 0, n = Math.abs(cible - depart);
+  if (!n) return fin();
+  const sens = Math.sign(cible - depart), pas = Math.max(12, Math.round(250 / n)); let k = 0;
+  el.textContent = depart + suffixe; el.classList.add("compte");
+  const tic = setInterval(() => { k++; if (k >= n) { clearInterval(tic); SCORE_TICS.delete(el); el.classList.remove("compte"); fin(); return; } el.textContent = (depart + sens * k) + suffixe; }, pas);
+  SCORE_TICS.set(el, tic);
 }
 async function tirerSiege(si, hi) {
   const st = T.sieges[si], h = st && st.mains[hi], hote = $(`m_${si}_${hi}`);
@@ -825,6 +840,34 @@ async function regler() {
   boutons({ donne: true });
 }
 $("bDonne").onclick = distribuer;
+/* ── Le verdict de TA main : un mot en serif, au-dessus de tes cartes, qui s'INSCRIT (un balayage
+   de gauche à droite, comme une plume) puis s'efface. Branché sur le bus « sabot:main-fin », donc
+   valable pour la table à plusieurs aussi. Calé sur le paiement de ce siège (J.attente, lu avant que
+   jetons.js ne l'incrémente : table.js est concaténé avant lui), pour que le mot, les jetons et la
+   note tombent ensemble ; un bust et un abandon, eux, s'inscrivent à l'instant. */
+const VERDICT_MOT = { bust: "Sauté", perd: "Perdu", gagne: "Gagné", blackjack: "Blackjack", egalite: "Égalité", abandon: "Abandon" };
+const VERDICT_TON = { bust: "p", perd: "p", gagne: "g", blackjack: "bj", egalite: "n", abandon: "n" };
+let VERDICT_T = null, VERDICT_D = null;
+function inscrireVerdict(issue, retard) {
+  const v = $("verdict"), f = $("feutre"); if (!v || !f || !VERDICT_MOT[issue]) return;
+  clearTimeout(VERDICT_D);
+  VERDICT_D = setTimeout(() => {
+    if ($("v-table").hidden) return;
+    const F = f.getBoundingClientRect(), toi = document.querySelector("#sieges .siege.toi .mains");
+    const r = toi && toi.getBoundingClientRect();
+    if (r && r.width) { v.style.left = Math.round(r.left + r.width / 2 - F.left) + "px"; v.style.top = Math.round(r.top - F.top - 4) + "px"; }
+    else { v.style.left = "50%"; v.style.top = "45%"; }
+    clearTimeout(VERDICT_T);
+    v.className = "verdict " + VERDICT_TON[issue]; v.textContent = VERDICT_MOT[issue];
+    void v.offsetWidth; v.classList.add("on");   // relance l'animation même si le mot est le même
+    VERDICT_T = setTimeout(() => { v.classList.remove("on"); }, 2300);
+  }, retard || 0);
+}
+document.addEventListener("sabot:main-fin", e => {
+  const d = e.detail || {}; if (!d.toi) return;
+  const attente = (d.issue === "bust" || d.issue === "abandon") ? 0 : ((typeof J === "object" && J && typeof J.attente === "number") ? J.attente : 0) + 60;
+  inscrireVerdict(d.issue, attente);
+});
 $("feutre").addEventListener("click", e => {
   if (e.target.closest("button, .bulle, input, select")) return;
   if (T.enJeu && T.occupe && !$("v-table").dataset.reseau) turbo(true);

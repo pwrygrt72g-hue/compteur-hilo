@@ -10,7 +10,10 @@ new MutationObserver(() => { if (!document.getElementById("modale").hidden) wind
 // Les coutures entre lots (Jetons ↔ Croupier) se lisent sur le bus « sabot:* » : ces
 // écouteurs sont enregistrés APRÈS l'application, donc ils voient le detail tel que
 // croupier.js le reçoit (jetons.js l'enrichit dans son propre écouteur, avant).
-window.__donnes = []; window.__fins = []; window.__bulles = [];
+window.__donnes = []; window.__fins = []; window.__bulles = []; window.__verdicts = [];
+// Le verdict de ta main (table.js) : un mot en serif qui s'inscrit sur le feutre (#verdict.on).
+new MutationObserver(() => { const v = document.getElementById("verdict"); if (v && v.classList.contains("on") && v.textContent) __verdicts.push(v.textContent); })
+  .observe(document.getElementById("verdict"), { attributes: true, attributeFilter: ["class"] });
 document.addEventListener("sabot:donne-debut", e => __donnes.push(Object.assign({}, e.detail)));
 document.addEventListener("sabot:main-fin", e => { if (e.detail && e.detail.toi) __fins.push(e.detail.issue); });
 new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.classList && b.classList.contains("cr-bulle") && b.classList.contains("on"))) continue;
@@ -122,6 +125,16 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   { let t = {}; try { t = JSON.parse(localStorage.getItem("sabot") || "{}"); } catch (e) {}
     ok("mémoire : tapis écrit, rien d'engagé", typeof t.tapis === "number" && (t.engage || 0) === 0, "tapis=" + t.tapis + " engage=" + t.engage); }
   ok("aucune erreur en jeu", __err.length === 0, __err.join(" / "));
+  // ── Le son (lot Son & matière) : chaque geste de la table laisse son nom au journal de socle.js,
+  // même quand le contexte audio dort (aucun geste de pointeur ici : rien ne doit jouer, tout doit être noté).
+  { const j = window.__sonJournal || [], u = [...new Set(j)].join(",");
+    ok("son : la carte glisse et se pose, un jeton claque en partant, les jetons tintent en arrivant", ["carte", "pose", "jeton", "jetons"].every(g => j.includes(g)), "journal = " + u);
+    ok("son : un verdict a sonné (accord du gain, boum du bust ou note du blackjack)", j.some(g => g === "gain" || g === "bust" || g === "blackjack"), "journal = " + u);
+    ok("son : le mélange racle", j.includes("raclement"), "journal = " + u);
+    // La synthèse est PURE : rendue dans un contexte hors ligne, elle produit du signal, sans saturer.
+    const r = await Promise.race([window.__rendreSon("jetons"), dodo(4000).then(() => null)]);
+    ok("son : la synthèse hors ligne rend un tintement (crête entre 0,05 et 1, sous 2 s)", !!r && r.crete > .05 && r.crete <= 1 && r.duree > .02 && r.duree < 2, JSON.stringify(r)); }
+  ok("verdict : le mot de fin de main s'est inscrit au-dessus de mes cartes, à chaque main", __verdicts.length >= 5 && __verdicts.every(v => /^(Gagné|Perdu|Sauté|Blackjack|Égalité|Abandon)$/.test(v)), __verdicts.length + " verdicts : " + __verdicts.join(","));
 
   // ── Retour au hall : la table entamée dit « Reprendre », et la reprendre ne remélange pas
   clic('nav [data-vue="salon"]'); await dodo(300);
@@ -285,6 +298,12 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   clic("#bReglages"); await dodo(200);
   ok("relais : la section vit dans ⚙, avec ses trois champs et son bouton", !q("#modale").hidden && !!q("#modaleBoite #turnUrl") && !!q("#modaleBoite #turnUser") && !!q("#modaleBoite #turnPass") && !!q("#modaleBoite #turnTester"), "champs absents de la modale");
   ok("relais : sans identifiants, ⚙ dit « STUN seul »", /STUN seul/.test(txt("#turnEtat")), txt("#turnEtat").slice(0, 60));
+  // ── Le volume des sons (socle.js, DB.volume) : un curseur dans ⚙, à 60 par défaut, mémorisé.
+  ok("volume : le curseur vit dans ⚙, à 60 % par défaut", !!q("#modaleBoite #volume") && q("#volume").value === "60" && txt("#volumeL") === "60 %", "volume=" + (q("#volume") || {}).value + " label=" + txt("#volumeL"));
+  if (q("#volume")) { q("#volume").value = "30"; q("#volume").dispatchEvent(new Event("input")); await dodo(120); }
+  { let m = {}; try { m = JSON.parse(localStorage.getItem("sabot") || "{}"); } catch (e) {}
+    ok("volume : mémorisé dans DB.volume, affiché en %", m.volume === 30 && txt("#volumeL") === "30 %", "volume=" + m.volume + " label=" + txt("#volumeL")); }
+  if (q("#volume")) { q("#volume").value = "60"; q("#volume").dispatchEvent(new Event("input")); }
   clic("#turnTester"); await dodo(300);
   ok("relais : tester sans identifiants le dit, sans rien lancer", /Aucun relais configuré/.test(txt("#turnEtat")), txt("#turnEtat").slice(0, 60));
   q("#turnUrl").value = "turn:relais.exemple.org:3478"; q("#turnUrl").dispatchEvent(new Event("input"));

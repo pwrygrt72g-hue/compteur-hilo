@@ -10,6 +10,7 @@
 //   --reseau=amis : la même, assis, avec deux amis fictifs poussés par le transport muet
 //                   (ils saluent l'hôte et s'assoient) — les vignettes vidéo en attente.
 //   --puis=a,b  : plusieurs identifiants, cliqués dans l'ordre (ex. bReglages,relaisOuvrir).
+//   --jouer     : après la donne, joue la main jusqu'au règlement (Rester), puis attend --attendre2 ms.
 //
 //   node outils/capturer.mjs table 1280x800 /tmp/table.png --donne
 //   node outils/capturer.mjs table 375x667 /tmp/tel.png --donne --table=cotai
@@ -78,6 +79,16 @@ const MISER = `(async () => { const q = s => document.querySelector(s), dodo = m
   } })()`;
 if ((opt.donne && !opt.sansmise) || opt.mise) { await evaluer(MISER); await dodo(opt.donne ? 350 : +(opt.attendre || 900)); }
 if (opt.donne) { await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(+(opt.attendre || 3200)); }
+// --jouer : joue la main jusqu'au RÈGLEMENT (Rester dès que c'est à toi, jamais d'assurance), puis
+// attend --attendre2 ms (700 par défaut) — le moment où les jetons glissent et où le verdict s'inscrit.
+if (opt.jouer) {
+  await evaluer(`(async () => { const q = s => document.querySelector(s), dodo = ms => new Promise(r => setTimeout(r, ms));
+    const phase = () => document.getElementById("v-table").dataset.phase || "";
+    for (let g = 0; g < 120 && phase() !== "reglement"; g++) { await dodo(150);
+      if (q("#bTire") && !q("#bTire").disabled) q("#bReste").click();
+      const a = q("#boiteAssurance .opts button:last-child"); if (a) a.click(); } })()`);
+  await dodo(+(opt.attendre2 || 700));
+}
 // --puis=bReste : un coup après la donne (pour voir le croupier retourner sa carte, un bust, un gain…).
 if (opt.puis) { for (const id of String(opt.puis).split(",")) { await evaluer(`(document.getElementById(${JSON.stringify(id.trim())})||{click(){}}).click()`); await dodo(250); } await dodo(+(opt.attendre2 || 2500)); }
 else await dodo(+(opt.attendre || 400));

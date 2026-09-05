@@ -351,8 +351,8 @@ function rsEffetCarte(f, delai) {
     const hote = f.siege === "croupier" ? $("dMain") : $(`m_${f.siege}_${f.main}`); if (!hote) return;
     const el = hote.children[f.index]; if (!el || el.classList.contains("carte--entre")) return;
     const cr = el.getBoundingClientRect(), sr = $("sabot").getBoundingClientRect();
-    animerDepuisSabot(el, cr); son("carte");
-    emettre("carte", { siege: f.siege, main: f.main, index: f.index, carte: f.carte, cachee: !!f.cachee, el,
+    const v = animerDepuisSabot(el, cr); son("carte");
+    emettre("carte", { siege: f.siege, main: f.main, index: f.index, carte: f.carte, cachee: !!f.cachee, el, duree: v.duree, delai: v.delai,
       depuis: { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 }, vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
   }, delai);
 }
