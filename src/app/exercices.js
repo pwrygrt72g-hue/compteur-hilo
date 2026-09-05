@@ -7,7 +7,40 @@ function ongletEx(g) {
   $("opDefilement").hidden = g !== "defilement"; $("opChrono").hidden = g !== "chrono"; $("opEstimation").hidden = g !== "estimation";
   ["exPiste", "exBilan", "estPiste", "estBilan"].forEach(id => { $(id).hidden = true; });
   $("exReglages").hidden = false;
+  rendreSceneExo();
 }
+/* ── Le tiroir des réglages et la scène de démonstration ───────────────────
+   Mesuré le 05/09 : sept sélecteurs, un curseur et deux cases AVANT « Commencer », puis
+   60 % d'écran vide — un formulaire de réglages, pas un exercice. Le tiroir est replié
+   (son résumé dit ce qu'il contient), « Commencer » est dans le bandeau, et la scène
+   occupe l'espace : trois cartes de dos, le compteur à zéro, ce qui va se passer. Elle
+   s'efface avec le tiroir dès que la piste ou le bilan est là (style.css, :has). */
+const pluriel = (n, mot) => n + " " + mot + (n > 1 ? (/eu$/.test(mot) ? "x" : "s") : "");
+function resumeExo() {
+  if (X.genre === "chrono") return `${pluriel(+$("cJeux").value, "jeu")} · ${pluriel(+$("cParVue").value, "carte")} à la fois · ${pluriel(+$("cCachees").value, "retirée")}`;
+  if (X.genre === "estimation") return `sabot de ${$("sJeux").value} jeux · ${$("sManches").value} manches`;
+  const silence = $("eMode").value === "silence", par = +$("eParVue").value, ctrl = $("eControle").value;
+  return `${pluriel(+$("eJeux").value, "jeu")} · ${fr1(+$("eVitesse").value / 1000)} s · ${silence ? "en silence" : "je clique la valeur"}` +
+    (silence && par > 1 ? ` · ${par} à la fois` : "") + (ctrl !== "0" ? " · contrôle surprise" : "");
+}
+function rendreSceneExo() {
+  const r = $("exResume"), cadre = $("exoCadre"); if (!r || !cadre) return;
+  r.textContent = resumeExo();
+  if (!cadre.children.length) for (let k = 0; k < 3; k++) cadre.appendChild(carteEl({}, true));
+  const c = $("exScene").querySelector(".exo-compte"), lab = c.querySelector(".grave"), val = c.querySelector("b");
+  const sec = fr1(+$("eVitesse").value / 1000);
+  lab.textContent = X.genre === "estimation" ? "Jeux dans le tas" : "Compte courant"; val.textContent = X.genre === "estimation" ? "?" : "0";
+  $("exoQuoi").innerHTML = X.genre === "estimation"
+    ? "Un tas de défausse, manche après manche : tu annonces combien de jeux y sont passés. C'est ce coup d'œil qui fait le compte vrai — tolérance : un demi-jeu."
+    : X.genre === "chrono"
+    ? "Tu fais défiler toi-même — <kbd>espace</kbd>, clic ou <kbd>→</kbd>. Le chrono part à la première carte, le compte t'est demandé à la fin."
+    : $("eMode").value === "silence"
+    ? `Les cartes tombent ici, une toutes les <b>${sec} s</b> ; tu tiens le compte en silence, on te le demande à la fin.`
+    : `Les cartes tombent ici, une toutes les <b>${sec} s</b> ; tu annonces la valeur de chacune. <kbd>←</kbd> −1 · <kbd>espace</kbd> 0 · <kbd>→</kbd> +1 · <kbd>1…5</kbd> les boutons de gauche à droite.`;
+}
+$("exReglages").addEventListener("change", rendreSceneExo);
+$("exReglages").addEventListener("input", rendreSceneExo);
+rendreSceneExo();
 $("ongletsEx").querySelectorAll("button").forEach(b => b.onclick = () => ongletEx(b.dataset.ex));
 $("eVitesse").oninput = () => { $("eVitesseL").textContent = fr1(+$("eVitesse").value / 1000) + " s";
   $("exPiste").style.setProperty("--intervalle", $("eVitesse").value + "ms"); };

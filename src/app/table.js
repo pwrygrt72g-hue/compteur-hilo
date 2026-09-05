@@ -27,11 +27,16 @@ function turbo(on) {
   $("v-table").classList.toggle("turbo", T.turbo);
 }
 // Une annonce qui change ne surgit pas : elle bascule.
+// La pastille est centrée par un transform CSS (translateX(-50%)) : on anime la propriété
+// `translate`, indépendante, qui se compose PAR-DESSUS. Mesuré le 05/09 : `transform` animé
+// écrasait le centrage, et la pastille sautait de 106 px vers la gauche à la fin de son fondu.
+// Sur ordinateur, c'est le croupier qui dit l'annonce (croupier.js écoute « sabot:annonce »).
 function annoncer(txt) {
   const a = $("annonce"); if (a.textContent === txt) return;
   a.textContent = txt;
+  emettre("annonce", { texte: txt });
   if (txt && !matchMedia("(prefers-reduced-motion:reduce)").matches)
-    a.animate([{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }], { duration: 200, easing: "ease-out" });
+    a.animate([{ opacity: 0, translate: "0 4px" }, { opacity: 1, translate: "0 0" }], { duration: 200, easing: "ease-out" });
 }
 const reglesTable = () => {
   const t = tableCourante();
@@ -131,11 +136,12 @@ function poserLieu(t) {
    « HIT SOFT 17 » ou « STAND ON ALL 17s », et l'assurance seulement là où le
    croupier a une carte cachée. Les arcs suivent le rail réel : ils sont
    recalculés sur la taille mesurée du feutre, jamais dessinés en dur. */
-const LETTRAGE = { cle: "" };
+const LETTRAGE = { cle: "", mesure: null };
+window.__lettrage = LETTRAGE;   // pour les sondes (capturer.mjs --sonde)
 function texteLettrage(t) {
   return {
     paie: t.blackjackPays === 1.5 ? "BLACKJACK PAYS 3 TO 2" : "BLACKJACK PAYS 6 TO 5",
-    croupier: t.h17 ? "DEALER MUST HIT SOFT 17" : "DEALER MUST STAND ON ALL 17s",
+    croupier: t.h17 ? "DEALER MUST HIT SOFT 17" : "DEALER MUST STAND ON ALL 17's",
     assurance: t.holeCard ? "INSURANCE PAYS 2 TO 1" : "NO HOLE CARD",
   };
 }
@@ -181,11 +187,12 @@ function rendreLettrage() {
   const enScreen = e => { const r = e.getBoundingClientRect(); return { l: r.left - F.left, t: r.top - F.top, r: r.right - F.left, b: r.bottom - F.top }; };
   const obstacles = sieges.flatMap((sg, i) => {
     const z = zones[i], m = sg.querySelector(".mains");
-    const pieces = [...sg.querySelectorAll(".cercle, .nom, .score, .issue, .carte, .visage, .jt-montant, .tapis-siege, .rangee-bas")].map(enScreen);
+    const pieces = [...sg.querySelectorAll(".cercle, .nom, .score, .issue, .carte, .visage, .jt-mises, .jt-montant, .tapis-siege, .rangee-bas")].map(enScreen);
     if (z && m) { const rm = enScreen(m); pieces.push({ l: z.l, r: z.r, t: rm.t, b: rm.b }); }
     return pieces;
   }).filter(z => z.r > z.l && z.b > z.t);
-  const touche = (x, y) => obstacles.some(z => x >= z.l - 8 && x <= z.r + 8 && y >= z.t - 4 && y <= z.b + 4);
+  // 14 px de marge autour de chaque pièce (mesuré le 05/09 : à 8, le jeton de Marc se posait sur « MUST »).
+  const touche = (x, y) => obstacles.some(z => x >= z.l - 14 && x <= z.r + 14 && y >= z.t - 8 && y <= z.b + 8);
   const t = tableCourante(), tx = texteLettrage(t);
   const cle = [W, H, basHaut, basCentre, zones.map(z => z.l + ":" + z.r + ":" + z.haut).join(","), obstacles.map(z => Math.round(z.l) + ":" + Math.round(z.b)).join(","), t.id].join("|");
   if (cle === LETTRAGE.cle) return;
@@ -217,18 +224,24 @@ function rendreLettrage() {
   // Trop court pour porter une règle lisible (moins de 26°) : pas de ligne du tout —
   // une règle tronquée se lit comme un défaut, une règle absente ne se lit pas.
   const arcLibre = (cote, d, ext, int) => {
-    const pas = Math.sign(int - ext); let fin = ext;
+    const pas = Math.sign(int - ext); let fin = ext, len = 0, prec = null;
     for (let a = ext; pas > 0 ? a <= int : a >= int; a += pas) {
       // La bande des lettres : la ligne de base et le HAUT DES CAPITALES (.7 em pour
       // Archivo, pas .85 : à 1280 × 800 la marge en trop butait sur le nom du siège de
       // coin, « DEALER MUST HIT SOFT 17 » disparaissait à gauche, « INSURANCE » restait à droite).
       const [x0, y0] = pointCoin(cote, d, a), [x1, y1] = pointCoin(cote, d + petit * .7, a);
       if (touche(x0, y0) || touche(x1, y1)) break;
-      fin = a;
+      if (prec) len += Math.hypot(x0 - prec[0], y0 - prec[1]);
+      prec = [x0, y0]; fin = a;
     }
     if (Math.abs(fin - ext) < 26) return null;
-    return cote === "G" ? arcCoin("G", d, ext, fin) : arcCoin("D", d, fin, ext);
+    return { d: cote === "G" ? arcCoin("G", d, ext, fin) : arcCoin("D", d, fin, ext), len };
   };
+  // Un texte TIENT sur son arc s'il n'a pas à descendre sous 9,5 px (la taille où on le
+  // retire, plus bas) : .87 em par capitale, interlettrage de .22 em compris. Mesuré le
+  // 05/09 à 1280 × 800 : le siège de coin coupait l'arc du rail à 35° — 135 px pour les
+  // 280 px de « DEALER MUST HIT SOFT 17 » — et la règle disparaissait sans un mot.
+  const tient = (arc, texte) => !!arc && arc.len * .96 >= texte.length * .87 * 9.6;
   let out = "", n = 0;
   const ligne = (texte, d, taille, classe) => {
     if (!d) return;
@@ -238,8 +251,13 @@ function rendreLettrage() {
   // Le long de l'arc bas, de part et d'autre des sièges : la règle du croupier à
   // gauche, l'assurance à droite (180 = le bord gauche, 90 = le bas, 0 = le bord
   // droit ; on lit de gauche à droite, le haut des lettres vers le centre).
-  ligne(tx.croupier, arcLibre("G", 6 + petit, 179, 126), petit, "rail");
-  ligne(tx.assurance, arcLibre("D", 6 + petit, 1, 54), petit, "rail");
+  const railG = arcLibre("G", 6 + petit, 179, 126), railD = arcLibre("D", 6 + petit, 1, 54);
+  const surRail = { croupier: tient(railG, tx.croupier), assurance: tient(railD, tx.assurance) };
+  if (surRail.croupier) ligne(tx.croupier, railG.d, petit, "rail");
+  if (surRail.assurance) ligne(tx.assurance, railD.d, petit, "rail");
+  // Ce que le rail ne peut pas porter va SOUS le grand arc, concentrique — le feutre de
+  // Vegas : « PAYS 3 TO 2 », puis la règle du croupier et l'assurance en arcs empilés.
+  const empiles = [!surRail.croupier && tx.croupier, !surRail.assurance && tx.assurance].filter(Boolean);
   // Le paiement du blackjack, en grand, dans la bande entre la main du croupier
   // et les sièges — TOUJOURS : un arc concentrique au rail (un sourire). Plafond :
   // à la verticale de chaque siège, l'arc reste au-dessus de ses cartes (le point de
@@ -248,22 +266,54 @@ function rendreLettrage() {
   // Si les deux se contredisent, la taille descend ; sous 80 % de sa taille, l'arc
   // n'est PAS dessiné : un arc pincé à 15 px entre deux rangées de cartes est
   // illisible et fait fouillis (les critiques, 05/09) — le rail garde ses deux lignes.
-  const rx = W * .34, ry = rx * .42, A = 40, cosA = Math.cos((90 - A) * Math.PI / 180);
-  let plafond = Infinity;
-  zones.forEach(z => {
-    const xp = Math.max(z.l, Math.min(z.r, W / 2)), u = Math.abs(xp - W / 2) / rx;
-    if (u >= cosA) return;
-    plafond = Math.min(plafond, z.haut - 3 + ry * (1 - Math.sqrt(1 - u * u)));
-  });
-  if (!isFinite(plafond)) plafond = H - 40;
+  const rx = W * .34, ry = rx * .42, A = 40;
+  const plafondPour = (rx, ry, A) => {
+    const cosA = Math.cos((90 - A) * Math.PI / 180); let plafond = Infinity;
+    zones.forEach(z => {
+      const xp = Math.max(z.l, Math.min(z.r, W / 2)), u = Math.abs(xp - W / 2) / rx;
+      if (u >= cosA) return;
+      plafond = Math.min(plafond, z.haut - 3 + ry * (1 - Math.sqrt(1 - u * u)));
+    });
+    return isFinite(plafond) ? plafond : H - 40;
+  };
+  const plafond = plafondPour(rx, ry, A);
   let taille = grand, plancher = basCentre + 3 + taille * .78;
   if (plafond < plancher) { taille = Math.max(15, Math.floor((plafond - basCentre - 3) / .78)); plancher = basCentre + 3 + taille * .78; }
   const cache = plafond < plancher - 2 || taille < Math.max(16, grand * .8) || plafond - basCentre < taille * 1.6;
-  const yBas = plafond >= plancher ? plancher + (plafond - plancher) * .5 : plancher;
+  // Le 2ᵉ arc (les règles que le rail n'a pas portées) : même centre, rayons agrandis de
+  // `delta2`, un peu plus ouvert (il est à l'extérieur). Il n'existe que s'il reste sa
+  // hauteur sous le grand arc AVANT les cartes des sièges ; le grand arc remonte alors
+  // pour lui laisser la place. Rien ne s'empile sous un grand arc qui n'est pas dessiné.
+  const A2 = A + 2;
+  let t2 = 0, delta2 = 0, dispo = -Infinity, empile = false;
+  if (!cache && empiles.length) {
+    // La première paire (taille du 2ᵉ, taille du grand) qui tient : le 2ᵉ de petit − 1 à 10 px
+    // — sa lisibilité d'abord —, le grand à sa taille puis en cédant jusqu'à 80 % (le seuil
+    // où il ne serait plus dessiné du tout). `dsp` est le plus bas où le grand arc peut
+    // poser sa ligne de base en laissant au 2ᵉ (delta2 plus bas) la place d'être au-dessus
+    // des cartes. Mesuré le 05/09 à 1280 × 800 : 52 px entre la rangée du croupier et tes
+    // cartes — le grand à 20 px et les règles à 11 y tiennent, pas 24 et 13.
+    const tMin = Math.max(16, grand * .8);
+    const candidats = [petit - 1, petit - 2, petit - 3, 10].filter((v, i, a) => v >= 10 && a.indexOf(v) === i);
+    boucle: for (const tt of candidats) {
+      const d2 = Math.round(tt * 1.35), dsp = Math.min(plafond, plafondPour(rx + d2, ry + d2, A2) - d2 - 2);
+      for (let tg = taille; tg >= tMin; tg--) {
+        if (basCentre + 3 + tg * .78 <= dsp) { taille = tg; plancher = basCentre + 3 + taille * .78; t2 = tt; delta2 = d2; dispo = dsp; empile = true; break boucle; }
+      }
+    }
+  }
+  const rx2 = rx + delta2, ry2 = ry + delta2;
+  let yBas = plafond >= plancher ? plancher + (plafond - plancher) * .5 : plancher;
+  if (empile) yBas = Math.max(plancher, Math.min(yBas, dispo));
+  LETTRAGE.mesure = { plafond, dispo, plancher, taille, delta2, empile, empiles: empiles.length, cache };
   const cy = yBas - ry;
-  const p = a => { const r = a * Math.PI / 180; return [W / 2 + rx * Math.cos(r), cy + ry * Math.sin(r)]; };
+  const p = (a, kx, ky) => { const r = a * Math.PI / 180; return [W / 2 + (kx || rx) * Math.cos(r), cy + (ky || ry) * Math.sin(r)]; };
   const [x1, y1] = p(90 + A), [x2, y2] = p(90 - A);
   if (!cache) ligne(tx.paie, `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`, taille, "grand");
+  if (empile) {
+    const [x3, y3] = p(90 + A2, rx2, ry2), [x4, y4] = p(90 - A2, rx2, ry2);
+    ligne(empiles.join("  \u00b7  "), `M${x3.toFixed(1)} ${y3.toFixed(1)}A${rx2.toFixed(1)} ${ry2.toFixed(1)} 0 0 0 ${x4.toFixed(1)} ${y4.toFixed(1)}`, t2, "rail empile");
+  }
   // La bande où vivent l'annonce et le conseil (style.css) : celle du grand arc, sous la
   // main du croupier — jamais une hauteur codée en dur qui tomberait sur les cartes.
   f.style.setProperty("--bande-haut", Math.round(basCentre + 2) + "px");
@@ -336,7 +386,7 @@ function rendreSieges() {
       const sc = document.createElement("div"); sc.className = "score";
       sc.textContent = h.cards.length && !h.ramassee ? E.handTotal(h.cards) + (h.doubled ? " ×2" : "") : "";
       const rs = document.createElement("div"); rs.className = "issue " + (ISSUE[h.result] || "");
-      rs.textContent = h.result || "";
+      rs.textContent = h.result || ""; rs.style.setProperty("--rang", si);   // la pastille surgit quand ce siège est payé
       // La pastille bascule à sa PREMIÈRE apparition seulement : rendreSieges()
       // reconstruit tout, une pastille déjà vue ne doit pas resauter.
       if (h.result && !h.issueVue) { rs.classList.add("neuve"); h.issueVue = true; }
@@ -707,10 +757,14 @@ function tonTour() {
     const tc = sys().equilibre ? CT.compteVrai(T.rc, T.sabot.length / 52) : null;
     const { a, ecart } = actionAvecEcart(h.cards, T.croupier[0], st, h, tc);
     $("conseil").innerHTML = `Stratégie : <b>${MOT[a]}</b>` + (ecart !== null ? ` <span class="muet">— écart au compte, à partir de ${sgn(ecart)}</span>` : "");
+    // Le coup conseillé prend l'or du bouton principal (style.css, .conseille).
+    const id = { H: "bTire", S: "bReste", D: "bDouble", P: "bSepare", U: "bAbandon" }[a];
+    document.querySelectorAll("#coups .btn").forEach(b => b.classList.toggle("conseille", b.id === id));
   } else $("conseil").textContent = "";
 }
 async function mainSuivante() {
   const si = T.sieges.indexOf(T.toi); boutons({}); $("conseil").textContent = "";
+  document.querySelectorAll("#coups .btn.conseille").forEach(b => b.classList.remove("conseille"));
   if (T.actif.main + 1 < T.toi.mains.length) { T.actif = { siege: si, main: T.actif.main + 1 }; marquerActif();
     emettre("tour", { siege: si, main: T.actif.main, toi: true }); return tonTour(); }
   T.occupe = true; await jouerSieges(si + 1);

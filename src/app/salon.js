@@ -94,6 +94,17 @@ function rendreSalon() {
     DB.table = id; garder(); nouveauSabot(); aller("table");
     bandeau("Tu t'assieds à « " + tableCourante().nom + " »");
   });
+  // Celui qui REVIENT a sa table sous le titre du héros : « Reprendre — Le Boulevard · tapis 975 »
+  // (les critiques, 05/09 : un joueur qui revient veut sa table, pas un slogan — et les tables
+  // étaient sous la ligne de flottaison). Le héros se fait plus court (body.revient, style.css).
+  const rep = $("hallReprendre");
+  if (rep) {
+    const t = tableCourante(), revient = entame || DB.tapis !== 1000 || DB.rachats > 0 || (DB.sessions || []).length > 0;
+    document.body.classList.toggle("revient", revient); rep.hidden = !revient;
+    const tapis = String(Math.round(DB.tapis)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
+    rep.innerHTML = `${entame ? "Reprendre ta place" : "Reprendre"} — <b>${echap(t.nom)}</b><small>tapis ${tapis}</small>`;
+    rep.onclick = () => { if (!sabotEntame()) nouveauSabot(); aller("table"); bandeau("Tu reprends ta place à « " + t.nom + " »"); };
+  }
   boite.querySelectorAll("[data-pourquoi]").forEach(b => b.onclick = () => {
     const t = DONNEES.catalogue.find(x => x.id === b.dataset.pourquoi), d = DONNEES.tables[t.id];
     ouvrirModale(`<span class="grave">${echap(t.lieu)}</span><h2 style="margin:4px 0 8px">${echap(t.nom)}</h2>

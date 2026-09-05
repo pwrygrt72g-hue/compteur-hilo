@@ -210,18 +210,26 @@ $("son").onclick = () => { DB.son = !DB.son; garder(); rendreSon(); if (DB.son) 
 $("prenom").value = DB.prenom;
 $("prenom").oninput = () => { DB.prenom = $("prenom").value; garder(); rendreSalut(); };
 // Le hall salue par le prénom : « Bonsoir, Léo. » avant l'heure de fermeture, jamais un « Bonjour » à minuit.
-// Sans prénom, la salutation POSE la question — c'est elle qu'on clique pour répondre : le champ
-// n'apparaît qu'à ce moment-là (le 05/09, un formulaire « Ton prénom » attendait sous le titre).
+// Sans prénom, la salutation est suivie du CHAMP lui-même — « Bonsoir. [Ton prénom] » : un vrai
+// champ, pas un pointillé qui n'était ni un champ ni un bouton (les critiques, 05/09). Une fois
+// répondu, la salutation redevient le bouton qui rouvre le champ (« modifier »).
+let HALL_EDITE = false;
 function rendreSalut() {
   const e = $("hallSalut"); if (!e) return;
   const p = prenom(), h = new Date().getHours(), bon = h >= 18 || h < 5 ? "Bonsoir" : "Bonjour";
-  e.textContent = p ? bon + ", " + p + "." : bon + ". Ton prénom ?";
+  e.textContent = p ? bon + ", " + p + "." : bon + ".";
+  const c = $("hallSalutChamp"); if (c) c.textContent = bon + ".";
+  if (!$("hallQui")) return;
+  const champ = HALL_EDITE || !p;
+  $("hallPrenom").hidden = !champ; $("hallQui").hidden = champ;
+  $("hallQui").setAttribute("aria-expanded", champ ? "true" : "false");
 }
 if ($("hallQui")) {
-  const montrer = on => { $("hallPrenom").hidden = !on; $("hallQui").setAttribute("aria-expanded", on ? "true" : "false"); if (on) { $("prenom").focus(); $("prenom").select(); } };
-  $("hallQui").onclick = () => montrer($("hallPrenom").hidden);
-  $("prenom").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); montrer(false); $("hallQui").focus(); } });
-  $("prenom").addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== $("prenom")) montrer(false); }, 120));
+  const montrer = on => { HALL_EDITE = on; rendreSalut(); if (on) { $("prenom").focus(); $("prenom").select(); } else if (prenom()) $("hallQui").focus(); };
+  $("hallQui").onclick = () => montrer(true);
+  $("prenom").addEventListener("focus", () => { HALL_EDITE = true; });
+  $("prenom").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); montrer(false); } });
+  $("prenom").addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== $("prenom")) { HALL_EDITE = false; rendreSalut(); } }, 120));
 }
 
 $("sys").innerHTML = Object.entries(DONNEES.systemes).map(([k, s]) => `<option value="${k}">${s.nom}</option>`).join("");

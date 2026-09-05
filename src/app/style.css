@@ -37,6 +37,10 @@
   --t-cadran:64px; --t-verdict:96px;
 
   --gap:16px; --r:14px;
+  /* LE bouton primaire : un seul or, le même dans les deux thèmes (mesuré le 05/09 : douze ors
+     distincts dans cette feuille, et « Commencer » sortait BRUN en thème clair pendant que
+     « Voir les tables » restait doré). L'encre #1A1206 fait 4,9:1 sur le bas du dégradé. */
+  --btn-or:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); --btn-encre:#1A1206;
   --ressort:cubic-bezier(.22,.72,.24,1);
   --sec:cubic-bezier(.3,0,.2,1);
 }
@@ -194,25 +198,34 @@ main{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:var(--gap) 
 @keyframes paraitre{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
 /* ── Contrôles ─────────────────────────────────────────────────────── */
-.btn{background:var(--laiton);color:var(--encre);border-radius:10px;padding:11px 18px;
+.btn{background:var(--btn-or);color:var(--btn-encre);border-radius:10px;padding:11px 18px;
   font-weight:600;font-size:var(--t-fort);transition:filter .15s,transform .08s;display:inline-flex;
-  align-items:center;gap:8px;justify-content:center}
+  align-items:center;gap:8px;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 8px 18px -10px rgba(0,0,0,.7)}
 .btn:hover{filter:brightness(1.08)}
 .btn:active{transform:scale(.975)}
-.btn.creux{background:transparent;color:var(--os);border:1px solid var(--bord)}
+.btn.creux{background:transparent;color:var(--os);border:1px solid var(--bord);box-shadow:none}
 .btn.creux:hover{border-color:var(--laiton);filter:none}
 .btn[disabled]{opacity:.42;cursor:not-allowed;transform:none;filter:none}
 .btn kbd{font-family:"Martian Mono",monospace;font-size:10px;opacity:.6}
 .rang-btn{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
-label.ch{display:flex;flex-direction:column;gap:5px}
-label.ch.ligne{flex-direction:row;align-items:center;gap:8px}
+label.ch{display:flex;flex-direction:column;gap:6px}
+label.ch.ligne{flex-direction:row;align-items:center;gap:8px;align-self:flex-end;min-height:44px}
 select,input[type=text],input[type=number]{background:var(--relief);border:1px solid var(--bord);
   color:var(--os);padding:8px 10px;border-radius:9px;font-family:"Martian Mono",monospace;font-size:var(--t-petit)}
 input[type=range]{accent-color:var(--laiton);width:170px}
-.champs{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-end}
+/* Chaque champ occupe la MÊME boîte : libellé en haut, contrôle de 44 px en bas. Mesuré le
+   05/09 : alignés par le bas, le curseur (20 px) faisait descendre son libellé de 23 px sous
+   la ligne des autres — une ligne de libellés brisée au milieu d'une rangée de six. */
+label.ch select, label.ch input[type=text], label.ch input[type=number]{min-height:44px}
+label.ch input[type=range]{height:44px;margin:0}
+.champs{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-start}
+.champs > .btn, .champs > p{align-self:center}
 .onglets{display:inline-flex;border:1px solid var(--bord);border-radius:999px;padding:3px;gap:2px;margin-bottom:14px}
 .onglets button{padding:7px 15px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint)}
-.onglets button[aria-selected="true"]{background:var(--ardoise);color:var(--os);font-weight:600}
+/* L'onglet actif se voit dans les DEUX thèmes : à 6 % d'opacité (mesuré le 05/09 en clair) le
+   seul indice était la graisse. */
+.onglets button[aria-selected="true"]{background:color-mix(in oklab, var(--os) 12%, transparent);color:var(--os);font-weight:600;
+  box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--filet) 45%, transparent)}
 
 /* ══════════════════════════════════════════════════════════════════════
    LE HALL — le menu est un casino
@@ -223,20 +236,33 @@ input[type=range]{accent-color:var(--laiton);width:170px}
    titres de salle, le filtre et les crédits suivent le thème de la page.
    ══════════════════════════════════════════════════════════════════════ */
 body.au-hall main{ max-width:none; padding:0 0 56px }
-.hall-int{ max-width:min(1400px, 100% - 2*max(var(--gap), var(--sg), var(--sd))); margin:0 auto }
+/* Le conteneur du hall, consommé par l'en-tête AUSSI : mesuré le 05/09 à 1280, la marque était à
+   x = 80 et le titre du héros à x = 20, et la marque sautait de 60 px en passant à la table. */
+.hall-int, body.au-hall .tete{ max-width:min(1400px, 100% - 2*max(var(--gap), var(--sg), var(--sd))); margin:0 auto }
+/* Le hall est TOUJOURS la nuit, quel que soit le thème de la page : en clair (mesuré le 05/09)
+   c'était une page beige avec un héros noir dedans et des cartons noirs sur fond crème. Le
+   clair reste aux écrans « papier » (exercices, réglages, à plusieurs). */
+body.au-hall{ color-scheme:dark;
+  --encre:#070D0C; --laque:#0E1817; --relief:#16221F; --os:#EDE7D9; --os-eteint:#A3AAA4;
+  --laiton:#E0A83C; --filet:#7A5F24; --bord:#6B7F75; --jade:#4FD8C0; --cinabre:#F4876C; --nacre:#F6F2E8;
+  --ardoise:rgba(255,255,255,.06); --ombre:rgba(0,0,0,.55); --halo:rgba(224,168,60,.34);
+  --trame-clair:rgba(255,255,255,.020); --trame-sombre:rgba(0,0,0,.055); --cuir:#241812 }
 
 /* ── Le héros : la photo bord à bord, le titre posé dessus ─────────────── */
 /* Un tiers de l'écran, pas 92 % (mesuré le 05/09 : 586 px sur 800 pour répéter le nom de
    l'en-tête, les neuf tables sous le pli). Le titre est la promesse, le prénom un clic. */
 .hall-heros{ position:relative; isolation:isolate; overflow:hidden; color:#F6F2E8; background:#070D0C;
-  min-height:clamp(340px, 50vh, 560px); display:flex; align-items:flex-end;
+  min-height:clamp(320px, 44vh, 520px); display:flex; align-items:flex-end;
   padding:clamp(36px,5vh,56px) 0 clamp(28px,4vh,44px) }
-.hall-heros>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 62%; z-index:-2;
+/* La tour est poussée à DROITE du titre (38 % au lieu du centre) : mesuré le 05/09, le « é. » du
+   titre traversait sa dentelle éclairée. */
+.hall-heros>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:38% 62%; z-index:-2;
   filter:brightness(.7) saturate(1.05) }
-/* Vignette, puis le bas qui s'assombrit : le titre et le prénom se lisent sur toute photo. */
+/* Vignette, un voile LATÉRAL sous le texte (il est calé à gauche), puis le bas qui s'assombrit. */
 .hall-heros::after{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
   background:
     radial-gradient(130% 95% at 50% 38%, transparent 42%, rgba(0,0,0,.55) 100%),
+    linear-gradient(90deg, rgba(7,13,12,.58) 0 28%, transparent 58%),
     linear-gradient(180deg, rgba(7,13,12,.42) 0%, rgba(7,13,12,0) 26%, rgba(7,13,12,.5) 62%, rgba(7,13,12,.86) 100%) }
 .hall-heros-int{ width:100%; position:relative; z-index:1; text-shadow:0 1px 2px rgba(0,0,0,.6), 0 8px 30px rgba(0,0,0,.45) }
 .hall-kicker{ color:rgba(246,242,232,.74) }
@@ -253,13 +279,25 @@ body.au-hall main{ max-width:none; padding:0 0 56px }
 .hall-qui:hover .hall-crayon, .hall-qui:focus-visible .hall-crayon, .hall-qui[aria-expanded="true"] .hall-crayon{ opacity:1 }
 .hall-qui:hover .hall-salut{ border-bottom-style:solid }
 .hall-qui:focus-visible{ outline:2px solid #F3C866; outline-offset:2px }
+.visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap }
 .hall-prenom{ display:flex; align-items:center; gap:10px; animation:bascule 160ms var(--sec) }
 .hall-prenom[hidden]{ display:none }
+/* Sans prénom, la salutation est suivie du CHAMP lui-même — « Bonsoir. [Ton prénom] » — pas d'un
+   pointillé qui n'est ni un champ ni un bouton (les critiques, 05/09). Une fois répondu, la
+   salutation redevient le bouton qui rouvre le champ. */
+.hall-prenom .hall-salut{ color:#F3C866; font-family:"Instrument Serif",Georgia,serif; font-size:clamp(20px, 1.6vw, 26px); line-height:1.1 }
+/* Celui qui REVIENT a sa table : le héros se fait plus court et la ligne « Reprendre » l'attend. */
+.hall-reprendre{ min-height:44px; padding:0 16px; border-color:rgba(243,200,102,.5); color:#F6F2E8; font-family:"Instrument Serif",Georgia,serif; font-size:clamp(18px, 1.35vw, 22px); font-weight:400;
+  background:rgba(0,0,0,.34); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px) }
+.hall-reprendre b{ color:#F3C866; font-weight:400 }
+.hall-reprendre small{ font-family:"Martian Mono",monospace; font-size:.68em; color:rgba(246,242,232,.72); margin-left:8px }
+.hall-reprendre:hover{ border-color:#F3C866; background:rgba(0,0,0,.5) }
+.hall-reprendre[hidden]{ display:none }
+body.au-hall.revient .hall-heros{ min-height:clamp(280px, 36vh, 400px) }
 .hall-entree #prenom{ min-width:160px; width:180px; min-height:44px; background:rgba(0,0,0,.42); border-color:rgba(255,255,255,.3); color:#F6F2E8;
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px) }
 .hall-entree #prenom::placeholder{ color:rgba(246,242,232,.45) }
-.hall-entree .btn{ min-height:48px; padding:0 22px; background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 10px 22px -10px rgba(0,0,0,.9) }
+.hall-entree .btn{ min-height:48px; padding:0 22px; box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 10px 22px -10px rgba(0,0,0,.9) }
 /* L'éventail : cinq cartes tirées au hasard, posées sur le comptoir à droite du titre. */
 .eventail{ position:absolute; right:clamp(16px, 7vw, 140px); bottom:clamp(28px, 6vh, 72px); width:340px; height:240px; z-index:1; pointer-events:none;
   filter:drop-shadow(0 18px 24px rgba(0,0,0,.6)) }
@@ -271,6 +309,10 @@ body.au-hall main{ max-width:none; padding:0 0 56px }
 .hall-entete{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px }
 .hall-entete h2{ font-size:clamp(30px, 2.6vw, 40px); margin-top:4px }
 .hall-entete .onglets{ margin-bottom:4px }
+/* Trois portes par rangée, à 1280 comme à 1920. Essayé à quatre (les critiques, 05/09) : à
+   288 px de large (216 de haut) la carte perdait son nom et son lieu, et à 336 px (1920) le
+   bloc du bas remontait sur le tampon « À fuir » et le bouton « Pourquoi ? ». Ce qui ramène
+   les tables au-dessus du pli, c'est le héros plus court — et « Reprendre » pour qui revient. */
 .salon, .hall-grille{ display:grid; gap:18px; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)) }
 .hall-grille.bureau{ grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)) }
 .hall-systeme{ align-self:stretch }
@@ -289,9 +331,14 @@ div.salle-carte{ cursor:default }
 .salle-carte>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:var(--pos, 50% 50%); z-index:-2; transform:scale(1.03);
   filter:brightness(.78) saturate(1.05); transition:transform .7s var(--sec), filter .3s }
 .salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo, .salle-carte:focus-visible>.photo{ transform:scale(1.08); filter:brightness(.98) saturate(1.12) }
+/* Le voile ne tombe plus à 6 % à 30 % de hauteur — c'est là que vit le kicker de lieu, sur
+   l'enseigne « planet » et sur « QUEENS » (mesuré le 05/09 : 3,2:1 en 1920 pour du 11 px). */
 .salle-carte>.voile{ position:absolute; inset:0; z-index:-1; pointer-events:none;
-  background:linear-gradient(180deg, rgba(7,13,12,.5) 0%, rgba(7,13,12,.06) 30%, rgba(7,13,12,.44) 54%, rgba(7,13,12,.94) 100%) }
+  background:linear-gradient(180deg, rgba(7,13,12,.62) 0%, rgba(7,13,12,.22) 30%, rgba(7,13,12,.5) 54%, rgba(7,13,12,.94) 100%) }
 .salle-carte .bas, .salle-carte .haut{ position:absolute; left:20px; right:20px; display:flex; text-shadow:0 1px 2px rgba(0,0,0,.7) }
+/* Le bloc bas ne doit JAMAIS atteindre la ligne du haut (mesuré le 05/09 dans la vignette du salon
+   privé : « LAS VEGAS STRIP » écrasait « TABLE 1 » — réglé dans .mp-table, plus bas). Pas de
+   découpe par max-height : essayée, elle mangeait le NOM de la table, le plus important. */
 .salle-carte .bas{ bottom:16px; flex-direction:column; gap:5px }
 /* L'appel, au coin : une porte qu'on survole dit ce qu'elle fait. */
 .salle-carte .asseoir-cta{ position:absolute; right:18px; bottom:16px; z-index:1; font-size:var(--t-petit); font-weight:600; letter-spacing:.02em; color:#F3C866;
@@ -299,9 +346,12 @@ div.salle-carte{ cursor:default }
 .salle-carte:hover .asseoir-cta, .salle-porte:hover .asseoir-cta, .salle-carte:focus-visible .asseoir-cta{ opacity:1; transform:none }
 @media (min-width:1000px){ .salle-carte .bas{ right:118px } }
 .salle-carte .haut{ top:14px; right:96px; align-items:center; gap:10px }
-.salle-carte .lieu, .salle-carte .num{ font-size:var(--t-micro); letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:rgba(246,242,232,.74) }
+.salle-carte .lieu, .salle-carte .num{ font-size:var(--t-micro); letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:rgba(246,242,232,.92); text-shadow:0 1px 3px rgba(0,0,0,.9) }
 .salle-carte .nom{ font-family:"Instrument Serif",Georgia,serif; font-size:clamp(26px, 2.1vw, 34px); line-height:1.02; text-wrap:balance }
-.salle-carte .sous{ font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:clamp(15px, 1.1vw, 17px); line-height:1.3; color:rgba(246,242,232,.9); max-width:40ch; text-wrap:pretty }
+/* Deux lignes réservées partout : dans une même rangée, les noms de tables sont sur la même ligne
+   (mesuré le 05/09 : « Le Front de Mer » 30 px plus haut parce que sa citation en prenait deux). */
+.salle-carte .sous{ font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:clamp(15px, 1.1vw, 17px); line-height:1.3; color:rgba(246,242,232,.9); max-width:40ch; text-wrap:pretty;
+  min-height:2.6em; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
 .salle-carte .regles{ margin-top:2px }
 .salle-carte .regle{ border-color:rgba(255,255,255,.32); color:rgba(246,242,232,.92); background:rgba(0,0,0,.36);
   backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px) }
@@ -311,7 +361,7 @@ div.salle-carte{ cursor:default }
 .salle-carte .chiffres b{ font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:clamp(18px, 1.3vw, 21px); color:#F6F2E8; margin-right:6px; letter-spacing:0 }
 .salle-carte .etat, .salle-carte .tampon{ font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; font-weight:700;
   padding:5px 10px; border-radius:999px; white-space:nowrap; text-shadow:none }
-.salle-carte .etat{ background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206; box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 6px 14px -8px #000 }
+.salle-carte .etat{ background:var(--btn-or); color:var(--btn-encre); box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 6px 14px -8px #000 }
 .salle-carte .tampon{ background:rgba(179,63,34,.88); color:#FFF1EA; box-shadow:0 0 0 1px rgba(255,155,122,.5) }
 /* Une table brûlée : photo désaturée, tampon cinabre. Enseigner par le refus. */
 .salle-porte.brulee .salle-carte>.photo{ filter:brightness(.55) saturate(.28) }
@@ -330,9 +380,16 @@ div.salle-carte{ cursor:default }
 .salle-carte.grande .sous{ font-size:var(--t-corps) }
 /* La table où l'on va s'asseoir (À plusieurs) : la même porte, en panneau. À 300 px de
    large, un 16:9 fait 169 px de haut et le nom montait sur le numéro : on la fait en 4:3. */
+/* …mesuré le 05/09 : en 4:3 dans 300 px (225 px de haut), le bloc bas (kicker, nom, citation
+   sur deux lignes, puces, chiffres sur deux lignes) faisait 230 px et remontait SOUS la ligne
+   du haut. La vignette a sa hauteur à elle, la citation n'y apporte rien, et rien n'y réserve
+   la place d'un appel « S'asseoir ». */
 .mp-table .salle-porte{ margin:0 }
-.mp-table .salle-carte{ aspect-ratio:4/3 }
-.mp-table .salle-carte .haut{ right:20px }
+.mp-table .salle-carte{ aspect-ratio:auto; min-height:300px }
+.mp-table .salle-carte .haut{ right:20px; gap:8px }
+.mp-table .salle-carte .bas{ right:20px }
+.mp-table .salle-carte .sous{ display:none }
+.mp-table .salle-carte .chiffres{ gap:2px 14px; margin-top:6px }
 
 /* ── Les crédits : discrets, présents ──────────────────────────────────── */
 .hall-credits{ margin-top:clamp(40px, 6vh, 72px); padding-top:18px; border-top:1px solid var(--ardoise);
@@ -473,7 +530,7 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="cercle"]{ --lueur:rgba(212,180,106,.24) }
 #v-table[data-lieu="cercle"] .salle .decor{ filter:blur(3px) brightness(.46) saturate(.95) }
 /* Le Salon Privé : cuir capitonné et or, pas un feutre gris dans le noir. */
-#v-table[data-lieu="salonprive"]{ --rail-liseret:#E6C773; --feutre:#2A2D31; --feutre-clair:#3B4046; --dos-carte:#2E2416 }
+#v-table[data-lieu="salonprive"]{ --rail-liseret:#E6C773; --feutre:#1E2226; --feutre-clair:#2E3338; --dos-carte:#2E2416 }
 #v-table[data-lieu="salonprive"] .tapis{
   background:
     radial-gradient(circle at 14px 14px, rgba(255,255,255,.22) 0 1.6px, transparent 2.8px) 0 0 / 28px 28px,
@@ -496,7 +553,12 @@ div.salle-carte{ cursor:default }
    blanches : une nappe verte sur un tableau de bord. La SCÈNE et la BARRE DES COUPS
    restent un casino la nuit dans les deux thèmes ; seule la page autour (en-tête,
    barre du haut, modales) s'éclaircit. Les encres de la scène sont les siennes. */
-#v-table .salle, #v-table .zone-actions{ color-scheme:dark }
+/* …et la BARRE DU HAUT aussi (mesuré le 05/09 en clair : barre crème, scène sombre, barre des
+   coups noire — un sandwich). Le poste de jeu est UN objet sombre posé sur la page. */
+#v-table{ color-scheme:dark }
+body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE7D9; --os-eteint:#A3AAA4; --bord:#6B7F75; --laiton:#E2B857; --filet:#7A5F24;
+  --ardoise:rgba(255,255,255,.06); --ombre:rgba(0,0,0,.55); --jade:#4FD8C0; --cinabre:#F4876C;
+  --trame-clair:rgba(255,255,255,.02); --trame-sombre:rgba(0,0,0,.055) }
 #v-table .zone-actions .bulle{ background:#FBF7EC; color:#1A1409; border-color:#C9A227 }
 #v-table .zone-actions .bulle .de{ color:#8A6A1E }
 #v-table .zone-actions .bulle .opts button{ border-color:rgba(26,20,9,.35); color:#1A1409 }
@@ -521,8 +583,10 @@ div.salle-carte{ cursor:default }
   border:1.5px solid var(--rail-liseret); opacity:.72; box-shadow:0 0 6px -2px var(--rail-liseret) }
 /* Trois sièges (le Salon Privé) sur un plateau dessiné pour six : 60 % de feutre vide.
    La table se resserre sur ses joueurs. */
-#v-table[data-sieges="3"] .tapis{ width:min(100%, 1100px) }
-#v-table[data-sieges="4"] .tapis{ width:min(100%, 1320px) }
+/* …mais elle suit l'écran (mesuré le 05/09 à 1920 : bridée à 1100 px, la table faisait 57 % de la
+   largeur et la photo de la salle 43 % — on regardait la salle plus que la table). */
+#v-table[data-sieges="3"] .tapis{ width:min(100%, max(1100px, 66vw)) }
+#v-table[data-sieges="4"] .tapis{ width:min(100%, max(1320px, 78vw)) }
 .feutre{
   position:relative; height:100%; min-height:0; overflow:hidden; border-radius:inherit; z-index:2;
   background-color:var(--feutre);
@@ -539,7 +603,7 @@ div.salle-carte{ cursor:default }
 .feutre>svg.grain{ mix-blend-mode:overlay; opacity:.55 }
 .feutre>svg.lettrage{ z-index:1 }
 .feutre>svg.lettrage text{ font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:700; fill:var(--or);
-  letter-spacing:.22em; text-transform:uppercase; opacity:.88; paint-order:stroke; stroke:rgba(0,0,0,.45); stroke-width:1px;
+  letter-spacing:.22em; opacity:.88; paint-order:stroke; stroke:rgba(0,0,0,.45); stroke-width:1px;
   transition:opacity .3s }
 /* Les deux lignes du rail sont petites (12 px) : elles portent des RÈGLES (6 TO 5 =
    table imbattable, H17/S17). Mesuré à .62 d'opacité : 2,7:1 sur le vert. Le liseré
@@ -563,12 +627,14 @@ div.salle-carte{ cursor:default }
      « Toi » à 1280 × 800 (mesuré le 05/09 : pastille à 156 px, cartes à 176). */
   .feutre>.annonce{ top:calc(var(--bande-haut, calc(var(--w-croupier, 89px) * 1.4 + 40px)) + 4px) }
   .feutre>.conseil{ top:calc(var(--bande-haut, calc(var(--w-croupier, 89px) * 1.4 + 40px)) + 38px) }
-  /* L'annonce passe DEVANT et l'arc S'EFFACE : à .35 il restait un fantôme doré que la
-     pastille coupait en deux (les critiques, 05/09). Un fondu lent, pas un clignotement. */
-  .feutre.annonce-on>svg.lettrage text.grand{ opacity:0; transition:opacity .5s ease }
-  .feutre>svg.lettrage text.grand{ transition:opacity .9s ease .2s }
+  /* Un feutre imprimé ne s'efface pas (les critiques, 05/09 : le lettrage disparaissait dès
+     qu'une annonce s'affichait, et une pastille flottait au milieu de 400 px de vert nu). Sur
+     ordinateur, dès que le croupier est là (#v-table.cr-parle, posé par croupier.js), c'est LUI
+     qui annonce — dans sa bulle — et la pastille du feutre se tait. Elle reste pour la table à
+     plusieurs (reseau.js y écrit son état directement) et pour le téléphone. */
   .feutre>.annonce:not(:empty){ width:max-content; max-width:min(92%, 720px); left:50%; right:auto; transform:translateX(-50%);
-    background:rgba(0,0,0,.38); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px; padding:5px 18px }
+    background:rgba(0,0,0,.6); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px; padding:5px 18px }
+  #v-table.cr-parle:not([data-reseau]) .feutre>.annonce{ display:none }
   .sabot, .defausse{ margin-top:-10px }
   .rack{ padding-bottom:14px }   /* le bas du buste du croupier passe derrière */
 }
@@ -579,12 +645,24 @@ div.salle-carte{ cursor:default }
   .rangee-haute{ margin-top:4px; min-height:calc(var(--w-croupier, 89px) * 1.4 + 2px) }
 }
 /* Le rack de jetons, planté dans le rail devant le croupier : six tubes vus de face. */
-.rack{ position:absolute; top:-2px; left:50%; transform:translateX(-50%); z-index:5;
-  display:flex; gap:3px; padding:5px 6px 4px; border-radius:0 0 9px 9px;
+/* Mesuré le 05/09 : six rectangles de 30 × 18 px aux rayures de 2 px — un sélecteur de thème.
+   Chaque tube est maintenant une COLONNE de jetons sur la tranche, bombée en haut, le jeton de
+   devant qui dépasse du tube, et une plaque de 100 posée de travers à droite pour casser la
+   symétrie. La hauteur totale ne bouge pas (le bas du rack touche déjà les cartes du croupier). */
+.rack{ position:absolute; top:-5px; left:50%; transform:translateX(-50%); z-index:5;
+  display:flex; gap:4px; padding:8px 8px 5px; border-radius:0 0 9px 9px;
   background:linear-gradient(180deg,#1C1512,#0E0A08); box-shadow:0 6px 12px -4px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(0,0,0,.6) }
-.rack i{ width:calc(var(--w-croupier, 89px) * .34); height:calc(var(--w-croupier, 89px) * .2); border-radius:4px 4px 2px 2px;
-  background:repeating-linear-gradient(0deg, var(--c) 0 2px, rgba(0,0,0,.35) 2px 2.6px, var(--c) 2.6px 4px);
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5), inset 3px 0 4px rgba(255,255,255,.18), inset -3px 0 4px rgba(0,0,0,.4) }
+.rack i{ position:relative; width:calc(var(--w-croupier, 89px) * .34); height:calc(var(--w-croupier, 89px) * .3); border-radius:6px 6px 3px 3px / 7px 7px 3px 3px;
+  background:
+    radial-gradient(120% 100% at 50% 0, rgba(255,255,255,.28), transparent 60%),
+    linear-gradient(90deg, rgba(255,255,255,.14), transparent 35%, transparent 65%, rgba(0,0,0,.4)),
+    repeating-linear-gradient(0deg, var(--c) 0 3px, rgba(0,0,0,.45) 3px 4.2px);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.55), inset 0 -2px 3px rgba(0,0,0,.45) }
+.rack i::before{ content:""; position:absolute; top:-4px; left:8%; right:8%; height:8px; border-radius:50% 50% 0 0 / 100% 100% 0 0;
+  background:var(--c); box-shadow:inset 0 2px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.35) }
+.rack::after{ content:"100"; position:absolute; right:-16px; top:9px; width:30px; height:19px; border-radius:3px; transform:rotate(-14deg); z-index:1;
+  font-family:"Martian Mono",monospace; font-size:9px; font-weight:700; line-height:19px; text-align:center; color:#E7D9AE;
+  background:linear-gradient(180deg,#2C2C33,#111114); box-shadow:inset 0 0 0 1px rgba(231,217,174,.5), inset 0 1px 0 rgba(255,255,255,.12), 0 4px 8px -3px rgba(0,0,0,.9) }
 .rack i:nth-child(1){--c:#EDE7D9} .rack i:nth-child(2){--c:#C8252B} .rack i:nth-child(3){--c:#1E7A44}
 .rack i:nth-child(4){--c:#1A1A1D} .rack i:nth-child(5){--c:#6D3D9C} .rack i:nth-child(6){--c:#E67E22}
 
@@ -614,7 +692,10 @@ div.salle-carte{ cursor:default }
    retournée : la carte qu'on regarde toute la main reste lisible entière. */
 #dMain{ --pas:calc(var(--w, 84px) * .62) }
 #dMain .carte:first-child{ position:relative; z-index:2 }
-#dMain .carte--pivot{ z-index:1 }
+/* z-index est animable (un entier) : la permutation attend la tranche du pivot (rotateY 90°,
+   vers 210 ms d'une rotation de 420) — mesuré le 05/09, le dos rouge recouvrait le bord de la
+   carte visible 145 ms avant de tourner. */
+#dMain .carte--pivot{ z-index:1; transition:z-index 0s linear 190ms }
 #dMain .carte--pivot:not(.cachee){ z-index:3 }
 .qui{ display:flex; flex-direction:column; align-items:center; gap:2px; font-size:clamp(11px, calc(var(--w-croupier, 89px) * .12), 14px); letter-spacing:.14em;
   text-transform:uppercase; color:color-mix(in oklab, var(--ivoire) 94%, transparent); text-shadow:0 1px 2px rgba(0,0,0,.5) }
@@ -661,9 +742,20 @@ div.salle-carte{ cursor:default }
    le centre) sont calculés par cartes.js d'après la courbe réelle du feutre, pour
    que le coin extérieur de chaque siège reste sur le feutre. Un siège n'a pas de
    fond : ce n'est pas un panneau d'appli collé sur le feutre, c'est un marquage. */
+/* --surelev (posé par cartes.js selon la hauteur du feutre) soulève TON siège au-dessus de
+   l'arc des voisins : mesuré le 05/09, à cinq sièges il fallait chercher sa main — mêmes cartes,
+   même hauteur, même total, seule la bague du cercle était dorée. Tes cartes sont plus grandes
+   (cartes.js, × 1,12), ton total est en or et plus gros, et pendant la main les voisins
+   s'éteignent d'un cran. */
 .siege{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 6px 4px; border-radius:14px; min-width:126px;
-  transform:translateY(var(--lift, 0px)) rotate(var(--tilt, 0deg)) }
+  transform:translateY(calc(var(--lift, 0px) + var(--surelev, 0px))) rotate(var(--tilt, 0deg)); transition:filter .35s ease }
+.siege.toi{ --surelev:var(--surelev-toi, 0px) }
 .siege.toi .cercle{ box-shadow:0 0 0 2px var(--or) inset, 0 0 14px -4px var(--or); opacity:1 }
+.siege.toi .score{ font-size:clamp(17px, calc(var(--w-table, 84px) * .22), 23px); color:var(--or); font-weight:600 }
+#v-table[data-phase="jeu"] .siege:not(.toi):not(.actif){ filter:brightness(.88) saturate(.92) }
+/* Quand c'est à toi de jouer : un liseré d'or sur TES cartes. */
+#v-table[data-phase="jeu"] .siege.toi.actif .carte{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
+  0 0 0 2px var(--or), 0 0 18px -2px var(--or), 0 6px 10px -4px rgba(0,0,0,.5) }
 /* Mesuré le 05/09 : un grand rectangle doré PLUS un pointillé autour des cartes = deux
    cadres imbriqués, penchés par --tilt et coupés par le rail. Le siège qui joue, c'est
    son cercle qui s'allume et un plafonnier sur sa main. */
@@ -674,7 +766,13 @@ div.salle-carte{ cursor:default }
 .siege.actif .mains::before{ opacity:1 }
 /* Le siège a SA hauteur avant même la première carte (celle d'une main + son score) :
    un siège qui grandit à la donne remonterait par-dessus le lettrage doré. */
-.siege .mains{ position:relative; display:flex; gap:10px; align-items:flex-end; min-height:calc(var(--w-table, 84px) * 1.4 + 22px) }
+/* La place des cartes est réservée à leur hauteur EN JEU (carte × 1,4, plus le score et ses
+   marges), pas moins : mesuré le 05/09 à 1280 × 800, réservée à 135 px pour 146 en jeu, ta
+   boîte grandissait de 11 px à la donne — ton siège montait d'autant, et le lettrage
+   calculé pendant la mise passait sous tes cartes. Tes cartes font × 1,12 (cartes.js). */
+.siege .mains{ position:relative; display:flex; gap:10px; align-items:flex-end;
+  min-height:calc(var(--w-table, 84px) * 1.4 + 6px + 1.5 * clamp(13px, var(--w-table, 84px) * .16, 17px)) }
+.siege.toi .mains{ min-height:calc(var(--w-table, 84px) * 1.4 * var(--k-toi, 1.12) + 7px + 1.5 * clamp(17px, var(--w-table, 84px) * .22, 23px)) }
 .siege .m{ display:grid; grid-template-columns:auto auto; justify-content:center; align-items:center; gap:2px 6px }
 .siege .m .main{ grid-column:1 / -1 }
 /* Valeur de repli avant que cartes.js n'ait mesuré (dimensionnerCartes pose --w et --pas en ligne sur chaque .main). */
@@ -682,7 +780,9 @@ div.salle-carte{ cursor:default }
 .siege .score{ font-family:"Martian Mono",monospace; font-size:clamp(13px, calc(var(--w-table, 84px) * .16), 17px); color:var(--ivoire); min-height:18px; text-shadow:0 1px 2px rgba(0,0,0,.5) }
 .siege .issue{ font-size:var(--t-micro); letter-spacing:.07em; text-transform:uppercase; padding:1px 7px; border-radius:999px; font-weight:600 }
 .siege .issue:empty{ display:none }
-.siege .issue.neuve{ animation:bascule 160ms var(--sec) }
+/* La pastille surgit quand le croupier PAIE ce siège (jetons.js espace les paiements de 140 ms) :
+   --rang est posé par rendreSieges. Mesuré le 05/09 : cinq verdicts d'un coup, l'argent un par un. */
+.siege .issue.neuve{ animation:bascule 160ms var(--sec) calc(var(--rang, 0) * 140ms) backwards }
 /* Des fonds OPAQUES : sur le feutre, une teinte à 24 % donnait 2,9:1 (mesuré le 05/09
    sur « Sauté »). Ici ≥ 8:1, et la pastille se lit sur les neuf feutres. */
 .issue.g{ background:rgba(4,34,26,.92); color:#5FE0C6; box-shadow:0 0 0 1px rgba(95,224,198,.4) }
@@ -697,7 +797,7 @@ div.salle-carte{ cursor:default }
 .issue.bj{ background:var(--or); color:#1A1409 }
 /* Une vraie case de mise, à l'échelle de la carte (85 %) : la pile de jetons (56 % de la
    carte, comme un vrai jeton face à une vraie carte) se lit DEDANS. */
-.cercle{ width:clamp(54px, calc(var(--w-table, 84px) * .82), 84px); height:clamp(54px, calc(var(--w-table, 84px) * .82), 84px); border-radius:50%; position:relative; margin-top:3px; flex:none;
+.cercle{ width:clamp(54px, calc(var(--w-table, 84px) * .82), 96px); height:clamp(54px, calc(var(--w-table, 84px) * .82), 96px); border-radius:50%; position:relative; margin-top:3px; flex:none;
   box-shadow:0 0 0 1.5px color-mix(in oklab, var(--or) 78%, transparent) inset, 0 0 10px -4px var(--or); opacity:.9 }
 .cercle::after{ content:""; position:absolute; inset:6px; border-radius:50%; border:1px solid color-mix(in oklab, var(--or) 40%, transparent) }
 /* L'appel à miser : ton cercle bat deux fois quand la mise n'est pas posée. Deux, pas l'infini. */
@@ -743,7 +843,7 @@ div.salle-carte{ cursor:default }
    LE geste de la phase de mise) ; les décisions en ivoire plein (Tirer, Rester… c'est LE
    geste de la main) ; les utilitaires à droite en filet, plus petits. Mesuré le 05/09 : le
    seul bouton doré était « Nouveau sabot », et Tirer pesait autant que « Reçu du sabot ». */
-#bDonne{ background:linear-gradient(180deg, color-mix(in oklab, var(--or) 78%, #fff), var(--or) 58%, var(--or-fonce)); color:#1A1206; font-weight:600;
+#bDonne{ background:var(--btn-or); color:var(--btn-encre); font-weight:600;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 8px 16px -8px rgba(0,0,0,.9), 0 0 0 1px rgba(0,0,0,.4) }
 /* Éteint, il est ÉTEINT — mais LISIBLE (5:1) : un pointillé dit « pose ta mise d'abord ».
    À 2,7:1 (mesuré le 05/09) on ne lisait plus ce qu'on attendait de nous. */
@@ -763,6 +863,12 @@ div.salle-carte{ cursor:default }
   box-shadow:inset 0 1px 0 #fff, 0 8px 16px -8px rgba(0,0,0,.9); backdrop-filter:none; -webkit-backdrop-filter:none }
 #coups .btn.verre:not([disabled]):hover{ background:#fff; border-color:rgba(0,0,0,.5) }
 #coups .btn.verre:not([disabled]) kbd{ opacity:.6 }
+/* « Abandon » se joue une fois sur cinquante : plus petit, en retrait, à droite du groupe. */
+#coups #bAbandon{ margin-left:6px; min-height:44px; padding:6px 12px; font-size:13px; align-self:center }
+#coups #bAbandon:not([disabled]){ background:rgba(251,247,236,.82); box-shadow:inset 0 1px 0 #fff, 0 4px 10px -6px rgba(0,0,0,.9) }
+/* Le coach allumé : le coup qu'il conseille prend l'or de « Distribuer ». */
+#coups .btn.verre.conseille:not([disabled]){ background:var(--btn-or); color:var(--btn-encre); border-color:rgba(0,0,0,.45);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 0 0 2px color-mix(in oklab, var(--or) 45%, transparent), 0 8px 16px -8px rgba(0,0,0,.9) }
 .btn.verre.mini{ min-height:clamp(46px, 3.4vw, 58px); padding:7px 12px; font-size:clamp(13px, .9vw, 15px) }
 /* Les utilitaires : un filet, 44 px de haut, un ton plus bas. Ils ne se jouent pas. */
 .rang-table .btn.verre.mini{ min-height:44px; padding:6px 12px; font-size:13px; background:transparent; color:rgba(246,241,228,.74);
@@ -817,6 +923,33 @@ div.salle-carte{ cursor:default }
 }
 
 /* ── Exercices ─────────────────────────────────────────────────────── */
+/* Mesuré le 05/09 : sept sélecteurs, un curseur et deux cases AVANT « Commencer », puis 60 % de
+   l'écran vide — un formulaire de réglages, pas un exercice. « Commencer » est dans le bandeau,
+   les réglages sont un tiroir replié (le résumé dit ce qu'il contient), et la scène — le cadre
+   où les cartes vont tomber, une carte de dos, le compteur à zéro — occupe l'espace. */
+.bandeau-salle .btn{ margin-left:auto; align-self:center; min-height:48px; padding:0 24px; flex:none; text-shadow:none }
+details.reglages{ margin-bottom:12px }
+details.reglages > summary{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:12px; min-height:44px; padding:0 16px;
+  border-radius:var(--r); border:1px solid var(--bord); color:var(--os-eteint); font-size:var(--t-petit) }
+details.reglages > summary::-webkit-details-marker{ display:none }
+details.reglages > summary::before{ content:"›"; font-size:18px; color:var(--laiton); transition:transform .2s; line-height:1 }
+details.reglages[open] > summary::before{ transform:rotate(90deg) }
+details.reglages > summary b{ color:var(--os); font-weight:600 }
+details.reglages > summary:hover{ border-color:var(--laiton) }
+details.reglages[open] > summary{ border-radius:var(--r) var(--r) 0 0; border-bottom-color:transparent }
+details.reglages > .laque{ border-radius:0 0 var(--r) var(--r) }
+#v-exercices:has(#exReglages[hidden]) #eDemarrer, #v-exercices:has(#exReglages[hidden]) #exScene{ display:none }
+.exo-scene{ min-height:min(52vh, 520px); display:grid; place-items:center; align-content:center; gap:14px; text-align:center }
+.exo-scene .exo-cadre{ display:flex; gap:18px; align-items:flex-end; justify-content:center; margin-bottom:6px }
+.exo-scene .exo-cadre .carte{ box-shadow:0 14px 30px -14px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.08) }
+.exo-scene .exo-cadre .carte:nth-child(1){ rotate:-7deg; translate:10px 8px; opacity:.55 }
+.exo-scene .exo-cadre .carte:nth-child(3){ rotate:6deg; translate:-10px 8px; opacity:.55 }
+.exo-scene .exo-compte .grave{ margin-bottom:0 }
+.exo-scene .carte{ --w:148px }
+.exo-scene .exo-compte{ display:flex; flex-direction:column; align-items:center; gap:2px }
+.exo-scene .exo-compte b{ font-family:"Martian Mono",monospace; font-size:var(--t-cadran); font-weight:600; line-height:1 }
+.exo-scene .exo-quoi{ max-width:52ch; color:var(--os-eteint); font-size:var(--t-petit); margin:0 }
+.exo-scene .exo-quoi kbd{ font-family:"Martian Mono",monospace; font-size:11px; padding:1px 6px; border:1px solid var(--bord); border-radius:5px }
 .scene{display:grid;place-items:center;min-height:238px;padding:16px 0 4px;position:relative}
 .scene .groupe{display:flex;gap:34px}
 .scene .carte{--w:148px}
@@ -961,7 +1094,12 @@ td.U{background:var(--ardoise)}
 .couleurs{ display:flex; gap:6px; align-items:center; min-height:44px }
 .couleur{ cursor:pointer; transition:transform .14s var(--ressort), filter .2s; filter:saturate(.75) brightness(.85) }
 .couleur:hover{ transform:translateY(-3px); filter:none }
-.couleur.on{ filter:none; transform:scale(1.08); box-shadow:0 0 0 2px var(--laque), 0 0 0 4px var(--laiton) }
+.couleur.on{ filter:none; outline:3px solid var(--laiton); outline-offset:2px; border-radius:50% }
+.mp-ligne .couleurs{ margin-top:6px }
+/* « Comment ça marche ? » : un vrai bouton en filet, pas un lien gris perdu sous « Ouvrir une table ». */
+.mp-comment summary{ display:inline-flex; padding:0 14px; border:1px solid var(--bord); border-radius:10px; color:var(--os); font-size:var(--t-petit); list-style:none }
+.mp-comment summary::-webkit-details-marker{ display:none }
+.mp-comment summary:hover{ border-color:var(--laiton) }
 @media (max-width:860px){ .mp-grille{ grid-template-columns:1fr } }
 .siege .nom .pastille{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--c); margin-right:6px; vertical-align:1px;
   box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 0 6px -1px var(--c) }
@@ -1050,6 +1188,7 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 }
 
 /* ── Téléphone ─────────────────────────────────────────────────────── */
+@media (pointer:coarse){ .onglets button, .hud-limites, .regle{ min-height:44px; display:inline-flex; align-items:center } }
 @media (max-width:860px){
   .concentration{grid-template-columns:1fr}
 }
@@ -1277,23 +1416,42 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 /* ══════════════════════════════════════════════════════════════════════
    LES JETONS (lot Jetons) — le dessin est dans jetons.js, la matière ici.
    Un jeton est un SVG (viewBox 100 × 100) de largeur --w, HÉRITÉE du
-   conteneur (.jt-tas, le rack, le clone en vol). Une pile empile ses jetons
-   de --ep (8,5 % du diamètre : l'épaisseur réelle d'un jeton d'argile) ; le
-   relief du SVG, sombre en bas, fait la tranche de ceux du dessous.
+   conteneur (.jt-tas, le rack, le clone en vol). Une pile est vue en LÉGÈRE
+   PLONGÉE : la face est une ellipse (84 % de la hauteur), et sous chaque jeton
+   court sa tranche, --ep de haut, rayée de la couleur de face et des inserts —
+   c'est elle qui donne le poids. Mesuré le 05/09 avec 8,5 % vus de dessus :
+   3,4 px d'écart, « Marc 30 » se lisait comme UN jeton rouge de 5, « Sonia 75 »
+   comme trois 25 côte à côte. Une pile de six doit se lire à trois mètres.
    ══════════════════════════════════════════════════════════════════════ */
+/* --jw est la taille animée d'une pile (elle glisse quand la table change d'échelle, elle ne
+   saute pas) ; --w reste le nom lu par les jetons, qui l'héritent. Registrée pour être
+   transitionnée ; `inherits:true`, sinon les jetons ne la verraient pas. */
+@property --jw{ syntax:"<length>"; inherits:true; initial-value:40px }
 .jt{ width:var(--w,46px); aspect-ratio:1; position:relative; flex:none; display:block; border-radius:50%; padding:0; border:0; background:none; color:inherit }
 .jt .jt-svg{ position:absolute; inset:0; width:100%; height:100%; display:block; overflow:visible }
 .jt .jt-svg text{ font-family:"Martian Mono",ui-monospace,Menlo,monospace; font-weight:700; letter-spacing:-.04em }
-.jt-tas{ display:flex; align-items:flex-end; --w:40px; --ep:calc(var(--w) * .085) }
+.jt-tas{ display:flex; align-items:flex-end; --jw:40px; --w:var(--jw); --plongee:.84; --ep:calc(var(--w) * .17); transition:--jw .25s var(--sec) }
 .jt-tas > .jt-pile + .jt-pile{ margin-left:calc(var(--w) * -.32) }
-.jt-pile{ position:relative; width:var(--w); height:calc(var(--w) + (var(--n,1) - 1) * var(--ep)); flex:none }
+.jt-pile{ position:relative; width:var(--w); height:calc(var(--w) * var(--plongee) + var(--n,1) * var(--ep)); flex:none }
 /* L'ombre de contact sous la pile : une ellipse molle, pas un halo. */
-.jt-pile::before{ content:""; position:absolute; left:6%; right:6%; bottom:-3px; height:calc(var(--w) * .2); border-radius:50%;
-  background:rgba(0,0,0,.5); filter:blur(3px) }
-.jt-pile .jt{ position:absolute; left:0; bottom:calc(var(--i,0) * var(--ep)) }
+.jt-pile::before{ content:""; position:absolute; left:4%; right:4%; bottom:-3px; height:calc(var(--w) * .22); border-radius:50%;
+  background:rgba(0,0,0,.55); filter:blur(3px) }
+.jt-pile .jt{ position:absolute; left:0; bottom:calc(var(--i,0) * var(--ep)); aspect-ratio:auto; height:calc(var(--w) * var(--plongee) + var(--ep)) }
+.jt-pile .jt .jt-svg{ height:calc(var(--w) * var(--plongee)); bottom:auto }
+/* La tranche : un demi-cylindre sous la face, rayé aux couleurs du jeton (--face, --marque,
+   posées par jetonEl), assombri vers le bas. Un ::before, jamais un z-index négatif : il doit
+   passer SOUS la face de ce jeton et SUR celle du jeton d'en dessous. */
+.jt-pile .jt::before{ content:""; position:absolute; left:1.5%; right:1.5%; top:calc(var(--w) * var(--plongee) * .5); bottom:0;
+  border-radius:0 0 50% 50% / 0 0 100% 100%;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.28), transparent 22%, transparent 78%, rgba(0,0,0,.4)),
+    linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.26) 62%, rgba(0,0,0,.5)),
+    repeating-linear-gradient(90deg, var(--face,#888) 0 calc(var(--w) * .155), var(--marque,#eee) calc(var(--w) * .155) calc(var(--w) * .235));
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.6), inset 0 0 0 .5px rgba(0,0,0,.35) }
 
 /* Dans le cercle de mise : la pile est posée au centre, elle dépasse vers le haut. */
-.cercle .jt-mises{ position:absolute; left:50%; bottom:2px; transform:translateX(-50%); display:flex; align-items:flex-end; gap:3px; z-index:3 }
+.cercle .jt-mises{ position:absolute; left:50%; bottom:5px; transform:translateX(-50%); display:flex; align-items:flex-end; gap:3px; z-index:3;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.45)) }
 .cercle .jt-mises > .jt-tas + .jt-tas{ margin-left:-6px }
 .cercle.garni{ opacity:1 }
 
@@ -1325,7 +1483,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .rj-retirer:hover:not([disabled]){ border-color:color-mix(in oklab, var(--or) 60%, transparent); background:rgba(255,255,255,.12) }
 .rj-retirer[disabled]{ opacity:.32; cursor:not-allowed }
 .rj-rachat{ min-height:44px; padding:0 14px; border-radius:12px; white-space:nowrap; font-weight:600; font-size:var(--t-petit);
-  background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206;
+  background:var(--btn-or); color:var(--btn-encre);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px -8px rgba(0,0,0,.9) }
 
 /* La ligne du coach : ta mise en unités et, si le compte est affiché, sa cohérence. */
@@ -1334,6 +1492,10 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   padding:5px 13px; border-radius:999px; background:rgba(0,0,0,.5); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or) 30%, transparent);
   color:color-mix(in oklab, var(--ivoire) 82%, transparent); animation:bascule 160ms var(--sec) }
 .coach-mise:empty{ display:none }
+/* L'appel à miser : en serif, lisible, sur le rail juste devant ton cercle. */
+.coach-mise.appel{ font-family:"Instrument Serif",Georgia,serif; font-size:clamp(17px, 1.3vw, 21px); text-transform:none; letter-spacing:0;
+  padding:6px 18px; color:var(--ivoire); background:rgba(0,0,0,.62); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or) 55%, transparent) }
+.coach-mise.appel b{ font-family:"Martian Mono",monospace; font-size:.8em; color:var(--or) }
 .coach-mise b{ font-weight:600 } .coach-mise .ok{ color:#5FE0C6 } .coach-mise .ko{ color:#FF9B7A }
 
 /* Le tapis dans la barre : le net de la session en petit, à côté. */
@@ -1481,7 +1643,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
    passer sous le cercle — mesuré à 1024 × 768 : deux rangées doublaient la hauteur du siège
    et poussaient le cercle sous l'annonce. --siege-w est posé par visio.js (la largeur que
    cartes.js a donnée au siège), le cercle est la même expression qu'au-dessus. */
-.visage{ position:relative; width:clamp(56px, calc(var(--siege-w, 226px) - 20px - clamp(54px, calc(var(--w-table, 84px) * .82), 84px)), 96px);
+.visage{ position:relative; width:clamp(56px, calc(var(--siege-w, 226px) - 20px - clamp(54px, calc(var(--w-table, 84px) * .82), 96px)), 96px);
   height:auto; aspect-ratio:4 / 3; flex:none; border-radius:10px; overflow:hidden; isolation:isolate;
   background:rgba(0,0,0,.42);
   box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 42%, transparent), 0 8px 16px -10px rgba(0,0,0,.9);

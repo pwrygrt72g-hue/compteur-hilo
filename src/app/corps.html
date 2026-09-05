@@ -60,13 +60,15 @@
          les tables tombaient sous le pli). Le prénom se donne en un clic sur la salutation,
          pas dans un formulaire qu'on remplit en rentrant de soirée. -->
     <div class="hall-int hall-heros-int">
-      <span class="grave hall-kicker">Le Sabot · entraînement au comptage de cartes</span>
+      <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
       <h1 class="hall-titre">Le compte est masqué.<br>À toi de le tenir.</h1>
       <p class="hall-phrase">Neuf tables de casino, une salle d'entraînement, un salon privé — et un croupier qui te regarde miser.</p>
       <div class="hall-entree">
         <button class="btn" data-hall="lesTables">Voir les tables</button>
+        <!-- Celui qui revient veut sa table, pas un slogan : « Reprendre — Le Boulevard · tapis 975 » (salon.js). -->
+        <button class="btn creux hall-reprendre" id="hallReprendre" hidden></button>
         <button class="hall-qui" id="hallQui" aria-expanded="false" aria-controls="hallPrenom" title="Changer de prénom"><span class="hall-salut" id="hallSalut"></span><span class="hall-crayon" aria-hidden="true">modifier</span></button>
-        <label class="ch hall-prenom" id="hallPrenom" hidden><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" autocomplete="given-name"></label>
+        <label class="hall-prenom" id="hallPrenom" hidden><span class="hall-salut" id="hallSalutChamp" aria-hidden="true"></span><span class="visually-hidden">Ton prénom</span><input type="text" id="prenom" placeholder="Ton prénom" maxlength="18" autocomplete="given-name"></label>
       </div>
     </div>
     <div class="eventail" id="eventail" aria-hidden="true"></div>
@@ -266,6 +268,9 @@
   <div class="bandeau-salle" data-photo="entrainement">
     <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
     <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Exercices</h2><p>Le réflexe : les cartes défilent, tu tiens le compte.</p></div>
+    <!-- Démarrage en UN clic, avec des réglages raisonnables : le bouton est ici, à côté du titre
+         (les critiques, 05/09 : sept sélecteurs, un curseur et deux cases AVANT « Commencer »). -->
+    <button class="btn" id="eDemarrer">Commencer</button>
   </div>
   <div class="onglets" id="ongletsEx" role="tablist">
     <button role="tab" aria-selected="true" data-ex="defilement">Défilement</button>
@@ -273,7 +278,10 @@
     <button role="tab" aria-selected="false" data-ex="estimation">Estimation</button>
   </div>
 
-  <div class="laque pad" id="exReglages">
+  <!-- Les réglages sont un tiroir REPLIÉ : son résumé dit ce qu'il contient (exercices.js). -->
+  <details class="reglages" id="exReglages">
+    <summary><b id="exResume">6 jeux · 1,2 s · je clique la valeur</b><span>Réglages</span></summary>
+    <div class="laque pad">
     <div class="champs" id="opDefilement">
       <label class="ch"><span class="grave">Jeux</span><select id="eJeux"><option>1</option><option>2</option><option selected>6</option><option>8</option></select></label>
       <label class="ch"><span class="grave">Cartes</span><select id="eNb"><option value="alea" selected>Au hasard (30 à 45)</option><option>20</option><option>52</option><option>104</option><option>208</option><option value="coupe">Jusqu'à la coupe</option></select></label>
@@ -296,10 +304,14 @@
       <label class="ch"><span class="grave">Manches</span><select id="sManches"><option selected>10</option><option>20</option></select></label>
       <p class="muet" style="margin:0;align-self:center;font-size:var(--t-petit);max-width:48ch">Tu regardes le tas de défausse et tu annonces combien de jeux y sont passés. C'est ce coup d'œil qui transforme un compte courant en compte vrai. Tolérance : un demi-jeu.</p>
     </div>
-    <div class="champs" style="margin-top:14px">
-      <button class="btn" id="eDemarrer">Commencer</button>
-      <p class="muet" style="margin:0;align-self:center;font-size:var(--t-fin)">Clavier : ← −1 · ↓ ou espace 0 · → +1 · 1…5 les boutons de gauche à droite.</p>
     </div>
+  </details>
+  <!-- La SCÈNE, dès l'arrivée : le cadre où les cartes vont tomber, une carte de dos, le compteur
+       à zéro — l'espace n'est plus vide, on voit à quoi ressemble l'exercice avant de le lancer. -->
+  <div class="laque pad exo-scene" id="exScene" aria-hidden="true">
+    <div class="exo-cadre" id="exoCadre"></div>
+    <div class="exo-compte"><span class="grave">Compte courant</span><b>0</b></div>
+    <p class="exo-quoi" id="exoQuoi"></p>
   </div>
 
   <div class="laque pad" id="exPiste" hidden style="position:relative">

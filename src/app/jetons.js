@@ -33,7 +33,9 @@ const JETONS = [
   { v: 2.5,  cls: "v250",  face: "#E39FBA", marque: "#FBF2F6", texte: "#78304F" },
   { v: 5,    cls: "v5",    face: "#C4282C", marque: "#F7EFDD", texte: "#8E1B1F" },
   { v: 25,   cls: "v25",   face: "#1F7A47", marque: "#F7EFDD", texte: "#14512F" },
-  { v: 100,  cls: "v100",  face: "#1D1D22", marque: "#E7D9AE", texte: "#1D1D22" },
+  // Le 100 : face ardoise (pas noir pur), inserts IVOIRE et liseré clair — mesuré le 05/09 sur le
+  // feutre du Salon Privé (#25282B), face contre feutre ≈ 1,3:1, seul le chiffre faisait le travail.
+  { v: 100,  cls: "v100",  face: "#2A2A31", marque: "#EDE7D9", texte: "#1D1D22", bord: "rgba(246,242,232,.55)" },
   { v: 500,  cls: "v500",  face: "#6A3BA0", marque: "#F3E9F9", texte: "#4A2670" },
   { v: 1000, cls: "v1000", face: "#E27A1F", marque: "#FFF4E4", texte: "#8F4A0E" },
 ];
@@ -66,7 +68,10 @@ const jetonDe = v => JETONS.find(x => x.v === v) || JETONS[0];
 function jetonSvg(v) {
   const j = jetonDe(v), txt = v === 2.5 ? "2,50" : String(v);
   const fs = txt.length >= 4 ? 19 : txt.length === 3 ? 25 : 30;
-  return `<svg class="jt-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+  // preserveAspectRatio="none" : dans une pile la face est écrasée en ellipse (plongée) ; ailleurs
+  // la boîte est carrée et rien ne change. Le dessin vit dans <g class="jt-face"> : c'est LUI qui
+  // tourne en vol (jetons.js, vol), pas la boîte — une ellipse qui tournerait basculerait.
+  return `<svg class="jt-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><g class="jt-face">
 <circle cx="50" cy="50" r="49" fill="${j.face}"/>
 <use href="#jt-marques" fill="${j.marque}"/>
 <circle cx="50" cy="50" r="49" fill="url(#jt-bombe)"/>
@@ -76,20 +81,22 @@ function jetonSvg(v) {
 <circle cx="50" cy="50" r="29.5" fill="url(#jt-inlay)"/>
 <text x="50" y="50.5" text-anchor="middle" dominant-baseline="central" font-size="${fs}" fill="${j.texte}">${txt}</text>
 <circle cx="50" cy="50" r="49" fill="url(#jt-relief)"/>
-<circle cx="50" cy="50" r="48.6" fill="none" stroke="#000" stroke-opacity=".45" stroke-width="1"/>
-</svg>`;
+<circle cx="50" cy="50" r="48.6" fill="none" stroke="${j.bord || "#000"}" stroke-opacity="${j.bord ? "1" : ".45"}" stroke-width="1"/>
+</g></svg>`;
 }
 const JT_GABARIT = document.createElement("template");
 function jetonEl(v, w, tag) {
   const b = tag || "div";
-  JT_GABARIT.innerHTML = `<${b} class="jt ${jetonDe(v).cls}" data-v="${v}"${w ? ` style="--w:${w}px"` : ""}>${jetonSvg(v)}</${b}>`;
+  const j = jetonDe(v);
+  // --face / --marque : la tranche (style.css, .jt-pile .jt::before) est rayée à ses couleurs.
+  JT_GABARIT.innerHTML = `<${b} class="jt ${j.cls}" data-v="${v}" style="--face:${j.face};--marque:${j.marque}${w ? `;--w:${w}px` : ""}">${jetonSvg(v)}</${b}>`;
   return JT_GABARIT.content.firstElementChild.cloneNode(true);
 }
 // Une pile : le plus gros jeton en bas, coupée par huit comme un croupier coupe
 // ses piles — 12 000 au Salon Privé fait deux colonnes, pas une tour.
 function pileEl(montant, w) {
   const js = decoupe(montant).sort((a, b) => b - a), tas = document.createElement("div");
-  tas.className = "jt-tas"; tas.style.setProperty("--w", (w || 40) + "px");
+  tas.className = "jt-tas"; tas.style.setProperty("--jw", (w || 40) + "px");
   for (let i = 0; i < js.length; i += 8) {
     const col = js.slice(i, i + 8), p = document.createElement("div"); p.className = "jt-pile";
     p.style.setProperty("--n", col.length);
@@ -100,12 +107,13 @@ function pileEl(montant, w) {
 }
 
 /* ── La taille des jetons POSÉS : celle de la table (--w-table, posée par cartes.js
-   sur le plateau), 56 % d'une carte pour ta pile, 46 % pour celle d'un voisin. Le
-   clone en vol a la taille d'ARRIVÉE — mesuré le 05/09, un clone de 40 px qui
-   devenait une pile de 34 au contact faisait un accroc de 15 %. */
+   sur le plateau), 60 % d'une carte pour ta pile, 50 % pour celle d'un voisin — le
+   rapport d'un vrai jeton (39 mm) à une vraie carte (63) est 0,62. Le clone en vol a
+   la taille d'ARRIVÉE — mesuré le 05/09, un clone de 40 px qui devenait une pile de
+   34 au contact faisait un accroc de 15 %. */
 function tailleJeton(toi) {
   const w = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--w-table")) || 84;
-  return Math.round(w * (toi ? .56 : .46));
+  return Math.round(w * (toi ? .6 : .5));
 }
 const tailleRack = () => { const b = $("rjJetons").firstElementChild; return b ? (parseFloat(getComputedStyle(b).getPropertyValue("--w")) || 46) : 46; };
 
@@ -137,7 +145,10 @@ function rendre(st, engage, retour) {
 const salleRect = () => $("v-table").getBoundingClientRect();
 function centre(el) { const s = salleRect(), r = el.getBoundingClientRect(); return { x: r.left + r.width / 2 - s.left, y: r.top + r.height / 2 - s.top }; }
 const ancreCercle = si => { const e = $("cercle_" + si); return e ? centre(e) : { x: salleRect().width / 2, y: salleRect().height * .8 }; };
-const ancreCroupier = () => { const e = $("rack"); return e && e.offsetWidth ? centre(e) : { x: salleRect().width / 2, y: 30 }; };
+// Sous le rail, pas sur le rack : mesuré le 05/09, le jeton du paiement apparaissait posé SUR le
+// rack, par-dessus les tubes, avant de glisser. Il sort de dessous, et il APPARAÎT (vol, o.apparait).
+const ancreCroupier = () => { const e = $("rack"); if (!(e && e.offsetWidth)) return { x: salleRect().width / 2, y: 30 };
+  const c = centre(e); c.y += e.offsetHeight / 2 + 22; return c; };
 // Le rack fermé est sous le rail : les jetons en partent (ou y rentrent) par le bas.
 const ancreRack = v => { const b = $("rjJetons").querySelector(`[data-v="${v}"]`) || $("rjJetons"); const c = centre(b);
   if (!$("rackJetons").classList.contains("ouvert")) { const s = salleRect(); c.x = s.width / 2; c.y = s.height + 40; } return c; };
@@ -172,12 +183,15 @@ function vol(o) {
   const a = porte.animate(trajet, { duration: dur, easing: ease, fill: "forwards" });
   // Le jeton part à la taille de là où il était (le rack : 46 px) et prend celle
   // d'arrivée dans le premier tiers du vol — jamais au contact.
-  if (o.de && o.de !== w) porte.animate([{ scale: (o.de / w).toFixed(3) }, { scale: "1", offset: .3 }, { scale: "1" }], { duration: dur, easing: "ease-out", fill: "forwards" });
+  // Mesuré le 05/09 : de 46 à 25 px dans le premier tiers, le jeton « fondait » en partant. Sur 60 %.
+  if (o.de && o.de !== w) porte.animate([{ scale: (o.de / w).toFixed(3) }, { scale: "1", offset: .6 }, { scale: "1" }], { duration: dur, easing: "ease-out", fill: "forwards" });
   if (!o.glisse) {
     // Mesuré le 05/09 : rotation LINÉAIRE de 300° sous un porteur en cubic-bezier, les
     // 130 dernières ms tournaient de 125° pour 20 px de course, et la pile posée est à 0°
     // (300° ≡ −60° : le chiffre sautait au contact). Même courbe, tour complet.
-    corps.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], { duration: dur, easing: ease, fill: "forwards" });
+    // C'est la FACE (le <g> du dessin) qui tourne, pas la boîte : une pile a une tranche, et
+    // une boîte en plongée qui tourne ne tourne pas, elle bascule.
+    corps.querySelectorAll(".jt-face").forEach(f => f.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], { duration: dur, easing: ease, fill: "forwards" }));
     const porte = corps.firstElementChild;
     if (porte) porte.animate([{ transform: "translateY(0) scale(1)" }, { transform: "translateY(-26px) scale(1.1)", offset: .38 }, { transform: "translateY(0) scale(1)" }],
       { duration: dur, easing: "ease-out", fill: "forwards" });
@@ -236,6 +250,13 @@ function garnirCercles() {
   });
 }
 document.addEventListener("sabot:sieges", () => { detecterSeparations(); garnirCercles(); });
+// cartes.js vient de (re)poser --w-table : les piles déjà posées prennent la nouvelle taille
+// (--jw est transitionnée : elles glissent). Mesuré le 05/09 : rendues avant la première mesure,
+// elles gardaient la taille de repli, puis sautaient de 43 à 21 px à la mise suivante.
+document.addEventListener("sabot:echelle", () => {
+  document.querySelectorAll("#sieges .cercle .jt-tas").forEach(t => {
+    const toi = !!t.closest(".siege.toi"); t.style.setProperty("--jw", tailleJeton(toi) + "px"); });
+});
 
 /* ── Le rack : tes jetons, sur le rail devant toi ────────────────────────── */
 function rendreRack(o) {
@@ -294,10 +315,20 @@ function poserJeton(v) {
   const bouton = $("rjJetons").querySelector(`[data-v="${v}"]`);
   if (bouton && !reduit()) { const a = bouton.animate([{ transform: "translateY(0)" }, { transform: "translateY(-7px)", offset: .4 }, { transform: "none" }], { duration: 200, easing: "ease-out" }); a.finished.then(() => a.cancel(), () => {}); }
   engager(T.toi, v); J.mise = arr(J.mise + v); J.poses.push(v); T.toi.mise = T.mise = J.mise;
-  rendreRack({ differe: true }); majDonne(); appelMise();
+  // L'ÉTAT tout de suite (Distribuer s'ouvre au clic, une ligne) ; le DESSIN à l'image suivante.
+  // Le clone décolle d'abord ; le rack et l'appel du croupier se redessinent après — mesuré le
+  // 05/09 : ~55 ms immobile au rack avant la première image en vol, un hoquet. ⚠️ majDonne reste
+  // SYNCHRONE : différé lui aussi, un second clic tombé avant l'image suivante trouvait
+  // Distribuer encore fermé et reposait un jeton (la sonde, sous temps virtuel, misait 100 pour 25).
+  // Et le différé est un setTimeout, PAS un requestAnimationFrame : sous --virtual-time-budget
+  // (la sonde) seule la première image est livrée, les suivantes jamais — mesuré le 05/09 sur
+  // une page nue (raf1 = 7 ms, raf2 absent après 700 ms). Un rack qui ne se redessine jamais
+  // laisse « Retirer » fermé pour de bon.
+  majDonne();
   vol({ v, w: tailleJeton(true), de: tailleRack(), depuis, vers: ancreCercle(si), fin: () => {
     rendreMontants(); if (J.phase !== "mise") return;
     T.toi.miseVue = Math.min(J.mise, arr((T.toi.miseVue || 0) + v)); garnirCercles(); son("jetons"); } });
+  setTimeout(() => { rendreRack({ differe: true }); appelMise(); }, 0);
 }
 function retirerJeton() {
   if (J.phase !== "mise" || !J.poses.length || !T.toi) return;
@@ -341,17 +372,29 @@ function miseBot(st) {
    Mesuré le 05/09 : « pose ta mise » était un 10 px gris dans le rack, pendant que
    « Sabot neuf, mélangé, carte brûlée. » en 22 px serif dominait le feutre et que
    « Distribuer » (éteint) était le bouton le plus voyant. La hiérarchie disait
-   « lis l'annonce, clique Distribuer » ; l'état disait « clique un jeton ». */
+   « lis l'annonce, clique Distribuer » ; l'état disait « clique un jeton ».
+   …puis (les critiques, 05/09) la pastille « Pose ta mise » flottait au milieu de 400 px de
+   feutre nu, le lettrage effacé dessous. Le coach parle au-dessus des sièges, pas au centre
+   du tapis : le croupier le DIT une fois (« sabot:appel-mise » → croupier.js), ton cercle bat
+   deux fois, et la ligne du rail devant toi (#coachMise) GARDE l'appel tant que la mise
+   n'est pas posée. Sur téléphone (pas de bulle), l'annonce du feutre reste. */
 let APPEL_T = null;
+const texteAppel = l => DB.tapis >= l.min ? `Pose ta mise · minimum ${fmtJ(l.min)}` : "Plus assez de jetons pour la mise minimale";
 function appelMise() {
   clearTimeout(APPEL_T);
   if ($("v-table").dataset.reseau) return;
   const l = limites(), ok = miseValide(J.mise);
   const toi = document.querySelector("#sieges .siege.toi");
   if (toi) toi.classList.toggle("appel", J.phase === "mise" && !ok);
+  rendreCoach();
   if (J.phase !== "mise") return;
   if (ok) { if (/mise/i.test($("annonce").textContent)) annoncer(""); return; }
-  const dire = () => { if (J.phase === "mise" && !miseValide(J.mise) && !T.enJeu) annoncer(DB.tapis >= l.min ? `Pose ta mise · minimum ${fmtJ(l.min)}` : "Plus assez de jetons pour la mise minimale"); };
+  const grand = matchMedia("(min-width:1000px)").matches;
+  const dire = () => {
+    if (J.phase !== "mise" || miseValide(J.mise) || T.enJeu) return;
+    if (!grand) { annoncer(texteAppel(l)); return; }
+    if (!J.appele) { J.appele = true; emettre("appel-mise", { min: l.min, ruine: DB.tapis < l.min }); }
+  };
   // On laisse lire ce que la table vient de dire (« Sabot neuf… », le règlement), puis on appelle.
   const a = $("annonce").textContent.trim();
   if (!a || /mise/i.test(a)) dire(); else APPEL_T = setTimeout(dire, 1600);
@@ -363,7 +406,7 @@ function ouvrirMises() {
   if (T.enJeu || T.occupe) return;
   // Ce qui traînait encore sur le feutre revient en main (main interrompue, table changée).
   if (DB.engage > 0) { DB.tapis = arr(DB.tapis + DB.engage); DB.engage = 0; garder(); }
-  J.phase = "mise"; J.donnee = false; J.mise = 0; J.poses = []; J.attente = 0; T.mise = 0; T.miseDonne = 0;
+  J.phase = "mise"; J.donnee = false; J.mise = 0; J.poses = []; J.attente = 0; J.appele = false; T.mise = 0; T.miseDonne = 0;
   $("v-table").dataset.phase = "mise";
   T.sieges.forEach(st => { st.mise = 0; st.miseVue = 0; (st.mains || []).forEach(h => { h.jParti = true; }); });
   profilerSieges(); garnirCercles(); rendreRack(); majDonne(); rendreCoach(); appelMise();
@@ -417,7 +460,15 @@ function rendreMiseHud() {
 function rendreCoach() {
   const c = $("coachMise"), l = limites();
   rendreMiseHud();
-  if (J.phase === "mise" || J.phase === "attente" || !T.miseDonne || !T.montre || typeof T.tcMise !== "number") { c.innerHTML = ""; return; }
+  // Pendant la mise, la ligne du rail porte l'APPEL (cf. appelMise), en serif, devant ton cercle.
+  if (J.phase === "mise") {
+    const appel = !$("v-table").dataset.reseau && !miseValide(J.mise) && !T.enJeu && matchMedia("(min-width:1000px)").matches;
+    c.classList.toggle("appel", appel);
+    c.innerHTML = appel ? (DB.tapis >= l.min ? `Pose ta mise · <b>minimum ${fmtJ(l.min)}</b>` : "Plus assez de jetons pour la mise minimale") : "";
+    return;
+  }
+  c.classList.remove("appel");
+  if (J.phase === "attente" || !T.miseDonne || !T.montre || typeof T.tcMise !== "number") { c.innerHTML = ""; return; }
   const u = T.miseDonne / l.min, { ok, ref } = coherence(u, T.tcMise);
   c.innerHTML = `${fr1(u)} unité${u > 1 ? "s" : ""} pour un compte vrai de ${T.tcMise > 0 ? "+" : ""}${fr1(T.tcMise)} → <b class="${ok ? "ok" : "ko"}">${ok ? "cohérent" : "incohérent, la rampe dit " + ref}</b>`;
 }
@@ -490,13 +541,17 @@ document.addEventListener("sabot:main-fin", e => {
   rendre(st, engage, retour);
   if (!toi) st.dernierNet = montant;
   enfiler(() => {
-    h.jParti = true; garnirCercles();
     const ce = ancreCercle(si), croupier = ancreCroupier(), maison = ancreMaison(si);
-    if (issue === "bust" || issue === "perd") glisser(engage, ce, croupier, { fondu: true, toi, fin: () => { if (toi) rendreTapis(); } });
-    else if (issue === "abandon") { glisser(engage / 2, ce, croupier, { fondu: true, toi }); glisser(retour, ce, maison, { fondu: !toi, toi, fin: () => { if (toi) rendreTapis(); } }); }
-    else if (issue === "egalite") glisser(engage, ce, maison, { fondu: !toi, toi, fin: () => { if (toi) rendreTapis(); } });
+    // La pile et son montant quittent le cercle quand le clone qui part les REMPLACE au même
+    // endroit (perte, égalité, abandon). Sur un gain, ils restent jusqu'à ce que le paiement
+    // arrive : mesuré le 05/09, le cercle de Marc était vide et son « 30 » effacé pendant que le
+    // jeton du croupier était encore sur le rack.
+    const retirer = () => { h.jParti = true; garnirCercles(); };
+    if (issue === "bust" || issue === "perd") { retirer(); glisser(engage, ce, croupier, { fondu: true, toi, fin: () => { if (toi) rendreTapis(); } }); }
+    else if (issue === "abandon") { retirer(); glisser(engage / 2, ce, croupier, { fondu: true, toi }); glisser(retour, ce, maison, { fondu: !toi, toi, fin: () => { if (toi) rendreTapis(); } }); }
+    else if (issue === "egalite") { retirer(); glisser(engage, ce, maison, { fondu: !toi, toi, fin: () => { if (toi) rendreTapis(); } }); }
     else {  // gagne · blackjack : le croupier paie devant le cercle, puis tout part chez le joueur
-      glisser(montant, croupier, ce, { toi, fin: () => { if (toi) { lueur(si); son("jetons"); }
+      glisser(montant, croupier, ce, { toi, apparait: true, fin: () => { retirer(); if (toi) { lueur(si); son("jetons"); }
         glisser(retour, ce, maison, { fondu: !toi, toi, duree: 460, fin: () => { if (toi) rendreTapis(); } }); } });
       return;
     }
@@ -509,7 +564,7 @@ document.addEventListener("sabot:assurance-fin", e => {
   const mise = h.assurance; h.jAssurancePartie = true; rendre(st, mise, arr(mise + montant));
   enfiler(() => {
     garnirCercles(); const ce = ancreCercle(si);
-    if (gagne) glisser(montant, ancreCroupier(), ce, { fin: () => { glisser(arr(mise + montant), ce, ancreMaison(si), { fondu: !toi }); if (toi) { lueur(si); son("jetons"); } } });
+    if (gagne) glisser(montant, ancreCroupier(), ce, { apparait: true, fin: () => { glisser(arr(mise + montant), ce, ancreMaison(si), { fondu: !toi }); if (toi) { lueur(si); son("jetons"); } } });
     else glisser(mise, ce, ancreCroupier(), { fondu: true });
   });
 });

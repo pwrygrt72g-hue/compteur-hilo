@@ -248,7 +248,12 @@ const crAuRepos = () => CR.emotion === "neutre" || CR.emotion === crRepos();
 /* ── L'état ──────────────────────────────────────────────────────────── */
 const CR = { id: "", el: null, scene: null, bulle: null, mains: null, mainsEl: null, hm: {}, visible: false, salue: false, fixe: false,
   j: {}, seg: {}, an: {}, arme: false, base: "neutre", emotion: "neutre", jeton: 0, gestes: 0,
-  dernier: {}, gains: 0, pertes: 0, mises: [], derniereAlerte: -9, minuteurs: [] };
+  dernier: {}, gains: 0, pertes: 0, mises: [], derniereAlerte: -9, minuteurs: [],
+  // La tête tourne de deux angles ADDITIONNÉS : le regard (vers un siège) et le penché (une
+  // émotion). Mesuré le 05/09 : « moqueur » penchait la tête de 8°, et « agacé » puis « furieux »
+  // étaient joués tête inclinée — rien ne la redressait, sinon un minuteur qu'une émotion
+  // suivante annulait. Une émotion sans penché la redresse, sans toucher au regard.
+  regard: 0, penche: 0, annonceT: 0, bulleGenre: "" };
 const CR_SEG = { L1: 120, L2: 116 };      // épaule→coude, coude→centre de la paume
 const CR_RESSORT = "cubic-bezier(.22,.72,.24,1)";
 const CR_EPAULE = { G: [150, 148], D: [270, 148] };
@@ -546,10 +551,13 @@ function crRegarde(x, y, ms) {
   let demi = 320; document.querySelectorAll("#sieges .siege").forEach(s => { const r = s.getBoundingClientRect(); demi = Math.max(demi, Math.abs(r.left + r.width / 2 - cx)); });
   const u = Math.max(-1, Math.min(1, (x - cx) / demi));
   const v = y === undefined ? .4 : Math.max(-1, Math.min(1, (y - rep.y0) / 400));
-  crBouger("crTete", u * 7, ms || 260);
+  CR.regard = u * 7; crTeteMaj(ms || 260);
   const iris = `translate(${(u * 2.6).toFixed(2)}px,${(v * 1.3).toFixed(2)}px)`;
   ["crIrisG", "crIrisD"].forEach(k => { const e = crQ("#cr-" + k); if (e) e.style.transform = iris; });
 }
+
+// La tête va à (regard + penché) : un seul geste, quelle que soit la composante qui a changé.
+function crTeteMaj(ms) { crBouger("crTete", CR.regard + CR.penche, ms); }
 
 /* ── Le visage. Sourcils = [descente px, rotation deg], jamais symétriques ;
    la bouche est ÉCHANGÉE, jamais interpolée — une bouche qui se déforme
@@ -610,21 +618,37 @@ function crBulleEl() {
   b.innerHTML = `<b class="cr-nom"></b><span class="cr-texte"></span>`;
   salle.appendChild(b); CR.bulle = b; return b;
 }
-function crDire(texte, ms) {
+// o.genre = « annonce » (ce que dit la table : le règlement, le sabot neuf, l'assurance…) ou
+// « replique » (le personnage). Une bulle déjà ouverte se REFERME avant de changer de texte
+// (mesuré le 05/09 : « Salut. Vegas, baby. » devenait « On remet ça ? » d'un coup, largeur
+// 270 → 240 px, opacité déjà à 1).
+function crDire(texte, ms, o) {
   const b = crBulleEl(); if (!b || !texte) return;
-  const rep = crRepere();
-  if (rep) {
-    const salle = $("salle").getBoundingClientRect();
-    b.style.left = Math.round(rep.x0 + 300 * rep.s - salle.left) + "px";
-    b.style.top = Math.max(4, Math.round(rep.y0 + 8 * rep.s - salle.top)) + "px";
-  }
-  b.querySelector(".cr-nom").textContent = crNom();
-  b.querySelector(".cr-texte").textContent = texte;
-  b.classList.add("on");
-  clearTimeout(CR.bulleT); CR.bulleT = setTimeout(() => b.classList.remove("on"), ms || 1800);
+  o = o || {};
+  const poser = () => {
+    const rep = crRepere();
+    if (rep) {
+      const salle = $("salle").getBoundingClientRect();
+      b.style.left = Math.round(rep.x0 + 300 * rep.s - salle.left) + "px";
+      b.style.top = Math.max(4, Math.round(rep.y0 + 8 * rep.s - salle.top)) + "px";
+    }
+    b.querySelector(".cr-nom").textContent = crNom();
+    b.querySelector(".cr-texte").textContent = texte;
+    CR.bulleGenre = o.genre || "replique"; if (CR.bulleGenre === "annonce") CR.annonceT = performance.now();
+    b.classList.add("on");
+    clearTimeout(CR.bulleT); CR.bulleT = setTimeout(() => { b.classList.remove("on"); CR.bulleGenre = ""; }, ms || 1800);
+  };
+  clearTimeout(CR.bulleT); clearTimeout(CR.bulleR);
+  if (b.classList.contains("on") && b.querySelector(".cr-texte").textContent !== texte && !MOUVEMENT_REDUIT.on) {
+    b.classList.remove("on"); CR.bulleR = setTimeout(poser, 170);
+  } else poser();
 }
 // Fermer la bulle tout de suite : le croupier ne parle pas pendant qu'il distribue.
-function crTaire() { clearTimeout(CR.bulleT); if (CR.bulle) CR.bulle.classList.remove("on"); }
+// `genre` : ne fermer que ce genre-là (une réplique sans texte ne coupe pas une annonce en cours).
+function crTaire(genre) {
+  if (genre && CR.bulleGenre && CR.bulleGenre !== genre) return;
+  clearTimeout(CR.bulleT); clearTimeout(CR.bulleR); CR.bulleGenre = ""; if (CR.bulle) CR.bulle.classList.remove("on");
+}
 function crReplique(genre) {
   const banque = crPerso().dit[genre] || []; if (!banque.length) return "";
   let i, g = 0; do { i = alea(banque.length); } while (banque.length > 1 && i === CR.dernier[genre] && g++ < 8);
@@ -632,17 +656,45 @@ function crReplique(genre) {
 }
 
 /* ── Une émotion : un visage, une réplique, un retour à la base ─────────── */
+// o.apres : la réplique attend (ms) — le visage change tout de suite, la bulle vient après.
+// C'est ce qui laisse lire l'ANNONCE du règlement (« Croupier saute à 26… ») avant la pique.
 function crEmotion(nom, o) {
   o = o || {}; const e = EMOTIONS[nom] || EMOTIONS.neutre;
   CR.emotion = nom; const jeton = ++CR.jeton;
+  const apres = o.apres || 0, tenue = (o.tenue || 2400) + apres;
   crVisage(e);
   if (e.secoue) crSecoue();
-  if (e.penche && !MOUVEMENT_REDUIT.on) { crBouger("crTete", e.penche, 220); crMinuteur(() => { if (CR.jeton === jeton) crBouger("crTete", 0, 420); }, (o.tenue || 2400) - 300); }
+  // Le penché de CETTE émotion — zéro si elle n'en a pas : la tête se redresse, le regard reste.
+  if (!MOUVEMENT_REDUIT.on) {
+    CR.penche = e.penche || 0; crTeteMaj(e.penche ? 220 : 300);
+    if (e.penche) crMinuteur(() => { if (CR.jeton === jeton) { CR.penche = 0; crTeteMaj(420); } }, tenue - 300);
+  }
   if (e.fixe) { const toi = document.querySelector("#sieges .siege.toi"); if (toi) { const r = toi.getBoundingClientRect(); crRegarde(r.left + r.width / 2, r.top, 220); } }
-  if (o.texte) { crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400)); crArticule(e.bouche); }
-  else crTaire();
-  crMinuteur(() => { if (CR.jeton === jeton) { CR.emotion = CR.base; crVisage(EMOTIONS[CR.base] || EMOTIONS.neutre); } }, o.tenue || 2400);
+  if (o.texte) {
+    const dire = () => { if (CR.jeton !== jeton) return; crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400)); crArticule(e.bouche); };
+    if (apres) crMinuteur(dire, apres); else dire();
+  } else crTaire("replique");
+  crMinuteur(() => { if (CR.jeton === jeton) { CR.emotion = CR.base; crVisage(EMOTIONS[CR.base] || EMOTIONS.neutre); } }, tenue);
 }
+// Une réplique qui tombe pendant qu'une annonce vient d'être dite attend qu'on l'ait lue.
+const crApresAnnonce = () => (CR.bulleGenre === "annonce" && performance.now() - CR.annonceT < 1700) ? 1500 : 0;
+
+/* ── Ce que dit la TABLE, c'est le croupier qui le dit (table.js, annoncer). Sur ordinateur
+   la pastille du feutre se tait dès qu'il est là (#v-table.cr-parle, style.css) : un feutre
+   imprimé ne s'efface pas pour afficher un message. L'annonce vide ferme la bulle. */
+document.addEventListener("sabot:annonce", e => {
+  if (!CR.el || !CR.visible || !matchMedia("(min-width:1000px)").matches || $("v-table").dataset.reseau) return;
+  const t = ((e.detail || {}).texte || "").trim();
+  if (!t) { crTaire("annonce"); return; }
+  crDire(t, 3400, { genre: "annonce" });
+});
+// L'appel à miser (jetons.js) : « Vos mises, s'il vous plaît. » — une fois par phase de mise.
+document.addEventListener("sabot:appel-mise", e => {
+  if (!CR.el || !CR.visible) return;
+  const d = e.detail || {};
+  const texte = d.ruine ? "Il vous manque des jetons pour le minimum." : (crPerso().dit.mises || [])[0] || "Vos mises, s'il vous plaît.";
+  crEmotion("content", { texte, tenue: 2600, ms: 2600 });
+});
 // Pour les captures et la console : window.__croupierEmotion("moqueur")
 window.__croupierEmotion = nom => { monterCroupier(); crEmotion(nom, { texte: crReplique(nom === "content" ? "accueil" : nom) || crReplique("moqueur"), tenue: 60000, ms: 60000 }); };
 
@@ -672,7 +724,7 @@ function crLancerAmbiance() {
     const clin = crAuRepos() && !CR.arme && Math.random() < .18;
     if (clin) { crCligne(320, true); crVisage(EMOTIONS.content); crMinuteur(() => { if (crAuRepos()) crVisage(EMOTIONS[CR.base] || EMOTIONS.neutre); }, 700); }
     else crCligne(150);
-    if (crAuRepos() && !CR.arme && Math.random() < .35) crBouger("crTete", (Math.random() - .5) * 5, 600);
+    if (crAuRepos() && !CR.arme && Math.random() < .35) { CR.regard = (Math.random() - .5) * 5; crTeteMaj(600); }
     CR.ambiance = setTimeout(tic, 2600 + Math.random() * 3800);
   };
   CR.ambiance = setTimeout(tic, 1800);
@@ -742,17 +794,17 @@ document.addEventListener("sabot:main-fin", e => {
   if (d.issue === "bust" || d.issue === "perd") {
     CR.pertes++; CR.gains = 0;
     const piquant = CR.id === "lin" ? Math.min(.95, .3 + .3 * CR.pertes) : c.piquant;
-    crEmotion("moqueur", { texte: Math.random() < piquant ? crReplique("moqueur") : "", ms: 2600, tenue: 3000 });
+    crEmotion("moqueur", { texte: Math.random() < piquant ? crReplique("moqueur") : "", ms: 2600, tenue: 3000, apres: crApresAnnonce() });
   } else if (d.issue === "gagne") {
     CR.gains++; CR.pertes = 0;
-    if (CR.gains >= 3) crEmotion("furieux", { texte: crReplique("serie"), ms: 2800, tenue: 3200 });
-    else crEmotion("agace", { texte: Math.random() < c.colere ? crReplique("agace") : "", ms: 2200, tenue: 2600 });
+    if (CR.gains >= 3) crEmotion("furieux", { texte: crReplique("serie"), ms: 2800, tenue: 3200, apres: crApresAnnonce() });
+    else crEmotion("agace", { texte: Math.random() < c.colere ? crReplique("agace") : "", ms: 2200, tenue: 2600, apres: crApresAnnonce() });
   } else if (d.issue === "blackjack") {
-    CR.gains++; CR.pertes = 0; crEmotion("furieux", { texte: crReplique("furieux"), ms: 2800, tenue: 3200 });
+    CR.gains++; CR.pertes = 0; crEmotion("furieux", { texte: crReplique("furieux"), ms: 2800, tenue: 3200, apres: crApresAnnonce() });
   } else if (d.issue === "abandon") {
     crEmotion("moqueur", { texte: Math.random() < c.piquant * .7 ? crReplique("abandon") : "" });
   } else if (d.issue === "egalite") {
-    if (Math.random() < .4) crEmotion("neutre", { texte: crReplique("egalite"), tenue: 1200 });
+    if (Math.random() < .4) crEmotion("neutre", { texte: crReplique("egalite"), tenue: 1200, apres: crApresAnnonce() });
   }
 });
 document.addEventListener("sabot:manche-fin", () => {
@@ -765,6 +817,7 @@ document.addEventListener("sabot:manche-fin", () => {
 if (window.ResizeObserver && $("croupierScene")) new ResizeObserver(entries => {
   const r = entries[0].contentRect, avant = CR.visible; CR.visible = r.width > 20 && r.height > 20;
   if (CR.mainsEl) CR.mainsEl.hidden = !CR.visible;
+  $("v-table").classList.toggle("cr-parle", CR.visible);
   if (!CR.visible) return;
   if (!CR.el) monterCroupier();
   if (!CR.arme) crReposer(avant ? 200 : 1);

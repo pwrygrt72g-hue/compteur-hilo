@@ -244,11 +244,26 @@ function dimensionnerCartes() {
   // Sur un feutre bas (1024 × 768 : 369 px), 19 % ne laissait AUCUN trou entre les
   // cartes du croupier et celles des sièges (mesuré le 05/09 : 371 contre 365) — l'arc
   // doré passait sous les cartes. Le croupier prend un peu moins, l'arc retrouve sa place.
-  if (plateau && Hf > 0) plateau.style.setProperty("--w-croupier", Math.max(58, Math.min(106, Math.round(Hf * (Hf < 430 ? .17 : .19)))) + "px");
-  // Plus de bande réservée au lettrage : le plafond (62 % de la hauteur d'un siège)
-  // laisse la bande de lui-même dès qu'il y a de la place, et sur un écran bas l'arc
-  // passe sous les cartes — comme sur une vraie table.
-  const wHaut = H > 0 ? Math.max(44, (H - chrome) / 1.4) : 999;
+  const wcHf = Hf > 0 ? Math.max(58, Math.min(106, Math.round(Hf * (Hf < 430 ? .17 : .19)))) : 89;
+  // LA PLACE DES SIÈGES : la hauteur du feutre moins la rangée du croupier — jamais la hauteur
+  // de la boîte des sièges, qui dépend des cartes qu'on est en train de dimensionner. Mesuré le
+  // 05/09 à 1920 × 1080 : la boîte faisait 262 px parce que les cartes faisaient 84, et les
+  // cartes faisaient 84 parce que la boîte faisait 262 — un feutre de 627 px, des cartes de
+  // portable, 180 px de vide entre le croupier et les joueurs. Et pendant une main, la boîte
+  // grandissait avec les cartes distribuées : --w-table changeait trois fois (44 → 56 px),
+  // et les piles de mises avec elle.
+  const rangee = feutre && feutre.querySelector(".rangee-haute");
+  let Hpour = () => box.clientHeight;
+  if (rangee && Hf > 0) {
+    const fcs = getComputedStyle(feutre);
+    let pris = rangee.offsetTop + rangee.offsetHeight + (parseFloat(fcs.paddingBottom) || 0) + 2;
+    // Sur téléphone, l'annonce et le conseil sont dans le flux (sur ordinateur ils flottent).
+    ["annonce", "conseil"].forEach(id => { const e = $(id); if (e && getComputedStyle(e).position !== "absolute") pris += e.offsetHeight + 2; });
+    // La rangée du croupier suit --w-croupier (1,4 fois sa carte) : on anticipe sa hauteur pour
+    // la valeur qu'on va poser, au lieu de mesurer celle d'avant.
+    const wcAvant = parseFloat(plateau.style.getPropertyValue("--w-croupier")) || wcHf;
+    Hpour = wc => Hf - pris - (wc - wcAvant) * 1.4;
+  }
   // Un siège de moins d'un demi-pixel de trop et le dernier passe à la ligne
   // (vécu : le 5ᵉ siège sur une 2ᵉ rangée, remonté de 231 px sur l'arc).
   const partage = Math.min(300, Math.floor((L - gap * (n - 1)) / n - .5));
@@ -260,9 +275,26 @@ function dimensionnerCartes() {
   // 92 px sur l'arc) montaient au niveau de celles du croupier, et l'arc doré était pincé
   // à 8 px entre les deux rangées. Une table de casino a les joueurs SOUS le croupier.
   const plancher = n >= 5 && Hf > 0 && Hf < 520 ? 72 : 84;
-  const plafond = Math.min(100, Math.max(plancher, (H - chrome) / 1.4 * .62));
   const sBase = (pellicule ? sieges[0].clientWidth : partage) - 12;
-  const wTable = Math.max(40, Math.round(Math.min(plafond, wHaut, .62 * sBase)));
+  // Plafond 112 (et plus 100) : à 1920 × 1080 la hauteur le permet, et une table qui grandit
+  // en hauteur doit grandir avec ses objets. Plus de bande réservée au lettrage : le plafond
+  // (62 % de la hauteur d'un siège) laisse la bande de lui-même dès qu'il y a de la place.
+  const wTablePour = H => {
+    const wHaut = H > 0 ? Math.max(44, (H - chrome) / 1.4) : 999;
+    const plafond = Math.min(112, Math.max(plancher, (H - chrome) / 1.4 * .62));
+    return Math.max(40, Math.round(Math.min(plafond, wHaut, .62 * sBase)));
+  };
+  // Le croupier est ASSERVI aux joueurs : entre leur taille et 1,25 fois (mesuré le 05/09 à
+  // 1920 : une paire de 172 px chez lui contre 84 chez eux — 2:1, contre 1,4:1 à 1280). Sa
+  // rangée dépend de lui, la place des sièges dépend de sa rangée : deux passes, ça converge.
+  const asservi = wT => Math.round(Math.max(Math.min(wcHf, wT * 1.25), Math.min(wT, 106)));
+  let wTable = wTablePour(Hpour(wcHf)), wc = asservi(wTable);
+  wTable = wTablePour(Hpour(wc)); wc = asservi(wTable);
+  // TES cartes sont plus grandes (× 1,12) : à cinq sièges, il fallait chercher sa main.
+  // Pas sur un feutre bas (1024 × 768 : 401 px) — mesuré le 05/09, les 11 px de plus
+  // mangeaient la bande du lettrage, et « BLACKJACK PAYS 3 TO 2 » n'était plus dessiné.
+  // Le soulèvement et le total en or suffisent à dire laquelle est ta main.
+  const K_TOI = pellicule || Hf < 430 ? 1 : 1.12;
   sieges.forEach(s => {
     // Une largeur FIXE par siège : un siège qui passe de 126 à 133 px à sa 2ᵉ carte
     // faisait reculer tous ses voisins de 3 px (mesuré le 04/09).
@@ -271,6 +303,7 @@ function dimensionnerCartes() {
     const S = (pellicule ? s.clientWidth : partage) - 12;         // l'intérieur du siège
     const Wmain = (S - (h - 1) * 10) / h;
     const kmax = Math.max(2, ...mains.map(m => m.children.length));
+    const wSiege = s.classList.contains("toi") ? Math.round(wTable * K_TOI) : wTable;
     mains.forEach(m => {
       let w;
       if (pellicule) { m.style.removeProperty("--w"); w = parseFloat(getComputedStyle(m).getPropertyValue("--w")) || 44; }
@@ -279,12 +312,22 @@ function dimensionnerCartes() {
       // (plancher 58 px) ; si ça ne tient toujours pas, l'éventail DÉBORDE du siège plutôt
       // que d'écraser les rangs. Mesuré le 05/09 au Cotai (sept sièges, mains de quatre) :
       // à 15 px de pas, « 3 3 10 3 » et « 4 4 5 R » ne se lisaient plus.
-      else { w = Math.max(58, Math.round(Math.min(wTable, Wmain / (1 + (kmax - 1) * .34)))); m.style.setProperty("--w", w + "px"); }
+      else { w = Math.max(58, Math.round(Math.min(wSiege, Wmain / (1 + (kmax - 1) * .34)))); m.style.setProperty("--w", w + "px"); }
       const c = m.children.length, pas = c > 1 ? Math.max(.34 * w, Math.min(.44 * w, (Wmain - w) / (c - 1))) : .44 * w;
       m.style.setProperty("--pas", Math.max(8, pas).toFixed(1) + "px");
     });
   });
-  if (plateau) plateau.style.setProperty("--w-table", (pellicule ? Math.round(.62 * sBase) : wTable) + "px");
+  if (plateau) {
+    const wT = pellicule ? Math.round(.62 * sBase) : wTable;
+    plateau.style.setProperty("--w-croupier", (pellicule ? wcHf : wc) + "px");
+    plateau.style.setProperty("--k-toi", K_TOI);   // la réserve de tes cartes (style.css, .siege.toi .mains) suit
+    // Ton siège se soulève au-dessus de l'arc des voisins, autant que la hauteur le permet.
+    plateau.style.setProperty("--surelev-toi", (pellicule ? 0 : Hf >= 560 ? -12 : Hf >= 440 ? -7 : -3) + "px");
+    const avant = plateau.style.getPropertyValue("--w-table");
+    plateau.style.setProperty("--w-table", wT + "px");
+    // Les piles de jetons (jetons.js) suivent l'échelle de la table : elles ne sautent plus.
+    if (avant !== wT + "px") emettre("echelle", { wTable: wT, wCroupier: wc });
+  }
   if (!pellicule && feutre) placerSieges(box, sieges, feutre);
 }
 /* Les sièges sur l'ARC. Le rail bas est courbe : un siège du bord posé en rang
