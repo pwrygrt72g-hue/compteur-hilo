@@ -295,7 +295,7 @@ function rendreMontants() {
   $("rjMise").textContent = fmtJ(J.mise);
   rendreMiseHud();
   const u = J.mise / l.min;
-  $("rjUnites").textContent = J.mise ? `${fr1(u)} unité${u > 1 ? "s" : ""}` : (DB.tapis >= l.min ? "pose ta mise" : "—");
+  $("rjUnites").textContent = J.mise ? `${fr1(u)} × le minimum` : (DB.tapis >= l.min ? "pose ta mise" : "—");
   rendreTapis();
 }
 function rendreTapis() {
@@ -464,7 +464,9 @@ function rendreMiseHud() {
   const l = limites(), m = J.phase === "mise" ? J.mise : T.miseDonne;
   if (!m) { e.textContent = "—"; return; }
   const u = m / l.min;
-  e.textContent = fmtJ(m) + " · " + fr1(u) + " u";
+  // « 25 · 2,5 × le minimum », pas « 2,5 u » : « u » n'était expliqué nulle part sur ordinateur
+  // (rjUnites ne se voit que sur téléphone — les critiques, 05/09).
+  e.textContent = fmtJ(m) + " · " + fr1(u) + " × le min";
 }
 // La phrase du coach ne dit plus que ce que la barre ne dit pas : la COHÉRENCE de
 // la mise avec le compte vrai figé à la donne, quand le compte est affiché.
@@ -481,7 +483,16 @@ function rendreCoach() {
   c.classList.remove("appel");
   if (J.phase === "attente" || !T.miseDonne || !T.montre || typeof T.tcMise !== "number") { c.innerHTML = ""; return; }
   const u = T.miseDonne / l.min, { ok, ref } = coherence(u, T.tcMise);
-  c.innerHTML = `${fr1(u)} unité${u > 1 ? "s" : ""} pour un compte vrai de ${T.tcMise > 0 ? "+" : ""}${fr1(T.tcMise)} → <b class="${ok ? "ok" : "ko"}">${ok ? "cohérent" : "incohérent, la rampe dit " + ref}</b>`;
+  // La phrase dit D'OÙ vient le chiffre — « à la donne » — parce que le cadran « Vrai » de la barre,
+  // lui, vit en direct pendant la main : deux comptes vrais sur le même écran sans un mot, c'est une
+  // contradiction (les critiques, 05/09 : « INCOHÉRENT » en capitales rouges contre un « VRAI −0,3 »).
+  // Les dix premières mains, la ligne reste en bas de casse et sans rouge (classe .doux) : on
+  // explique, on n'accuse pas.
+  const tcTxt = (T.tcMise > 0 ? "+" : "") + fr1(T.tcMise);
+  c.classList.toggle("doux", (DB.mainsJouees || 0) < 10);
+  c.innerHTML = ok
+    ? `À la donne, compte vrai ${tcTxt} : la rampe conseillait ${ref} × le minimum, tu as misé ${fr1(u)} × → <b class="ok">cohérent</b>`
+    : `À la donne, le compte vrai était ${tcTxt} : la rampe conseillait <b>${ref} × le minimum</b> (${fmtJ(ref * l.min)}), tu as misé ${fr1(u)} × (${fmtJ(T.miseDonne)}) → <b class="ko">à revoir</b>`;
 }
 $("bMontrer").addEventListener("click", rendreCoach);
 

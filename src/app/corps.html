@@ -65,9 +65,13 @@
     <div class="hall-int hall-heros-int">
       <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
       <h1 class="hall-titre">Le compte est masqué.<br>À toi de le tenir.</h1>
-      <p class="hall-phrase">Neuf tables de casino, une salle d'entraînement, un salon privé — et un croupier qui te regarde miser.</p>
+      <!-- La phrase dit ce qu'EST le compte avant de lister les salles : un novice lisait « Le compte est
+           masqué » sans savoir de quoi on parlait (les critiques, 05/09), et la seule explication vivait
+           ~1 900 px plus bas, sous « Le bureau ». « Première fois ? » ouvre la leçon (salon.js, ouvrirLecon). -->
+      <p class="hall-phrase">Chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. Neuf tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
       <div class="hall-entree">
         <button class="btn" data-hall="lesTables">Voir les tables</button>
+        <button class="btn creux hall-apprendre" id="hallApprendre" title="Le but du jeu, les trois valeurs, dix cartes à compter — trois minutes">Première fois ? Apprendre à compter</button>
         <!-- Celui qui revient veut sa table, pas un slogan : « Reprendre — Le Boulevard · tapis 975 » (salon.js). -->
         <button class="btn creux hall-reprendre" id="hallReprendre" hidden></button>
         <button class="hall-qui" id="hallQui" aria-expanded="false" aria-controls="hallPrenom" title="Changer de prénom"><span class="hall-salut" id="hallSalut"></span><span class="hall-crayon" aria-hidden="true">modifier</span></button>
@@ -78,14 +82,21 @@
   </div>
 
   <div class="hall-int">
+    <!-- LE SYSTÈME SÉLECTIONNÉ : la légende du comptage, juste sous le héros — c'est la première chose
+         qu'un novice doit lire, pas la dernière (elle était le DERNIER bloc du hall, les critiques, 05/09). -->
+    <div class="laque pad hall-systeme" id="hallSysteme">
+      <div class="hall-systeme-nom"><span class="grave">Le système sélectionné</span><h3 id="sysNom">Hi-Lo</h3><p class="muet" id="sysNote"></p></div>
+      <div class="regles" id="sysTable" aria-label="Valeur des cartes"></div>
+      <p class="muet hall-systeme-quoi">Le <b>compte courant</b> additionne la valeur de chaque carte sortie. Le <b>compte vrai</b> le divise par les jeux qui restent : c'est lui seul qui dit si la table t'est favorable — et donc quand miser plus.</p>
+    </div>
     <!-- LES TABLES : neuf cartes-photos, rendues par salon.js (rendreSalon). -->
     <section class="hall-salle" id="lesTables" aria-labelledby="hTables">
       <div class="hall-entete">
-        <div><span class="grave">Neuf salles, neuf règlements, neuf leçons</span><h2 id="hTables">Les tables</h2></div>
+        <div><span class="grave">Neuf salles, neuf règlements — clique une table pour t'y asseoir</span><h2 id="hTables">Les tables</h2></div>
         <div class="onglets" id="filtreSalon" role="tablist" aria-label="Filtrer les tables">
           <button role="tab" aria-selected="true" data-f="tout">Toutes</button>
-          <button role="tab" aria-selected="false" data-f="battable">Battables</button>
-          <button role="tab" aria-selected="false" data-f="fuir">À fuir</button>
+          <button role="tab" aria-selected="false" data-f="battable" title="Les tables où tenir le compte rapporte">Où compter rapporte</button>
+          <button role="tab" aria-selected="false" data-f="fuir" title="Blackjack payé 6:5 ou mélangeuse continue : le compte n'y sert à rien">Où compter ne sert à rien</button>
         </div>
       </div>
       <div class="salon" id="salon"></div>
@@ -113,9 +124,10 @@
       </div>
     </section>
 
-    <!-- LE SALON PRIVÉ : une grande porte. -->
+    <!-- ENTRE AMIS : une grande porte. (« Le Salon Privé » est le nom de la TABLE 7, high limit —
+         deux écrans sous le même nom dans la même barre, les critiques, 05/09.) -->
     <section class="hall-salle" id="prive" aria-labelledby="hPrive">
-      <div class="hall-entete"><div><span class="grave">Entre amis</span><h2 id="hPrive">Le salon privé</h2></div></div>
+      <div class="hall-entete"><div><span class="grave">Sans serveur, avec vos caméras</span><h2 id="hPrive">Entre amis</h2></div></div>
       <button class="salle-carte grande" data-vue="ensemble" data-photo="prive">
         <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
         <span class="bas"><span class="lieu">Sans serveur, avec vos caméras</span><span class="nom">Jouer à plusieurs</span>
@@ -137,13 +149,6 @@
           <span class="bas"><span class="lieu">Le tiroir</span><span class="nom">Réglages</span>
             <span class="sous">Le système de comptage, le thème, les sons.</span></span>
         </button>
-        <div class="laque pad hall-systeme">
-          <span class="grave">Le système sélectionné</span>
-          <h3 id="sysNom" style="margin:4px 0 2px">Hi-Lo</h3>
-          <p class="muet" id="sysNote" style="font-size:var(--t-petit)"></p>
-          <div class="regles" id="sysTable" style="margin-top:8px"></div>
-          <p class="muet" style="font-size:var(--t-fin);margin:12px 0 0">Le <b>compte courant</b> additionne la valeur de chaque carte sortie. Le <b>compte vrai</b> le divise par les jeux qui restent : c'est lui seul qui dit si la table t'est favorable.</p>
-        </div>
       </div>
     </section>
 
@@ -162,13 +167,13 @@
   <div class="laque hud" id="hud">
     <div class="hud-table"><b id="tNom">—</b><span class="regles" id="tRegles"></span><span class="hud-limites" id="rjLimites" title="Mise minimale et maximale de la table">min 10 · max 1 000</span></div>
     <div class="hud-compte" id="hudCompte" title="Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.">
-      <span><i>Courant</i><b id="tRC">—</b></span>
-      <span><i>Vrai</i><b id="tTC">—</b></span>
-      <span><i>Jeux</i><b id="tJeux">—</b></span>
-      <span title="La mise que dit la rampe de référence, en unités"><i>Rampe</i><b id="tMise">—</b></span>
+      <span title="Compte courant : la somme des valeurs des cartes sorties depuis le mélange (+1, 0, −1 en Hi-Lo)"><i>Courant</i><b id="tRC">—</b></span>
+      <span title="Compte vrai : le compte courant divisé par les jeux qui restent — c'est lui qui dit si la table t'est favorable"><i>Vrai</i><b id="tTC">—</b></span>
+      <span title="Jeux restants dans le sabot, estimés à la carte près"><i>Jeux</i><b id="tJeux">—</b></span>
+      <span title="Rampe : la mise conseillée pour ce compte vrai, en multiples du minimum de la table"><i>Rampe</i><b id="tMise">—</b></span>
       <span class="puce-masque" aria-hidden="true">Compte masqué</span>
       <span class="solde" id="hudTapis" title="Tes jetons en main"><i>Tapis</i><b id="tTapis">1 000</b><em id="tNet" hidden></em></span>
-      <span id="hudMise" title="Ta mise réelle, et en unités du minimum"><i>Mise</i><b id="tMiseReelle">—</b></span>
+      <span id="hudMise" title="Ta mise : en jetons, et en multiples du minimum de la table"><i>Mise</i><b id="tMiseReelle">—</b></span>
     </div>
   </div>
 
@@ -198,7 +203,7 @@
         <svg class="lettrage" id="lettrage" aria-hidden="true" focusable="false"></svg>
         <div class="rangee-haute">
           <div class="defausse" id="defausse"><i></i><span class="n"><span id="defausseN">0</span></span></div>
-          <div class="croupier"><div class="main" id="dMain"></div><div class="qui">Croupier <b id="dScore">·</b></div></div>
+          <div class="croupier"><div class="main" id="dMain"></div><div class="qui">Croupier <b id="dScore">·</b><span class="saute" id="dSaute" hidden>sauté</span></div></div>
           <div class="sabot" id="sabot">312</div>
         </div>
         <p class="annonce" id="annonce"></p>
@@ -231,12 +236,12 @@
       <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
     </div>
     <div class="rang-btn" id="coups">
-      <button class="btn" id="bDonne">Distribuer<kbd>&#9166;</kbd></button>
-      <button class="btn verre" id="bTire" disabled>Tirer<kbd>T</kbd></button>
-      <button class="btn verre" id="bReste" disabled>Rester<kbd>R</kbd></button>
-      <button class="btn verre" id="bDouble" disabled>Doubler<kbd>D</kbd></button>
-      <button class="btn verre" id="bSepare" disabled>Séparer<kbd>S</kbd></button>
-      <button class="btn verre" id="bAbandon" disabled>Abandon<kbd>A</kbd></button>
+      <button class="btn" id="bDonne" title="Distribuer les cartes (Entrée)">Distribuer<kbd>&#9166;</kbd></button>
+      <button class="btn verre" id="bTire" disabled title="Tirer : une carte de plus">Tirer<kbd>T</kbd></button>
+      <button class="btn verre" id="bReste" disabled title="Rester : je garde ma main telle quelle">Rester<kbd>R</kbd></button>
+      <button class="btn verre" id="bDouble" disabled title="Doubler : je double ma mise et je reçois une seule carte, puis je reste">Doubler<kbd>D</kbd></button>
+      <button class="btn verre" id="bSepare" disabled title="Séparer : je joue deux mains à partir de ma paire, une mise sur chacune">Séparer<kbd>S</kbd></button>
+      <button class="btn verre" id="bAbandon" disabled title="Abandon : je rends la main et je récupère la moitié de ma mise">Abandon<kbd>A</kbd></button>
     </div>
     <!-- Les utilitaires de la table, à droite, en retrait : ils ne se jouent pas à chaque main.
          « Montrer le compte » et « Caméra » restent toujours à portée ; le reste vit dans un
@@ -244,19 +249,22 @@
          passaient sur une deuxième rangée et volaient 54 px au feutre). Les identifiants ne
          bougent pas : la sonde, le banc et reseau.js les cliquent tels quels. -->
     <div class="rang-table" id="rangTable">
-      <button class="btn verre mini" id="bMontrer" aria-pressed="false">Montrer le compte</button>
+      <button class="btn verre mini" id="bMontrer" aria-pressed="false" title="Afficher le compte courant, le compte vrai, les jeux restants et la rampe de mise dans la barre">Montrer le compte</button>
+      <!-- L'aide à la décision (« Stratégie : Tirer ») : allumée d'office les vingt premières mains (table.js,
+           aideActive). Elle vivait au fond du menu « Plus » — la seule chose dont un débutant a besoin. -->
+      <button class="btn verre mini" id="bAide" aria-pressed="false" title="Afficher la stratégie de base pendant ton tour">Aide à la décision</button>
       <!-- Ta caméra (visio.js) : tes amis te voient sur ton siège. Vidéo seule, JAMAIS de micro —
            on compte en silence. Mémorisé (DB.camera). Caché en solo. -->
       <button class="btn verre mini" id="bCamera" hidden aria-pressed="false" title="Ta caméra, pour que tes amis te voient sur ton siège — vidéo seule, jamais de micro">Caméra</button>
       <div class="plus" id="plusTable">
         <button class="btn verre mini plus-btn" id="bPlus" aria-expanded="false" aria-controls="plusMenu" title="Plus d'options">Plus <span class="chevron" aria-hidden="true"></span></button>
         <div class="plus-menu" id="plusMenu">
-          <button class="btn verre mini" id="bMonCompte">Mon compte</button>
-          <button class="btn verre mini" id="bRecu">Reçu du sabot</button>
-          <button class="btn verre mini" id="bReglagesTable" title="Cadence, aide à la décision, croupier">Croupier &amp; cadence</button>
+          <button class="btn verre mini" id="bMonCompte" title="Annonce ton compte courant : la table le compare au vrai">Annoncer mon compte</button>
+          <button class="btn verre mini" id="bRecu" title="Le reçu du sabot : l'empreinte scellée du mélange, vérifiable par n'importe qui">Vérifier le mélange</button>
+          <button class="btn verre mini" id="bReglagesTable" title="Rythme de la donne, rythme des voisins, choix du croupier">Cadence &amp; croupier</button>
           <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
           <button class="btn verre mini" id="bReseau" hidden>Table</button>
-          <button class="btn verre mini creux" id="bNouveauSabot" title="Jette la manche en cours et remélange">Nouveau sabot</button>
+          <button class="btn verre mini creux" id="bNouveauSabot" title="Jette la manche en cours et remélange tout le sabot">Nouveau sabot (abandonne la manche)</button>
         </div>
       </div>
     </div>
@@ -315,10 +323,15 @@
   </details>
   <!-- La SCÈNE, dès l'arrivée : le cadre où les cartes vont tomber, une carte de dos, le compteur
        à zéro — l'espace n'est plus vide, on voit à quoi ressemble l'exercice avant de le lancer. -->
-  <div class="laque pad exo-scene" id="exScene" aria-hidden="true">
-    <div class="exo-cadre" id="exoCadre"></div>
-    <div class="exo-compte"><span class="grave">Compte courant</span><b>0</b></div>
+  <div class="laque pad exo-scene" id="exScene">
+    <div class="exo-cadre" id="exoCadre" aria-hidden="true"></div>
+    <div class="exo-compte" aria-hidden="true"><span class="grave">Compte courant</span><b>0</b></div>
+    <!-- La légende du système AVANT le départ : quelle carte vaut −1, 0, +1 (exercices.js la remplit
+         depuis sys().v — les critiques, 05/09 : la consigne parlait de « 1…5 les boutons » qui n'existent
+         pas en Hi-Lo, et la légende n'apparaissait qu'une fois lancé). -->
+    <div class="regles exo-legende" id="exoLegende" aria-label="Valeur des cartes"></div>
     <p class="exo-quoi" id="exoQuoi"></p>
+    <button class="btn" id="eDemarrer2" title="Lancer l'exercice avec ces réglages">Commencer</button>
   </div>
 
   <div class="laque pad" id="exPiste" hidden style="position:relative">
@@ -482,7 +495,7 @@
   <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
   <div class="bandeau-salle" data-photo="prive">
     <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
-    <div class="bandeau-texte"><span class="grave">Le salon privé</span><h2>Jouer à plusieurs</h2><p>Une vraie table jusqu'à cinq, ou la course au comptage — le même sabot pour tout le monde.</p></div>
+    <div class="bandeau-texte"><span class="grave">Entre amis</span><h2>Jouer à plusieurs</h2><p>Une vraie table jusqu'à cinq, ou la course au comptage — le même sabot pour tout le monde.</p></div>
   </div>
   <!-- Deux façons de jouer à plusieurs : une VRAIE table de blackjack (jusqu'à cinq, des
        mises, un croupier, l'hôte tient le sabot) — et la course au comptage, le mode
@@ -553,16 +566,23 @@
     <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
     <div class="bandeau-texte"><span class="grave">Le bureau</span><h2 id="progTitre">Tes sessions</h2><p>Ton écart au compte réel, session après session.</p></div>
   </div>
+  <!-- Sans session : UN seul état vide (progres.js) — pas trois panneaux vides et un bouton
+       « Effacer » actif au-dessus de rien (les critiques, 05/09). -->
+  <div class="laque pad prog-vide" id="progVide" hidden>
+    <h2>Aucune session encore.</h2>
+    <p>Chaque exercice terminé, chaque sabot joué à la table s'inscrit ici : ton écart au compte réel, session après session.</p>
+    <div class="rang-btn"><button class="btn" data-vue="exercices">Commencer un exercice</button><button class="btn creux" data-hall="lesTables">Voir les tables</button></div>
+  </div>
   <div class="pave" id="progPave"></div>
-  <div class="laque pad" style="margin-top:12px">
+  <div class="laque pad" id="progCourbeBloc" style="margin-top:12px">
     <span class="grave">Écart au compte réel, trente dernières sessions</span>
     <canvas id="courbe" height="216"></canvas>
   </div>
-  <div class="laque pad defile" style="margin-top:12px">
+  <div class="laque pad defile" id="progJournalBloc" style="margin-top:12px">
     <span class="grave">Journal</span>
     <table class="journal" id="progJournal"></table>
   </div>
-  <div class="rang-btn" style="margin-top:14px;justify-content:flex-start"><button class="btn creux" id="progEffacer">Effacer l'historique</button></div>
+  <div class="rang-btn" id="progEffacerRang" style="margin-top:14px;justify-content:flex-start"><button class="btn creux" id="progEffacer">Effacer l'historique</button></div>
 </section>
 
 </main>

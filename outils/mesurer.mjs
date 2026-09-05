@@ -62,6 +62,14 @@ const evaluer = async expr => {
 
 await cdp("Page.enable"); await cdp("Runtime.enable");
 
+// Une mesure sur un écran POSÉ. Un jeton encore EN VOL (le rail est sous le feutre : il part de
+// y = 776 sur une fenêtre de 800) faisait dépasser le document de 27 px — un défaut « 1,04 écran »
+// qui n'existait qu'une fois sur deux, selon que la sonde tombait pendant ou après le vol (mesuré le
+// 05/09, 1280 × 800, Salon Privé). On attend que plus aucun jeton ne vole, 2,5 s au plus.
+const POSE = `new Promise(res => { const t0 = performance.now(); const tic = () => {
+  const n = document.querySelectorAll("#jetonsCalque .jt-vol").length;
+  if (!n || performance.now() - t0 > 2500) res(n); else setTimeout(tic, 80); }; tic(); })`;
+
 // La sonde : ce qui compte pour juger un écran, pas ce qui est facile à mesurer.
 const SONDE = `(() => {
   const q = s => document.querySelector(s);
@@ -81,7 +89,22 @@ const SONDE = `(() => {
     .filter(e => { const r = cible(e).getBoundingClientRect(); return r.width > 0 && (r.height < 44 || r.width < 24); })
     .map(e => { const r = cible(e).getBoundingClientRect(); return (e.id || e.className || e.tagName) + " " + Math.round(r.width) + "×" + Math.round(r.height); });
   const largeurDoc = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth);
-  return { vw, vh, doc, defile: Math.max(0, doc - vh), ecrans: +(doc / vh).toFixed(2),
+  // Ce qui dépasse EN BAS de la fenêtre (le document fait plus d'un écran) : nommé, sinon on
+  // cherche à l'aveugle. Mesuré le 05/09 : « 1,07 écran » au Salon Privé à 1024 × 768 sans savoir quoi.
+  const depasseBas = [...document.querySelectorAll("body *")].filter(e => {
+    const r = e.getBoundingClientRect();
+    return r.height > 0 && r.bottom + scrollY > vh + 2 && getComputedStyle(e).display !== "none";
+  }).slice(0, 5).map(e => { const r = e.getBoundingClientRect(); return (e.id ? "#" + e.id : e.className && typeof e.className === "string" ? "." + e.className.split(" ")[0] : e.tagName) + " " + Math.round(r.top + scrollY) + "→" + Math.round(r.bottom + scrollY); });
+  // L'écart entre les cartes du croupier et les tiennes (au Salon Privé à 1280 × 800, mesuré le 05/09 :
+  // 1 px), et le lettrage doré du feutre (« BLACKJACK PAIE 3 CONTRE 2 » n'était jamais dessiné).
+  const dm = q("#dMain"), tm = q(".siege.toi .main"), rdm = dm && dm.getBoundingClientRect(), rtm = tm && tm.getBoundingClientRect();
+  const ecartCroupier = rdm && rtm && rdm.height && rtm.height ? Math.round(rtm.top - rdm.bottom) : null;
+  const lettrage = (q("#lettrage") || {}).textContent || "";
+  // Pourquoi l'arc n'est pas là, quand il n'est pas là : la clé et la mesure du dernier rendu
+  // (table.js expose LETTRAGE) — sans elles, un feutre nu une fois sur trois ne s'explique pas.
+  const L = window.__lettrage || {}, lettrageInfo = (L.cle || "").slice(0, 60) + " " + JSON.stringify(L.mesure || null);
+  const wTable = q("#plateau") ? parseFloat(getComputedStyle(q("#plateau")).getPropertyValue("--w-table")) || null : null;
+  return { vw, vh, doc, defile: Math.max(0, doc - vh), ecrans: +(doc / vh).toFixed(2), ecartCroupier, wTable, lettrage: lettrage.replace(/\s+/g, " ").trim(), depasseBas, lettrageInfo,
     deborde: largeurDoc > vw + 1 ? dep : [], largeurDoc, hEntete: h("header"),
     yCoups: y("#coups"), hTapis: h("#plateau"), hSieges: h("#sieges"),
     bandes: { tete: h(".tete"), padHaut: q("header") ? parseFloat(getComputedStyle(q("header")).paddingTop) : null,
@@ -109,7 +132,7 @@ for (const [nom, L, H] of TAILLES) {
       await evaluer(`(document.querySelector("#sieges .siege.vide .asseoir")||{click(){}}).click()`); await dodo(500);
       await evaluer(`(() => { const r = window.__reseauEntrant; if (!r) return; for (const [id, nom, c, k] of [["jAmi1", "Sonia", "#c0392b", 2], ["jAmi2", "Karim", "#1f6f4a", 4]]) { r({ t: "salut", id, nom, couleur: c }); r({ t: "action", id, a: "asseoir", v: k, nom, couleur: c }); } })()`);
       await dodo(700); await evaluer(MISER); await dodo(400);
-      const m = await evaluer(SONDE);
+      const m = (await evaluer(POSE), await evaluer(SONDE));
       if (m && !m.erreur) rapport.push({ taille: nom, L, H, vue: v, ...m });
       await evaluer(`document.getElementById("bReseau").click()`); await dodo(200);
       await evaluer(`(document.getElementById("rsQuitter")||{click(){}}).click()`); await dodo(800);
@@ -119,8 +142,19 @@ for (const [nom, L, H] of TAILLES) {
     await dodo(v === "table" ? 900 : 350);
     // La donne exige une mise (lot Jetons) : on tape un jeton qui couvre le minimum avant de distribuer.
     if (v === "table") { await evaluer(MISER); await dodo(300); await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(2600); }
-    const m = await evaluer(SONDE);
+    const m = (await evaluer(POSE), await evaluer(SONDE));
     if (m && !m.erreur) rapport.push({ taille: nom, L, H, vue: v, ...m });
+    // Le Salon Privé (trois sièges) : la même donne, la même sonde — c'est la table où les cartes du
+    // croupier touchaient les tiennes (les critiques, 05/09). On y va par le hall, on en revient pareil.
+    if (v === "table") {
+      await evaluer(`(document.querySelector('nav [data-vue="salon"]')||{click(){}}).click()`); await dodo(300);
+      await evaluer(`(document.querySelector('#salon [data-asseoir="salonprive"]')||{click(){}}).click()`); await dodo(900);
+      await evaluer(MISER); await dodo(300); await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(2600);
+      const m3 = (await evaluer(POSE), await evaluer(SONDE));
+      if (m3 && !m3.erreur) rapport.push({ taille: nom, L, H, vue: "table3", ...m3 });
+      await evaluer(`(document.querySelector('nav [data-vue="salon"]')||{click(){}}).click()`); await dodo(300);
+      await evaluer(`(document.querySelector('#salon [data-asseoir="boulevard"]')||{click(){}}).click()`); await dodo(600);
+    }
   }
 }
 
@@ -142,11 +176,12 @@ for (const v of vues) {
 }
 const pb = rapport.filter(r => r.deborde.length);
 console.log("\nDÉBORDEMENTS HORIZONTAUX :", pb.length ? pb.map(r => `${r.L}×${r.H}/${r.vue} → ${r.deborde.join(",")}`).join(" · ") : "aucun");
-const t = rapport.filter(r => r.vue === "table" || r.vue === "reseau");
+const t = rapport.filter(r => r.vue === "table" || r.vue === "table3" || r.vue === "reseau");
 console.log("\nTABLE — hauteur d'en-tête · bas des coups · feutre · sièges (« reseau » = la table à plusieurs, avec ses vignettes)");
 for (const r of t) { const b = r.bandes;
-  console.log(`  ${(r.L + "×" + r.H).padEnd(10)}${r.vue === "reseau" ? " (à plusieurs)" : ""} entête ${String(r.hEntete).padStart(4)} px (tete ${b.tete}, pad ${b.padHaut}) · coups à y=${String(r.yCoups).padStart(5)} (fenêtre ${r.vh}) ${r.yCoups > r.vh ? "❌ HORS ÉCRAN" : "✓"} · feutre ${r.hTapis} · sièges ${r.hSieges}`);
-  console.log(`             bandes : barre ${b.barre} · salle ${b.salle} · rangée haute ${b.haute} · annonce ${b.annonce} · conseil ${b.conseil} · actions ${b.actions} · #v-table ${b.vTable} · main ${b.main}`); }
+  console.log(`  ${(r.L + "×" + r.H).padEnd(10)}${r.vue === "reseau" ? " (à plusieurs)" : r.vue === "table3" ? " (Salon Privé, 3 sièges)" : ""} entête ${String(r.hEntete).padStart(4)} px (tete ${b.tete}, pad ${b.padHaut}) · coups à y=${String(r.yCoups).padStart(5)} (fenêtre ${r.vh}) ${r.yCoups > r.vh ? "❌ HORS ÉCRAN" : "✓"} · feutre ${r.hTapis} · sièges ${r.hSieges}`);
+  console.log(`             bandes : barre ${b.barre} · salle ${b.salle} · rangée haute ${b.haute} · annonce ${b.annonce} · conseil ${b.conseil} · actions ${b.actions} · #v-table ${b.vTable} · main ${b.main}`);
+  console.log(`             croupier → ta main : ${r.ecartCroupier === null ? "—" : r.ecartCroupier + " px"} (carte ${r.wTable} px) · lettrage : ${r.lettrage ? "« " + r.lettrage.slice(0, 60) + " »" : "AUCUN"}`); }
 const cibles44 = [...new Set(rapport.flatMap(r => r.petits))];
 console.log("\nCIBLES TACTILES SOUS 44 px :", cibles44.length ? cibles44.slice(0, 10).join(" · ") : "aucune");
 
@@ -168,10 +203,15 @@ for (const r of rapport) {
   const ou = `${r.L}×${r.H}/${r.vue}`;
   exiger(r.largeurDoc <= r.vw + 1, `${ou} : la page déborde horizontalement (${r.largeurDoc} > ${r.vw}) → ${r.deborde.join(",")}`);
   exiger(r.hEntete <= 64, `${ou} : en-tête de ${r.hEntete} px (plafond 64 — une seule rangée)`);
-  if (r.vue === "table" || r.vue === "reseau") {
-    exiger(r.ecrans <= 1.03, `${ou} : la table demande ${r.ecrans} écran(s), elle doit tenir dans un`);
+  if (r.vue === "table" || r.vue === "table3" || r.vue === "reseau") {
+    exiger(r.ecrans <= 1.03, `${ou} : la table demande ${r.ecrans} écran(s), elle doit tenir dans un — dépasse : ${(r.depasseBas || []).join(", ") || "?"}`);
     exiger(r.yCoups !== null && r.yCoups <= r.vh, `${ou} : les coups sont hors écran (bas à y=${r.yCoups}, fenêtre ${r.vh})`);
     exiger(r.hSieges >= 60, `${ou} : sièges écrasés à ${r.hSieges} px`);
+    // Les cartes du croupier ne touchent JAMAIS les tiennes : au moins 0,3 carte d'écart (25 px à 84).
+    const mini = Math.round((r.wTable || 84) * .3);
+    exiger(r.ecartCroupier === null || r.ecartCroupier >= mini, `${ou} : les cartes du croupier touchent les tiennes (écart ${r.ecartCroupier} px, minimum ${mini})`);
+    // Un feutre imprimé : le paiement du blackjack est TOUJOURS dessiné sur ordinateur (tables solo).
+    if (r.vue !== "reseau") exiger(/PAIE/.test(r.lettrage), `${ou} : le feutre est nu — « BLACKJACK PAIE… » n'est pas dessiné (lettrage : « ${r.lettrage.slice(0, 40)} » · dernier rendu : ${r.lettrageInfo})`);
   }
   for (const c of r.petits) if (!TOLERE.test(c)) exiger(false, `${ou} : cible tactile ${c} sous 44 px`);
 }

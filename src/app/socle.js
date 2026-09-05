@@ -66,7 +66,8 @@ const garder = () => { try { localStorage.setItem("sabot", JSON.stringify(DB)); 
 const sys = () => DONNEES.systemes[DB.sys] || DONNEES.systemes.hilo;
 // 900 ms par carte : le rythme d'un vrai croupier. À 400 les cartes tombaient trop vite (Léo, 04/09).
 if (DB.cadence === undefined || DB.cadence === 400) DB.cadence = 900;
-if (DB.conseil === undefined) DB.conseil = false;
+// L'aide à la décision : "auto" = allumée les vingt premières mains, puis un vrai/faux (table.js, aideActive).
+if (DB.conseil === undefined) DB.conseil = "auto";
 // Les cartes ont 13 rangs à l'écran, mais 10 en mathématiques : 10, V, D et R
 // sont une seule et même colonne. Tout ce qui parle au solveur ou au comptage
 // passe par rg(). Sans ça, un roi tombe hors du tableau et le compte devient NaN.
@@ -81,9 +82,13 @@ const prenom = () => DB.prenom.trim();
    (une carte qui sort du sabot, le raclement du mélange), des impulsions courtes
    pour ce qui claque (une carte qui se pose, des jetons qui tintent), des
    oscillateurs pour ce qui sonne (le blackjack, le gain, le bust).
-   · Rien ne part avant un geste : le contexte n'est CRÉÉ qu'au premier pointeur
-     ou à la première touche (règle d'autoplay des navigateurs). Hors geste, un
-     son demandé est noté au journal et se tait.
+   · Rien ne part avant un geste : le contexte est CRÉÉ au chargement (c'est permis,
+     il naît « suspended »), hors du chemin critique, et n'est que REPRIS (resume,
+     1-2 ms) au premier pointeur ou à la première touche — la règle d'autoplay des
+     navigateurs porte sur la lecture, pas sur la création. Mesuré le 05/09 : le
+     constructeur seul prenait 535-624 ms SYNCHRONES dans le clic « Distribuer » ;
+     la page gelait, la main du croupier sautait au sabot quand l'image revenait.
+     Hors geste, un son demandé est noté au journal et se tait.
    · Jamais deux fois le même son à l'identique : chaque genre tire une hauteur
      à ±8 %, différente de la précédente (variation).
    · Un seul volume général (DB.volume, 0-100, défaut 60), réglé dans ⚙, en plus
@@ -96,12 +101,20 @@ if (typeof DB.volume !== "number" || isNaN(DB.volume)) DB.volume = 60;
 let AC = null, MG = null;
 const SON_JOURNAL = [], SON_TRACE = []; window.__sonJournal = SON_JOURNAL; window.__sonTrace = SON_TRACE;   // les genres joués (et horodatés), pour la sonde
 const volumeGain = () => Math.pow(Math.max(0, Math.min(100, DB.volume)) / 100, 1.6);
+function creerAC() {
+  if (AC) return AC;
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); MG = AC.createGain(); MG.gain.value = volumeGain(); MG.connect(AC.destination); } catch (e) { AC = null; }
+  return AC;
+}
 function ac() {
-  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); MG = AC.createGain(); MG.gain.value = volumeGain(); MG.connect(AC.destination); } catch (e) { AC = null; } }
+  if (!AC) creerAC();
   if (AC && AC.state === "suspended") AC.resume().catch(() => {});
   return AC;
 }
-// Le premier geste réveille le contexte (créé DANS le geste : c'est ce que la règle exige).
+// Le contexte naît une fois la page rendue (un temps mort, jamais un geste) ; le premier
+// geste ne fait que le REPRENDRE. Si le navigateur refuse la création hors geste, ac() la
+// refait dans le geste — l'ancien chemin, qui marche toujours.
+(window.requestIdleCallback || (f => setTimeout(f, 60)))(() => { creerAC(); });
 ["pointerdown", "keydown"].forEach(ev => document.addEventListener(ev, () => { ac(); }, { capture: true, passive: true }));
 const DERNIERE_HAUTEUR = {}, DERNIER_INSTANT = {};
 function variation(genre) {
@@ -303,7 +316,7 @@ function rendreFil() {
   else if (vue === "exercices") pas.push(["Salle d'entraînement", "entrainement"], ["Exercices", null], [onglet("ongletsEx"), null]);
   else if (vue === "strategie") pas.push(["Salle d'entraînement", "entrainement"], ["Stratégie", null], [onglet("ongletsStrat"), null]);
   else if (vue === "concentration") pas.push(["Salle d'entraînement", "entrainement"], ["Concentration", null]);
-  else if (vue === "ensemble") pas.push(["Salon privé", "prive"], [onglet("mpModes"), null]);
+  else if (vue === "ensemble") pas.push(["Entre amis", "prive"], [onglet("mpModes"), null]);
   else if (vue === "progres") pas.push(["Bureau", "bureau"], ["Progression", null]);
   const segs = pas.filter(([l]) => l);
   f.hidden = !segs.length;
@@ -374,10 +387,14 @@ function rendreSysteme() {
     + (s.equilibre ? "" : `<span class="regle">déséquilibré · départ à ${sgn(CT.compteInitial(DB.sys, +($("eJeux").value || 6)))}</span>`);
   $("cCible").textContent = sgn(CT.compteInitial(DB.sys, +$("cJeux").value) + (s.equilibre ? 0 : 4 * +$("cJeux").value));
 }
+// L'éventail du hall, à 250 px : quatre cartes chiffrées au hasard et l'AS DE PIQUE devant,
+// jamais une figure (à cette taille le sprite des figures, pensé pour 60 px, fait dessin
+// d'enfant — les critiques, 05/09 — quand les pips, eux, sont irréprochables).
 function rendreEventail() {
   const f = $("eventail"); f.innerHTML = "";
-  const jeu = sabotNeuf(1); const pris = [];
-  for (let k = 0; k < 5; k++) pris.push(jeu.splice(alea(jeu.length), 1)[0]);
+  const jeu = sabotNeuf(1).filter(c => c.i >= 1 && c.i <= 9); const pris = [];
+  for (let k = 0; k < 4; k++) pris.push(jeu.splice(alea(jeu.length), 1)[0]);
+  pris.push(sabotNeuf(1).find(c => c.r === "A" && c.suit === "♠"));
   pris.forEach((c, k) => { const e = carteEl(c);
     e.style.transform = `translateX(-50%) rotate(${(k - 2) * 13}deg)`;
     e.style.animationDelay = (k * 65) + "ms"; f.appendChild(e); });

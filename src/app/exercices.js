@@ -20,8 +20,29 @@ function resumeExo() {
   if (X.genre === "chrono") return `${pluriel(+$("cJeux").value, "jeu")} · ${pluriel(+$("cParVue").value, "carte")} à la fois · ${pluriel(+$("cCachees").value, "retirée")}`;
   if (X.genre === "estimation") return `sabot de ${$("sJeux").value} jeux · ${$("sManches").value} manches`;
   const silence = $("eMode").value === "silence", par = +$("eParVue").value, ctrl = $("eControle").value;
-  return `${pluriel(+$("eJeux").value, "jeu")} · ${fr1(+$("eVitesse").value / 1000)} s · ${silence ? "en silence" : "je clique la valeur"}` +
+  // En clair : « une carte toutes les 1,2 s · tu cliques la valeur » — un résumé de réglage codé
+  // (« 1,2 s · je clique la valeur ») ne disait pas ce qu'on attend (les critiques, 05/09).
+  return `${pluriel(+$("eJeux").value, "jeu")} · une carte toutes les ${fr1(+$("eVitesse").value / 1000)} s · ${silence ? "tu comptes en silence" : "tu cliques la valeur"}` +
     (silence && par > 1 ? ` · ${par} à la fois` : "") + (ctrl !== "0" ? " · contrôle surprise" : "");
+}
+// La légende du système sélectionné, en puces : « +1 2 3 4 5 6 · 0 7 8 9 · −1 10 V D R A ».
+function legendeSysteme() {
+  const v = sys().v, groupes = {};
+  RANKS.forEach((r, i) => { const k = v[i >= 9 ? 9 : i]; (groupes[k] = groupes[k] || []).push(r); });
+  return Object.keys(groupes).map(Number).sort((a, b) => b - a)
+    .map(k => `<span class="regle ${k > 0 ? "bien" : k < 0 ? "mal" : ""}" title="Ces cartes valent ${sgn(k)}">${sgn(k)}&nbsp; ${groupes[k].join(" ")}</span>`).join("");
+}
+// La consigne des boutons, GÉNÉRÉE depuis le système : « Trois boutons : −1 pour A, 10, V, D, R ;
+// 0 pour 7, 8, 9 ; +1 pour 2 à 6 ». Les touches 1…5 n'existent que pour un système à cinq valeurs.
+function consigneBoutons() {
+  const v = sys().v, vals = [...new Set(v)].sort((a, b) => a - b);
+  const mots = ["", "un", "deux", "trois", "quatre", "cinq", "six"];
+  const rangsDe = x => { const rs = RANKS.filter((r, i) => v[i >= 9 ? 9 : i] === x);
+    return rs.length > 4 && rs.every((r, i) => !i || RANKS.indexOf(r) === RANKS.indexOf(rs[i - 1]) + 1) ? rs[0] + " à " + rs[rs.length - 1] : rs.join(", "); };
+  const mot = mots[vals.length] || String(vals.length);
+  const boutons = `${mot.charAt(0).toUpperCase() + mot.slice(1)} boutons : ` + vals.map(x => `<b>${sgn(x)}</b> pour ${rangsDe(x)}`).join(" ; ");
+  const touches = vals.length === 3 ? `<kbd>←</kbd> −1 · <kbd>espace</kbd> 0 · <kbd>→</kbd> +1` : `<kbd>1…${vals.length}</kbd> les boutons de gauche à droite`;
+  return boutons + ". Au clavier : " + touches + ".";
 }
 function rendreSceneExo() {
   const r = $("exResume"), cadre = $("exoCadre"); if (!r || !cadre) return;
@@ -29,6 +50,8 @@ function rendreSceneExo() {
   if (!cadre.children.length) for (let k = 0; k < 3; k++) cadre.appendChild(carteEl({}, true));
   const c = $("exScene").querySelector(".exo-compte"), lab = c.querySelector(".grave"), val = c.querySelector("b");
   const sec = fr1(+$("eVitesse").value / 1000);
+  // La légende AVANT le départ : elle n'apparaissait que sur les boutons, une fois lancé.
+  if ($("exoLegende")) $("exoLegende").innerHTML = X.genre === "estimation" ? "" : legendeSysteme();
   lab.textContent = X.genre === "estimation" ? "Jeux dans le tas" : "Compte courant"; val.textContent = X.genre === "estimation" ? "?" : "0";
   $("exoQuoi").innerHTML = X.genre === "estimation"
     ? "Un tas de défausse, manche après manche : tu annonces combien de jeux y sont passés. C'est ce coup d'œil qui fait le compte vrai — tolérance : un demi-jeu."
@@ -36,7 +59,7 @@ function rendreSceneExo() {
     ? "Tu fais défiler toi-même — <kbd>espace</kbd>, clic ou <kbd>→</kbd>. Le chrono part à la première carte, le compte t'est demandé à la fin."
     : $("eMode").value === "silence"
     ? `Les cartes tombent ici, une toutes les <b>${sec} s</b> ; tu tiens le compte en silence, on te le demande à la fin.`
-    : `Les cartes tombent ici, une toutes les <b>${sec} s</b> ; tu annonces la valeur de chacune. <kbd>←</kbd> −1 · <kbd>espace</kbd> 0 · <kbd>→</kbd> +1 · <kbd>1…5</kbd> les boutons de gauche à droite.`;
+    : `Les cartes tombent ici, une toutes les <b>${sec} s</b> ; tu annonces la valeur de chacune. ${consigneBoutons()}`;
 }
 $("exReglages").addEventListener("change", rendreSceneExo);
 $("exReglages").addEventListener("input", rendreSceneExo);
@@ -59,6 +82,7 @@ const prochainControle = de => {
   return de + +m;
 };
 $("eDemarrer").onclick = demarrerExercice;
+if ($("eDemarrer2")) $("eDemarrer2").onclick = demarrerExercice;   // le même bouton, sous les cartes
 $("eStop").onclick = () => finExercice();
 $("rRejouer").onclick = demarrerExercice;
 $("rReglages").onclick = () => { $("exBilan").hidden = true; $("exReglages").hidden = false; };

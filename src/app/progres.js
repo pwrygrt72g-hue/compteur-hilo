@@ -4,10 +4,14 @@ const pctDe = a => a[0] + a[1] ? Math.round(100 * a[0] / (a[0] + a[1])) + " %" :
 function rendreProgres() {
   const S = DB.sessions;
   $("progTitre").textContent = prenom() ? `Tes sessions, ${prenom()}` : "Tes sessions";
-  if (!S.length) {
-    $("progPave").innerHTML = `<div class="laque t"><b>—</b><span class="grave">Aucune session pour l'instant</span></div>`;
-    $("progJournal").innerHTML = ""; dessinerCourbe([]); return;
-  }
+  // Sans session : UN seul état vide — le titre, une phrase, un bouton vers les exercices. Le
+  // graphique, le journal et « Effacer l'historique » n'existent pas tant qu'il n'y a rien à
+  // montrer ni à effacer (les critiques, 05/09 : trois panneaux vides et un bouton actif sur du vide).
+  const vide = !S.length;
+  ["progVide"].forEach(id => { if ($(id)) $(id).hidden = !vide; });
+  ["progPave", "progCourbeBloc", "progJournalBloc", "progEffacerRang"].forEach(id => { if ($(id)) $(id).hidden = vide; });
+  if ($("progEffacer")) $("progEffacer").disabled = vide;
+  if (vide) { $("progPave").innerHTML = ""; $("progJournal").innerHTML = ""; return; }
   const ex = S.filter(s => s.exact).length;
   const rts = S.filter(s => s.reaction); const rt = rts.length ? rts.reduce((a, s) => a + s.reaction, 0) / rts.length : null;
   const chr = S.filter(s => s.genre === "chrono" && s.exact && s.secondes);

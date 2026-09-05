@@ -3,28 +3,32 @@
    Ce fichier rend les portes des tables (rendreSalon), pose les photos sur les
    portes fixes du hall (rendreHall) et écrit les crédits qui vont avec.
    Il vit AVANT table.js : rien ici ne touche T au chargement — seulement au rendu. */
+// Chaque puce porte son EXPLICATION en infobulle (title) : H17, S17, 3:2, 6:5, DAS, pén. 75 % —
+// du jargon sans un mot pour le novice, qui ne pouvait pas choisir une table en connaissance de
+// cause (les critiques, 05/09). Le texte dit ce que la règle change POUR TOI.
 function chipsRegles(t) {
-  const d = DONNEES.tables[t.id];
   const c = [];
-  c.push([`${t.jeux} jeu${t.jeux > 1 ? "x" : ""}`, t.jeux <= 2 ? "bien" : ""]);
-  c.push([t.h17 ? "H17" : "S17", t.h17 ? "" : "bien"]);
-  c.push([t.blackjackPays === 1.5 ? "3:2" : "6:5", t.blackjackPays === 1.5 ? "bien" : "mal"]);
-  if (t.melange === "melangeuse_continue") c.push(["mélangeuse continue", "mal"]);
-  else c.push([`pén. ${Math.round(t.penetration * 100)} %`, t.penetration >= .75 ? "bien" : t.penetration <= .55 ? "mal" : ""]);
-  if (t.das) c.push(["DAS", "bien"]); else c.push(["sans DAS", ""]);
-  if (t.surrender !== "none") c.push(["abandon", "bien"]);
-  if (!t.holeCard) c.push(["sans carte cachée", "mal"]);
-  if (t.doubleOn !== "any") c.push(["doubler " + t.doubleOn.join("-"), ""]);
-  return c.map(([l, k]) => `<span class="regle ${k}">${l}</span>`).join("");
+  c.push([`${t.jeux} jeu${t.jeux > 1 ? "x" : ""}`, t.jeux <= 2 ? "bien" : "", `${t.jeux} jeu${t.jeux > 1 ? "x" : ""} de 52 cartes dans le sabot — moins il y en a, plus le compte bouge vite`]);
+  c.push([t.h17 ? "H17" : "S17", t.h17 ? "" : "bien", t.h17 ? "H17 : le croupier tire encore sur un 17 souple (as + 6) — un peu moins bon pour toi" : "S17 : le croupier reste sur tous les 17, même souples — un peu mieux pour toi"]);
+  c.push([t.blackjackPays === 1.5 ? "3:2" : "6:5", t.blackjackPays === 1.5 ? "bien" : "mal", t.blackjackPays === 1.5 ? "3:2 : un blackjack paie une fois et demie ta mise — la règle normale" : "6:5 : un blackjack ne paie que 1,2 fois ta mise — à fuir, le compte ne rattrape jamais ça"]);
+  if (t.melange === "melangeuse_continue") c.push(["mélangeuse continue", "mal", "Les cartes jouées retournent dans la machine après chaque main : le compte ne s'accumule jamais"]);
+  else c.push([`pén. ${Math.round(t.penetration * 100)} %`, t.penetration >= .75 ? "bien" : t.penetration <= .55 ? "mal" : "", `Pénétration ${Math.round(t.penetration * 100)} % : on joue ${Math.round(t.penetration * 100)} % du sabot avant de remélanger — plus c'est profond, plus le compte a le temps de payer`]);
+  if (t.das) c.push(["DAS", "bien", "DAS : on peut doubler après avoir séparé une paire"]); else c.push(["sans DAS", "", "Pas de doublement après une séparation"]);
+  if (t.surrender !== "none") c.push(["abandon", "bien", "Abandon : on peut rendre une mauvaise main et récupérer la moitié de sa mise"]);
+  if (!t.holeCard) c.push(["sans carte cachée", "mal", "Le croupier ne prend sa seconde carte qu'à la fin : s'il fait blackjack, tu perds aussi tes doublements"]);
+  if (t.doubleOn !== "any") c.push(["doubler " + t.doubleOn.join("-"), "", "On ne peut doubler que sur un total de " + t.doubleOn.join(", ")]);
+  return c.map(([l, k, aide]) => `<span class="regle ${k}"${aide ? ` title="${echap(aide)}"` : ""}>${l}</span>`).join("");
 }
 // Les TROIS puces qu'on garde partout où la place manque (la porte du hall, la barre de
 // la table) : le nombre de jeux, H17/S17, 3:2 ou 6:5 — plus la mélangeuse quand il y en
 // a une, parce que celle-là tue le comptage. Une seule définition pour les deux écrans.
-function pucesCourtes(t) {
+// o.sansMelangeuse : sur la PORTE du hall, le tampon « À fuir · mélangeuse » le dit déjà — la puce
+// en plus ajoutait une rangée et poussait « MACAO, COTAI STRIP » sur « TABLE 4 » (les critiques, 05/09).
+function pucesCourtes(t, o) {
   const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
   const puces = [...tmp.children], garde = puces.slice(0, 3);
   const csm = puces.find(p => /mélangeuse/.test(p.textContent));
-  if (csm && !garde.includes(csm)) garde.push(csm);
+  if (csm && !garde.includes(csm) && !(o && o.sansMelangeuse)) garde.push(csm);
   return garde.map(p => p.outerHTML).join("");
 }
 // L'indice de comptabilité : ce que la table laisse VRAIMENT à un compteur.
@@ -69,8 +73,8 @@ function carteTableHtml(t, o) {
       <span class="bas">
         <span class="lieu">${echap(t.lieu)}</span><span class="nom">${echap(t.nom)}</span>
         <span class="sous">« ${echap(t.lecon)} »</span>
-        <span class="regles">${pucesCourtes(t)}</span>
-        <span class="chiffres"><span><b>${fr2(d.avantage)} %</b>avantage maison</span><span><b>${fmtJ(t.mise_min)} – ${fmtJ(t.mise_max)}</b>mises</span></span>
+        <span class="regles">${pucesCourtes(t, { sansMelangeuse: true })}</span>
+        <span class="chiffres"><span title="Ce que la maison gagne en moyenne sur chaque mise, en stratégie parfaite — plus c'est bas, mieux c'est"><b>${fr2(d.avantage)} %</b>avantage maison</span><span title="Mise minimale et maximale à cette table, en jetons"><b>${fmtJ(t.mise_min)} – ${fmtJ(t.mise_max)}</b>mises</span></span>
       </span>
       ${o.inerte ? "" : `<span class="asseoir-cta" aria-hidden="true">${o.reprise ? "Reprendre" : "S'asseoir"} &rarr;</span>`}
     </${balise}>
@@ -111,7 +115,7 @@ function rendreSalon() {
       <p class="lecon" style="font-family:'Instrument Serif',serif;font-size:var(--t-titre);color:var(--laiton)">« ${echap(t.lecon)} »</p>
       <p style="text-align:left">${echap(t.detail)}</p>
       <div class="regles" style="justify-content:center">${chipsRegles(t)}</div>
-      <p class="muet" style="font-size:var(--t-petit);margin-top:12px">Avantage maison mesuré sur trois millions de mains jouées en stratégie parfaite : <b class="cadran">${fr2(d.avantage)} %</b>. Indice de comptabilité : <b class="cadran">${indiceComptable(t)}</b> sur 100.</p>`);
+      <p class="muet" style="font-size:var(--t-petit);margin-top:12px">Avantage maison mesuré sur trois millions de mains jouées en stratégie parfaite : <b class="cadran">${fr2(d.avantage)} %</b> — ce que la maison gagne en moyenne sur chaque mise. Rentabilité du comptage : <b class="cadran">${indiceComptable(t)}</b> sur 100 — plus c'est haut, plus tenir le compte rapporte ici.</p>`);
   });
 }
 $("filtreSalon").querySelectorAll("button").forEach(b => b.onclick = () => {
@@ -142,6 +146,83 @@ function rendreCredits() {
     + `</p><p>Recadrées, redimensionnées et encodées en WebP ; les originaux sont chez leurs auteurs.</p>`;
 }
 $("bHallReglages").onclick = () => $("bReglages").click();
+
+/* ── « Première fois ? » : la leçon en trois écrans (le but du jeu, les trois valeurs, dix cartes
+   à compter avec correction). Le hall partait de « Le compte est masqué » et la seule explication
+   du comptage était son dernier bloc (les critiques, 05/09). Tout vient du système sélectionné
+   (sys().v) : la leçon est celle de Hi-Lo comme d'Omega II. ─────────────────────────────── */
+const LECON = { etape: 0, cartes: [], i: 0, rc: 0, bons: 0, dit: 0 };
+function leconRangs() {
+  const v = sys().v, groupes = {};
+  RANKS.forEach((r, i) => { const k = v[i >= 9 ? 9 : i]; (groupes[k] = groupes[k] || []).push(r); });
+  // Trié du + au − : ce qu'on retient d'abord, ce sont les petites cartes qui valent +1.
+  return Object.keys(groupes).map(Number).sort((a, b) => b - a).map(k => [k, groupes[k]]);
+}
+function leconHtml() {
+  const e = LECON.etape, S = sys();
+  const tete = `<div class="lecon"><span class="lecon-etape">Apprendre à compter · ${e + 1} sur 3</span>`;
+  if (e === 0) return tete + `<h2>Le but du jeu, en une phrase.</h2>
+    <p>Au blackjack, tu joues <b>contre le croupier</b>, pas contre les autres joueurs : il faut faire <b>plus que lui sans dépasser 21</b>. Les figures valent 10, l'as vaut 1 ou 11, le reste sa valeur.</p>
+    <p>Le croupier, lui, n'a pas le choix : il tire jusqu'à 17. C'est pour ça que <b>ce qui reste dans le sabot</b> change tout — beaucoup de dix et d'as à venir, c'est bon pour toi (tes blackjacks paient une fois et demie, ses 16 sautent) ; beaucoup de petites cartes, c'est bon pour lui.</p>
+    <p><b>Compter, c'est savoir de quel côté penche le sabot.</b> Et miser plus quand il penche vers toi.</p>
+    <div class="rang-btn"><button class="btn" id="leconSuite">Les trois valeurs →</button></div></div>`;
+  if (e === 1) {
+    const rangs = leconRangs().map(([k, rs]) => { const jeu = sabotNeuf(1);
+      const ex = rs.slice(0, 5).map(r => jeu.find(c => c.r === r));
+      return `<div class="lecon-rang"><span class="regle ${k > 0 ? "bien" : k < 0 ? "mal" : ""}">${sgn(k)}</span><span class="main">${ex.map(c => carteEl(c).outerHTML).join("")}</span><span class="muet">${rs.join(" · ")}</span></div>`; }).join("");
+    return tete + `<h2>${S.nom} : chaque carte vaut ${leconRangs().map(([k]) => sgn(k)).join(", ")}.</h2>
+      <p>Tu pars de <b>${sgn(CT.compteInitial(DB.sys, 6))}</b> à un sabot neuf. À chaque carte qui sort — les tiennes, celles des voisins, celles du croupier — tu ajoutes sa valeur de tête. Ce total, c'est le <b>compte courant</b>.</p>
+      ${rangs}
+      <p class="muet" style="font-size:var(--t-petit)">Les petites cartes sorties (+1) laissent les grosses dans le sabot : le compte monte, la table penche vers toi. Divisé par le nombre de jeux qui restent, ça devient le <b>compte vrai</b> — celui qui décide de la mise.</p>
+      <div class="rang-btn"><button class="btn" id="leconSuite">Dix cartes, à toi →</button><button class="btn creux" id="leconAvant">← Le but</button></div></div>`;
+  }
+  const fini = LECON.i >= LECON.cartes.length;
+  if (!fini) {
+    const c = LECON.cartes[LECON.i], vals = [...new Set(S.v)].sort((a, b) => a - b);
+    return tete + `<h2>Dix cartes. Annonce la valeur de chacune.</h2>
+      <p class="muet" style="font-size:var(--t-petit)">Carte ${LECON.i + 1} sur ${LECON.cartes.length} · ${S.nom} : ${leconRangs().map(([k, rs]) => sgn(k) + " pour " + (rs.length > 4 ? rs[0] + "–" + rs[rs.length - 1] : rs.join(", "))).join(" · ")}. Tiens le total de tête.</p>
+      <div class="lecon-scene">${carteEl(c).outerHTML}<div class="lecon-compte"><span class="grave">Ton compte, de tête</span><b>?</b></div></div>
+      <div class="reponses">${vals.map(x => `<button data-v="${x}" class="${x > 0 ? "plus" : x < 0 ? "moins" : ""}">${sgn(x)}<i>${RANKS.filter((r, i) => S.v[i >= 9 ? 9 : i] === x).join(" ")}</i></button>`).join("")}</div>
+      <p class="lecon-retour" id="leconRetour"></p></div>`;
+  }
+  if (LECON.dit === null) return tete + `<h2>Et le compte, alors ?</h2>
+    <p>Dix cartes sont sorties. Tu as annoncé juste <b>${LECON.bons} fois sur ${LECON.cartes.length}</b>. Maintenant, le total :</p>
+    <div class="demande"><label class="ch"><span class="grave">Compte courant</span><input type="number" id="leconSaisie" placeholder="0"></label><button class="btn" id="leconVerifier">Vérifier</button></div></div>`;
+  const exact = LECON.dit === LECON.rc;
+  return tete + `<h2>${exact ? "Exact." : "Presque."}</h2>
+    <div class="lecon-bilan"><span class="grave">Le compte réel</span><b style="color:${exact ? "var(--jade)" : "var(--cinabre)"}">${sgn(LECON.rc)}</b>${exact ? "" : `<span class="muet">tu as dit ${sgn(LECON.dit)}</span>`}</div>
+    <p>${exact ? "C'est exactement ça : tu sais compter. " : "Le geste est là, il reste à le rendre automatique. "}Dans la salle d'entraînement, les cartes défilent à la vitesse que tu veux ; à une table, tu comptes pendant que tout le monde joue — et un croupier te regarde miser.</p>
+    <div class="rang-btn"><button class="btn" id="leconExercices">Continuer dans les exercices</button><button class="btn creux" id="leconTables">M'asseoir à une table</button><button class="btn creux" id="leconRejouer">Dix autres cartes</button></div></div>`;
+}
+function leconTirer() {
+  const jeu = sabotNeuf(1); LECON.cartes = [];
+  for (let k = 0; k < 10; k++) LECON.cartes.push(jeu.splice(alea(jeu.length), 1)[0]);
+  LECON.i = 0; LECON.rc = CT.compteInitial(DB.sys, 6); LECON.bons = 0; LECON.dit = null;
+}
+function rendreLecon() {
+  ouvrirModale(leconHtml());
+  const b = $("modaleBoite");
+  const suite = b.querySelector("#leconSuite"), avant = b.querySelector("#leconAvant");
+  if (suite) suite.onclick = () => { LECON.etape++; if (LECON.etape === 2) leconTirer(); rendreLecon(); };
+  if (avant) avant.onclick = () => { LECON.etape--; rendreLecon(); };
+  b.querySelectorAll(".reponses button").forEach(bt => bt.onclick = () => {
+    const c = LECON.cartes[LECON.i], vrai = valeurCompte(c), bon = +bt.dataset.v === vrai;
+    LECON.rc += vrai; if (bon) LECON.bons++; son(bon ? "ok" : "ko");
+    const r = b.querySelector("#leconRetour"); if (r) { r.textContent = (bon ? "✓ " : "✗ c'était ") + sgn(vrai); r.className = "lecon-retour " + (bon ? "ok" : "ko"); }
+    b.querySelectorAll(".reponses button").forEach(x => { x.disabled = true; });
+    setTimeout(() => { LECON.i++; rendreLecon(); }, bon ? 420 : 900);
+  });
+  const verif = b.querySelector("#leconVerifier"), saisie = b.querySelector("#leconSaisie");
+  const verifier = () => { const g = (saisie.value || "").trim(); if (g === "") return; LECON.dit = parseInt(g, 10); son(LECON.dit === LECON.rc ? "ok" : "ko"); rendreLecon(); };
+  if (verif) { verif.onclick = verifier; saisie.addEventListener("keydown", e => { if (e.key === "Enter") verifier(); }); setTimeout(() => saisie.focus(), 40); }
+  const fermer = () => { $("modale").hidden = true; };
+  const ex = b.querySelector("#leconExercices"); if (ex) ex.onclick = () => { fermer(); aller("exercices"); };
+  const ta = b.querySelector("#leconTables"); if (ta) ta.onclick = () => { fermer(); allerHall("lesTables"); };
+  const rj = b.querySelector("#leconRejouer"); if (rj) rj.onclick = () => { leconTirer(); rendreLecon(); };
+  if (suite) suite.focus();
+}
+function ouvrirLecon() { LECON.etape = 0; rendreLecon(); }
+if ($("hallApprendre")) $("hallApprendre").onclick = ouvrirLecon;
 
 // La feuille de réglages EMPRUNTE le bloc `#outils` à l'en-tête et le rend à la
 // fermeture. Recopier son HTML dupliquerait `#sys`, `#theme`, `#son` — des

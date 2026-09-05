@@ -48,32 +48,45 @@ const MOUVEMENT_REDUIT = (() => {
    y = 200, tête entre y = 14 et 114, épaules à y = 136. ──────────────────── */
 const CR_L1 = 92, CR_L2_MIN = 36, CR_L2_MAX = 172, CR_GAINE = 120;   // unités de rig
 const CR_EPAULE = { G: [166, 146], D: [354, 146] };
-const CR_MAIN = cote => `<g id="@crMain${cote}"><g id="@crPoignet${cote}"><g${cote === "G" ? ' transform="scale(-1,1)"' : ""}>
+// La main, vue de dos, doigts vers les joueurs : une paume plus large aux jointures qu'au
+// poignet, un POUCE qui s'écarte, quatre doigts aux longueurs décroissantes (le majeur le plus
+// long, l'auriculaire le plus court), bouts ronds, une phalange suggérée d'un trait. Et 15 %
+// plus petite : mesuré le 05/09, des gants à quatre doigts rectangulaires de la largeur d'un
+// siège à 1920. L'échelle est posée sur le groupe intérieur, le poignet reste à l'origine.
+const CR_MAIN = cote => `<g id="@crMain${cote}"><g id="@crPoignet${cote}"><g transform="scale(${cote === "G" ? "-.85" : ".85"},.85)">
    <path d="M-17-13h34l-2 17h-30z" fill="var(--cr-poignet,#F1ECE0)"/>
    <path d="M-17-9h34" stroke-opacity=".16"/>
    <circle cx="12" cy="-4" r="2.1" fill="var(--cr-or,#D9B45B)" stroke="none"/>
-   <path d="M-17 2C-20 14-19 26-13 35L13 35C19 26 20 14 17 2Z" fill="var(--cr-peau,#D6A579)"/>
+   <path d="M-16 2C-19 12-19 24-15 34L15 34C19 24 19 12 16 2Z" fill="var(--cr-peau,#D6A579)"/>
    <g id="@crCarte${cote}" opacity="0"><rect x="-16" y="34" width="32" height="46" rx="3" fill="#F7F3EA" stroke="#2A1A10" stroke-opacity=".55" transform="rotate(-14 -16 34)"/><path d="M-10 62l6-9 6 9z" fill="#A8231E" transform="rotate(-14 -16 34)"/></g>
-   <rect x="-17.5" y="31" width="8.6" height="26" rx="4.3" fill="var(--cr-peau,#D6A579)"/>
-   <rect x="-7.2" y="32" width="9" height="29" rx="4.5" fill="var(--cr-peau,#D6A579)"/>
-   <rect x="3" y="32" width="8.6" height="27" rx="4.3" fill="var(--cr-peau,#D6A579)"/>
-   <rect x="12.2" y="30" width="7.6" height="22" rx="3.8" fill="var(--cr-peau,#D6A579)"/>
-   <path d="M-17 6C-26 8-32 17-29 25C-27 31-20 31-16 26Z" fill="var(--cr-peau,#D6A579)"/>
-   <path d="M-15 32q4-3 8 0M-4 33q4-3 8 0M6 33q4-3 7 0" stroke-opacity=".22"/>
-   <path d="M-12 4c1 10 1 18 0 27" stroke-opacity=".1"/>
+   <path d="M-16 5C-24 6-31 13-32 22C-33 30-28 35-23 33C-19 31-17 25-15 20Z" fill="var(--cr-peau,#D6A579)"/>
+   <path d="M-23 32c-3-5-2-11 1-15" stroke-opacity=".14" fill="none"/>
+   <rect x="-15.5" y="30" width="8.4" height="29" rx="4.2" fill="var(--cr-peau,#D6A579)"/>
+   <rect x="-6.2" y="31" width="8.8" height="32" rx="4.4" fill="var(--cr-peau,#D6A579)"/>
+   <rect x="3.4" y="31" width="8.4" height="29" rx="4.2" fill="var(--cr-peau,#D6A579)"/>
+   <rect x="12.4" y="29" width="7.2" height="23" rx="3.6" fill="var(--cr-peau,#D6A579)"/>
+   <path d="M-14 43q3-2 6 0M-5 45q3-2 7 0M4.5 44q3-2 6 0M13 41q2.5-2 5.5 0M-14 52q3-2 6 0M-5 54q3-2 7 0M4.5 53q3-2 6 0M13 47q2.5-2 5.5 0" stroke-opacity=".15" fill="none"/>
+   <path d="M-15 31q4-3 8 0M-5 32q4-3 8 0M4 32q4-3 7 0M13 30q3-3 6 0" stroke-opacity=".22" fill="none"/>
+   <path d="M-11 4c1 10 1 18 0 27" stroke-opacity=".08"/>
   </g></g></g>`;
 const CR_BRAS = cote => `<g transform="translate(${CR_EPAULE[cote][0]},${CR_EPAULE[cote][1]})"><g id="@crBras${cote}">
  <path d="M-18-4C-11-16 11-16 18-4L15 88C9 97-9 97-15 88Z" fill="var(--cr-manche,#1E242A)"/>
  <path d="M-18-4C-11-16 11-16 18-4L15 88C9 97-9 97-15 88Z" fill="url(#@lumB)" stroke="none"/>
  <path d="M-18-4C-11-16 11-16 18-4L15 88C9 97-9 97-15 88Z" fill="url(#@cyl)" stroke="none"/>
  <path d="M-11 58c5 4 17 4 22 0" stroke-opacity=".28" stroke-width="2" stroke-linecap="round"/>
+ <!-- le pli du COUDE : deux cassures de tissu juste au-dessus de l'articulation, un ourlet à la
+      jonction — sans elles le bras se lisait comme un tuyau d'arrosage (les critiques, 05/09) -->
+ <path d="M-14 74c4 5 24 5 28 0M-13 82c4 4 22 4 26 0" stroke-opacity=".34" stroke-width="2" stroke-linecap="round" fill="none"/>
+ <path d="M-15 88c6 3 24 3 30 0" stroke="#000" stroke-opacity=".28" stroke-width="3" stroke-linecap="round" fill="none"/>
  <g transform="translate(0,${CR_L1})"><g id="@crAvant${cote}">
   <g id="@crGaine${cote}">
    <path d="M-16-3C-8-10 8-10 16-3L13 ${CR_GAINE}L-13 ${CR_GAINE}Z" fill="var(--cr-manche,#1E242A)"/>
    <path d="M-16-3C-8-10 8-10 16-3L13 ${CR_GAINE}L-13 ${CR_GAINE}Z" fill="url(#@cyl)" stroke="none"/>
+   <path d="M-13 46c4 3 22 3 26 0M-12 92c4-3 20-3 24 0" stroke-opacity=".22" stroke-width="1.6" stroke-linecap="round" fill="none"/>
   </g>
   <circle r="16" fill="var(--cr-manche,#1E242A)" stroke="none"/><circle r="16" fill="url(#@cyl)" stroke="none"/>
-  <path d="M-10 8c4 4 16 4 20 0" stroke-opacity=".26" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M-15 2c5 8 25 8 30 0" stroke="#000" stroke-opacity=".22" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M-10 9c4 4 16 4 20 0" stroke-opacity=".26" stroke-width="1.8" stroke-linecap="round"/>
   ${CR_MAIN(cote)}
  </g></g>
 </g></g>`;
@@ -136,8 +149,8 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
  <ellipse class="cr-joue" id="@crJoueG" cx="232" cy="82" rx="9" ry="5.2" fill="#D9584F" stroke="none" opacity="0"/>
  <ellipse class="cr-joue" id="@crJoueD" cx="288" cy="82" rx="9" ry="5.2" fill="#D9584F" stroke="none" opacity="0"/>
  <!-- les yeux : pivot au centre, l'iris glisse, la paupière descend depuis le haut -->
- <g transform="translate(241,62)" stroke="none"><g id="@crOeilG" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisG"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupG" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".5" stroke-width="1.6"/></g></g>
- <g transform="translate(279,62)" stroke="none"><g id="@crOeilD" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisD"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupD" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".5" stroke-width="1.6"/></g></g>
+ <g transform="translate(241,62)" stroke="none"><g id="@crOeilG" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisG"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupG" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g>
+ <g transform="translate(279,62)" stroke="none"><g id="@crOeilD" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisD"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupD" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g>
  <use id="@crLunettes" href="#@l-rien" fill="none"/>
  <!-- sourcils DISSYMÉTRIQUES : deux miroirs exacts font « vecteur généré » -->
  <g transform="translate(241,45)"><path id="@crSourcilG" d="M-13 3C-7-4 4-6 13-1L12 5C4 2-4 3-12 8Z" fill="var(--cr-cheveux,#191411)" stroke="none"/></g>
@@ -164,10 +177,11 @@ const CROUPIERS = {
   vince: { nom: "Vince", lieu: "Las Vegas Strip", trait: "Gominé, gouailleur. Parle beaucoup, pardonne peu.",
     coiffe: "c-plaque", orne: "o-noeud", lunettes: "l-rien", moustache: "m-rien", acc: "a-rien", sourcils: 1,
     p: { "--cr-peau": "#D8A57C", "--cr-cheveux": "#14100E", "--cr-veste": "#171C21", "--cr-manche": "#171C21", "--cr-gilet": "#4A2028",
-      "--cr-chemise": "#F2EDE1", "--cr-poignet": "#F2EDE1", "--cr-orne": "#C8252B", "--cr-iris": "#3A2A1C", "--cr-pochette": "#C8252B" },
+      "--cr-chemise": "#F2EDE1", "--cr-poignet": "#F2EDE1", "--cr-orne": "#9E3A31", "--cr-iris": "#3A2A1C", "--cr-pochette": "#9E3A31" },
     piquant: .95, colere: .8, vigilance: 1, repos: "content",
     dit: {
       accueil: ["Bienvenue au Boulevard. Asseyez-vous, on va bien s'entendre.", "Salut. Vegas, baby."],
+      assurance: ["Un as. Assurance ? {cout}, la moitié de votre mise.", "Je montre un as. Assurance ? {cout}."],
       moqueur: ["Ça pique.", "La maison vous remercie.", "On remet ça ?", "Dommage. Sincèrement.", "Vegas, baby.", "Les cartes ne vous aiment pas ce soir.",
         "Vous reviendrez. Ils reviennent tous.", "Aïe.", "Je compatis. Un peu.", "Le sabot avait ses raisons.", "Et voilà le travail.", "Tirer là-dessus… audacieux."],
       agace: ["Coup de chance.", "Profitez-en.", "Le chef de table regarde.", "Mouais.", "Ça n'arrivera pas deux fois.", "Encore vous ?",
@@ -185,6 +199,7 @@ const CROUPIERS = {
     piquant: .85, colere: .9, vigilance: 2,
     dit: {
       accueil: ["Assieds-toi, fiston. Ici c'est Reno.", "Prenez votre temps. Moi j'en ai."],
+      assurance: ["J'ai un as, fiston. Assurance ? {cout}.", "Un as. Vous vous assurez ? {cout}."],
       moqueur: ["Dommage, fiston.", "La maison vous remercie.", "J'ai vu pire. Rarement.", "Ça pique, hein ?", "Le sabot a parlé.", "On remet ça ?",
         "C'est Reno, ici.", "Ça arrive aux meilleurs. Et aux autres.", "Un de plus pour la maison.", "Ravalez-moi cette grimace.", "Tirer sur seize, hein…", "Dommage."],
       agace: ["Coup de chance.", "Profitez-en, ça ne dure pas.", "Ho.", "Bon.", "Chance de débutant.", "Le chef regarde.",
@@ -202,6 +217,7 @@ const CROUPIERS = {
     piquant: .45, colere: .6, vigilance: 1,
     dit: {
       accueil: ["Bonsoir.", "Prenez place. La machine ne dort jamais."],
+      assurance: ["As. Assurance ? {cout}."],
       moqueur: ["Dommage.", "C'était prévisible.", "La table encaisse.", "Encore ?", "Vous comptiez sur quoi ?", "Le hasard a tranché.",
         "Perdu.", "La mélangeuse s'en souvient.", "Rien à dire.", "Prochaine main.", "Ça ira mieux. Peut-être.", "…"],
       agace: ["Bien.", "Hm.", "Une fois.", "Payé.", "Le hasard, seulement le hasard.", "N'y prenez pas goût.",
@@ -219,6 +235,7 @@ const CROUPIERS = {
     piquant: .6, colere: .7, vigilance: 2,
     dit: {
       accueil: ["Les jeux sont faits.", "Bonsoir. Le règlement est affiché."],
+      assurance: ["Assurance. {cout}.", "Un as. Assurance ? {cout}."],
       moqueur: ["Dommage.", "La maison vous remercie.", "Ce n'était pas une décision.", "Perdu.", "Pas de commentaire.", "Vous reviendrez, ils reviennent tous.",
         "Une main de moins.", "C'est fini.", "Sans surprise.", "Voilà.", "La table encaisse.", "Prochaine."],
       agace: ["Coup de chance.", "Soit.", "Le chef de table regarde.", "Profitez-en.", "Payé.", "Ne vous méprenez pas.",
@@ -236,6 +253,7 @@ const CROUPIERS = {
     piquant: .8, colere: .9, vigilance: 3, repos: "concentre",
     dit: {
       accueil: ["Chef de table. Je surveille, vous jouez.", "Bonsoir. Vos mises m'intéressent plus que vos cartes."],
+      assurance: ["Un as. Vous vous assurez ? {cout}.", "As. Assurance ? {cout}."],
       moqueur: ["Dommage.", "Ça pique.", "La maison vous remercie.", "Perdu. Encore.", "On remet ça ?", "Le compte ne fait pas tout.",
         "Une main de compteur, ça.", "Rien ne vous sauvera.", "Je compte aussi, vous savez.", "Et hop.", "Vous pouvez partir.", "Merci pour votre contribution."],
       agace: ["Coup de chance.", "Je surveille.", "Profitez-en.", "Le chef de table, c'est moi.", "Ça se voit, vous savez.", "Encore un et je note.",
@@ -392,7 +410,19 @@ function crCarteEnMain(cote, on) { const e = crQ("#cr-crCarte" + cote); if (e) e
 /* ── Les poses. Toutes lues à l'écran : le rack, le sabot et la défausse sont là
    où la scène les a mis, la course des bras suit. ───────────────────────── */
 // La bouche du sabot : là où la carte sort, le poignet juste à gauche d'elle.
-function crCibleSabot() { const r = crRect("sabot"); return r ? { x: r.left + r.width * .04, y: r.top + r.height * .16 } : null; }
+// La PAUME sur le centre du sabot — là d'où la carte part (table.js, --dx/--dy) — pour que la main
+// et la carte partagent la même ligne de vol. La main pend du poignet le long de l'avant-bras :
+// le poignet vise donc le centre du sabot RECULÉ de la longueur de la paume, dans la direction
+// de l'épaule. Mesuré le 05/09 avec le poignet au coin haut-gauche : la main plongeait de 48 px
+// sous la ligne de vol, et pendant trois images on voyait deux cartes à 44 px l'une de l'autre ;
+// au bord gauche à mi-hauteur, hors de portée, la main pendait SOUS le sabot et la manche le barrait.
+function crCibleSabot() {
+  const r = crRect("sabot"), rep = crRepere(); if (!r || !rep) return null;
+  const cx = r.left + r.width * .5, cy = r.top + r.height * .46;
+  const sx = rep.x0 + CR_EPAULE.D[0] * rep.s, sy = rep.y0 + CR_EPAULE.D[1] * rep.s;
+  const dx = cx - sx, dy = cy - sy, d = Math.hypot(dx, dy) || 1, recul = 44 * rep.s;
+  return { x: cx - dx / d * recul, y: cy - dy / d * recul };
+}
 // Au repos, les mains sont POSÉES sur le feutre de chaque côté du rack, juste sous ses
 // coins, doigts vers les joueurs — pas vissées sur la défausse et le sabot (les critiques,
 // 05/09). Chaque main se place d'après ce qui l'entoure, lu à l'écran : la gauche entre
@@ -410,7 +440,12 @@ function crCibleRepos(cote) {
   const voulu = rep.x0 + (CR_EPAULE[cote][0] + k * CR_L1 * Math.cos(CR_THETA_REPOS * Math.PI / 180)) * s;
   const cale = (x, lo, hi) => hi < lo ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, x));
   if (!rk) return { x: voulu, y };
-  if (cote === "D") { const sb = crRect("sabot"); return { x: cale(voulu, rk.right + 14 * s, sb ? sb.left - 24 * s : Infinity), y }; }
+  // À droite, JAMAIS sur le sabot (mesuré le 05/09 : Salon Privé à 1280, Cotai à 1920, la main
+  // recouvrait le chrome). Quand l'intervalle rack → sabot est plus étroit que la main, elle se
+  // pose contre le sabot et déborde sur le bord du rack — un croupier a la main sur son rack,
+  // pas sur son sabot.
+  if (cote === "D") { const sb = crRect("sabot"); const hi = sb ? sb.left - 22 * s : Infinity, lo = rk.right + 12 * s;
+    return { x: hi < lo ? hi : Math.max(lo, Math.min(hi, voulu)), y }; }
   const qui = document.querySelector(".croupier .qui"), q = qui && qui.getBoundingClientRect(), df = crRect("defausse");
   return { x: cale(voulu, df ? df.right + 24 * s : -Infinity, Math.min(rk.left - 14 * s, q && q.width ? q.left - 24 * s : Infinity)), y };
 }
@@ -419,11 +454,14 @@ function crReposer(ms) {
   const d = crCibleRepos("D"), g = crCibleRepos("G"); if (!d) return;
   crPoseBras("D", d.x, d.y, ms, 0, { theta: CR_THETA_REPOS, doigtsBas: true }); crPoseBras("G", g.x, g.y, ms, 0, { theta: CR_THETA_REPOS, doigtsBas: true });
 }
-function crArmer(ms) {
+function crArmer(ms, o) {
   const c = crCibleSabot(); if (!c) return false;
   CR.arme = true;
-  return crPoseBras("D", c.x, c.y, ms || 320, 12);
+  return crPoseBras("D", c.x, c.y, ms || 320, 12, o);
 }
+// Le retour au sabot d'une main tendue : la même courbe que l'aller, jamais le ressort (qui
+// fait 55-70 % du trajet dans les 17 premières ms — mesuré le 05/09, 119 px en UNE image).
+const CR_RETOUR = "cubic-bezier(.4,0,.2,1)";
 /* LE geste. La main part du sabot, une petite carte dans la paume, et l'ACCOMPAGNE vers
    le siège : même retard que la vraie carte (`delai`), même courbe à démarrage doux, 55 %
    de sa durée et 34 % de son trajet (150 px au plus : au-delà, mesuré le 05/09, la main
@@ -449,20 +487,26 @@ function crFlick(vers, v, o) {
   crPoseBras("D", vers.el && vers.el.closest && vers.el.closest("#dMain") ? tx : crEviterCartes(tx, ty), ty, ms, -24, opt);
   crRegarde(vers.x, vers.y, ms * 1.3);
   CR.gestes++; const n = CR.gestes;
-  // La carte quitte la main à mi-geste : la vraie est déjà partie, la petite s'efface.
-  crMinuteur(() => { if (CR.gestes === n) crCarteEnMain("D", false); }, (opt.delai || 0) + ms * .5);
+  // La petite carte s'éteint dès que la VRAIE commence à bouger (son retard + une image) :
+  // mesuré le 05/09 à mi-geste, on voyait deux cartes à 8-45 px l'une de l'autre pendant trois images.
+  crMinuteur(() => { if (CR.gestes === n) crCarteEnMain("D", false); }, (opt.delai || 0) + Math.min(55, ms * .5));
   const retour = ms + (opt.delai || 0) + 20;
-  if (v > retour + 70) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(Math.max(90, Math.min(v - retour - 30, v * .3))); }, retour);
+  // Le retour prend au moins 160 ms, sur la courbe de l'aller : un retour en 3 images (175 px en
+  // 67 ms, mesuré le 05/09) arrachait l'œil de la carte qui volait encore.
+  if (v > retour + 70) crMinuteur(() => { if (CR.arme && CR.gestes === n) crArmer(Math.max(160, Math.min(v - retour - 30, v * .45)), { easing: CR_RETOUR }); }, retour);
   else crMinuteur(() => { if (CR.gestes === n) crCarteEnMain("D", false); }, retour);
 }
-// Sa propre carte cachée : la main GAUCHE vient dessus, un coup de poignet, et repart.
+// Sa propre carte cachée : la main DROITE — déjà armée au sabot, à 60 px de la carte — vient
+// SUR elle (le poignet au tiers haut-gauche, les doigts posés dessus), un coup de poignet, la
+// carte pivote sous la main, et la main repart au sabot. Mesuré le 05/09 avec la gauche : en
+// bout de course, elle s'arrêtait 35 px à côté et 20 px trop haut, sur la carte VISIBLE.
 function crRetourne(el) {
   if (!CR.el || !CR.visible || !el) return;
   const r = el.getBoundingClientRect(); if (!r.width) return;
-  const rep = crRepere(), s = rep ? rep.s : 1;
-  crPoseBras("G", r.left + r.width * .5 + 18 * s, r.top + r.height * .12, 240, 26);
-  crMinuteur(() => crBouger("crPoignetG", -30, 180), 250);
-  crMinuteur(() => crReposerGauche(360), 540);
+  CR.arme = false; CR.gestes++; const n = CR.gestes;
+  crPoseBras("D", r.left + r.width * .3, r.top + r.height * .3, 240, 26, { easing: CR_RETOUR });
+  crMinuteur(() => { if (CR.gestes === n) crBouger("crPoignetD", -30, 180); }, 250);
+  crMinuteur(() => { if (CR.gestes === n) crArmer(320, { easing: CR_RETOUR }); }, 560);
   crRegarde(r.left + r.width / 2, r.top, 260);
 }
 function crReposerGauche(ms) { const g = crCibleRepos("G"); if (g) crPoseBras("G", g.x, g.y, ms, 0, { theta: CR_THETA_REPOS, doigtsBas: true }); }
@@ -537,13 +581,13 @@ const BOUCHES = {
 const EMOTIONS = {
   neutre: { sg: [0, 0], sd: [0, 0], bouche: "calme", joues: 0, plisse: [0, 0] },
   concentre: { sg: [1.8, 4], sd: [1.8, -4], bouche: "ferme", joues: 0, plisse: [.22, .22] },
-  content: { sg: [-1.5, -3], sd: [-1.5, 3], bouche: "sourire", joues: .2, plisse: [0, 0] },
+  content: { sg: [-1.5, -3], sd: [-1.5, 3], bouche: "sourire", joues: .08, plisse: [0, 0] },
   // Moqueur : sourcil gauche haut, le droit bas, l'œil droit à demi fermé, sourire en coin,
   // et la tête PENCHE (crEmotion). À 1280 px, c'est le penché qui se lit de loin.
-  moqueur: { sg: [-7, -18], sd: [3.5, 9], bouche: "encoin", joues: .15, plisse: [.06, .5], penche: 9 },
+  moqueur: { sg: [-7, -18], sd: [3.5, 9], bouche: "encoin", joues: .06, plisse: [.06, .5], penche: 9 },
   // Agacé : sourcils en V, joues, et le menton qui vient (avance) — la mâchoire.
-  agace: { sg: [4.5, 15], sd: [4.5, -15], bouche: "boude", joues: .55, plisse: [.35, .35], avance: 3 },
-  furieux: { sg: [7, 24], sd: [7, -24], bouche: "serre", joues: .95, plisse: [.45, .45], secoue: true, avance: 4 },
+  agace: { sg: [4.5, 15], sd: [4.5, -15], bouche: "boude", joues: .3, plisse: [.35, .35], avance: 3 },
+  furieux: { sg: [7, 24], sd: [7, -24], bouche: "serre", joues: .55, plisse: [.45, .45], secoue: true, avance: 4 },
   soupcon: { sg: [3.5, 8], sd: [4, -5], bouche: "ferme", joues: 0, plisse: [.55, .55], fixe: true, penche: -4 },
 };
 function crVisage(o) {
@@ -583,8 +627,29 @@ function crBulleEl() {
   if (CR.bulle) return CR.bulle;
   const salle = $("salle"); if (!salle) return null;
   const b = document.createElement("div"); b.className = "cr-bulle"; b.setAttribute("role", "status"); b.setAttribute("aria-live", "polite");
-  b.innerHTML = `<b class="cr-nom"></b><span class="cr-texte"></span>`;
+  b.innerHTML = `<b class="cr-nom"></b><span class="cr-texte"></span><span class="cr-aide"></span><span class="cr-opts"></span>`;
   salle.appendChild(b); CR.bulle = b; return b;
+}
+// Une question dans la bulle : le texte, une ligne d'aide, des boutons — et PAS de minuterie,
+// la bulle reste tant qu'on n'a pas répondu. C'est l'assurance (table.js, « sabot:assurance-
+// question ») : une seule voix, celle du croupier, à la première personne.
+function crDireQuestion(texte, aide, options, sur) {
+  const b = crBulleEl(); if (!b) return false;
+  clearTimeout(CR.bulleT); clearTimeout(CR.bulleR);
+  crPoserBulle(b);
+  b.querySelector(".cr-nom").textContent = crNom();
+  b.querySelector(".cr-texte").textContent = texte;
+  b.querySelector(".cr-aide").textContent = aide || "";
+  const o = b.querySelector(".cr-opts"); o.innerHTML = "";
+  options.forEach(([libelle, valeur, defaut]) => {
+    const bt = document.createElement("button"); bt.type = "button"; bt.textContent = libelle; if (defaut) bt.className = "defaut";
+    bt.onclick = () => { o.innerHTML = ""; b.querySelector(".cr-aide").textContent = ""; b.classList.remove("question", "on"); CR.bulleGenre = ""; sur(valeur); };
+    o.appendChild(bt);
+  });
+  CR.bulleGenre = "question"; b.classList.add("question", "on");
+  crArticule("ferme");
+  setTimeout(() => { const d = o.querySelector(".defaut"); if (d && d.isConnected) d.focus(); }, 80);
+  return true;
 }
 function crPoserBulle(b) {
   const t = crQ("#cr-crTete"), salle = $("salle"); if (!t || !salle) return;
@@ -598,6 +663,7 @@ function crPoserBulle(b) {
 // 270 → 240 px, opacité déjà à 1).
 function crDire(texte, ms, o) {
   const b = crBulleEl(); if (!b || !texte) return;
+  if (CR.bulleGenre === "question") return;        // une question attend sa réponse : rien ne passe devant
   o = o || {};
   const poser = () => {
     crPoserBulle(b);
@@ -616,6 +682,7 @@ function crDire(texte, ms, o) {
 // `genre` : ne fermer que ce genre-là (une réplique sans texte ne coupe pas une annonce en cours).
 function crTaire(genre) {
   if (genre && CR.bulleGenre && CR.bulleGenre !== genre) return;
+  if (CR.bulleGenre === "question" && genre !== "question") return;
   clearTimeout(CR.bulleT); clearTimeout(CR.bulleR); CR.bulleGenre = ""; if (CR.bulle) CR.bulle.classList.remove("on");
 }
 function crReplique(genre) {
@@ -657,6 +724,22 @@ document.addEventListener("sabot:annonce", e => {
   const t = ((e.detail || {}).texte || "").trim();
   if (!t) { crTaire("annonce"); return; }
   crDire(t, 3400, { genre: "annonce" });
+});
+// L'assurance : LE croupier pose la question, dans sa bulle, à la première personne, avec le
+// montant ; Oui/Non dedans ; il te regarde, concentré, jusqu'à la réponse. Sur ordinateur, en
+// solo (à plusieurs, reseau.js a sa boîte à minuterie). q.prise = true dit à table.js de ne pas
+// ouvrir sa boîte.
+document.addEventListener("sabot:assurance-question", e => {
+  const q = e.detail || {};
+  if (!CR.el || !CR.visible || !matchMedia("(min-width:1000px)").matches || $("v-table").dataset.reseau || typeof q.repondre !== "function") return;
+  const texte = (crReplique("assurance") || "Un as. Assurance ? {cout}.").replace("{cout}", fmtJ(q.cout));
+  const aide = "Un pari à part, payé 2 contre 1 si j'ai un blackjack. " + (q.conseil || "");
+  crVisage(EMOTIONS.concentre); CR.fixe = true; crRegardeSiege("toi", 220);
+  const ok = crDireQuestion(texte, aide, [["Oui", true], ["Non", false, true]], prise => {
+    CR.fixe = false; crVisage(EMOTIONS[CR.emotion] || EMOTIONS.neutre);
+    q.repondre(prise);
+  });
+  if (ok) q.prise = true; else CR.fixe = false;
 });
 // L'appel à miser (jetons.js) : « Vos mises, s'il vous plaît. » — une fois par phase de mise.
 document.addEventListener("sabot:appel-mise", e => {

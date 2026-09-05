@@ -274,7 +274,15 @@ function dimensionnerCartes() {
   // 72 : mesuré le 05/09 à 1280 × 800, les cartes des sièges du bord (84 px, remontées de
   // 92 px sur l'arc) montaient au niveau de celles du croupier, et l'arc doré était pincé
   // à 8 px entre les deux rangées. Une table de casino a les joueurs SOUS le croupier.
-  const plancher = n >= 5 && Hf > 0 && Hf < 520 ? 72 : 84;
+  // …et QUEL QUE SOIT le nombre de sièges : à trois (le Salon Privé), le plancher de 84 faisait des
+  // cartes qui remplissaient tout ce qui restait sous la rangée du croupier — 8 px entre sa main et
+  // la tienne, et plus de place pour le lettrage (mesuré le 05/09 à 1280 × 800, feutre de 405 px).
+  // …et sous 400 px (1024 × 768 : 383 px de feutre, bandeau sur une ligne), 66 : la boîte des sièges
+  // est calée EN BAS du feutre (style.css, .sieges align-self:end), donc le seul levier sur la bande
+  // de l'arc est la hauteur du siège lui-même — mesuré le 05/09, réserver de la place sous la rangée du
+  // croupier (de 0 à 40 px) ne déplaçait pas les sièges d'un pixel. Six pixels de carte en moins,
+  // c'est huit pixels de bande en plus : l'écart passe de 21 à ~30, et l'arc est imprimé.
+  const plancher = Hf > 0 && Hf < 400 ? 66 : Hf > 0 && Hf < 520 ? 72 : 84;
   const sBase = (pellicule ? sieges[0].clientWidth : partage) - 12;
   // Plafond 112 (et plus 100) : à 1920 × 1080 la hauteur le permet, et une table qui grandit
   // en hauteur doit grandir avec ses objets. Plus de bande réservée au lettrage : le plafond
@@ -294,7 +302,11 @@ function dimensionnerCartes() {
   // Pas sur un feutre bas (1024 × 768 : 401 px) — mesuré le 05/09, les 11 px de plus
   // mangeaient la bande du lettrage, et « BLACKJACK PAYS 3 TO 2 » n'était plus dessiné.
   // Le soulèvement et le total en or suffisent à dire laquelle est ta main.
-  const K_TOI = pellicule || Hf < 430 ? 1 : 1.12;
+  // …ni à TROIS sièges (le Salon Privé) : avec des sièges larges, la carte est déjà à son plafond, et
+  // les 12 % de plus faisaient toucher les cartes du croupier aux tiennes — bas de sa main à y = 135,
+  // haut de la tienne à 136 (mesuré le 05/09 à 1280 × 800). À trois, ta main est déjà au centre :
+  // pas besoin de la grossir ni de la soulever pour la trouver.
+  const K_TOI = pellicule || Hf < 430 || n <= 3 ? 1 : 1.12;
   sieges.forEach(s => {
     // Une largeur FIXE par siège : un siège qui passe de 126 à 133 px à sa 2ᵉ carte
     // faisait reculer tous ses voisins de 3 px (mesuré le 04/09).
@@ -322,7 +334,7 @@ function dimensionnerCartes() {
     plateau.style.setProperty("--w-croupier", (pellicule ? wcHf : wc) + "px");
     plateau.style.setProperty("--k-toi", K_TOI);   // la réserve de tes cartes (style.css, .siege.toi .mains) suit
     // Ton siège se soulève au-dessus de l'arc des voisins, autant que la hauteur le permet.
-    plateau.style.setProperty("--surelev-toi", (pellicule ? 0 : Hf >= 560 ? -12 : Hf >= 440 ? -7 : -3) + "px");
+    plateau.style.setProperty("--surelev-toi", (pellicule || n <= 3 ? 0 : Hf >= 560 ? -12 : Hf >= 440 ? -7 : -3) + "px");
     const avant = plateau.style.getPropertyValue("--w-table");
     plateau.style.setProperty("--w-table", wT + "px");
     // Les piles de jetons (jetons.js) suivent l'échelle de la table : elles ne sautent plus.
@@ -335,6 +347,22 @@ function dimensionnerCartes() {
    faut pour que le coin extérieur bas de son contenu reste sur le feutre, et
    s'incline vers le centre (--tilt, 3,5° par rang, 7° au plus). Tout est mesuré
    HORS transformation (offsetTop/offsetLeft), sinon on mesurerait le résultat. */
+/* La largeur des CARTES d'un siège (l'union de ses éventails, plus 10 px entre deux mains
+   séparées), mesurée hors transformation — et PAS celle de sa boîte .mains. Cette boîte
+   s'élargit avec le texte du total (« 18 souple ») ou du verdict : mesuré le 05/09 au Salon
+   Privé à 1280 × 800, 249 px de boîte pour trois cartes de 72, 197 pour deux. Le lettrage la
+   croyait sous l'arc et cédait jusqu'à 13 px ; la remontée des sièges du bord la croyait au
+   rail et les hissait au niveau de la main du croupier. Boîte vide (phase de mise) : 0 —
+   chaque appelant garde sa réserve minimale (un éventail de trois). */
+function largeurCartes(mains) {
+  let total = 0, k = 0;
+  mains.querySelectorAll(".main").forEach(m => {
+    let g = Infinity, d = -Infinity;
+    for (const c of m.children) { if (!c.offsetWidth) continue; g = Math.min(g, c.offsetLeft); d = Math.max(d, c.offsetLeft + c.offsetWidth); }
+    if (d > g) { total += d - g; k++; }
+  });
+  return total + Math.max(0, k - 1) * 10;
+}
 function placerSieges(box, sieges, feutre) {
   const W = feutre.clientWidth, H = feutre.clientHeight; if (W < 320 || H < 160) return;
   const cf = courbeFeutre(feutre, W, H), n = sieges.length;
@@ -362,7 +390,7 @@ function placerSieges(box, sieges, feutre) {
     // descendent plus bas que le nom : mesurés aussi, sinon ils passent sur le lettrage du rail.
     s.querySelectorAll(".mains, :scope > .cercle, .rangee-bas, .nom, .tapis-siege, .asseoir").forEach(p => {
       // Les cartes : une largeur FIXE (un éventail de trois), sinon la 3ᵉ carte déplacerait le siège.
-      const demi = (p.classList.contains("mains") ? Math.max(p.offsetWidth, wT * 2.2) : p.offsetWidth) / 2 + 10;
+      const demi = (p.classList.contains("mains") ? Math.max(largeurCartes(p), wT * 2.2) : p.offsetWidth) / 2 + 10;
       const bas = box.offsetTop + hautDans(p) + p.offsetHeight;
       const yCourbe = Math.min(cf.y(cx - demi) - marge(cx - demi), cf.y(cx + demi) - marge(cx + demi));
       lift = Math.max(lift, Math.round(bas - yCourbe));

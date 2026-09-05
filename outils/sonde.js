@@ -91,7 +91,7 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   await miser(); await dodo(700);
   const moi = qa("#sieges .siege").findIndex(s => s.classList.contains("toi"));
   ok("jetons : la mise est dans mon cercle", qa("#cercle_" + moi + " .jt").length >= 1, "cercle vide");
-  ok("jetons : mise chiffrée, en unités", /\d/.test(txt("#rjMise")) && /unité/.test(txt("#rjUnites")), txt("#rjMise") + " / " + txt("#rjUnites"));
+  ok("jetons : mise chiffrée, en unités", /\d/.test(txt("#rjMise")) && /minimum|unité/.test(txt("#rjUnites")), txt("#rjMise") + " / " + txt("#rjUnites"));
   ok("jetons : le tapis a baissé", tap() !== tapisAvant, tapisAvant + " → " + tap());
   ok("jetons : les voisins ont misé", qa("#sieges .siege:not(.toi) .jt").length >= 2, qa("#sieges .siege:not(.toi) .jt").length + " jetons voisins");
   ok("jetons : avec une mise, la donne s'ouvre", !q("#bDonne").disabled, "Distribuer fermé");
@@ -106,7 +106,7 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   // remélange — le compteur de mains a quitté le feutre, on ne peut plus le lire.
   const restants = trace.map(t => +(/sabot=(\d+)/.exec(t) || [0, 0])[1]);
   ok("table : carte de coupe franchie", restants.some((n, i) => i && n > restants[i - 1] + 10), restants.join(" "));
-  ok("table : aucune donne interrompue", trace.every(t=>/Croupier/.test(t)), trace.join(" "));
+  ok("table : aucune donne interrompue", trace.every(t=>/roupier/.test(t)), trace.join(" "));
   ok("des mains ont été jouées", +txt("#sabot") < 300, "sabot=" + txt("#sabot"));
   ok("compte courant entier (jamais NaN)", entier(txt("#tRC")), txt("#tRC"));
   ok("compte vrai chiffré", /[0-9]/.test(txt("#tTC")), txt("#tTC"));
@@ -146,7 +146,9 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   clic('#salon [data-asseoir="cotai"]'); await dodo(2000);
   if (q("#bMontrer").getAttribute("aria-pressed") !== "true") q("#bMontrer").click();
   for (let k = 0; k < 4; k++) await jouerUneMain(false);
-  ok("mélangeuse : le sabot se recharge", +txt("#sabot") > 280, txt("#sabot"));
+  // Une mélangeuse n'affiche pas de compte (le meuble n'a ni chiffre ni carte de coupe) : le nombre vit en data-n.
+  ok("mélangeuse : le sabot se recharge", +q("#sabot").dataset.n > 280, q("#sabot").dataset.n);
+  ok("mélangeuse : ni chiffre, ni défausse, ni carte de coupe", txt("#sabot") === "" && q("#v-table").dataset.melange === "csm" && getComputedStyle(q("#defausse")).display === "none", "sabot=" + txt("#sabot") + " melange=" + q("#v-table").dataset.melange);
   ok("mélangeuse : le compte ne s'accumule pas", entier(txt("#tRC")) && Math.abs(+txt("#tRC")) < 12, txt("#tRC"));
 
   // ── Stratégie : 20 réponses, figures incluses
