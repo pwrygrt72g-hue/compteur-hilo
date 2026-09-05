@@ -9,6 +9,10 @@
 //   1. les deux se relient au courtier (le même — B est épinglé sur celui de A)
 //   2. ≤ 30 s : chaque côté a l'autre en ICE connected/completed ET framesDecoded > 15
 //      (des images passent VRAIMENT, c'est le décodeur qui le dit, via getStats)
+//   2 bis. la COLLECTE ICE est terminée des deux côtés, en < 5 s (iceGatheringState
+//      « complete », durée posée par visio.mjs). Avec le TURN mort d'Open Relay inscrit
+//      en dur jusqu'au 5 septembre 2026, elle ne finissait JAMAIS : cette étape est
+//      celle qui empêche un relais mort de revenir sans que personne le voie.
 //   3. on tue B (SIGKILL) : A doit signaler son départ en ≤ 12 s
 //   4. on relance B : les deux se revoient en ≤ 30 s
 // Sortie 1 avec l'étape fautive et l'état des deux côtés. Si les courtiers
@@ -140,6 +144,16 @@ async function passage(essai, eviter) {
     etape("A et B se voient (ICE connecté, > 15 images, deux sens)", d, `A→B via ${await via(B, "A")}, B→A via ${await via(A, "B")}`);
     const eA = await A.etat(), eB = await B.etat();
     console.log(`     A voit B en ${eA.pairs[0].videoWidth} px de large, ${eA.pairs[0].framesDecoded} images · B voit A en ${eB.pairs[0].videoWidth} px, ${eB.pairs[0].framesDecoded} images`);
+
+    // 2 bis. La collecte ICE est FINIE, et vite, des deux côtés. Un relais mort dans la liste
+    // la laisse « gathering » pour toujours (mesuré avec Open Relay) — on l'exige sous 5 s.
+    const COLLECTE_MAX = 5000, tc2 = Date.now();
+    const collecteFinie = e => e.pairs.length && e.pairs.every(p => p.collecte === "complete" && typeof p.collecteMs === "number");
+    await attendreQue(A, collecteFinie, COLLECTE_MAX, "collecte ICE de A terminée (≤ 5 s)");
+    await attendreQue(B, collecteFinie, Math.max(1000, COLLECTE_MAX - (Date.now() - tc2)), "collecte ICE de B terminée (≤ 5 s)");
+    const durees = [...(await A.etat()).pairs, ...(await B.etat()).pairs].map(p => p.collecteMs);
+    if (durees.some(ms => ms > COLLECTE_MAX)) throw new Echec(`collecte ICE trop lente : ${durees.join(" / ")} ms (plafond ${COLLECTE_MAX})`, await A.etat());
+    etape("Collecte ICE terminée des deux côtés (< 5 s, STUN seul)", Date.now() - tc2, `durées ${durees.map(ms => (ms / 1000).toFixed(2) + " s").join(" · ")}`);
 
     // 2 bis. Un troisième : chacun voit chacun.
     let C = null;

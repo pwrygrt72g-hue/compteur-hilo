@@ -224,14 +224,44 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   ok("multijoueur : la course reste accessible", /course/i.test(txt("#mpCreer")), txt("#mpCreer"));
   clic('#mpModes [data-mode="table"]'); await dodo(80);
   ok("multijoueur : le code se tape groupé", (q("#mpCode").value = "a7k2m9pq", q("#mpCode").dispatchEvent(new Event("input")), q("#mpCode").value === "A7K2-M9PQ"), q("#mpCode").value);
+  // ── L'ARTEFACT : WebSocket bloqué SANS erreur visible. L'écran doit le dire en moins de
+  // trois secondes, avec le lien GitHub Pages, ne pas ouvrir la table — et ne jamais
+  // demander la caméra pour rien (visio.js ne démarre qu'une fois le courtier relié).
+  { const WS = window.WebSocket; let gum = 0;
+    const md = navigator.mediaDevices, gumOrig = md && md.getUserMedia;
+    if (md) md.getUserMedia = function () { gum++; return Promise.reject(Object.assign(new Error("sonde"), { name: "NotAllowedError" })); };
+    window.WebSocket = class { constructor() { setTimeout(() => this.onerror && this.onerror(new Event("error")), 2); } close() {} send() {} };
+    clic("#mpCreer"); await dodo(3200);
+    ok("artefact : sans WebSocket, l'écran À plusieurs le dit en < 3 s, avec le lien GitHub Pages", /github\.io\/compteur-hilo/.test(q("#mpEtat").innerHTML) && q("#v-table").hidden && !q("#mpCreer").disabled, "mpEtat = " + txt("#mpEtat").slice(0, 80) + " · table hidden=" + q("#v-table").hidden);
+    ok("artefact : la caméra n'a pas été demandée pour rien", gum === 0, gum + " appel(s) getUserMedia");
+    window.WebSocket = WS; if (md) md.getUserMedia = gumOrig; }
   // ── La table réseau, sans courtier : un transport muet injecté par la sonde. L'hôte
-  // est seul, la table s'ouvre sur la scène et attend des joueurs sans une erreur.
-  window.__reseauTransport = () => ({ publier() {}, fermer() {} });
+  // est seul, la table s'ouvre sur la scène et attend des joueurs sans une erreur. Le
+  // transport garde `onMessage` sous la main : c'est par là qu'un ami fictif entrera.
+  window.__reseauTransport = o => { window.__reseauEntrant = o.onMessage; return { publier() {}, fermer() {} }; };
   clic("#mpCreer"); await dodo(1500);
   ok("table réseau : ouverte sur la scène, en attente", !q("#v-table").hidden && q("#v-table").dataset.reseau === "1" && /attente|code/i.test(txt("#annonce")), "hidden=" + q("#v-table").hidden + " reseau=" + q("#v-table").dataset.reseau + " annonce=" + txt("#annonce"));
   ok("table réseau : cinq sièges libres, un code de huit", qa("#sieges .siege.vide").length === 5 && /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(txt("#tCode")), qa("#sieges .siege.vide").length + " libres · " + txt("#tCode"));
   clic("#sieges .siege.vide .asseoir"); await dodo(600);
   ok("table réseau : assis, les mises s'ouvrent", !!q("#sieges .siege.toi") && phase() === "mise" && q("#rackJetons").classList.contains("ouvert"), "toi=" + !!q("#sieges .siege.toi") + " phase=" + phase());
+  // ── Les têtes des amis (visio.js) : une vignette par siège humain, jamais un rectangle noir.
+  ok("visio : ma vignette est une silhouette qui dit pourquoi (pas de vidéo, pas de noir)", !!q("#sieges .siege.toi .visage.moi .silhouette") && txt("#sieges .siege.toi .visage .visage-etat").length > 0 && !q("#sieges .siege.toi .visage video"), "visage=" + !!q("#sieges .siege.toi .visage") + " état=" + txt("#sieges .siege.toi .visage .visage-etat"));
+  ok("visio : la vignette partage la rangée du cercle de mise", !!q("#sieges .siege.toi .rangee-bas .cercle") && !!q("#sieges .siege.toi .rangee-bas .visage"), "rangée absente");
+  ok("visio : pas de vignette sur un siège libre", qa("#sieges .siege.vide .visage").length === 0, qa("#sieges .siege.vide .visage").length + " vignettes sur des sièges libres");
+  ok("visio : le bouton Caméra est là, éteint (rien n'est demandé sans un clic)", !q("#bCamera").hidden && q("#bCamera").getAttribute("aria-pressed") === "false", "hidden=" + q("#bCamera").hidden + " pressed=" + q("#bCamera").getAttribute("aria-pressed"));
+  // Un ami fictif salue et s'assoit par le transport muet : sa vignette attend, sans une erreur.
+  if (window.__reseauEntrant) { __reseauEntrant({ t: "salut", id: "jSonde", nom: "Sonia", couleur: "#c0392b" }); __reseauEntrant({ t: "action", id: "jSonde", a: "asseoir", v: 3, nom: "Sonia", couleur: "#c0392b" }); await dodo(700); }
+  ok("visio : l'amie assise a sa vignette en attente, la mienne reste en miroir", qa("#sieges .visage").length === 2 && /attente/i.test(txt("#sieges .visage:not(.moi) .visage-etat")) && qa("#sieges .visage.moi").length === 1, qa("#sieges .visage").length + " vignettes · " + txt("#sieges .visage:not(.moi) .visage-etat"));
+  // Une caméra qui MANQUE (getUserMedia bouchonné : dans ce Chrome sans faux périphérique la
+  // vraie demande ne répond jamais sous le temps virtuel) : l'allumer doit le DIRE, se
+  // rééteindre, et l'oublier — sans une erreur.
+  { const md = navigator.mediaDevices, gumOrig = md && md.getUserMedia;
+    if (md) md.getUserMedia = () => Promise.reject(Object.assign(new Error("sonde"), { name: "NotFoundError" }));
+    clic("#bCamera"); await dodo(800);
+    if (md) md.getUserMedia = gumOrig; }
+  ok("visio : sans caméra, le bouton se rééteint et ma vignette dit pourquoi", q("#bCamera").getAttribute("aria-pressed") === "false" && /caméra|refus|indispo|occup|coup/i.test(txt("#sieges .siege.toi .visage .visage-etat")), "pressed=" + q("#bCamera").getAttribute("aria-pressed") + " état=" + txt("#sieges .siege.toi .visage .visage-etat"));
+  { let m = {}; try { m = JSON.parse(localStorage.getItem("sabot") || "{}"); } catch (e) {}
+    ok("mémoire : DB.camera repasse à faux quand la caméra manque", m.camera === false, "camera=" + m.camera); }
   await miser(); await dodo(500);
   ok("table réseau : ma mise est dans mon cercle, l'hôte peut distribuer", qa("#sieges .siege.toi .jt").length >= 1 && !q("#bDonne").disabled, "jt=" + qa("#sieges .siege.toi .jt").length + " donne=" + q("#bDonne").disabled);
   clic("#bDonne"); await dodo(400);
@@ -249,6 +279,23 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   ok("table réseau : la fiche de la table (code, joueurs, bots)", /À cette table/.test(q("#modaleBoite").textContent) && !!q("#rsBots"), q("#modaleBoite").textContent.slice(0, 80));
   clic("#rsQuitter"); await dodo(1500);
   ok("table réseau : quitter rend la table solo", !q("#v-table").dataset.reseau && q("#bReseau").hidden && txt("#bNouveauSabot") === "Nouveau sabot" && phase() === "mise", "reseau=" + q("#v-table").dataset.reseau + " phase=" + phase());
+  ok("visio : en solo, ni bouton Caméra ni vignette", q("#bCamera").hidden && qa("#sieges .visage").length === 0, "hidden=" + q("#bCamera").hidden + " vignettes=" + qa("#sieges .visage").length);
+
+  // ── Le relais vidéo dans ⚙ : mémorisé (DB.turn), testable ; sans identifiants, on le dit.
+  clic("#bReglages"); await dodo(200);
+  ok("relais : la section vit dans ⚙, avec ses trois champs et son bouton", !q("#modale").hidden && !!q("#modaleBoite #turnUrl") && !!q("#modaleBoite #turnUser") && !!q("#modaleBoite #turnPass") && !!q("#modaleBoite #turnTester"), "champs absents de la modale");
+  ok("relais : sans identifiants, ⚙ dit « STUN seul »", /STUN seul/.test(txt("#turnEtat")), txt("#turnEtat").slice(0, 60));
+  clic("#turnTester"); await dodo(300);
+  ok("relais : tester sans identifiants le dit, sans rien lancer", /Aucun relais configuré/.test(txt("#turnEtat")), txt("#turnEtat").slice(0, 60));
+  q("#turnUrl").value = "turn:relais.exemple.org:3478"; q("#turnUrl").dispatchEvent(new Event("input"));
+  q("#turnUser").value = "sonde"; q("#turnUser").dispatchEvent(new Event("input"));
+  q("#turnPass").value = "secret"; q("#turnPass").dispatchEvent(new Event("input")); await dodo(100);
+  { let m = {}; try { m = JSON.parse(localStorage.getItem("sabot") || "{}"); } catch (e) {}
+    ok("relais : mémorisé dans DB.turn", m.turn && m.turn.url === "turn:relais.exemple.org:3478" && m.turn.user === "sonde" && m.turn.pass === "secret", JSON.stringify(m.turn)); }
+  ok("relais : renseigné, ⚙ le dit", /Relais renseigné/.test(txt("#turnEtat")), txt("#turnEtat").slice(0, 60));
+  ["turnUrl", "turnUser", "turnPass"].forEach(id => { q("#" + id).value = ""; q("#" + id).dispatchEvent(new Event("input")); });
+  clic("#modaleFermer"); await dodo(150);
+  ok("relais : la feuille rend le bloc à l'en-tête", q("#outils").hidden && !!q("header #outils"), "outils hidden=" + q("#outils").hidden);
   ok("BILAN : aucune erreur", __err.length === 0, __err.join(" / "));
  } catch (e) { R.push("KO la sonde a planté >> " + e.message + " @ " + (e.stack || "").split("\n")[1]); }
  document.getElementById("SONDE").textContent = "RES " + R.join(" ; ") + " || ERR " + (__err.join(" / ") || "aucune");

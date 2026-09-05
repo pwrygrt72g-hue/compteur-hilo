@@ -1378,3 +1378,57 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .cr-chef .cr-mini{ width:100%; height:100%; display:block }
 .cr-chef.fixe{ box-shadow:0 0 0 2px var(--cinabre) inset, 0 0 14px -4px var(--cinabre) }
 .cr-chef .cr-mini #co-crSourcilG, .cr-chef .cr-mini #co-crSourcilD, .cr-chef .cr-mini #co-crBouche{ transition:transform .3s }
+
+/* ── Les têtes des amis (visio.js) — `.visage`, parce que `.tete` est l'en-tête ──
+   À plusieurs, chaque siège tenu par un humain porte une vignette vidéo, à côté de
+   son cercle de mise : la tête au rail, les jetons devant, le nom dessous — l'ordre
+   d'une vraie table vue du croupier. Sur les sièges de gauche la vignette est à
+   l'extérieur (ordre inversé) : les visages regardent vers le centre. Une vignette
+   sans flux n'est JAMAIS un rectangle noir : une silhouette, et un mot qui dit
+   pourquoi (« caméra coupée », « connexion… », « vidéo bloquée »). */
+.siege .rangee-bas{ display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:3px }
+.siege .rangee-bas .cercle{ margin-top:0 }
+.siege.gauche .visage{ order:-1 }
+/* 96 × 72 quand le siège le permet ; sinon la vignette CÈDE (jusqu'à 56 px) plutôt que de
+   passer sous le cercle — mesuré à 1024 × 768 : deux rangées doublaient la hauteur du siège
+   et poussaient le cercle sous l'annonce. --siege-w est posé par visio.js (la largeur que
+   cartes.js a donnée au siège), le cercle est la même expression qu'au-dessus. */
+.visage{ position:relative; width:clamp(56px, calc(var(--siege-w, 226px) - 20px - clamp(54px, calc(var(--w-table, 84px) * .82), 84px)), 96px);
+  height:auto; aspect-ratio:4 / 3; flex:none; border-radius:10px; overflow:hidden; isolation:isolate;
+  background:rgba(0,0,0,.42);
+  box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 42%, transparent), 0 8px 16px -10px rgba(0,0,0,.9);
+  transition:box-shadow .3s }
+.visage video{ display:block; width:100%; height:100%; object-fit:cover; background:#000 }
+.visage.moi video{ transform:scaleX(-1) }              /* la tienne en miroir, comme dans une glace */
+.visage .silhouette{ position:absolute; inset:0; width:100%; height:100%; display:block; color:color-mix(in oklab, var(--ivoire) 36%, transparent) }
+.visage .visage-etat{ position:absolute; left:0; right:0; bottom:0; padding:10px 4px 3px; font-size:9px; line-height:1.1; letter-spacing:.1em;
+  text-transform:uppercase; text-align:center; color:var(--ivoire); text-shadow:0 1px 2px rgba(0,0,0,.9);
+  background:linear-gradient(transparent, rgba(0,0,0,.66)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.visage .visage-etat:empty{ display:none }
+.visage[data-etat="ok"]{ box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 72%, transparent), 0 0 14px -4px var(--or), 0 8px 16px -10px rgba(0,0,0,.9) }
+.visage[data-etat="bloque"]{ box-shadow:0 0 0 1.5px var(--cinabre), 0 8px 16px -10px rgba(0,0,0,.9) }
+.visage[data-etat="bloque"] .visage-etat{ color:var(--cinabre) }
+.visage[data-etat="demande"] .silhouette, .visage[data-etat="connexion"] .silhouette{ animation:respire 1.6s ease-in-out infinite }
+@keyframes respire{ 0%,100%{ opacity:.5 } 50%{ opacity:1 } }
+.siege.absent .visage{ filter:grayscale(1); opacity:.6 }
+/* Le bouton Caméra allumé : un point jade, comme un voyant — et le liseré or des boutons pressés. */
+#bCamera[aria-pressed="true"]::before{ content:""; display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; vertical-align:1px;
+  background:var(--jade); box-shadow:0 0 6px var(--jade) }
+@media (max-width:999.98px){ .visage{ width:64px } .visage .visage-etat{ font-size:8px; letter-spacing:.06em; padding-top:8px } .siege .rangee-bas{ gap:5px } }
+@media (max-height:520px){ .visage{ width:64px } }
+
+/* ── Le relais vidéo, dans ⚙ ─────────────────────────────────────────────── */
+.relais{ margin-top:16px; padding-top:12px; border-top:1px solid var(--ardoise); text-align:left }
+.relais summary{ cursor:pointer; min-height:44px; display:flex; flex-direction:column; justify-content:center; gap:2px; list-style:none; padding-left:18px; position:relative }
+.relais summary::-webkit-details-marker{ display:none }
+.relais summary::before{ content:"›"; position:absolute; left:2px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--laiton); transition:transform .2s }
+.relais[open] summary::before{ transform:translateY(-50%) rotate(90deg) }
+.relais summary .muet{ font-size:var(--t-fin) }
+.relais p.muet{ font-size:var(--t-fin); margin:8px 0 0 }
+.relais .relais-champs{ margin-top:12px; gap:10px }
+.relais .relais-champs label.ch{ flex:1 1 100% }
+.relais .relais-champs label.ch:nth-child(n+2){ flex:1 1 calc(50% - 5px) }
+.relais input{ width:100%; font-family:"Martian Mono",monospace; font-size:var(--t-petit) }
+.relais .relais-etat{ font-size:var(--t-petit); min-height:20px; margin-top:8px }
+.relais .relais-etat[data-ok="1"]{ color:var(--jade) }
+.relais .relais-etat[data-ok="0"]{ color:var(--cinabre) }

@@ -32,6 +32,10 @@
      sabot:assurance        { siege, main, toi, prise, montant }  la réponse, montant en jetons
      sabot:assurance-fin    { siege, main, toi, gagne, montant }  l'assurance est réglée (+mise si
                             le croupier avait blackjack, −moitié sinon), avant les main-fin
+     sabot:reseau-entree    { api, code, moi }        la table à plusieurs est reliée (reseau.js) ;
+                            api.brut = l'api de net.mjs, absent avec le transport muet de la sonde
+     sabot:reseau-pairs     { pairs }                 la liste des pairs de la salle a changé (Map id → { id, nom })
+     sabot:reseau-sortie    {}                        on quitte la table à plusieurs
      Les montants sont en JETONS : hand.bet porte la vraie mise depuis le lot Jetons.
      remelange porte aussi pendantDonne:true quand le sabot est renouvelé au milieu d'une donne.
    ══════════════════════════════════════════════════════════════════════ */

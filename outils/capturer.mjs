@@ -7,6 +7,9 @@
 //   --sansmise  : avec --donne, ne pose rien (pour voir le bouton fermé).
 //   --reseau    : ouvre une table À PLUSIEURS (transport muet, sans courtier), s'assoit et mise.
 //   --reseau=attente : la même, avant de s'asseoir — la table qui attend des joueurs.
+//   --reseau=amis : la même, assis, avec deux amis fictifs poussés par le transport muet
+//                   (ils saluent l'hôte et s'assoient) — les vignettes vidéo en attente.
+//   --puis=a,b  : plusieurs identifiants, cliqués dans l'ordre (ex. bReglages,relaisOuvrir).
 //
 //   node outils/capturer.mjs table 1280x800 /tmp/table.png --donne
 //   node outils/capturer.mjs table 375x667 /tmp/tel.png --donne --table=cotai
@@ -57,8 +60,14 @@ await evaluer(`(document.querySelector('[data-vue="${vue}"]')||{click(){}}).clic
 await dodo(700);
 if (opt.reseau) {
   await evaluer(`(document.querySelector('nav [data-vue="ensemble"]')||{click(){}}).click()`); await dodo(300);
-  await evaluer(`window.__reseauTransport = () => ({ publier() {}, fermer() {} }); document.getElementById("mpCreer").click()`); await dodo(1600);
+  await evaluer(`window.__reseauTransport = o => { window.__reseauEntrant = o.onMessage; return { publier() {}, fermer() {} }; }; document.getElementById("mpCreer").click()`); await dodo(1600);
   if (opt.reseau !== "attente") { await evaluer(`(document.querySelector("#sieges .siege.vide .asseoir")||{click(){}}).click()`); await dodo(500); }
+  if (opt.reseau === "amis") {
+    await evaluer(`(() => { const r = window.__reseauEntrant; if (!r) return;
+      for (const [id, nom, c, k] of [["jAmi1", "Sonia", "#c0392b", 2], ["jAmi2", "Karim", "#1f6f4a", 4]]) {
+        r({ t: "salut", id, nom, couleur: c }); r({ t: "action", id, a: "asseoir", v: k, nom, couleur: c }); } })()`);
+    await dodo(700);
+  }
 }
 const MISER = `(async () => { const q = s => document.querySelector(s), dodo = ms => new Promise(r => setTimeout(r, ms));
   for (let g = 0; g < 30 && q("#bDonne") && q("#bDonne").disabled; g++) {
@@ -70,7 +79,7 @@ const MISER = `(async () => { const q = s => document.querySelector(s), dodo = m
 if ((opt.donne && !opt.sansmise) || opt.mise) { await evaluer(MISER); await dodo(opt.donne ? 350 : +(opt.attendre || 900)); }
 if (opt.donne) { await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(+(opt.attendre || 3200)); }
 // --puis=bReste : un coup après la donne (pour voir le croupier retourner sa carte, un bust, un gain…).
-if (opt.puis) { await evaluer(`(document.getElementById(${JSON.stringify(opt.puis)})||{click(){}}).click()`); await dodo(+(opt.attendre2 || 2500)); }
+if (opt.puis) { for (const id of String(opt.puis).split(",")) { await evaluer(`(document.getElementById(${JSON.stringify(id.trim())})||{click(){}}).click()`); await dodo(250); } await dodo(+(opt.attendre2 || 2500)); }
 else await dodo(+(opt.attendre || 400));
 // --sonde=<expression JS> : imprime sa valeur (JSON) juste avant la capture — pour MESURER ce qu'on regarde.
 if (opt.sonde) console.log("SONDE", JSON.stringify(await evaluer(String(opt.sonde))));

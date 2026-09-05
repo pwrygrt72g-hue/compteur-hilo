@@ -25,7 +25,10 @@
    ═══════════════════════════════════════════════════════════════════ */
 const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, tableSolo: "", ticker: null, abandon: false,
   mise: 0, poses: [], miseVue: {}, enVol: {}, emis: new Set(), partis: new Set(), assurPartie: new Set(), vus: new Set(),
-  vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, panneauOuvert: false };
+  vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, panneauOuvert: false,
+  // Le crochet de visio.js : un message du courtier lui est d'abord proposé (sujets visio/*),
+  // et il le garde ou le rend. net.mjs n'a qu'un seul onMessage, posé à la connexion.
+  onBrut: null };
 const PAGES_URL = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
 // Ta couleur à la table = un JETON du rack (jetons.js), pas une pastille arc-en-ciel :
 // la pastille devant ton nom en prend la face. Une ancienne couleur enregistrée
@@ -77,11 +80,12 @@ async function rsConnecter(code) {
     // Le testament : si l'onglet ferme sans dire au revoir, le courtier le dit pour lui.
     testament: { sujet, message: JSON.stringify({ t: "adieu", id: RS.moi }) },
     onEssai: (n, total, nom) => rsEtatTexte(`Essai ${n} sur ${total} — ${nom}…`),
-    onMessage: (_, brut) => { try { rsRecevoir(JSON.parse(brut)); } catch (e) {} },
+    onMessage: (s, brut) => { if (RS.onBrut && RS.onBrut(s, brut)) return; try { rsRecevoir(JSON.parse(brut)); } catch (e) {} },
     onClose: () => rsDeconnecte(),
   });
   api.souscrire(sujet);
-  return { publier: o => api.publier(sujet, JSON.stringify(o)), fermer: () => api.fermer(), nom: NET.nomCourtier(url) };
+  // `brut` : l'api de net.mjs telle quelle, pour la visio (elle souscrit ses propres sujets).
+  return { publier: o => api.publier(sujet, JSON.stringify(o)), fermer: () => api.fermer(), nom: NET.nomCourtier(url), brut: api };
 }
 function rsRecevoir(m) { if (RS.salle) RS.salle.recevoir(m, Date.now()); }
 function rsEtatTexte(t) { const e = $("mpEtat"); if (e) e.textContent = t; }
@@ -136,10 +140,12 @@ async function ouvrirTable(code, createur) {
     cartesNeuves: rsCartesNeuves, partie: rsOptionsPartie,
     onEtat: e => rendreReseau(e),
     onInfo: txt => { bandeau(txt, 3200); if (RS.etat) { rsResyncMise(); rsBoutons(RS.etat); } },
-    onPairs: () => { if (rsPanneauVisible()) rsPanneau(); },
+    onPairs: pairs => { emettre("reseau-pairs", { pairs }); if (rsPanneauVisible()) rsPanneau(); },
   });
   entrerModeReseau();
   RS.salle.entrer(Date.now());
+  // La visio (visio.js) se greffe ici : le courtier est relié, la scène est en mode réseau.
+  emettre("reseau-entree", { api, code, moi: RS.moi });
   RS.ticker = setInterval(() => { if (!RS.salle) return; RS.salle.cadence = vitesse(); RS.salle.tic(Date.now()); }, 200);
   aller("table");
   bandeau(createur ? "Table ouverte — partage le code " + TR.formaterCode(code) : "Tu rejoins la table " + TR.formaterCode(code), 3600);
@@ -163,6 +169,7 @@ function entrerModeReseau() {
   rsRendreRack();
 }
 function quitterTable(silencieux) {
+  emettre("reseau-sortie", {});   // la visio se ferme d'abord : son adieu doit partir par un courtier encore relié
   if (RS.salle) { try { RS.salle.quitter(); } catch (e) {} } RS.salle = null;
   if (RS.api) { try { RS.api.fermer(); } catch (e) {} } RS.api = null;
   clearInterval(RS.ticker); RS.ticker = null;
@@ -317,6 +324,9 @@ function rsRendreSieges() {
     const tp = document.createElement("span"); tp.className = "tapis-siege"; tp.textContent = fmtJ(st.tapis) + (st.rachats ? " · " + st.rachats + " rachat" + (st.rachats > 1 ? "s" : "") : "");
     nm.after(tp);
   });
+  // Les sièges ont grandi (tapis sous le nom, boutons « S'asseoir ») APRÈS la mesure de
+  // rendreSieges() : on remesure, sinon ce qui dépasse passe sur le lettrage du rail.
+  dimensionnerCartes();
 }
 function rsChipCode() {
   const r = $("tRegles"); if (!r || !RS.code) return;

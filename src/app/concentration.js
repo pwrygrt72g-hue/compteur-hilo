@@ -100,17 +100,22 @@ function detendre() {
   else if (!CO.occupe) indice(5, "Tu souris dans le vide. Bizarre.");
 }
 $("coDetendu").onclick = detendre;
+// La caméra est CELLE de camera.mjs, partagée avec la visio de la table et comptée par
+// références : un seul voyant, une seule permission, et le détecteur continue de tourner
+// si tes amis te voient déjà. Rien ne lève : un refus se lit dans `etat` et `raison`.
 async function lancerCamera() {
   arreterCamera(); $("coCamHors").hidden = false; $("coCamEtat").textContent = "";
   if (!CO.cam) { $("coCamHors").textContent = "Caméra désactivée : seuls les signes de comportement comptent."; return; }
-  try {
-    CO.flux = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: "user" }, audio: false });
-    const v = $("coVideo"); v.srcObject = CO.flux; await v.play();
-    $("coCamHors").hidden = true; $("coCamEtat").textContent = "Détecteur actif";
-    CO.raf = requestAnimationFrame(camTick);
-  } catch (e) { CO.cam = false; $("coCamHors").textContent = "Caméra indisponible ici (" + (e.name || "refusée") + "). Ouvre le site plutôt que la page publiée."; }
+  const cam = M.camera.cameraPartagee(); CO.camRef = true;
+  const { flux, etat, raison } = await cam.prendre();
+  if (!CO.camRef) return;                                   // arrêtée pendant la demande : la référence est déjà rendue
+  if (!flux) { CO.camRef = false; cam.rendre(); CO.cam = false; $("coCamHors").textContent = (raison || "Caméra indisponible (" + etat + ").") + " Ouvre le site plutôt que la page publiée."; return; }
+  CO.flux = flux;
+  const v = $("coVideo"); v.srcObject = flux; await v.play().catch(() => {});
+  $("coCamHors").hidden = true; $("coCamEtat").textContent = "Détecteur actif";
+  CO.raf = requestAnimationFrame(camTick);
 }
-function arreterCamera() { cancelAnimationFrame(CO.raf); if (CO.flux) { CO.flux.getTracks().forEach(t => t.stop()); CO.flux = null; } }
+function arreterCamera() { cancelAnimationFrame(CO.raf); if (CO.camRef) { CO.camRef = false; M.camera.cameraPartagee().rendre(); } CO.flux = null; }
 const LW = 64, LH = 48;
 const travail = document.createElement("canvas"); travail.width = LW; travail.height = LH;
 const wx = travail.getContext("2d", { willReadFrequently: true });

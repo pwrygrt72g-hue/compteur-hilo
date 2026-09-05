@@ -1396,6 +1396,60 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .cr-chef.fixe{ box-shadow:0 0 0 2px var(--cinabre) inset, 0 0 14px -4px var(--cinabre) }
 .cr-chef .cr-mini #co-crSourcilG, .cr-chef .cr-mini #co-crSourcilD, .cr-chef .cr-mini #co-crBouche{ transition:transform .3s }
 
+/* ── Les têtes des amis (visio.js) — `.visage`, parce que `.tete` est l'en-tête ──
+   À plusieurs, chaque siège tenu par un humain porte une vignette vidéo, à côté de
+   son cercle de mise : la tête au rail, les jetons devant, le nom dessous — l'ordre
+   d'une vraie table vue du croupier. Sur les sièges de gauche la vignette est à
+   l'extérieur (ordre inversé) : les visages regardent vers le centre. Une vignette
+   sans flux n'est JAMAIS un rectangle noir : une silhouette, et un mot qui dit
+   pourquoi (« caméra coupée », « connexion… », « vidéo bloquée »). */
+.siege .rangee-bas{ display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:3px }
+.siege .rangee-bas .cercle{ margin-top:0 }
+.siege.gauche .visage{ order:-1 }
+/* 96 × 72 quand le siège le permet ; sinon la vignette CÈDE (jusqu'à 56 px) plutôt que de
+   passer sous le cercle — mesuré à 1024 × 768 : deux rangées doublaient la hauteur du siège
+   et poussaient le cercle sous l'annonce. --siege-w est posé par visio.js (la largeur que
+   cartes.js a donnée au siège), le cercle est la même expression qu'au-dessus. */
+.visage{ position:relative; width:clamp(56px, calc(var(--siege-w, 226px) - 20px - clamp(54px, calc(var(--w-table, 84px) * .82), 84px)), 96px);
+  height:auto; aspect-ratio:4 / 3; flex:none; border-radius:10px; overflow:hidden; isolation:isolate;
+  background:rgba(0,0,0,.42);
+  box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 42%, transparent), 0 8px 16px -10px rgba(0,0,0,.9);
+  transition:box-shadow .3s }
+.visage video{ display:block; width:100%; height:100%; object-fit:cover; background:#000 }
+.visage.moi video{ transform:scaleX(-1) }              /* la tienne en miroir, comme dans une glace */
+.visage .silhouette{ position:absolute; inset:0; width:100%; height:100%; display:block; color:color-mix(in oklab, var(--ivoire) 36%, transparent) }
+.visage .visage-etat{ position:absolute; left:0; right:0; bottom:0; padding:10px 4px 3px; font-size:9px; line-height:1.1; letter-spacing:.1em;
+  text-transform:uppercase; text-align:center; color:var(--ivoire); text-shadow:0 1px 2px rgba(0,0,0,.9);
+  background:linear-gradient(transparent, rgba(0,0,0,.66)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.visage .visage-etat:empty{ display:none }
+.visage[data-etat="ok"]{ box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 72%, transparent), 0 0 14px -4px var(--or), 0 8px 16px -10px rgba(0,0,0,.9) }
+.visage[data-etat="bloque"]{ box-shadow:0 0 0 1.5px var(--cinabre), 0 8px 16px -10px rgba(0,0,0,.9) }
+.visage[data-etat="bloque"] .visage-etat{ color:var(--cinabre) }
+.visage[data-etat="demande"] .silhouette, .visage[data-etat="connexion"] .silhouette{ animation:respire 1.6s ease-in-out infinite }
+@keyframes respire{ 0%,100%{ opacity:.5 } 50%{ opacity:1 } }
+.siege.absent .visage{ filter:grayscale(1); opacity:.6 }
+/* Le bouton Caméra allumé : un point jade, comme un voyant — et le liseré or des boutons pressés. */
+#bCamera[aria-pressed="true"]::before{ content:""; display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; vertical-align:1px;
+  background:var(--jade); box-shadow:0 0 6px var(--jade) }
+@media (max-width:999.98px){ .visage{ width:64px } .visage .visage-etat{ font-size:8px; letter-spacing:.06em; padding-top:8px } .siege .rangee-bas{ gap:5px } }
+@media (max-height:520px){ .visage{ width:64px } }
+
+/* ── Le relais vidéo, dans ⚙ ─────────────────────────────────────────────── */
+.relais{ margin-top:16px; padding-top:12px; border-top:1px solid var(--ardoise); text-align:left }
+.relais summary{ cursor:pointer; min-height:44px; display:flex; flex-direction:column; justify-content:center; gap:2px; list-style:none; padding-left:18px; position:relative }
+.relais summary::-webkit-details-marker{ display:none }
+.relais summary::before{ content:"›"; position:absolute; left:2px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--laiton); transition:transform .2s }
+.relais[open] summary::before{ transform:translateY(-50%) rotate(90deg) }
+.relais summary .muet{ font-size:var(--t-fin) }
+.relais p.muet{ font-size:var(--t-fin); margin:8px 0 0 }
+.relais .relais-champs{ margin-top:12px; gap:10px }
+.relais .relais-champs label.ch{ flex:1 1 100% }
+.relais .relais-champs label.ch:nth-child(n+2){ flex:1 1 calc(50% - 5px) }
+.relais input{ width:100%; font-family:"Martian Mono",monospace; font-size:var(--t-petit) }
+.relais .relais-etat{ font-size:var(--t-petit); min-height:20px; margin-top:8px }
+.relais .relais-etat[data-ok="1"]{ color:var(--jade) }
+.relais .relais-etat[data-ok="0"]{ color:var(--cinabre) }
+
 </style>
 <header><div class="tete">
   <button class="marque" data-vue="accueil" title="Retour au hall"><span class="emb"></span><span class="nom">Le Sabot</span></button>
@@ -1426,6 +1480,21 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
       <button class="btn creux" id="theme" title="Th&#232;me clair ou sombre" aria-label="Changer de th&#232;me">&#9689; Th&#232;me</button>
       <button class="btn creux" id="son" title="Sons" aria-label="Activer ou couper les sons">&#9834; Sons</button>
     </div>
+    <!-- Le relais vidéo (visio.js) : sans lui, la visio de la table passe en direct (STUN
+         seul) et ne traverse ni la 4G ni un réseau strict. Les identifiants viennent d'un
+         service que l'utilisateur choisit ; ils vivent dans DB.turn, jamais dans le code. -->
+    <details class="relais" id="relaisBloc">
+      <summary id="relaisOuvrir"><span class="grave">Relais vid&#233;o (TURN)</span><span class="muet">N&#233;cessaire si un ami est en 4G ou derri&#232;re un r&#233;seau strict</span></summary>
+      <p class="muet relais-quoi">Autour de la table, la vid&#233;o va directement d'un navigateur &#224; l'autre. Quand deux connexions ne se voient pas (4G, r&#233;seau d'entreprise, box stricte), il faut un relais qui fait passer les paquets &#8212; chiffr&#233;s, il ne peut pas les lire.</p>
+      <div class="champs relais-champs">
+        <label class="ch"><span class="grave">Adresse du relais</span><input type="text" id="turnUrl" placeholder="turn:standard.relay.metered.ca:80" spellcheck="false" autocomplete="off" autocapitalize="off"></label>
+        <label class="ch"><span class="grave">Utilisateur</span><input type="text" id="turnUser" spellcheck="false" autocomplete="off" autocapitalize="off"></label>
+        <label class="ch"><span class="grave">Mot de passe</span><input type="text" id="turnPass" spellcheck="false" autocomplete="off" autocapitalize="off"></label>
+      </div>
+      <div class="rang-btn" style="justify-content:flex-start;margin-top:10px"><button class="btn creux" id="turnTester">Tester le relais</button></div>
+      <p class="muet relais-etat" id="turnEtat" aria-live="polite"></p>
+      <p class="muet relais-ou">O&#249; en obtenir un gratuitement, en trois minutes : <a href="https://www.metered.ca/stun-turn" target="_blank" rel="noopener">metered.ca</a>, formule gratuite &#8212; elle donne une adresse, un utilisateur et un mot de passe, avec un quota mensuel de quelques centaines de Mo : de l'ordre de deux heures de table &#224; deux quand TOUT passe par le relais. Il n'est consomm&#233; que si la connexion directe &#233;choue. Le relais ne voit que des paquets chiffr&#233;s.</p>
+    </details>
   </div>
 </div></header>
 
@@ -1615,6 +1684,9 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
       <button class="btn verre mini" id="bNouveauSabot" title="Jette la manche en cours et remélange">Nouveau sabot</button>
       <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
       <button class="btn verre mini" id="bReseau" hidden>Table</button>
+      <!-- Ta caméra (visio.js) : tes amis te voient sur ton siège. Vidéo seule, JAMAIS de micro —
+           on compte en silence. Mémorisé (DB.camera). Caché en solo. -->
+      <button class="btn verre mini" id="bCamera" hidden aria-pressed="false" title="Ta caméra, pour que tes amis te voient sur ton siège — vidéo seule, jamais de micro">Caméra</button>
     </div>
     <div id="boiteAssurance"></div>
   </div>
@@ -2981,6 +3053,536 @@ function creerSalle(o) {
 
 return {TAPIS_DEPART,MISE_DELAI,TOUR_DELAI,ASSURANCE_DELAI,REGLEMENT_DELAI,ABSENCE_DELAI,ELECTION_DELAI,NB_SIEGES,ACTIONS,NOMS_BOTS,creerPartie,codeSalon,normaliserCode,formaterCode,codeValide,creerSalle};
 })();
+M["camera"] = (function(){
+// Une seule caméra pour toute l'application, comptée par références.
+//
+// Le détecteur de visage du mode Concentration et la visio autour de la table
+// veulent la même chose : ta caméra frontale, en petit. Deux getUserMedia
+// séparés allumeraient deux fois le voyant, demanderaient deux fois la
+// permission, et sur certains téléphones le second échoue parce que le premier
+// tient déjà le capteur. Ici, on ne demande qu'une fois ; chacun prend une
+// référence, la rend quand il a fini, et la caméra s'éteint au dernier rendu.
+//
+// ⚠️ VIDÉO SEULE, JAMAIS DE MICRO. Décision : on ne demande jamais l'audio.
+// La parole détruit la mémoire de travail du comptage — on compte en silence —
+// et un seul voyant allumé vaut mieux que deux demandes de permission.
+//
+// Rien ici ne lève : un refus, une caméra absente ou occupée se lit dans
+// `etat` et `raison`. L'appelant affiche une phrase, il ne rattrape pas une
+// exception.
+
+// 320×240 à 15 images par seconde : des vignettes, pas du cinéma. C'est ce
+// qui tient dans un maillage à cinq sans faire souffler un portable.
+const CONTRAINTES = {
+  video: { width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15, max: 15 }, facingMode: "user" },
+  audio: false,
+};
+
+// États possibles, tous explicites :
+//   eteinte        personne ne la tient
+//   demande        getUserMedia est en cours
+//   active         un flux tourne, `flux` est posé
+//   refusee        tu as dit non (ou la page publiée n'y a pas droit)
+//   absente        aucune caméra sur cet appareil
+//   occupee        une autre application tient le capteur
+//   indisponible   pas de navigator.mediaDevices : contexte non sécurisé, ou
+//                  page enveloppée sans droit caméra (l'artefact)
+//   coupee         le flux s'est arrêté tout seul (câble, permission retirée)
+const ETATS_CAMERA = ["eteinte", "demande", "active", "refusee", "absente", "occupee", "indisponible", "coupee"];
+
+function classerErreur(e) {
+  const n = (e && e.name) || "";
+  if (n === "NotAllowedError" || n === "PermissionDeniedError" || n === "SecurityError") return ["refusee", "Tu as refusé la caméra, ou cette page n'y a pas droit."];
+  if (n === "NotFoundError" || n === "DevicesNotFoundError" || n === "OverconstrainedError") return ["absente", "Aucune caméra sur cet appareil."];
+  if (n === "NotReadableError" || n === "TrackStartError" || n === "AbortError") return ["occupee", "Une autre application tient déjà la caméra."];
+  return ["indisponible", "Caméra indisponible ici (" + (n || "erreur inconnue") + ")."];
+}
+
+let INSTANCE = null;
+
+function cameraPartagee() {
+  if (INSTANCE) return INSTANCE;
+  let refs = 0, flux = null, etat = "eteinte", raison = "", detail = "", enCours = null;
+  const abonnes = new Set();
+  const poser = (e, r, d) => { etat = e; raison = r || ""; detail = d || ""; abonnes.forEach(f => { try { f(etat, raison, flux); } catch (_) {} }); };
+  const eteindre = () => {
+    if (flux) flux.getTracks().forEach(t => { try { t.stop(); } catch (_) {} });
+    flux = null;
+  };
+  const demander = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      poser("indisponible", "Pas de caméra dans ce contexte : ouvre le site (GitHub Pages) plutôt que la page publiée.", "navigator.mediaDevices absent");
+      return null;
+    }
+    poser("demande", "");
+    try {
+      const f = await navigator.mediaDevices.getUserMedia(CONTRAINTES);
+      // Le voyant peut s'éteindre sans nous : permission retirée dans la barre
+      // d'adresse, caméra débranchée. On le DIT au lieu d'afficher une vignette noire.
+      f.getVideoTracks().forEach(t => t.addEventListener("ended", () => {
+        if (flux !== f) return;
+        eteindre(); poser("coupee", "La caméra s'est arrêtée.");
+      }));
+      // Quelqu'un a tout rendu pendant la demande : on n'allume pas un voyant
+      // que personne ne regarde.
+      if (refs <= 0) { f.getTracks().forEach(t => t.stop()); poser("eteinte", ""); return null; }
+      flux = f; poser("active", ""); return f;
+    } catch (e) {
+      const [ee, rr] = classerErreur(e);
+      // `detail` garde le nom et le message techniques : la phrase est pour l'écran, le détail pour le journal.
+      poser(ee, rr, ((e && e.name) || "") + (e && e.message ? " : " + e.message : "")); return null;
+    }
+  };
+  INSTANCE = {
+    // Prend une référence. Rend TOUJOURS { flux, etat, raison } — jamais une exception.
+    async prendre() {
+      refs++;
+      if (flux) return { flux, etat, raison };
+      if (!enCours) enCours = demander().finally(() => { enCours = null; });
+      const f = await enCours;
+      return { flux: f, etat, raison };
+    },
+    // Rend une référence. Au dernier rendu, le voyant s'éteint.
+    rendre() {
+      refs = Math.max(0, refs - 1);
+      if (refs === 0 && flux) { eteindre(); poser("eteinte", ""); }
+    },
+    // S'abonner aux changements d'état : f(etat, raison, flux). Renvoie le désabonnement.
+    onEtat(f) { abonnes.add(f); return () => abonnes.delete(f); },
+    get flux() { return flux; },
+    get etat() { return etat; },
+    get raison() { return raison; },
+    get detail() { return detail; },
+    get references() { return refs; },
+  };
+  return INSTANCE;
+}
+
+return {CONTRAINTES,ETATS_CAMERA,cameraPartagee};
+})();
+M["visio"] = (function(){
+// La visio autour de la table : chacun voit les vignettes des autres sièges.
+//
+// ══ Comment ça marche ══════════════════════════════════════════════════════
+// Maillage complet (mesh) : chaque pair ouvre UNE RTCPeerConnection vers
+// chacun des autres, jusqu'à cinq pairs — un par siège. À cinq, ça fait
+// quatre flux sortants de 320×240 à 15 i/s par personne : ~1 Mbit/s de
+// montée, ce qu'une 4G moyenne tient. Au-delà de cinq il faudrait un serveur
+// qui mélange les flux, et on n'en a pas.
+//
+// La SIGNALISATION (offres, réponses, candidats ICE) passe par le courtier
+// MQTT public de net.mjs — le même que les cartes du mode « À plusieurs ». Pas
+// de serveur à nous. Sujets :
+//   compteur-hilo/v1/<salon>/visio/<de>/tous   présence (salut·adieu), à tout le monde
+//   compteur-hilo/v1/<salon>/visio/<de>/<a>    signalisation adressée à UN pair
+// ⚠️ Comme pour les cartes : deux amis reliés à deux courtiers différents ne se
+// voient pas. net.mjs prend le premier courtier qui répond ; il est le même
+// pour tout le monde presque toujours, pas absolument toujours.
+//
+// La NÉGOCIATION est la « négociation parfaite » du W3C : les deux côtés
+// peuvent offrir en même temps, le côté POLI (l'identifiant lexicographiquement
+// le plus petit) annule sa propre offre et répond à l'autre. En pratique on
+// ÉVITE la collision : l'impoli offre tout de suite, le poli attend 2,5 s et
+// n'offre que si rien n'est venu. Trickle ICE, mais PAR LOTS (cf. ci-dessous).
+// Sur `failed`, on redémarre ICE.
+//
+// ⚠️ MESURÉ LE 4 SEPTEMBRE 2026 : broker.emqx.io — le premier de la liste de
+// net.mjs, donc le courtier de presque tout le monde — NE DÉLIVRE QUE ~10
+// MESSAGES PAR SECONDE ET PAR CLIENT, et jette le reste SANS RIEN DIRE
+// (40 messages d'un coup : 10 arrivent ; espacés de 250 ms : tous). HiveMQ et
+// Mosquitto délivrent tout. Le trickle ICE naïf — un message par candidat, huit
+// à dix par paire et par côté — dépassait ce quota dès qu'un troisième pair
+// arrivait : ICE se connectait mais la seconde ronde de négociation se perdait,
+// et un flux sur deux ne passait pas (vu au banc, quatre fois sur quatre).
+// D'où, quel que soit le courtier :
+//   · une FILE D'ENVOI cadencée à un message par 130 ms par client ;
+//   · les candidats ICE partent PAR LOTS (250 ms), et chaque offre ou réponse
+//     EMPORTE les candidats déjà connus ;
+//   · une offre sans réponse est RENVOYÉE après 4 s (avec ses candidats) —
+//     un message perdu coûte quatre secondes, jamais la visio.
+//
+// La PRÉSENCE : un `salut` à l'arrivée puis toutes les deux secondes, un
+// `adieu` au départ — et le TESTAMENT MQTT de net.mjs publie cet adieu à ta
+// place si ton onglet meurt brutalement (le courtier le fait dès que la
+// connexion tombe, en moins d'une seconde). Sans testament, un pair mort
+// n'est vu qu'au silence : sept secondes sans salut, ou trois si ICE est
+// tombé en même temps. Dans tous les cas moins de douze.
+//
+// ══ Où ça marche, où c'est mort ═══════════════════════════════════════════
+// · GitHub Pages (https://pwrygrt72g-hue.github.io/compteur-hilo/) : tout
+//   marche — WebSocket vers le courtier, caméra, WebRTC, STUN et TURN.
+// · L'ARTEFACT Claude : MORT. Sa politique de sécurité bloque tout WebSocket
+//   externe, SANS erreur visible — la connexion échoue en quelques
+//   millisecondes et net.mjs le dit (« connexion refusée »). La visio doit
+//   détecter ça en moins de trois secondes (`sonderReseau`, 2,5 s au plus) et
+//   afficher `MESSAGE_ARTEFACT` avec le lien GitHub Pages, plutôt qu'une
+//   roue qui tourne. La caméra y est le plus souvent refusée aussi (iframe
+//   sans droit caméra) — camera.mjs le dit à son tour.
+//
+// ══ Où va la vidéo ════════════════════════════════════════════════════════
+// NULLE PART ailleurs que chez tes amis. Le maillage est pair-à-pair : la
+// vidéo va directement de ton navigateur au leur, chiffrée (DTLS-SRTP, c'est
+// le protocole, pas une option). Le courtier MQTT ne voit que les offres et
+// les candidats — du texte de négociation, jamais une image. STUN (Google) ne
+// sert qu'à apprendre son adresse publique ; il ne stocke rien.
+//
+// ══ Le relais (TURN) : CONFIGURABLE, jamais un cadeau qu'on croit gratuit ═══
+// Quand deux réseaux ne se voient pas (NAT symétriques, 4G derrière un CGNAT,
+// boîtes d'entreprise), seul un relais TURN fait passer les paquets — chiffrés
+// de bout en bout, il ne peut pas les lire. Sans relais, « ça marche chez moi »
+// et pas chez l'ami en 4G.
+// ⚠️ MESURÉ LE 5 SEPTEMBRE 2026 : le TURN « Open Relay » (openrelay.metered.ca,
+// identifiants openrelayproject) qui était inscrit ici EST MORT — allocation
+// refusée (400), certificat de turns:443 en hostname mismatch, ZÉRO candidat
+// relay, et `iceGatheringState` qui ne passait JAMAIS à « complete ». Un TURN
+// mort ne fait pas que ne rien relayer : il RALENTIT la collecte ICE de tout le
+// monde, même entre deux amis qui se voyaient très bien en direct. Il est
+// retiré. Le relais est désormais celui que l'utilisateur configure dans ⚙
+// (`serveursIce(turn)`), testable par `testerRelais` ; sans identifiants on part
+// en STUN seul, et on le DIT. Sur `failed` sans relais, l'appelant affiche
+// pourquoi (jamais un échec silencieux) — cf. `SANS_RELAIS_MESSAGE`.
+//
+// ⚠️ PAS DE MICRO. Vidéo seule, par décision (cf. camera.mjs) : on compte en
+// silence, la parole détruit la mémoire de travail.
+
+const { sujet } = M["net"];
+const PAIRS_MAX = 5;
+const LIEN_PAGES = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
+const MESSAGE_ARTEFACT = "La visio ne peut pas marcher sur cette page publiée : sa politique de sécurité bloque les connexions vers le courtier. Ouvre le site pour voir tes amis : " + LIEN_PAGES;
+// STUN seul : deux serveurs de Google, gratuits, qui ne font qu'apprendre à chacun
+// son adresse publique. C'est ce qu'on a quand aucun relais n'est configuré.
+const SERVEURS_STUN = ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"];
+// Ce que dit la vignette quand la connexion directe échoue et qu'aucun relais n'est là.
+const SANS_RELAIS_MESSAGE = "La vidéo directe est bloquée par ta connexion : ajoute un relais dans ⚙";
+const AVEC_RELAIS_MESSAGE = "La vidéo ne passe pas, même par le relais : teste-le dans ⚙";
+// Les URL d'un relais, telles qu'on les tape dans ⚙ : une ou plusieurs, séparées par
+// des virgules, des espaces ou des retours à la ligne ; « host:port » sans schéma
+// devient « turn:host:port ». Une ligne vide ou illisible est ignorée.
+function urlsRelais(brut) {
+  return String(brut || "").split(/[\s,;]+/).map(u => u.trim()).filter(Boolean)
+    // Un « http://… » collé par erreur n'est pas un relais : jeté, pas préfixé.
+    // Sans schéma, on accepte « host » ou « host:port » — rien d'autre.
+    .filter(u => !/\/\//.test(u) && (/^(turns?|stuns?):/i.test(u) || /^[^:?]+(:\d+)?(\?.*)?$/.test(u)))
+    .map(u => /^(turns?|stuns?):/i.test(u) ? u : "turn:" + u)
+    .filter(u => /^(turns?|stuns?):[^\s/:]+(:\d+)?(\?.*)?$/i.test(u));
+}
+// Construit la liste des serveurs ICE : STUN toujours, puis le relais s'il est complet
+// (une URL ET un utilisateur ET un mot de passe — un TURN sans identifiants est refusé
+// par tout serveur sérieux, autant ne pas l'envoyer). `turn` = { url, user, pass } ou rien.
+function serveursIce(turn) {
+  const ice = [{ urls: SERVEURS_STUN.slice() }];
+  const t = turn || {};
+  const urls = urlsRelais(t.url).filter(u => /^turns?:/i.test(u));
+  const user = String(t.user || "").trim(), pass = String(t.pass || "");
+  if (urls.length && user && pass) ice.push({ urls, username: user, credential: pass });
+  return ice;
+}
+const relaisConfigure = turn => serveursIce(turn).length > 1;
+// La liste par défaut, sans relais. Gardée pour qui l'importait.
+const SERVEURS_ICE = serveursIce(null);
+const SALUT_INTERVALLE_MS = 2000;   // un salut toutes les 2 s (quarante octets — rien, même à cinq)
+const SILENCE_MAX_MS = 7000;        // 7 s sans salut = parti (repli si le testament n'est pas arrivé)
+const SILENCE_ICE_MS = 3000;        // ICE coupé ET 3 s sans salut = parti (un onglet mort, pas un réseau qui hoquette)
+const ENVOI_ECART_MS = 130;         // un message par 130 ms par client : sous le quota d'emqx (~10/s), mesuré
+const LOT_CANDIDATS_MS = 250;       // les candidats ICE partent par lots de 250 ms
+const ATTENTE_POLIE_MS = 2500;      // le poli laisse l'impoli offrir d'abord
+const REOFFRE_MS = 4000;            // une offre sans réponse est renvoyée après 4 s
+
+const sujetVisio = (salon, de, a) => `${sujet(salon)}/visio/${de}/${a}`;
+// Le testament à donner à net.connecter() : l'adieu que le courtier publiera
+// pour toi si ton onglet meurt. Sans lui, tes amis te voient dix secondes de trop.
+const testamentVisio = (salon, moi) => ({ sujet: sujetVisio(salon, moi, "tous"), message: JSON.stringify({ t: "adieu" }) });
+
+// Détecte en moins de trois secondes si le réseau est mort (artefact, proxy
+// d'entreprise). Rend true si UN WebSocket vers `url` s'ouvre, false sinon.
+// Ne lève jamais.
+function sonderReseau(url, delai = 2500) {
+  return new Promise(res => {
+    let ws, fini = false;
+    const conclure = v => { if (fini) return; fini = true; clearTimeout(m); try { ws && ws.close(); } catch (_) {} res(v); };
+    const m = setTimeout(() => conclure(false), delai);
+    try { ws = new WebSocket(url, "mqtt"); } catch (e) { return conclure(false); }
+    ws.onopen = () => conclure(true);
+    ws.onerror = () => conclure(false);
+    ws.onclose = () => conclure(false);
+  });
+}
+// Teste un relais : une RTCPeerConnection en `iceTransportPolicy: "relay"` ne peut
+// produire QUE des candidats relay — s'il en arrive un, le TURN a accepté l'allocation.
+// Rend { ok, raison, ms, candidat? } en moins de `delai` ms, ne lève jamais. Un relais
+// mort se voit ici en trois façons, toutes dites : collecte terminée sans candidat,
+// erreur d'allocation (`icecandidateerror`, avec son code : 401 = identifiants, 400 =
+// relais hors service), ou rien du tout au bout du délai.
+function testerRelais(turn, delai = 8000) {
+  return new Promise(res => {
+    const serveurs = serveursIce(turn).filter(s => s.username);
+    if (!serveurs.length) return res({ ok: false, ms: 0, raison: "Aucun relais configuré : il faut une adresse, un utilisateur et un mot de passe." });
+    if (typeof RTCPeerConnection !== "function") return res({ ok: false, ms: 0, raison: "WebRTC n'est pas disponible dans ce navigateur." });
+    let pc; try { pc = new RTCPeerConnection({ iceServers: serveurs, iceTransportPolicy: "relay" }); }
+    catch (e) { return res({ ok: false, ms: 0, raison: "Adresse de relais refusée par le navigateur (" + e.message + ")." }); }
+    const t0 = Date.now(); let fini = false, erreur = "";
+    const conclure = r => { if (fini) return; fini = true; clearTimeout(m); try { pc.close(); } catch (_) {} res(Object.assign({ ms: Date.now() - t0 }, r)); };
+    const m = setTimeout(() => conclure({ ok: false, raison: erreur || ("Aucun candidat relay en " + Math.round(delai / 1000) + " s : le relais ne répond pas.") }), delai);
+    pc.onicecandidate = ({ candidate }) => {
+      if (!candidate) return;
+      const type = candidate.type || (/\btyp (\w+)/.exec(candidate.candidate || "") || [])[1];
+      if (type === "relay") conclure({ ok: true, raison: "", candidat: (candidate.address || candidate.ip || "") + (candidate.port ? ":" + candidate.port : ""), protocole: candidate.protocol || "" });
+    };
+    pc.onicecandidateerror = e => {
+      const code = e && e.errorCode, txt = e && e.errorText;
+      if (code === 401 || code === 403) erreur = "Le relais refuse les identifiants (" + code + (txt ? " " + txt : "") + ")." ;
+      else if (code) erreur = "Le relais a répondu " + code + (txt ? " (" + txt + ")" : "") + ".";
+    };
+    pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === "complete") conclure({ ok: false, raison: erreur || "Collecte terminée sans aucun candidat relay : le relais n'a rien alloué." }); };
+    try { pc.createDataChannel("relais"); } catch (_) {}
+    pc.createOffer().then(o => pc.setLocalDescription(o)).catch(e => conclure({ ok: false, raison: "Négociation impossible (" + e.message + ")." }));
+  });
+}
+// Ce que dit la visio quand rien ne passe : la phrase + le lien, jamais une roue.
+function expliquerEchec(e) {
+  const msg = (e && e.message) || "";
+  if (/refus|poignée|délai|aucun courtier/i.test(msg) || !msg) return MESSAGE_ARTEFACT;
+  return "La visio n'a pas pu se connecter (" + msg + "). " + MESSAGE_ARTEFACT;
+}
+
+const hex = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(x => x.toString(16).padStart(2, "0")).join(""); };
+
+// creerVisio({ reseau, salon, moi, flux?, nom?, turn?, onFlux, onDepart, onEtat, onJournal? })
+//   reseau   : l'api de net.connecter() — { publier(sujet, message), souscrire(sujet) }
+//   salon    : le code du salon (le même que pour les cartes)
+//   moi      : mon identifiant dans le salon (celui des pairs de net.mjs)
+//   flux     : mon MediaStream local (camera.mjs), ou rien — je verrai sans être vu
+//   turn     : { url, user, pass } du relais configuré dans ⚙, ou rien (STUN seul)
+//   onFlux(id, MediaStream)   un flux distant est arrivé (ou a changé)
+//   onDepart(id)              ce pair est parti, sa vignette doit disparaître
+//   onEtat(id, etat)          ice : new·checking·connected·completed·disconnected·failed·closed
+//                             + refuse (sixième pair), + parti,
+//                             + bloque (ICE `failed` : la connexion directe ne passe pas —
+//                               `api.sansRelais` dit si un relais aurait pu aider)
+// Rend { demarrer(), recevoir(sujet, brut), attacherFlux(flux), arrivee(id), depart(id),
+//        fermer(), pairs (Map id → { id, pc, session, polite, ice, collecteMs }), sansRelais }.
+// `collecteMs` : durée de la collecte ICE (null tant qu'elle n'est pas finie) — avec un
+// TURN mort elle ne finissait jamais ; le banc l'exige sous 5 s.
+// ⚠️ L'appelant DOIT relayer chaque message reçu de net.mjs à `recevoir` : net.mjs
+// n'a qu'un seul onMessage, posé à la connexion. Les sujets étrangers sont ignorés.
+function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, onFlux, onDepart, onEtat, onJournal } = {}) {
+  const iceServers = serveursIce(turn), sansRelais = iceServers.length < 2;
+  const session = hex(6);            // change à chaque rechargement : un pair relancé est reconnu comme neuf
+  const pairs = new Map();
+  const base = `${sujet(salon)}/visio/`;
+  let local = flux, salutMinuteur = null, menageMinuteur = null, ferme = false;
+  const journal = (...a) => { if (onJournal) try { onJournal(a.join(" ")); } catch (_) {} };
+  const etat = (id, e) => { if (onEtat) try { onEtat(id, e); } catch (_) {} };
+  const publier = (a, o) => { try { reseau.publier(base + moi + "/" + a, JSON.stringify(Object.assign({ s: session }, o))); } catch (e) { journal("publication ratée", e.message); } };
+
+  // ── La file d'envoi cadencée ─────────────────────────────────────────────
+  // Tout ce qui part passe ici, un message par ENVOI_ECART_MS. Le courtier
+  // emqx jette sans bruit ce qui dépasse ~10 messages par seconde ; une file
+  // qui déborde chez nous vaut mieux qu'une file qui déborde chez lui.
+  const file = []; let pompe = null, dernierEnvoi = 0;
+  const pomper = () => {
+    if (pompe || !file.length || ferme) return;
+    pompe = setTimeout(() => {
+      pompe = null;
+      const e = file.shift();
+      if (e && (!e.p || pairs.get(e.p.id) === e.p)) { dernierEnvoi = Date.now(); publier(e.a, e.o); }
+      pomper();
+    }, Math.max(0, ENVOI_ECART_MS - (Date.now() - dernierEnvoi)));
+  };
+  const pousser = (a, o, p) => { file.push({ a, o, p }); pomper(); };
+  const salut = a => pousser(a || "tous", { t: "salut", n: nom });
+
+  const disponible = () => typeof RTCPeerConnection === "function";
+  // Une offre ou une réponse emporte les candidats déjà connus : si elle doit être
+  // renvoyée, elle repart complète, et le lot en cours n'a plus à les porter.
+  const envoyerDescription = p => {
+    p.lot = []; clearTimeout(p.lotMinuteur); p.lotMinuteur = null;
+    p.dernierEnvoiOffre = Date.now();
+    journal("→", p.id, p.pc.localDescription.type, "(" + p.pc.signalingState + ", " + p.candidats.length + " candidats)");
+    pousser(p.id, { t: "description", d: p.pc.localDescription, c: p.candidats }, p);
+  };
+  const envoyerLot = p => {
+    clearTimeout(p.lotMinuteur); p.lotMinuteur = null;
+    if (!p.lot.length) return;
+    const c = p.lot; p.lot = [];
+    pousser(p.id, { t: "candidats", c }, p);
+  };
+  async function offrir(p, pourquoi) {
+    const pc = p.pc;
+    if (pc.signalingState !== "stable") return;
+    try {
+      p.makingOffer = true;
+      await pc.setLocalDescription();
+      journal("offre", p.id, pourquoi);
+      envoyerDescription(p);
+    } catch (e) { journal("offre ratée", p.id, e.message); }
+    finally { p.makingOffer = false; }
+  }
+
+  function ajouter(id, sess) {
+    if (pairs.has(id)) return pairs.get(id);
+    if (pairs.size >= PAIRS_MAX - 1) { etat(id, "refuse"); journal("refusé (table pleine)", id); return null; }
+    if (!disponible()) { etat(id, "indisponible"); return null; }
+    const polite = moi < id;
+    const p = { id, session: sess, polite, ice: "new", vu: Date.now(), ne: Date.now(), pc: null,
+      makingOffer: false, ignoreOffer: false, answerPending: false, attente: [], redemarrages: 0,
+      candidats: [], lot: [], lotMinuteur: null, dernierEnvoiOffre: 0, attentePolie: null, collecteMs: null };
+    const pc = new RTCPeerConnection({ iceServers });
+    p.pc = pc;
+    pairs.set(id, p);
+    // Un seul émetteur/récepteur vidéo par paire, créé tout de suite pour que la
+    // négociation parte même sans caméra locale (on veut VOIR sans être vu).
+    const piste = local && local.getVideoTracks()[0];
+    p.tr = pc.addTransceiver(piste || "video", { direction: piste ? "sendrecv" : "recvonly" });
+    pc.onnegotiationneeded = () => {
+      // Première négociation : l'impoli offre, le poli attend qu'on lui offre.
+      // Deux offres croisées se règlent (négociation parfaite), mais coûtent une
+      // ronde de plus — et sous le quota du courtier, une ronde de plus se perd.
+      if (p.polite && !pc.remoteDescription && !p.attentePolie) {
+        p.attentePolie = setTimeout(() => { p.attentePolie = null; if (pairs.get(id) === p && !pc.remoteDescription) offrir(p, "(le poli n'a rien reçu)"); }, ATTENTE_POLIE_MS);
+        return;
+      }
+      if (p.polite && !pc.remoteDescription) return;   // l'attente court déjà
+      offrir(p, p.redemarrages ? "(redémarrage ICE)" : "");
+    };
+    pc.onicecandidate = ({ candidate }) => {
+      if (!candidate) return;
+      p.candidats.push(candidate); p.lot.push(candidate);
+      if (!p.lotMinuteur) p.lotMinuteur = setTimeout(() => envoyerLot(p), LOT_CANDIDATS_MS);
+    };
+    pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === "complete") { if (p.collecteMs === null) { p.collecteMs = Date.now() - p.ne; journal("collecte ICE finie", id, p.collecteMs + " ms"); } envoyerLot(p); } };
+    pc.onsignalingstatechange = () => journal("signalisation", id, pc.signalingState);
+    pc.oniceconnectionstatechange = () => {
+      p.ice = pc.iceConnectionState; etat(id, p.ice);
+      if (p.ice === "failed" && pairs.get(id) === p) {
+        // On le DIT avant de réessayer : un échec de connexion directe sans relais ne se
+        // répare pas tout seul, et une vignette muette ferait croire à un ami sans caméra.
+        etat(id, "bloque");
+        // On redémarre ICE, mais pas en boucle serrée : deux secondes, cinq fois.
+        if (p.redemarrages++ < 5) setTimeout(() => { if (pairs.get(id) === p && pc.signalingState !== "closed") { journal("redémarrage ICE", id); pc.restartIce(); } }, 2000);
+      }
+    };
+    pc.ontrack = ({ track, streams }) => {
+      const s = streams[0] || new MediaStream([track]);
+      if (onFlux) try { onFlux(id, s); } catch (_) {}
+    };
+    journal("pair ajouté", id, polite ? "(je suis poli)" : "(je suis impoli)");
+    return p;
+  }
+  function retirer(id, pourquoi) {
+    const p = pairs.get(id); if (!p) return;
+    pairs.delete(id);
+    clearTimeout(p.lotMinuteur); clearTimeout(p.attentePolie);
+    try { p.pc.onnegotiationneeded = p.pc.onicecandidate = p.pc.ontrack = p.pc.oniceconnectionstatechange = p.pc.onsignalingstatechange = p.pc.onicegatheringstatechange = null; p.pc.close(); } catch (_) {}
+    journal("pair retiré", id, pourquoi || "");
+    etat(id, "parti");
+    if (onDepart) try { onDepart(id); } catch (_) {}
+  }
+  async function description(p, d, cands) {
+    const pc = p.pc;
+    const pret = !p.makingOffer && (pc.signalingState === "stable" || p.answerPending);
+    const collision = d.type === "offer" && !pret;
+    p.ignoreOffer = !p.polite && collision;
+    journal("←", p.id, d.type, "(" + pc.signalingState + (p.makingOffer ? ", offre en cours" : "") + ", " + (cands ? cands.length : 0) + " candidats)", collision ? "COLLISION" : "");
+    if (p.ignoreOffer) { journal("offre ignorée (collision, je suis impoli)", p.id); return; }
+    p.answerPending = d.type === "answer";
+    await pc.setRemoteDescription(d);   // le côté poli annule sa propre offre ici s'il le faut
+    p.answerPending = false;
+    if (d.type === "offer") { await pc.setLocalDescription(); envoyerDescription(p); }
+    // Les candidats portés par la description, puis ceux arrivés avant elle.
+    const q = [...(cands || []), ...p.attente]; p.attente = [];
+    for (const c of q) await candidat(p, c);
+  }
+  async function candidat(p, c) {
+    if (!p.pc.remoteDescription) { p.attente.push(c); return; }
+    try { await p.pc.addIceCandidate(c); }
+    catch (e) { if (!p.ignoreOffer) journal("candidat refusé", p.id, e.message); }
+  }
+  // Un pair qu'on connaissait revient avec une autre session : c'est un
+  // rechargement de page. On ferme l'ancienne connexion et on repart.
+  function accueillir(id, sess) {
+    const p = pairs.get(id);
+    if (p && p.session !== sess) retirer(id, "session changée");
+    const q = pairs.get(id);
+    if (q) { q.vu = Date.now(); return q; }
+    const n = ajouter(id, sess);
+    if (n) salut(id);   // qu'il me connaisse tout de suite, sans attendre mon prochain salut général
+    return n;
+  }
+  // Le testament du courtier dit un départ brutal en moins d'une seconde ; ceci
+  // est le REPLI, pour un portable qui ferme son couvercle (aucun paquet ne part).
+  // Un pair vivant salue toutes les deux secondes par le courtier — une voie
+  // indépendante du média : ICE qui tombe SANS que les saluts cessent, c'est un
+  // réseau qui hoquette, et ICE se redémarre tout seul. Les deux qui cessent
+  // ensemble, c'est un pair mort.
+  // Et la RÉ-OFFRE : le courtier peut avoir jeté une offre ou une réponse. Une
+  // offre restée sans réponse repart après REOFFRE_MS ; une paire sans aucune
+  // description distante au bout du même délai en émet une.
+  function menage() {
+    const t = Date.now();
+    for (const p of [...pairs.values()]) {
+      const silence = t - p.vu;
+      if (silence > SILENCE_MAX_MS) { retirer(p.id, "silence"); continue; }
+      if (silence > SILENCE_ICE_MS && (p.ice === "disconnected" || p.ice === "failed" || p.ice === "closed")) { retirer(p.id, "ICE coupé et silence"); continue; }
+      const pc = p.pc;
+      if (pc.signalingState === "have-local-offer" && t - p.dernierEnvoiOffre > REOFFRE_MS) { journal("ré-offre", p.id, "(pas de réponse)"); envoyerDescription(p); }
+      else if (pc.signalingState === "stable" && !pc.remoteDescription && !p.makingOffer && t - p.ne > REOFFRE_MS && t - p.dernierEnvoiOffre > REOFFRE_MS) offrir(p, "(rien reçu depuis " + Math.round((t - p.ne) / 1000) + " s)");
+    }
+  }
+
+  const api = {
+    pairs,
+    sansRelais,
+    get session() { return session; },
+    demarrer() {
+      if (ferme) return;
+      reseau.souscrire(base + "+/tous");
+      reseau.souscrire(base + "+/" + moi);
+      salut();
+      salutMinuteur = setInterval(salut, SALUT_INTERVALLE_MS);
+      menageMinuteur = setInterval(menage, 1000);
+    },
+    // Relaye un message net.mjs. Rend true s'il était pour la visio.
+    recevoir(s, brut) {
+      if (typeof s !== "string" || !s.startsWith(base)) return false;
+      const [de, a] = s.slice(base.length).split("/");
+      if (!de || de === moi || (a !== "tous" && a !== moi)) return true;
+      let m; try { m = JSON.parse(brut); } catch (e) { return true; }
+      // L'adieu du TESTAMENT est écrit par le courtier, sans session : on le prend avant tout.
+      if (m && m.t === "adieu") { retirer(de, "adieu"); return true; }
+      if (!m || !m.s) return true;
+      if (m.t === "salut") { accueillir(de, m.s); return true; }
+      const p = accueillir(de, m.s);   // une description d'un inconnu vaut un salut
+      if (!p) return true;
+      if (m.t === "description" && m.d) description(p, m.d, m.c).catch(e => journal("description ratée", de, e.message));
+      else if (m.t === "candidats" && Array.isArray(m.c)) (async () => { for (const c of m.c) await candidat(p, c); })();
+      return true;
+    },
+    // Pose (ou remplace) mon flux local : chaque paire passe en sendrecv, la
+    // renégociation part toute seule. Null pour cesser d'être vu.
+    attacherFlux(f) {
+      local = f;
+      const piste = f && f.getVideoTracks()[0];
+      for (const p of pairs.values()) {
+        try { p.tr.sender.replaceTrack(piste || null); p.tr.direction = piste ? "sendrecv" : "recvonly"; }
+        catch (e) { journal("flux non attaché", p.id, e.message); }
+      }
+    },
+    // Pour l'app qui tient déjà sa présence (salut/adieu des cartes) : un coup de coude.
+    arrivee(id) { if (id && id !== moi) salut(id); },
+    depart(id) { retirer(id, "départ annoncé"); },
+    fermer() {
+      if (ferme) return; ferme = true;
+      clearInterval(salutMinuteur); clearInterval(menageMinuteur); clearTimeout(pompe);
+      publier("tous", { t: "adieu" });   // tout de suite, pas par la file : la page se ferme
+      for (const id of [...pairs.keys()]) retirer(id, "fermeture");
+    },
+  };
+  return api;
+}
+
+return {PAIRS_MAX,LIEN_PAGES,MESSAGE_ARTEFACT,SERVEURS_STUN,SANS_RELAIS_MESSAGE,AVEC_RELAIS_MESSAGE,urlsRelais,serveursIce,relaisConfigure,SERVEURS_ICE,SALUT_INTERVALLE_MS,SILENCE_MAX_MS,SILENCE_ICE_MS,ENVOI_ECART_MS,LOT_CANDIDATS_MS,ATTENTE_POLIE_MS,REOFFRE_MS,sujetVisio,testamentVisio,sonderReseau,testerRelais,expliquerEchec,creerVisio};
+})();
 
 
 /* ═══ socle.js ═══ */
@@ -3018,6 +3620,10 @@ return {TAPIS_DEPART,MISE_DELAI,TOUR_DELAI,ASSURANCE_DELAI,REGLEMENT_DELAI,ABSEN
      sabot:assurance        { siege, main, toi, prise, montant }  la réponse, montant en jetons
      sabot:assurance-fin    { siege, main, toi, gagne, montant }  l'assurance est réglée (+mise si
                             le croupier avait blackjack, −moitié sinon), avant les main-fin
+     sabot:reseau-entree    { api, code, moi }        la table à plusieurs est reliée (reseau.js) ;
+                            api.brut = l'api de net.mjs, absent avec le transport muet de la sonde
+     sabot:reseau-pairs     { pairs }                 la liste des pairs de la salle a changé (Map id → { id, nom })
+     sabot:reseau-sortie    {}                        on quitte la table à plusieurs
      Les montants sont en JETONS : hand.bet porte la vraie mise depuis le lot Jetons.
      remelange porte aussi pendantDonne:true quand le sabot est renouvelé au milieu d'une donne.
    ══════════════════════════════════════════════════════════════════════ */
@@ -3453,7 +4059,10 @@ function dimensionnerCartes() {
   const pellicule = cs.flexWrap === "nowrap";          // téléphone : les sièges défilent, la largeur de carte reste celle du CSS
   const gap = parseFloat(cs.columnGap) || 12;
   const cercle = box.querySelector(".cercle");
-  const chrome = (cercle ? cercle.offsetHeight : 72) + 68;   // score, nom, cercle, marges : tout ce qui n'est pas la carte
+  // À plusieurs (visio.js), le cercle partage sa rangée avec la vignette vidéo de l'ami :
+  // c'est la rangée entière (la plus haute des deux pièces) qui compte, pas le cercle seul.
+  const bas = box.querySelector(".rangee-bas");
+  const chrome = (bas ? bas.offsetHeight : cercle ? cercle.offsetHeight : 72) + 68;   // score, nom, cercle, marges : tout ce qui n'est pas la carte
   // La carte du croupier suit la HAUTEUR DU FEUTRE (stable), jamais celle des sièges :
   // la rangée haute a sa hauteur d'après cette valeur, et la hauteur des sièges dépend
   // de la rangée haute — une boucle, si on lisait H. 15,5 % : 90 px sur un portable
@@ -3527,7 +4136,10 @@ function placerSieges(box, sieges, feutre) {
   const lifts = sieges.map(s => {
     const cx = box.offsetLeft + s.offsetLeft + s.offsetWidth / 2;
     let lift = 0;
-    s.querySelectorAll(".mains, .cercle, .nom").forEach(p => {
+    // La rangée cercle + vignette (visio.js) se mesure ENTIÈRE : son cercle n'est plus centré.
+    // À plusieurs (reseau.js), le tapis sous le nom et le bouton « S'asseoir » (44 px)
+    // descendent plus bas que le nom : mesurés aussi, sinon ils passent sur le lettrage du rail.
+    s.querySelectorAll(".mains, :scope > .cercle, .rangee-bas, .nom, .tapis-siege, .asseoir").forEach(p => {
       // Les cartes : une largeur FIXE (un éventail de trois), sinon la 3ᵉ carte déplacerait le siège.
       const demi = (p.classList.contains("mains") ? Math.max(p.offsetWidth, wT * 2.2) : p.offsetWidth) / 2 + 10;
       const bas = box.offsetTop + hautDans(p) + p.offsetHeight;
@@ -6286,17 +6898,22 @@ function detendre() {
   else if (!CO.occupe) indice(5, "Tu souris dans le vide. Bizarre.");
 }
 $("coDetendu").onclick = detendre;
+// La caméra est CELLE de camera.mjs, partagée avec la visio de la table et comptée par
+// références : un seul voyant, une seule permission, et le détecteur continue de tourner
+// si tes amis te voient déjà. Rien ne lève : un refus se lit dans `etat` et `raison`.
 async function lancerCamera() {
   arreterCamera(); $("coCamHors").hidden = false; $("coCamEtat").textContent = "";
   if (!CO.cam) { $("coCamHors").textContent = "Caméra désactivée : seuls les signes de comportement comptent."; return; }
-  try {
-    CO.flux = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: "user" }, audio: false });
-    const v = $("coVideo"); v.srcObject = CO.flux; await v.play();
-    $("coCamHors").hidden = true; $("coCamEtat").textContent = "Détecteur actif";
-    CO.raf = requestAnimationFrame(camTick);
-  } catch (e) { CO.cam = false; $("coCamHors").textContent = "Caméra indisponible ici (" + (e.name || "refusée") + "). Ouvre le site plutôt que la page publiée."; }
+  const cam = M.camera.cameraPartagee(); CO.camRef = true;
+  const { flux, etat, raison } = await cam.prendre();
+  if (!CO.camRef) return;                                   // arrêtée pendant la demande : la référence est déjà rendue
+  if (!flux) { CO.camRef = false; cam.rendre(); CO.cam = false; $("coCamHors").textContent = (raison || "Caméra indisponible (" + etat + ").") + " Ouvre le site plutôt que la page publiée."; return; }
+  CO.flux = flux;
+  const v = $("coVideo"); v.srcObject = flux; await v.play().catch(() => {});
+  $("coCamHors").hidden = true; $("coCamEtat").textContent = "Détecteur actif";
+  CO.raf = requestAnimationFrame(camTick);
 }
-function arreterCamera() { cancelAnimationFrame(CO.raf); if (CO.flux) { CO.flux.getTracks().forEach(t => t.stop()); CO.flux = null; } }
+function arreterCamera() { cancelAnimationFrame(CO.raf); if (CO.camRef) { CO.camRef = false; M.camera.cameraPartagee().rendre(); } CO.flux = null; }
 const LW = 64, LH = 48;
 const travail = document.createElement("canvas"); travail.width = LW; travail.height = LH;
 const wx = travail.getContext("2d", { willReadFrequently: true });
@@ -6557,7 +7174,10 @@ if (/^#(course|salon)=/.test(location.hash)) {
    ═══════════════════════════════════════════════════════════════════ */
 const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, tableSolo: "", ticker: null, abandon: false,
   mise: 0, poses: [], miseVue: {}, enVol: {}, emis: new Set(), partis: new Set(), assurPartie: new Set(), vus: new Set(),
-  vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, panneauOuvert: false };
+  vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, panneauOuvert: false,
+  // Le crochet de visio.js : un message du courtier lui est d'abord proposé (sujets visio/*),
+  // et il le garde ou le rend. net.mjs n'a qu'un seul onMessage, posé à la connexion.
+  onBrut: null };
 const PAGES_URL = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
 // Ta couleur à la table = un JETON du rack (jetons.js), pas une pastille arc-en-ciel :
 // la pastille devant ton nom en prend la face. Une ancienne couleur enregistrée
@@ -6609,11 +7229,12 @@ async function rsConnecter(code) {
     // Le testament : si l'onglet ferme sans dire au revoir, le courtier le dit pour lui.
     testament: { sujet, message: JSON.stringify({ t: "adieu", id: RS.moi }) },
     onEssai: (n, total, nom) => rsEtatTexte(`Essai ${n} sur ${total} — ${nom}…`),
-    onMessage: (_, brut) => { try { rsRecevoir(JSON.parse(brut)); } catch (e) {} },
+    onMessage: (s, brut) => { if (RS.onBrut && RS.onBrut(s, brut)) return; try { rsRecevoir(JSON.parse(brut)); } catch (e) {} },
     onClose: () => rsDeconnecte(),
   });
   api.souscrire(sujet);
-  return { publier: o => api.publier(sujet, JSON.stringify(o)), fermer: () => api.fermer(), nom: NET.nomCourtier(url) };
+  // `brut` : l'api de net.mjs telle quelle, pour la visio (elle souscrit ses propres sujets).
+  return { publier: o => api.publier(sujet, JSON.stringify(o)), fermer: () => api.fermer(), nom: NET.nomCourtier(url), brut: api };
 }
 function rsRecevoir(m) { if (RS.salle) RS.salle.recevoir(m, Date.now()); }
 function rsEtatTexte(t) { const e = $("mpEtat"); if (e) e.textContent = t; }
@@ -6668,10 +7289,12 @@ async function ouvrirTable(code, createur) {
     cartesNeuves: rsCartesNeuves, partie: rsOptionsPartie,
     onEtat: e => rendreReseau(e),
     onInfo: txt => { bandeau(txt, 3200); if (RS.etat) { rsResyncMise(); rsBoutons(RS.etat); } },
-    onPairs: () => { if (rsPanneauVisible()) rsPanneau(); },
+    onPairs: pairs => { emettre("reseau-pairs", { pairs }); if (rsPanneauVisible()) rsPanneau(); },
   });
   entrerModeReseau();
   RS.salle.entrer(Date.now());
+  // La visio (visio.js) se greffe ici : le courtier est relié, la scène est en mode réseau.
+  emettre("reseau-entree", { api, code, moi: RS.moi });
   RS.ticker = setInterval(() => { if (!RS.salle) return; RS.salle.cadence = vitesse(); RS.salle.tic(Date.now()); }, 200);
   aller("table");
   bandeau(createur ? "Table ouverte — partage le code " + TR.formaterCode(code) : "Tu rejoins la table " + TR.formaterCode(code), 3600);
@@ -6695,6 +7318,7 @@ function entrerModeReseau() {
   rsRendreRack();
 }
 function quitterTable(silencieux) {
+  emettre("reseau-sortie", {});   // la visio se ferme d'abord : son adieu doit partir par un courtier encore relié
   if (RS.salle) { try { RS.salle.quitter(); } catch (e) {} } RS.salle = null;
   if (RS.api) { try { RS.api.fermer(); } catch (e) {} } RS.api = null;
   clearInterval(RS.ticker); RS.ticker = null;
@@ -6849,6 +7473,9 @@ function rsRendreSieges() {
     const tp = document.createElement("span"); tp.className = "tapis-siege"; tp.textContent = fmtJ(st.tapis) + (st.rachats ? " · " + st.rachats + " rachat" + (st.rachats > 1 ? "s" : "") : "");
     nm.after(tp);
   });
+  // Les sièges ont grandi (tapis sous le nom, boutons « S'asseoir ») APRÈS la mesure de
+  // rendreSieges() : on remesure, sinon ce qui dépasse passe sur le lettrage du rail.
+  dimensionnerCartes();
 }
 function rsChipCode() {
   const r = $("tRegles"); if (!r || !RS.code) return;
@@ -7125,6 +7752,236 @@ nouveauSabot = function (o) { if (T.reseau) { if (RS.etat) { RS.prec = null; ren
 if (/^#table=/.test(location.hash)) {
   const c = TR.normaliserCode(location.hash.slice(7));
   if (TR.codeValide(c)) { MP.mode = "table"; rendreModeMP(); aller("ensemble"); setTimeout(() => ouvrirTable(c, false), 300); }
+}
+
+
+/* ═══ visio.js ═══ */
+/* ══════════════════════ LES TÊTES DES AMIS ══════════════════════
+   LA VISIO AUTOUR DE LA TABLE À PLUSIEURS. Concaténé après reseau.js.
+   Chaque siège tenu par un HUMAIN porte une vignette `.visage` (96×72 — pas `.tete`, qui est le conteneur de l'en-tête) à côté de son cercle de
+   mise : les flux distants viennent de creerVisio (src/visio.mjs, maillage WebRTC
+   signalé par le même courtier MQTT que la table), le tien de cameraPartagee
+   (src/camera.mjs — la même caméra que le détecteur du mode Concentration, comptée par
+   références). JAMAIS de micro : on compte en silence.
+
+   Comment on se greffe sans toucher au rendu de la scène :
+   · reseau.js émet « sabot:reseau-entree » (le courtier est relié), « sabot:reseau-pairs »
+     (la liste des pairs bouge) et « sabot:reseau-sortie » ; on s'y branche.
+   · RS.onBrut est notre crochet sur les messages du courtier : les sujets visio/* sont
+     pour nous, le reste repart à la table.
+   · « sabot:sieges » (table.js) dit que les sièges viennent d'être redessinés : on y
+     pose nos vignettes — dans une rangée `.rangee-bas` qui accueille aussi le cercle —
+     puis on redemande à cartes.js de mesurer (la rangée compte dans la hauteur du siège).
+   · Une vignette SANS flux est une silhouette et un mot, jamais un rectangle noir muet.
+   · Sur « failed » sans relais, la vignette et un bandeau disent quoi faire (⚙) —
+     un échec de connexion directe ne se répare pas tout seul.
+   · Avec le transport muet de la sonde (api.brut absent), pas de visio : les vignettes
+     restent des silhouettes « en attente », et le bouton Caméra marche quand même.
+   · Dans l'ARTEFACT (WebSocket bloqué), on n'arrive jamais ici : reseau.js le dit en
+     moins de trois secondes et n'ouvre pas la table — la caméra n'est donc jamais
+     demandée pour rien.
+   ═══════════════════════════════════════════════════════════════════ */
+const VI = M.visio, CAM = M.camera;
+const RV = { visio: null, code: "", moi: "", flux: new Map(), etats: new Map(), bloques: new Set(), bloqueDit: new Set(),
+  videos: new Map(), pairs: new Set(), tenu: false, camEtat: "eteinte", camRaison: "", camAbonne: false };
+if (DB.camera === undefined) DB.camera = false;
+if (!DB.turn || typeof DB.turn !== "object") DB.turn = { url: "", user: "", pass: "" };
+DB.turn = Object.assign({ url: "", user: "", pass: "" }, DB.turn);
+// La silhouette : une tête et des épaules en ivoire éteint — le contraire d'un rectangle noir.
+const SILHOUETTE = `<svg class="silhouette" viewBox="0 0 96 72" aria-hidden="true" focusable="false"><circle cx="48" cy="26" r="12" fill="currentColor"/><path d="M18 72c0-18 12-27 30-27s30 9 30 27z" fill="currentColor"/></svg>`;
+
+/* ── Entrer, sortir, suivre les pairs ───────────────────────────────────── */
+function rvDemarrer(d) {
+  rvArreter();
+  RV.code = d.code; RV.moi = d.moi; RV.pairs = new Set([d.moi]);
+  $("bCamera").hidden = false; rvBoutonCamera();
+  const brut = d.api && d.api.brut;
+  if (brut) {
+    RV.visio = VI.creerVisio({
+      reseau: brut, salon: d.code, moi: d.moi, nom: prenom() || "Joueur", turn: DB.turn,
+      onFlux: (id, flux) => { RV.flux.set(id, flux); rvRendre(id); },
+      onDepart: id => { RV.flux.delete(id); RV.etats.delete(id); RV.bloques.delete(id); RV.videos.delete(id); rvRendre(id); },
+      onEtat: rvEtat,
+      onJournal: t => { if (window.__visioJournal) window.__visioJournal.push(t); },
+    });
+    RS.onBrut = (s, brut) => !!RV.visio && RV.visio.recevoir(s, brut);
+    RV.visio.demarrer();
+  }
+  if (DB.camera) rvAllumer();
+  rvPoserVignettes();
+}
+function rvArreter() {
+  if (RV.visio) { try { RV.visio.fermer(); } catch (e) {} }
+  RV.visio = null; RS.onBrut = null;
+  RV.flux.clear(); RV.etats.clear(); RV.bloques.clear(); RV.bloqueDit.clear(); RV.videos.clear(); RV.pairs = new Set();
+  rvEteindre();
+  $("bCamera").hidden = true;
+}
+// La salle (table-reseau.mjs) tient la présence par le testament du courtier : un pair
+// qui meurt y est vu en moins d'une seconde. On le répercute sur le maillage.
+function rvPairs(pairs) {
+  if (!RV.visio) return;
+  const ids = new Set(pairs.keys());
+  for (const id of ids) if (!RV.pairs.has(id) && id !== RV.moi) RV.visio.arrivee(id);
+  for (const id of RV.pairs) if (!ids.has(id) && id !== RV.moi) RV.visio.depart(id);
+  RV.pairs = ids;
+}
+function rvEtat(id, et) {
+  if (et === "bloque") {
+    RV.bloques.add(id);
+    if (!RV.bloqueDit.has(id)) { RV.bloqueDit.add(id); bandeau(RV.visio && RV.visio.sansRelais ? VI.SANS_RELAIS_MESSAGE : VI.AVEC_RELAIS_MESSAGE, 6500); son("ko"); }
+  } else if (et === "connected" || et === "completed") RV.bloques.delete(id);
+  RV.etats.set(id, et);
+  rvRendre(id);
+}
+document.addEventListener("sabot:reseau-entree", e => rvDemarrer(e.detail));
+document.addEventListener("sabot:reseau-sortie", () => rvArreter());
+document.addEventListener("sabot:reseau-pairs", e => rvPairs(e.detail.pairs));
+document.addEventListener("sabot:sieges", () => { if (T.reseau) rvPoserVignettes(); });
+
+/* ── Ta caméra : un bouton, mémorisé, jamais de micro ───────────────────── */
+function rvBoutonCamera() {
+  const b = $("bCamera"); if (!b) return;
+  const on = RV.tenu && RV.camEtat !== "eteinte";
+  b.setAttribute("aria-pressed", on ? "true" : "false");
+  b.title = on ? "Couper ta caméra" : "Ta caméra, pour que tes amis te voient sur ton siège — vidéo seule, jamais de micro";
+}
+async function rvAllumer() {
+  if (RV.tenu) return;
+  const cam = CAM.cameraPartagee();
+  if (!RV.camAbonne) {
+    RV.camAbonne = true;
+    // La caméra peut s'éteindre sans nous (permission retirée, câble) : on le dit sur la vignette.
+    cam.onEtat((etat, raison) => { if (!RV.tenu) return; RV.camEtat = etat; RV.camRaison = raison;
+      if (etat === "coupee") { RV.tenu = false; cam.rendre(); if (RV.visio) RV.visio.attacherFlux(null); DB.camera = false; garder(); bandeau("La caméra s'est arrêtée."); }
+      rvBoutonCamera(); rvRendreMoi(); });
+  }
+  RV.tenu = true; RV.camEtat = "demande"; RV.camRaison = ""; rvBoutonCamera(); rvRendreMoi();
+  const { flux, etat, raison } = await cam.prendre();
+  if (!RV.tenu) return;                      // coupée pendant la demande : la référence est déjà rendue
+  RV.camEtat = etat; RV.camRaison = raison || "";
+  if (flux) { if (RV.visio) RV.visio.attacherFlux(flux); }
+  else { RV.tenu = false; cam.rendre(); DB.camera = false; garder(); bandeau(raison || "Caméra indisponible ici.", 4200); }
+  rvBoutonCamera(); rvRendreMoi();
+}
+function rvEteindre() {
+  if (RV.tenu) { RV.tenu = false; CAM.cameraPartagee().rendre(); }
+  if (RV.visio) RV.visio.attacherFlux(null);
+  RV.camEtat = "eteinte"; RV.camRaison = "";
+  rvBoutonCamera(); rvRendreMoi();
+}
+$("bCamera").onclick = () => {
+  if (RV.tenu) { DB.camera = false; garder(); rvEteindre(); }
+  else { DB.camera = true; garder(); rvAllumer(); }
+};
+
+/* ── Les vignettes sur les sièges ───────────────────────────────────────── */
+// Après chaque redessin des sièges : une rangée cercle + vignette pour chaque humain.
+function rvPoserVignettes() {
+  if (!T.reseau) return;
+  let neuf = false;
+  document.querySelectorAll("#sieges .siege").forEach((d, k) => {
+    const st = T.sieges[k]; if (!st || st.vide || st.bot || !st.id) return;
+    let rb = d.querySelector(".rangee-bas");
+    if (!rb) { const ce = d.querySelector(".cercle"); if (!ce) return; rb = document.createElement("div"); rb.className = "rangee-bas"; ce.replaceWith(rb); rb.appendChild(ce); neuf = true; }
+    d.classList.toggle("gauche", parseFloat(d.style.getPropertyValue("--ecart")) < 0);
+    // La largeur que cartes.js a donnée au siège : la vignette s'y ajuste (CSS) pour tenir sur la rangée du cercle.
+    if (d.style.width) d.style.setProperty("--siege-w", d.style.width);
+    let t = d.querySelector(".visage");
+    if (!t) { t = document.createElement("div"); t.className = "visage"; rb.appendChild(t); neuf = true; }
+    t.dataset.id = st.id; t.classList.toggle("moi", !!st.toi);
+    rvRendreVignette(t, st);
+  });
+  // La rangée du bas a changé de hauteur et de largeur : cartes.js remesure les cartes et l'arc.
+  if (neuf && typeof dimensionnerCartes === "function") dimensionnerCartes();
+}
+function rvRendre(id) {
+  const t = document.querySelector(`#sieges .visage[data-id="${CSS.escape(id)}"]`);
+  const st = T.sieges.find(s => s && s.id === id);
+  if (t && st) rvRendreVignette(t, st); else if (!t && st) rvPoserVignettes();
+}
+function rvRendreMoi() { if (T.toi && T.toi.id) rvRendre(T.toi.id); }
+// Ce que dit ma vignette quand elle n'a pas de flux.
+function rvEtatMoi() {
+  const e = RV.camEtat, r = RV.camRaison;
+  if (e === "demande") return ["demande", "caméra…", "La caméra est demandée au navigateur."];
+  if (e === "refusee") return ["ko", "refusée", r];
+  if (e === "absente") return ["ko", "pas de caméra", r];
+  if (e === "occupee") return ["ko", "occupée", r];
+  if (e === "indisponible") return ["ko", "indisponible", r];
+  if (e === "coupee") return ["ko", "coupée", r];
+  return ["eteinte", "coupée", "Ta caméra est coupée : clique « Caméra » pour que tes amis te voient."];
+}
+// Ce que dit la vignette d'un ami sans flux, d'après l'état ICE de sa paire.
+function rvEtatPair(id, st) {
+  if (st.absent) return ["parti", "parti", "Il a quitté la table."];
+  const e = RV.etats.get(id);
+  if (RV.bloques.has(id) && e !== "connected" && e !== "completed")
+    return ["bloque", "vidéo bloquée", RV.visio && RV.visio.sansRelais ? VI.SANS_RELAIS_MESSAGE : VI.AVEC_RELAIS_MESSAGE];
+  if (!RV.visio) return ["attente", "en attente", "La visio n'est pas reliée."];
+  if (e === "refuse") return ["ko", "table pleine", "Cinq caméras au plus : la sixième n'est pas relayée."];
+  if (e === "indisponible") return ["ko", "pas de visio", "Ce navigateur n'a pas WebRTC."];
+  if (e === "parti" || e === "closed") return ["parti", "parti", "Sa connexion est fermée."];
+  if (e === "disconnected") return ["connexion", "coupure…", "Sa connexion hoquette ; on réessaie."];
+  if (e === "connected" || e === "completed") return ["sanscam", "sans caméra", "Relié, mais sa caméra est coupée."];
+  return ["connexion", "connexion…", "La visio se négocie avec " + (st.nom || "ce joueur") + "."];
+}
+function rvRendreVignette(t, st) {
+  const moi = !!st.toi, id = st.id;
+  const flux = moi ? (RV.tenu && CAM.cameraPartagee().flux) || null : RV.flux.get(id) || null;
+  let etat = "ok", texte = "", titre = moi ? "Toi — en miroir" : (st.nom || "");
+  if (!flux) [etat, texte, titre] = moi ? rvEtatMoi() : rvEtatPair(id, st);
+  t.dataset.etat = etat;
+  if (titre) t.title = titre; else t.removeAttribute("title");
+  let v = t.querySelector("video");
+  if (flux) {
+    if (!v) {
+      v = RV.videos.get(id) || document.createElement("video");
+      v.autoplay = true; v.playsInline = true; v.muted = true; v.setAttribute("playsinline", ""); v.setAttribute("muted", "");
+      RV.videos.set(id, v); t.prepend(v);
+    }
+    if (v.srcObject !== flux) v.srcObject = flux;
+    v.play().catch(() => {});
+    const s = t.querySelector(".silhouette"); if (s) s.remove();
+  } else {
+    if (v) v.remove();
+    if (!t.querySelector(".silhouette")) t.insertAdjacentHTML("afterbegin", SILHOUETTE);
+  }
+  let e = t.querySelector(".visage-etat");
+  if (!e) { e = document.createElement("span"); e.className = "visage-etat"; t.appendChild(e); }
+  e.textContent = texte;
+}
+
+/* ── Le relais, dans ⚙ ──────────────────────────────────────────────────── */
+function rvRelaisPhrase() {
+  return VI.relaisConfigure(DB.turn)
+    ? "Relais renseigné : il sera proposé à chaque nouvelle connexion vidéo (pas à celles déjà ouvertes). Teste-le une fois."
+    : "Sans identifiants : STUN seul (stun.l.google.com). La vidéo passe en direct quand les deux connexions le permettent — un ami en 4G ou derrière un réseau strict ne se verra pas.";
+}
+function rvRendreRelais(txt, ok) {
+  if (!$("turnUrl")) return;
+  if (document.activeElement !== $("turnUrl")) $("turnUrl").value = DB.turn.url || "";
+  if (document.activeElement !== $("turnUser")) $("turnUser").value = DB.turn.user || "";
+  if (document.activeElement !== $("turnPass")) $("turnPass").value = DB.turn.pass || "";
+  const e = $("turnEtat"); e.textContent = txt || rvRelaisPhrase();
+  if (ok === undefined) delete e.dataset.ok; else e.dataset.ok = ok ? "1" : "0";
+}
+if ($("turnUrl")) {
+  rvRendreRelais();
+  [["turnUrl", "url"], ["turnUser", "user"], ["turnPass", "pass"]].forEach(([id, k]) => {
+    $(id).addEventListener("input", () => { DB.turn[k] = $(id).value; garder(); rvRendreRelais(); });
+  });
+  $("turnTester").onclick = async () => {
+    const b = $("turnTester"); b.disabled = true;
+    rvRendreRelais("Test en cours — huit secondes au plus…");
+    const r = await VI.testerRelais(DB.turn);
+    b.disabled = false;
+    rvRendreRelais(r.ok ? `✓ Relais joignable : un candidat relay en ${fr1(r.ms / 1000)} s${r.candidat ? " (" + r.candidat + (r.protocole ? ", " + r.protocole : "") + ")" : ""}. Il sera utilisé si la connexion directe échoue.`
+      : "✗ " + r.raison, r.ok);
+    son(r.ok ? "ok" : "ko");
+  };
+  // La feuille ⚙ emprunte le bloc #outils : à chaque ouverture, on relit ce qui est mémorisé.
+  $("bReglages").addEventListener("click", () => setTimeout(() => rvRendreRelais(), 0));
 }
 
 

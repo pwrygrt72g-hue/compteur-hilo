@@ -7,6 +7,11 @@
 //
 //   node outils/mesurer.mjs [vue…]
 //
+// « reseau » est une vue de plus : la table À PLUSIEURS (transport muet, deux amis
+// fictifs assis, vignettes vidéo en attente), soumise aux MÊMES assertions que la table
+// solo — elle doit tenir dans un écran avec ses têtes. À mettre en DERNIER : elle
+// laisse la scène en mode réseau (on quitte la table à la fin, mais on ne rejoue pas la donne).
+//
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
@@ -94,6 +99,18 @@ for (const [nom, L, H] of TAILLES) {
   await cdp("Page.navigate", { url: `http://127.0.0.1:${PORT}/index.html` });
   await dodo(1400);
   for (const v of VUES) {
+    if (v === "reseau") {
+      await evaluer(`(document.querySelector('nav [data-vue="ensemble"]')||{click(){}}).click()`); await dodo(300);
+      await evaluer(`window.__reseauTransport = o => { window.__reseauEntrant = o.onMessage; return { publier() {}, fermer() {} }; }; document.getElementById("mpCreer").click()`); await dodo(1500);
+      await evaluer(`(document.querySelector("#sieges .siege.vide .asseoir")||{click(){}}).click()`); await dodo(500);
+      await evaluer(`(() => { const r = window.__reseauEntrant; if (!r) return; for (const [id, nom, c, k] of [["jAmi1", "Sonia", "#c0392b", 2], ["jAmi2", "Karim", "#1f6f4a", 4]]) { r({ t: "salut", id, nom, couleur: c }); r({ t: "action", id, a: "asseoir", v: k, nom, couleur: c }); } })()`);
+      await dodo(700); await evaluer(MISER); await dodo(400);
+      const m = await evaluer(SONDE);
+      if (m && !m.erreur) rapport.push({ taille: nom, L, H, vue: v, ...m });
+      await evaluer(`document.getElementById("bReseau").click()`); await dodo(200);
+      await evaluer(`(document.getElementById("rsQuitter")||{click(){}}).click()`); await dodo(800);
+      continue;
+    }
     await evaluer(`(document.querySelector('nav [data-vue="${v}"]')||{click(){}}).click()`);
     await dodo(v === "table" ? 900 : 350);
     // La donne exige une mise (lot Jetons) : on tape un jeton qui couvre le minimum avant de distribuer.
@@ -121,10 +138,10 @@ for (const v of vues) {
 }
 const pb = rapport.filter(r => r.deborde.length);
 console.log("\nDÉBORDEMENTS HORIZONTAUX :", pb.length ? pb.map(r => `${r.L}×${r.H}/${r.vue} → ${r.deborde.join(",")}`).join(" · ") : "aucun");
-const t = rapport.filter(r => r.vue === "table");
-console.log("\nTABLE — hauteur d'en-tête · bas des coups · feutre · sièges");
+const t = rapport.filter(r => r.vue === "table" || r.vue === "reseau");
+console.log("\nTABLE — hauteur d'en-tête · bas des coups · feutre · sièges (« reseau » = la table à plusieurs, avec ses vignettes)");
 for (const r of t) { const b = r.bandes;
-  console.log(`  ${(r.L + "×" + r.H).padEnd(10)} entête ${String(r.hEntete).padStart(4)} px (tete ${b.tete}, pad ${b.padHaut}) · coups à y=${String(r.yCoups).padStart(5)} (fenêtre ${r.vh}) ${r.yCoups > r.vh ? "❌ HORS ÉCRAN" : "✓"} · feutre ${r.hTapis} · sièges ${r.hSieges}`);
+  console.log(`  ${(r.L + "×" + r.H).padEnd(10)}${r.vue === "reseau" ? " (à plusieurs)" : ""} entête ${String(r.hEntete).padStart(4)} px (tete ${b.tete}, pad ${b.padHaut}) · coups à y=${String(r.yCoups).padStart(5)} (fenêtre ${r.vh}) ${r.yCoups > r.vh ? "❌ HORS ÉCRAN" : "✓"} · feutre ${r.hTapis} · sièges ${r.hSieges}`);
   console.log(`             bandes : barre ${b.barre} · salle ${b.salle} · rangée haute ${b.haute} · annonce ${b.annonce} · conseil ${b.conseil} · actions ${b.actions} · #v-table ${b.vTable} · main ${b.main}`); }
 const cibles44 = [...new Set(rapport.flatMap(r => r.petits))];
 console.log("\nCIBLES TACTILES SOUS 44 px :", cibles44.length ? cibles44.slice(0, 10).join(" · ") : "aucune");
@@ -147,7 +164,7 @@ for (const r of rapport) {
   const ou = `${r.L}×${r.H}/${r.vue}`;
   exiger(r.largeurDoc <= r.vw + 1, `${ou} : la page déborde horizontalement (${r.largeurDoc} > ${r.vw}) → ${r.deborde.join(",")}`);
   exiger(r.hEntete <= 64, `${ou} : en-tête de ${r.hEntete} px (plafond 64 — une seule rangée)`);
-  if (r.vue === "table") {
+  if (r.vue === "table" || r.vue === "reseau") {
     exiger(r.ecrans <= 1.03, `${ou} : la table demande ${r.ecrans} écran(s), elle doit tenir dans un`);
     exiger(r.yCoups !== null && r.yCoups <= r.vh, `${ou} : les coups sont hors écran (bas à y=${r.yCoups}, fenêtre ${r.vh})`);
     exiger(r.hSieges >= 60, `${ou} : sièges écrasés à ${r.hSieges} px`);

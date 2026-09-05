@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Banc relais — Le Sabot</title>
+<!-- Page de banc pour tester-relais.mjs : elle expose testerRelais (src/visio.mjs) à
+     window, rien d'autre. Ni courtier, ni caméra — un relais se teste sans ami. -->
+</head>
+<body>
+<p id="statut">Banc relais : prêt.</p>
+<script type="module">
+import { testerRelais, serveursIce } from "../src/visio.mjs";
+window.__testerRelais = testerRelais; window.__serveursIce = serveursIce; window.__pret = true;
+</script>
+</body>
+</html>

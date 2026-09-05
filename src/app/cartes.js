@@ -229,7 +229,10 @@ function dimensionnerCartes() {
   const pellicule = cs.flexWrap === "nowrap";          // téléphone : les sièges défilent, la largeur de carte reste celle du CSS
   const gap = parseFloat(cs.columnGap) || 12;
   const cercle = box.querySelector(".cercle");
-  const chrome = (cercle ? cercle.offsetHeight : 72) + 68;   // score, nom, cercle, marges : tout ce qui n'est pas la carte
+  // À plusieurs (visio.js), le cercle partage sa rangée avec la vignette vidéo de l'ami :
+  // c'est la rangée entière (la plus haute des deux pièces) qui compte, pas le cercle seul.
+  const bas = box.querySelector(".rangee-bas");
+  const chrome = (bas ? bas.offsetHeight : cercle ? cercle.offsetHeight : 72) + 68;   // score, nom, cercle, marges : tout ce qui n'est pas la carte
   // La carte du croupier suit la HAUTEUR DU FEUTRE (stable), jamais celle des sièges :
   // la rangée haute a sa hauteur d'après cette valeur, et la hauteur des sièges dépend
   // de la rangée haute — une boucle, si on lisait H. 15,5 % : 90 px sur un portable
@@ -303,7 +306,10 @@ function placerSieges(box, sieges, feutre) {
   const lifts = sieges.map(s => {
     const cx = box.offsetLeft + s.offsetLeft + s.offsetWidth / 2;
     let lift = 0;
-    s.querySelectorAll(".mains, .cercle, .nom").forEach(p => {
+    // La rangée cercle + vignette (visio.js) se mesure ENTIÈRE : son cercle n'est plus centré.
+    // À plusieurs (reseau.js), le tapis sous le nom et le bouton « S'asseoir » (44 px)
+    // descendent plus bas que le nom : mesurés aussi, sinon ils passent sur le lettrage du rail.
+    s.querySelectorAll(".mains, :scope > .cercle, .rangee-bas, .nom, .tapis-siege, .asseoir").forEach(p => {
       // Les cartes : une largeur FIXE (un éventail de trois), sinon la 3ᵉ carte déplacerait le siège.
       const demi = (p.classList.contains("mains") ? Math.max(p.offsetWidth, wT * 2.2) : p.offsetWidth) / 2 + 10;
       const bas = box.offsetTop + hautDans(p) + p.offsetHeight;

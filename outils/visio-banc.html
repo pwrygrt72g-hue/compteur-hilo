@@ -87,8 +87,10 @@ function relier() {
   if (flux) { $("local").srcObject = flux; $("local").play().catch(() => {}); }
   cam.onEtat(e => { window.__etat.camera = e; });
 
+  // &turn=url&user=u&pass=p : un relais à essayer (sinon STUN seul, comme l'application sans ⚙).
+  const turn = q.get("turn") ? { url: q.get("turn"), user: q.get("user") || "", pass: q.get("pass") || "" } : null;
   visio = creerVisio({
-    reseau: api, salon, moi, flux, nom: moi,
+    reseau: api, salon, moi, flux, nom: moi, turn,
     onJournal: journal,
     onEtat: (id, e) => journal(`${id} → ${e}`),
     onFlux: (id, s) => {
@@ -128,7 +130,10 @@ function relier() {
         } catch (e) {}
         const v = videos.get(p.id);
         pairs.push({ id: p.id, ice: p.pc.iceConnectionState, signal: p.pc.signalingState, connexion: p.pc.connectionState,
-          videoWidth: v ? v.videoWidth : 0, framesDecoded, bytesReceived, candidatLocal });
+          videoWidth: v ? v.videoWidth : 0, framesDecoded, bytesReceived, candidatLocal,
+          // La collecte ICE : son état vrai (dans le pc) et sa durée (posée par visio.mjs à « complete »).
+          // Avec le TURN mort d'Open Relay elle restait « gathering » pour toujours.
+          collecte: p.pc.iceGatheringState, collecteMs: p.collecteMs });
       }
       window.__etat.pairs = pairs;
       window.__etat.connecte = !!api.vivant;

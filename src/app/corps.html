@@ -27,6 +27,21 @@
       <button class="btn creux" id="theme" title="Th&#232;me clair ou sombre" aria-label="Changer de th&#232;me">&#9689; Th&#232;me</button>
       <button class="btn creux" id="son" title="Sons" aria-label="Activer ou couper les sons">&#9834; Sons</button>
     </div>
+    <!-- Le relais vidéo (visio.js) : sans lui, la visio de la table passe en direct (STUN
+         seul) et ne traverse ni la 4G ni un réseau strict. Les identifiants viennent d'un
+         service que l'utilisateur choisit ; ils vivent dans DB.turn, jamais dans le code. -->
+    <details class="relais" id="relaisBloc">
+      <summary id="relaisOuvrir"><span class="grave">Relais vid&#233;o (TURN)</span><span class="muet">N&#233;cessaire si un ami est en 4G ou derri&#232;re un r&#233;seau strict</span></summary>
+      <p class="muet relais-quoi">Autour de la table, la vid&#233;o va directement d'un navigateur &#224; l'autre. Quand deux connexions ne se voient pas (4G, r&#233;seau d'entreprise, box stricte), il faut un relais qui fait passer les paquets &#8212; chiffr&#233;s, il ne peut pas les lire.</p>
+      <div class="champs relais-champs">
+        <label class="ch"><span class="grave">Adresse du relais</span><input type="text" id="turnUrl" placeholder="turn:standard.relay.metered.ca:80" spellcheck="false" autocomplete="off" autocapitalize="off"></label>
+        <label class="ch"><span class="grave">Utilisateur</span><input type="text" id="turnUser" spellcheck="false" autocomplete="off" autocapitalize="off"></label>
+        <label class="ch"><span class="grave">Mot de passe</span><input type="text" id="turnPass" spellcheck="false" autocomplete="off" autocapitalize="off"></label>
+      </div>
+      <div class="rang-btn" style="justify-content:flex-start;margin-top:10px"><button class="btn creux" id="turnTester">Tester le relais</button></div>
+      <p class="muet relais-etat" id="turnEtat" aria-live="polite"></p>
+      <p class="muet relais-ou">O&#249; en obtenir un gratuitement, en trois minutes : <a href="https://www.metered.ca/stun-turn" target="_blank" rel="noopener">metered.ca</a>, formule gratuite &#8212; elle donne une adresse, un utilisateur et un mot de passe, avec un quota mensuel de quelques centaines de Mo : de l'ordre de deux heures de table &#224; deux quand TOUT passe par le relais. Il n'est consomm&#233; que si la connexion directe &#233;choue. Le relais ne voit que des paquets chiffr&#233;s.</p>
+    </details>
   </div>
 </div></header>
 
@@ -216,6 +231,9 @@
       <button class="btn verre mini" id="bNouveauSabot" title="Jette la manche en cours et remélange">Nouveau sabot</button>
       <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
       <button class="btn verre mini" id="bReseau" hidden>Table</button>
+      <!-- Ta caméra (visio.js) : tes amis te voient sur ton siège. Vidéo seule, JAMAIS de micro —
+           on compte en silence. Mémorisé (DB.camera). Caché en solo. -->
+      <button class="btn verre mini" id="bCamera" hidden aria-pressed="false" title="Ta caméra, pour que tes amis te voient sur ton siège — vidéo seule, jamais de micro">Caméra</button>
     </div>
     <div id="boiteAssurance"></div>
   </div>

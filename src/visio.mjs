@@ -60,12 +60,24 @@
 // NULLE PART ailleurs que chez tes amis. Le maillage est pair-à-pair : la
 // vidéo va directement de ton navigateur au leur, chiffrée (DTLS-SRTP, c'est
 // le protocole, pas une option). Le courtier MQTT ne voit que les offres et
-// les candidats — du texte de négociation, jamais une image. Quand deux
-// réseaux ne se voient pas (NAT symétriques, boîtes d'entreprise), le TURN
-// d'Open Relay RELAIE les paquets — mais chiffrés de bout en bout, il ne peut
-// pas les lire. Sans TURN, « ça marche chez moi » et pas chez l'ami ; c'est
-// lui qui fait passer les réseaux difficiles. STUN (Google) ne sert qu'à
-// apprendre son adresse publique. Ni l'un ni l'autre ne stocke quoi que ce soit.
+// les candidats — du texte de négociation, jamais une image. STUN (Google) ne
+// sert qu'à apprendre son adresse publique ; il ne stocke rien.
+//
+// ══ Le relais (TURN) : CONFIGURABLE, jamais un cadeau qu'on croit gratuit ═══
+// Quand deux réseaux ne se voient pas (NAT symétriques, 4G derrière un CGNAT,
+// boîtes d'entreprise), seul un relais TURN fait passer les paquets — chiffrés
+// de bout en bout, il ne peut pas les lire. Sans relais, « ça marche chez moi »
+// et pas chez l'ami en 4G.
+// ⚠️ MESURÉ LE 5 SEPTEMBRE 2026 : le TURN « Open Relay » (openrelay.metered.ca,
+// identifiants openrelayproject) qui était inscrit ici EST MORT — allocation
+// refusée (400), certificat de turns:443 en hostname mismatch, ZÉRO candidat
+// relay, et `iceGatheringState` qui ne passait JAMAIS à « complete ». Un TURN
+// mort ne fait pas que ne rien relayer : il RALENTIT la collecte ICE de tout le
+// monde, même entre deux amis qui se voyaient très bien en direct. Il est
+// retiré. Le relais est désormais celui que l'utilisateur configure dans ⚙
+// (`serveursIce(turn)`), testable par `testerRelais` ; sans identifiants on part
+// en STUN seul, et on le DIT. Sur `failed` sans relais, l'appelant affiche
+// pourquoi (jamais un échec silencieux) — cf. `SANS_RELAIS_MESSAGE`.
 //
 // ⚠️ PAS DE MICRO. Vidéo seule, par décision (cf. camera.mjs) : on compte en
 // silence, la parole détruit la mémoire de travail.
@@ -75,11 +87,37 @@ import { sujet } from "./net.mjs";
 export const PAIRS_MAX = 5;
 export const LIEN_PAGES = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
 export const MESSAGE_ARTEFACT = "La visio ne peut pas marcher sur cette page publiée : sa politique de sécurité bloque les connexions vers le courtier. Ouvre le site pour voir tes amis : " + LIEN_PAGES;
-export const SERVEURS_ICE = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443", "turns:openrelay.metered.ca:443"],
-    username: "openrelayproject", credential: "openrelayproject" },
-];
+// STUN seul : deux serveurs de Google, gratuits, qui ne font qu'apprendre à chacun
+// son adresse publique. C'est ce qu'on a quand aucun relais n'est configuré.
+export const SERVEURS_STUN = ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"];
+// Ce que dit la vignette quand la connexion directe échoue et qu'aucun relais n'est là.
+export const SANS_RELAIS_MESSAGE = "La vidéo directe est bloquée par ta connexion : ajoute un relais dans ⚙";
+export const AVEC_RELAIS_MESSAGE = "La vidéo ne passe pas, même par le relais : teste-le dans ⚙";
+// Les URL d'un relais, telles qu'on les tape dans ⚙ : une ou plusieurs, séparées par
+// des virgules, des espaces ou des retours à la ligne ; « host:port » sans schéma
+// devient « turn:host:port ». Une ligne vide ou illisible est ignorée.
+export function urlsRelais(brut) {
+  return String(brut || "").split(/[\s,;]+/).map(u => u.trim()).filter(Boolean)
+    // Un « http://… » collé par erreur n'est pas un relais : jeté, pas préfixé.
+    // Sans schéma, on accepte « host » ou « host:port » — rien d'autre.
+    .filter(u => !/\/\//.test(u) && (/^(turns?|stuns?):/i.test(u) || /^[^:?]+(:\d+)?(\?.*)?$/.test(u)))
+    .map(u => /^(turns?|stuns?):/i.test(u) ? u : "turn:" + u)
+    .filter(u => /^(turns?|stuns?):[^\s/:]+(:\d+)?(\?.*)?$/i.test(u));
+}
+// Construit la liste des serveurs ICE : STUN toujours, puis le relais s'il est complet
+// (une URL ET un utilisateur ET un mot de passe — un TURN sans identifiants est refusé
+// par tout serveur sérieux, autant ne pas l'envoyer). `turn` = { url, user, pass } ou rien.
+export function serveursIce(turn) {
+  const ice = [{ urls: SERVEURS_STUN.slice() }];
+  const t = turn || {};
+  const urls = urlsRelais(t.url).filter(u => /^turns?:/i.test(u));
+  const user = String(t.user || "").trim(), pass = String(t.pass || "");
+  if (urls.length && user && pass) ice.push({ urls, username: user, credential: pass });
+  return ice;
+}
+export const relaisConfigure = turn => serveursIce(turn).length > 1;
+// La liste par défaut, sans relais. Gardée pour qui l'importait.
+export const SERVEURS_ICE = serveursIce(null);
 export const SALUT_INTERVALLE_MS = 2000;   // un salut toutes les 2 s (quarante octets — rien, même à cinq)
 export const SILENCE_MAX_MS = 7000;        // 7 s sans salut = parti (repli si le testament n'est pas arrivé)
 export const SILENCE_ICE_MS = 3000;        // ICE coupé ET 3 s sans salut = parti (un onglet mort, pas un réseau qui hoquette)
@@ -107,6 +145,37 @@ export function sonderReseau(url, delai = 2500) {
     ws.onclose = () => conclure(false);
   });
 }
+// Teste un relais : une RTCPeerConnection en `iceTransportPolicy: "relay"` ne peut
+// produire QUE des candidats relay — s'il en arrive un, le TURN a accepté l'allocation.
+// Rend { ok, raison, ms, candidat? } en moins de `delai` ms, ne lève jamais. Un relais
+// mort se voit ici en trois façons, toutes dites : collecte terminée sans candidat,
+// erreur d'allocation (`icecandidateerror`, avec son code : 401 = identifiants, 400 =
+// relais hors service), ou rien du tout au bout du délai.
+export function testerRelais(turn, delai = 8000) {
+  return new Promise(res => {
+    const serveurs = serveursIce(turn).filter(s => s.username);
+    if (!serveurs.length) return res({ ok: false, ms: 0, raison: "Aucun relais configuré : il faut une adresse, un utilisateur et un mot de passe." });
+    if (typeof RTCPeerConnection !== "function") return res({ ok: false, ms: 0, raison: "WebRTC n'est pas disponible dans ce navigateur." });
+    let pc; try { pc = new RTCPeerConnection({ iceServers: serveurs, iceTransportPolicy: "relay" }); }
+    catch (e) { return res({ ok: false, ms: 0, raison: "Adresse de relais refusée par le navigateur (" + e.message + ")." }); }
+    const t0 = Date.now(); let fini = false, erreur = "";
+    const conclure = r => { if (fini) return; fini = true; clearTimeout(m); try { pc.close(); } catch (_) {} res(Object.assign({ ms: Date.now() - t0 }, r)); };
+    const m = setTimeout(() => conclure({ ok: false, raison: erreur || ("Aucun candidat relay en " + Math.round(delai / 1000) + " s : le relais ne répond pas.") }), delai);
+    pc.onicecandidate = ({ candidate }) => {
+      if (!candidate) return;
+      const type = candidate.type || (/\btyp (\w+)/.exec(candidate.candidate || "") || [])[1];
+      if (type === "relay") conclure({ ok: true, raison: "", candidat: (candidate.address || candidate.ip || "") + (candidate.port ? ":" + candidate.port : ""), protocole: candidate.protocol || "" });
+    };
+    pc.onicecandidateerror = e => {
+      const code = e && e.errorCode, txt = e && e.errorText;
+      if (code === 401 || code === 403) erreur = "Le relais refuse les identifiants (" + code + (txt ? " " + txt : "") + ")." ;
+      else if (code) erreur = "Le relais a répondu " + code + (txt ? " (" + txt + ")" : "") + ".";
+    };
+    pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === "complete") conclure({ ok: false, raison: erreur || "Collecte terminée sans aucun candidat relay : le relais n'a rien alloué." }); };
+    try { pc.createDataChannel("relais"); } catch (_) {}
+    pc.createOffer().then(o => pc.setLocalDescription(o)).catch(e => conclure({ ok: false, raison: "Négociation impossible (" + e.message + ")." }));
+  });
+}
 // Ce que dit la visio quand rien ne passe : la phrase + le lien, jamais une roue.
 export function expliquerEchec(e) {
   const msg = (e && e.message) || "";
@@ -116,20 +185,26 @@ export function expliquerEchec(e) {
 
 const hex = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(x => x.toString(16).padStart(2, "0")).join(""); };
 
-// creerVisio({ reseau, salon, moi, flux?, nom?, onFlux, onDepart, onEtat, onJournal? })
+// creerVisio({ reseau, salon, moi, flux?, nom?, turn?, onFlux, onDepart, onEtat, onJournal? })
 //   reseau   : l'api de net.connecter() — { publier(sujet, message), souscrire(sujet) }
 //   salon    : le code du salon (le même que pour les cartes)
 //   moi      : mon identifiant dans le salon (celui des pairs de net.mjs)
 //   flux     : mon MediaStream local (camera.mjs), ou rien — je verrai sans être vu
+//   turn     : { url, user, pass } du relais configuré dans ⚙, ou rien (STUN seul)
 //   onFlux(id, MediaStream)   un flux distant est arrivé (ou a changé)
 //   onDepart(id)              ce pair est parti, sa vignette doit disparaître
 //   onEtat(id, etat)          ice : new·checking·connected·completed·disconnected·failed·closed
-//                             + refuse (sixième pair), + parti
+//                             + refuse (sixième pair), + parti,
+//                             + bloque (ICE `failed` : la connexion directe ne passe pas —
+//                               `api.sansRelais` dit si un relais aurait pu aider)
 // Rend { demarrer(), recevoir(sujet, brut), attacherFlux(flux), arrivee(id), depart(id),
-//        fermer(), pairs (Map id → { id, pc, session, polite, ice }) }.
+//        fermer(), pairs (Map id → { id, pc, session, polite, ice, collecteMs }), sansRelais }.
+// `collecteMs` : durée de la collecte ICE (null tant qu'elle n'est pas finie) — avec un
+// TURN mort elle ne finissait jamais ; le banc l'exige sous 5 s.
 // ⚠️ L'appelant DOIT relayer chaque message reçu de net.mjs à `recevoir` : net.mjs
 // n'a qu'un seul onMessage, posé à la connexion. Les sujets étrangers sont ignorés.
-export function creerVisio({ reseau, salon, moi, flux = null, nom = "", onFlux, onDepart, onEtat, onJournal } = {}) {
+export function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, onFlux, onDepart, onEtat, onJournal } = {}) {
+  const iceServers = serveursIce(turn), sansRelais = iceServers.length < 2;
   const session = hex(6);            // change à chaque rechargement : un pair relancé est reconnu comme neuf
   const pairs = new Map();
   const base = `${sujet(salon)}/visio/`;
@@ -189,8 +264,8 @@ export function creerVisio({ reseau, salon, moi, flux = null, nom = "", onFlux, 
     const polite = moi < id;
     const p = { id, session: sess, polite, ice: "new", vu: Date.now(), ne: Date.now(), pc: null,
       makingOffer: false, ignoreOffer: false, answerPending: false, attente: [], redemarrages: 0,
-      candidats: [], lot: [], lotMinuteur: null, dernierEnvoiOffre: 0, attentePolie: null };
-    const pc = new RTCPeerConnection({ iceServers: SERVEURS_ICE });
+      candidats: [], lot: [], lotMinuteur: null, dernierEnvoiOffre: 0, attentePolie: null, collecteMs: null };
+    const pc = new RTCPeerConnection({ iceServers });
     p.pc = pc;
     pairs.set(id, p);
     // Un seul émetteur/récepteur vidéo par paire, créé tout de suite pour que la
@@ -213,11 +288,14 @@ export function creerVisio({ reseau, salon, moi, flux = null, nom = "", onFlux, 
       p.candidats.push(candidate); p.lot.push(candidate);
       if (!p.lotMinuteur) p.lotMinuteur = setTimeout(() => envoyerLot(p), LOT_CANDIDATS_MS);
     };
-    pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === "complete") envoyerLot(p); };
+    pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === "complete") { if (p.collecteMs === null) { p.collecteMs = Date.now() - p.ne; journal("collecte ICE finie", id, p.collecteMs + " ms"); } envoyerLot(p); } };
     pc.onsignalingstatechange = () => journal("signalisation", id, pc.signalingState);
     pc.oniceconnectionstatechange = () => {
       p.ice = pc.iceConnectionState; etat(id, p.ice);
       if (p.ice === "failed" && pairs.get(id) === p) {
+        // On le DIT avant de réessayer : un échec de connexion directe sans relais ne se
+        // répare pas tout seul, et une vignette muette ferait croire à un ami sans caméra.
+        etat(id, "bloque");
         // On redémarre ICE, mais pas en boucle serrée : deux secondes, cinq fois.
         if (p.redemarrages++ < 5) setTimeout(() => { if (pairs.get(id) === p && pc.signalingState !== "closed") { journal("redémarrage ICE", id); pc.restartIce(); } }, 2000);
       }
@@ -292,6 +370,7 @@ export function creerVisio({ reseau, salon, moi, flux = null, nom = "", onFlux, 
 
   const api = {
     pairs,
+    sansRelais,
     get session() { return session; },
     demarrer() {
       if (ferme) return;

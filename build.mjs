@@ -59,7 +59,9 @@ if (!donnees) {
 
 // ---- 2. mini-empaqueteur : des modules ES vers une seule portée ----
 // table-reseau (la table à plusieurs, hôte autoritaire) dépend d'engine : il vient après.
-const ORDRE = ["engine", "solver", "shuffle", "counting", "net", "table-reseau"];
+// visio (le maillage WebRTC autour de la table) dépend de net : il vient après lui ;
+// camera (une seule caméra, comptée par références) ne dépend de rien.
+const ORDRE = ["engine", "solver", "shuffle", "counting", "net", "table-reseau", "camera", "visio"];
 const exportsDe = src => {
   const n = new Set();
   for (const m of src.matchAll(/^export\s+(?:async\s+)?(?:const|let|function)\s+([A-Za-z_$][\w$]*)/gm)) n.add(m[1]);
@@ -89,8 +91,10 @@ const corps = readFileSync("src/app/corps.html", "utf8");
 // jetons.js et croupier.js écoutent le bus émis par table.js, ils viennent juste après.
 // reseau.js (la table à plusieurs) se greffe sur la table, les jetons et le croupier :
 // il vient après eux trois, et après ensemble.js dont il complète l'écran d'accueil.
+// visio.js (les têtes des amis sur les sièges, le bouton Caméra, le relais de ⚙) écoute
+// les événements « sabot:reseau-* » que reseau.js émet : il vient juste après lui.
 const MORCEAUX = ["socle.js","cartes.js","salon.js","table.js","jetons.js","croupier.js",
-  "exercices.js","strategie.js","concentration.js","ensemble.js","reseau.js","progres.js","clavier.js","demarrage.js"];
+  "exercices.js","strategie.js","concentration.js","ensemble.js","reseau.js","visio.js","progres.js","clavier.js","demarrage.js"];
 const app = MORCEAUX.map(f => {
   try { return `\n/* ═══ ${f} ═══ */\n` + readFileSync(`src/app/${f}`, "utf8"); }
   catch (e) { throw new Error(`morceau d'interface manquant : src/app/${f}`); }

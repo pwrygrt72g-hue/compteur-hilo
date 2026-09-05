@@ -59,6 +59,14 @@ En multijoueur, chaque joueur apporte sa graine et le sabot est tiré de leur co
 
 Le mode « À plusieurs » parle MQTT sur WebSocket vers un courtier public, avec un client écrit à la main (quarante lignes, aucune dépendance). Il n'y a pas de serveur à héberger et rien n'est stocké : le code de salon vit le temps de la session.
 
+### Les têtes des amis
+
+Autour de la table à plusieurs, chaque siège tenu par un humain porte une vignette vidéo à côté de son cercle de mise — la tienne en miroir. Le bouton **Caméra** de la table l'allume et le choix est mémorisé. Vidéo seule, **jamais de micro** : on compte en silence. La vidéo va directement d'un navigateur à l'autre (WebRTC, chiffré de bout en bout) ; le courtier ne voit que la négociation, jamais une image. Une vignette sans flux montre une silhouette et dit pourquoi.
+
+**Ce qui est prouvé** : `node outils/prouver-visio.mjs` lance deux vrais Chrome sur le vrai courtier public, exige des images décodées dans les deux sens, une collecte ICE terminée en moins de 5 secondes, un départ brutal vu en moins de 12 secondes et des retrouvailles — sur la même machine, donc en connexion directe.
+
+**Ce qui ne l'est pas** : deux amis derrière des réseaux stricts (4G, NAT symétrique, box d'entreprise) ne se voient qu'à travers un **relais TURN**. Le relais public « Open Relay » qui était inscrit dans le code est mort (`node outils/tester-relais.mjs` le mesure : aucun candidat relay, erreur 701) ; il est retiré, parce qu'un relais mort ralentit la collecte de tout le monde sans rien relayer. Le relais se configure dans ⚙ (« Relais vidéo (TURN) ») avec un bouton **Tester le relais** — metered.ca en fournit un gratuit avec un quota mensuel. Sans identifiants, on part en STUN seul et l'application le dit ; quand la connexion directe échoue, la vignette l'écrit en toutes lettres.
+
 À la table de blackjack, celui qui ouvre la table est l'**hôte** : il tient le sabot scellé, distribue et règle ; les autres n'envoient que leurs gestes (miser, tirer, rester, doubler, séparer, abandonner, s'assurer) et affichent l'état qu'il diffuse — personne ne calcule une issue de son côté. Chacun peut vérifier le sabot (empreinte publiée avant la première carte, graine révélée quand le sabot est remplacé) et relire le journal des manches. Si l'hôte disparaît, le plus petit identifiant restant prend le relais : la manche en cours est annulée, les mises rendues, et un sabot neuf est scellé — l'écran le dit. Dans un Artifact publié, les WebSockets sont bloquées : la table se joue sur la version GitHub Pages.
 
 ⚠️ Les messages passent en clair par un courtier public. C'est un jeu d'entraînement, pas un canal privé.
