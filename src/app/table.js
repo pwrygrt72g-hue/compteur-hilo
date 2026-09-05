@@ -107,11 +107,7 @@ async function nouveauSabot(o) {
 function poserLieu(t) {
   $("v-table").dataset.lieu = t.id; $("v-table").dataset.sieges = Math.max(1, Math.min(t.sieges, 6));
   $("tNom").textContent = t.nom + " · " + t.lieu;
-  const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
-  const puces = [...tmp.children], garde = puces.slice(0, 3);
-  const csm = puces.find(p => /mélangeuse/.test(p.textContent));
-  if (csm && !garde.includes(csm)) garde.push(csm);
-  $("tRegles").replaceChildren(...garde);
+  $("tRegles").innerHTML = pucesCourtes(t);   // les mêmes trois puces que la porte du hall (salon.js)
   // La salle a le décor de son lieu : la photo embarquée (window.PHOTOS, cf. build.mjs),
   // floutée et assombrie par la feuille de style. Sans photo, la salle reste celle de
   // la lueur et du sol posés par [data-lieu] — rien ne casse.

@@ -21,14 +21,23 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
  try {
   await dodo(1500);
   ok("démarrage sans erreur", __err.length === 0, __err.join(" / "));
-  for (const v of ["salon","exercices","strategie","concentration","ensemble","progres","table","accueil"]) {
+  for (const v of ["exercices","strategie","concentration","ensemble","progres","table","accueil"]) {
     clic('nav [data-vue="' + v + '"]'); await dodo(250);
     const s = document.getElementById("v-" + v);
     ok("vue " + v, s && !s.hidden && s.textContent.trim().length > 40, s ? "hidden=" + s.hidden : "absente");
+    // Hors du hall, le fil d'Ariane dit où l'on est et ramène au hall ; dans le hall, il se tait.
+    ok("fil d'Ariane " + v, v === "accueil" ? q("#fil").hidden : /^Hall/.test(txt("#fil")) && !!q('#fil [data-vue="accueil"]'), "fil = " + txt("#fil"));
   }
+  // Le hall EST le menu : les huit pastilles ont disparu de l'en-tête, la nav reste adressable.
+  ok("en-tête : la nav est cachée, ses huit boutons restent", q("#nav").hidden && qa("#nav [data-vue]").length === 8, "hidden=" + q("#nav").hidden);
+  ok("hall : quatre salles + crédits photos", !!q("#lesTables") && !!q("#entrainement") && !!q("#prive") && !!q("#bureau") && qa("#hallCredits a").length >= 10, qa("#hallCredits a").length + " liens de crédit");
+  ok("hall : les portes ont leurs photos", qa("#v-accueil img.photo[src]").length >= 15, qa("#v-accueil img.photo[src]").length + " photos");
+  // « Salon » n'est plus une vue : c'est l'ancre « Les tables » du hall.
   clic('nav [data-vue="salon"]'); await dodo(300);
-  ok("salon : 9 tables", qa("#salon .tbl").length === 9, qa("#salon .tbl").length + " tables");
-  ok("salon : tables mortes signalées", qa("#salon .tbl.brulee").length === 3, qa("#salon .tbl.brulee").length + " brûlées");
+  ok("salon : l'ancre « Les tables » du hall", !q("#v-accueil").hidden && !!q("#lesTables"), "hidden=" + q("#v-accueil").hidden);
+  ok("salon : 9 tables", qa("#salon .salle-porte").length === 9, qa("#salon .salle-porte").length + " tables");
+  ok("salon : tables mortes signalées", qa("#salon .salle-porte.brulee").length === 3, qa("#salon .salle-porte.brulee").length + " brûlées");
+  ok("salon : aucune porte « Reprendre » avant la première main", !q("#salon .etat"), "une porte dit Reprendre");
   clic("#salon [data-pourquoi]"); await dodo(300);
   ok("fiche « pourquoi »", !q("#modale").hidden && q("#modaleBoite").textContent.length > 200, "modale vide");
   clic("#modaleFermer"); await dodo(150);
@@ -36,6 +45,8 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   // ── Table à sabot : 6 jeux, figures comprises
   clic('#salon [data-asseoir="boulevard"]'); await dodo(2000);
   ok("assis au Boulevard", txt("#tNom").indexOf("Boulevard") >= 0, txt("#tNom"));
+  ok("fil d'Ariane : Hall › Le Boulevard", /Hall/.test(txt("#fil")) && /Boulevard/.test(txt("#fil")), txt("#fil"));
+  ok("table : le décor du lieu est posé", /url\(/.test(q("#salle").style.getPropertyValue("--photo")), "--photo = " + q("#salle").style.getPropertyValue("--photo").slice(0, 40));
   ok("sabot de 6 jeux moins la brûlée", txt("#sabot") === "311", txt("#sabot"));
   // La cadence par défaut est celle d'un vrai croupier (900 ms, Léo 04/09) ; on la
   // vérifie, puis on la règle à 200 ms PAR LE RÉGLAGE DE LA TABLE — quatorze mains à
@@ -112,6 +123,11 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
     ok("mémoire : tapis écrit, rien d'engagé", typeof t.tapis === "number" && (t.engage || 0) === 0, "tapis=" + t.tapis + " engage=" + t.engage); }
   ok("aucune erreur en jeu", __err.length === 0, __err.join(" / "));
 
+  // ── Retour au hall : la table entamée dit « Reprendre », et la reprendre ne remélange pas
+  clic('nav [data-vue="salon"]'); await dodo(300);
+  ok("hall : la table entamée dit « Reprendre »", txt('#salon [data-asseoir="boulevard"] .etat') === "Reprendre", "etat = " + txt('#salon [data-asseoir="boulevard"] .etat'));
+  { const avant = txt("#sabot"); clic('#salon [data-asseoir="boulevard"]'); await dodo(600);
+    ok("hall : reprendre sa place garde le sabot", !q("#v-table").hidden && txt("#sabot") === avant, avant + " → " + txt("#sabot")); }
   // ── Mélangeuse continue : le compte ne doit jamais s'accumuler
   clic('nav [data-vue="salon"]'); await dodo(200);
   clic('#salon [data-asseoir="cotai"]'); await dodo(2000);

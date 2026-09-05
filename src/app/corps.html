@@ -1,6 +1,9 @@
 <header><div class="tete">
-  <button class="marque" data-vue="accueil"><span class="emb"></span><span class="nom">Le Sabot</span></button>
-  <nav id="nav">
+  <button class="marque" data-vue="accueil" title="Retour au hall"><span class="emb"></span><span class="nom">Le Sabot</span></button>
+  <!-- Le hall EST le menu : on n'arrive à une salle qu'en poussant sa porte. Les huit
+       vues restent adressables par ces boutons (raccourcis, sonde, banc, liens internes,
+       modales « Changer de table ») — un DOM qui les perdrait casserait tout ça sans le dire. -->
+  <nav id="nav" hidden>
     <button data-vue="accueil" aria-current="page">Accueil</button>
     <button data-vue="salon">Salon</button>
     <button data-vue="table">Table</button>
@@ -10,6 +13,9 @@
     <button data-vue="ensemble">À plusieurs</button>
     <button data-vue="progres">Progression</button>
   </nav>
+  <!-- Le fil d'Ariane : « Hall › Le Cotai », « Hall › Salle d'entraînement › Exercices ».
+       Rendu par socle.js (rendreFil) à chaque changement de vue ou d'onglet. Vide dans le hall. -->
+  <nav class="fil" id="fil" aria-label="Fil d'Ariane"></nav>
   <button class="icone" id="bReglages" title="Réglages" aria-label="Réglages">&#9881;</button>
   <!-- Les outils vivent ici en permanence : la feuille &#9881; les EMPRUNTE puis les rend.
        Les dupliquer dans la modale casserait l'unicité des identifiants, et les
@@ -26,49 +32,99 @@
 
 <main>
 
-<!-- ════════════════════ ACCUEIL ════════════════════ -->
+<!-- ════════════════════ LE HALL ════════════════════
+     Le menu est un casino. On entre par le hall (la photo du Strip, le nom en serif),
+     puis on choisit une PORTE : une des neuf tables, une salle d'entraînement, le salon
+     privé, le bureau. Chaque porte est une photo — une vraie, créditée en bas de page.
+     « Le salon » d'avant n'est plus une vue : c'est l'ancre #lesTables de ce hall. -->
 <section class="vue" id="v-accueil">
-  <div class="heros">
-    <div>
-      <span class="grave">Entraînement au comptage de cartes</span>
-      <h1 style="margin:8px 0 12px">On ne compte pas des cartes.<br>On compte ce qui reste.</h1>
-      <p>Neuf tables de casino réelles, avec leurs vraies règles et leur vrai avantage maison — mesuré ici, pas recopié. Une stratégie de base <em>calculée</em> pour chaque table. Un sabot dont tu peux vérifier le mélange. Et de quoi t'entraîner jusqu'à ce que le compte devienne un réflexe.</p>
-      <div class="champs" style="margin-top:14px">
-        <label class="ch"><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" style="min-width:150px"></label>
-        <button class="btn" data-vue="salon">Entrer dans le salon</button>
+  <div class="hall-heros" id="hallHeros" data-photo="hall">
+    <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async">
+    <div class="hall-int hall-heros-int">
+      <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
+      <h1 class="hall-titre">Le Sabot</h1>
+      <p class="hall-phrase"><span class="hall-salut" id="hallSalut"></span>Neuf tables de casino, une salle d'entraînement, un salon privé. Le compte est masqué : c'est à toi de le tenir.</p>
+      <div class="hall-entree">
+        <label class="ch"><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" autocomplete="given-name"></label>
+        <button class="btn" data-hall="lesTables">Voir les tables</button>
       </div>
     </div>
     <div class="eventail" id="eventail" aria-hidden="true"></div>
   </div>
 
-  <div class="modes" id="modes"></div>
+  <div class="hall-int">
+    <!-- LES TABLES : neuf cartes-photos, rendues par salon.js (rendreSalon). -->
+    <section class="hall-salle" id="lesTables" aria-labelledby="hTables">
+      <div class="hall-entete">
+        <div><span class="grave">Neuf salles, neuf règlements, neuf leçons</span><h2 id="hTables">Les tables</h2></div>
+        <div class="onglets" id="filtreSalon" role="tablist" aria-label="Filtrer les tables">
+          <button role="tab" aria-selected="true" data-f="tout">Toutes</button>
+          <button role="tab" aria-selected="false" data-f="battable">Battables</button>
+          <button role="tab" aria-selected="false" data-f="fuir">À fuir</button>
+        </div>
+      </div>
+      <div class="salon" id="salon"></div>
+    </section>
 
-  <div class="duo">
-    <div class="laque pad">
-      <span class="grave">Le système sélectionné</span>
-      <h3 id="sysNom" style="margin:4px 0 2px">Hi-Lo</h3>
-      <p class="muet" id="sysNote" style="font-size:var(--t-petit)"></p>
-      <div class="regles" id="sysTable" style="margin-top:8px"></div>
-    </div>
-    <div class="laque pad">
-      <span class="grave">Ce qu'il faut avoir compris</span>
-      <p style="margin-top:6px">Le <b>compte courant</b> additionne la valeur de chaque carte sortie. Le <b>compte vrai</b> le divise par le nombre de jeux qui restent à distribuer : c'est lui, et lui seul, qui dit si la table t'est favorable.</p>
-      <p class="muet" style="font-size:var(--t-petit);margin:0">Un bon compteur ne se trompe jamais sur le compte courant, estime les jeux restants à un demi-jeu près, et ne laisse rien paraître. Les trois se travaillent séparément — c'est ce que font les exercices.</p>
-    </div>
-  </div>
-</section>
+    <!-- LA SALLE D'ENTRAÎNEMENT : trois portes. -->
+    <section class="hall-salle" id="entrainement" aria-labelledby="hEntrainement">
+      <div class="hall-entete"><div><span class="grave">Trois muscles, travaillés séparément</span><h2 id="hEntrainement">La salle d'entraînement</h2></div></div>
+      <div class="hall-grille trois">
+        <button class="salle-carte" data-vue="exercices" data-photo="entrainement">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">Le réflexe</span><span class="nom">Exercices</span>
+            <span class="sous">Les cartes défilent à la vitesse que tu veux ; un sabot chronométré ; le coup d'œil sur le tas de défausse.</span></span>
+        </button>
+        <button class="salle-carte" data-vue="strategie" data-photo="strategie">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">La décision</span><span class="nom">Stratégie</span>
+            <span class="sous">La stratégie de base main par main, puis les écarts au compte — calculés pour la table où tu es assis.</span></span>
+        </button>
+        <button class="salle-carte" data-vue="concentration" data-photo="concentration">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">Le sang-froid</span><span class="nom">Concentration</span>
+            <span class="sous">Tu comptes en silence pendant que la table te parle et que le chef de table te fixe.</span></span>
+        </button>
+      </div>
+    </section>
 
-<!-- ════════════════════ SALON ════════════════════ -->
-<section class="vue" id="v-salon" hidden>
-  <span class="grave">Le salon</span>
-  <h2 style="margin:4px 0 6px">Choisis ta table</h2>
-  <p class="muet" style="max-width:66ch">Pour un compteur, une table <em>est</em> son règlement. La pénétration et le paiement du blackjack décident si elle se bat ; le reste se joue en dixièmes de point. Deux de ces tables sont imbattables quoi que tu fasses : elles sont là pour que tu apprennes à les refuser.</p>
-  <div class="onglets" id="filtreSalon" role="tablist" style="margin-top:12px">
-    <button role="tab" aria-selected="true" data-f="tout">Toutes</button>
-    <button role="tab" aria-selected="false" data-f="battable">Battables</button>
-    <button role="tab" aria-selected="false" data-f="fuir">À fuir</button>
+    <!-- LE SALON PRIVÉ : une grande porte. -->
+    <section class="hall-salle" id="prive" aria-labelledby="hPrive">
+      <div class="hall-entete"><div><span class="grave">Entre amis</span><h2 id="hPrive">Le salon privé</h2></div></div>
+      <button class="salle-carte grande" data-vue="ensemble" data-photo="prive">
+        <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+        <span class="bas"><span class="lieu">Sans serveur, avec vos caméras</span><span class="nom">Jouer à plusieurs</span>
+          <span class="sous">Jusqu'à cinq autour d'une table : le même sabot, un croupier, chacun sa main — ou la course au comptage, où chacun annonce son compte.</span></span>
+      </button>
+    </section>
+
+    <!-- LE BUREAU : la progression, les réglages, le système de comptage. -->
+    <section class="hall-salle" id="bureau" aria-labelledby="hBureau">
+      <div class="hall-entete"><div><span class="grave">Derrière la porte du fond</span><h2 id="hBureau">Le bureau</h2></div></div>
+      <div class="hall-grille bureau">
+        <button class="salle-carte" data-vue="progres" data-photo="jetons">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">Le registre</span><span class="nom">Progression</span>
+            <span class="sous">Tes sessions, ton écart au compte réel, ton journal.</span></span>
+        </button>
+        <button class="salle-carte" id="bHallReglages" data-photo="cartes">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">Le tiroir</span><span class="nom">Réglages</span>
+            <span class="sous">Le système de comptage, le thème, les sons.</span></span>
+        </button>
+        <div class="laque pad hall-systeme">
+          <span class="grave">Le système sélectionné</span>
+          <h3 id="sysNom" style="margin:4px 0 2px">Hi-Lo</h3>
+          <p class="muet" id="sysNote" style="font-size:var(--t-petit)"></p>
+          <div class="regles" id="sysTable" style="margin-top:8px"></div>
+          <p class="muet" style="font-size:var(--t-fin);margin:12px 0 0">Le <b>compte courant</b> additionne la valeur de chaque carte sortie. Le <b>compte vrai</b> le divise par les jeux qui restent : c'est lui seul qui dit si la table t'est favorable.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Les crédits : une CC BY sans crédit est une violation. Rendus depuis window.PHOTOS_CREDITS. -->
+    <footer class="hall-credits" id="hallCredits"></footer>
   </div>
-  <div class="salon" id="salon"></div>
 </section>
 
 <!-- ════════════════════ TABLE ════════════════════ -->
@@ -167,6 +223,11 @@
 
 <!-- ════════════════════ EXERCICES ════════════════════ -->
 <section class="vue" id="v-exercices" hidden>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="entrainement">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Exercices</h2><p>Le réflexe : les cartes défilent, tu tiens le compte.</p></div>
+  </div>
   <div class="onglets" id="ongletsEx" role="tablist">
     <button role="tab" aria-selected="true" data-ex="defilement">Défilement</button>
     <button role="tab" aria-selected="false" data-ex="chrono">Sabot chrono</button>
@@ -262,6 +323,11 @@
 
 <!-- ════════════════════ STRATÉGIE ════════════════════ -->
 <section class="vue" id="v-strategie" hidden>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="strategie">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Stratégie</h2><p>La décision : la bonne main, main par main, pour la table où tu es assis.</p></div>
+  </div>
   <div class="onglets" id="ongletsStrat" role="tablist">
     <button role="tab" aria-selected="true" data-s="base">Stratégie de base</button>
     <button role="tab" aria-selected="false" data-s="ecarts">Écarts au compte</button>
@@ -294,9 +360,12 @@
 
 <!-- ════════════════════ CONCENTRATION ════════════════════ -->
 <section class="vue" id="v-concentration" hidden>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="concentration">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Concentration</h2><p>Le sang-froid : compte sans te faire griller.</p></div>
+  </div>
   <div class="laque pad" id="coReglages">
-    <span class="grave">Concentration</span>
-    <h2 style="margin:4px 0 10px">Compte sans te faire griller</h2>
     <p class="muet" style="margin:0 0 14px;max-width:70ch">Les cartes défilent et tu comptes en silence. Pendant ce temps la table vit : un voisin te parle, le chef de table te fixe, un calcul te tombe dessus. Chaque hésitation fait monter la <b>jauge de suspicion</b>. À cent, on t'invite à quitter la table. Et il faudra quand même annoncer le compte.</p>
     <div class="champs">
       <label class="ch"><span class="grave">Jeux</span><select id="coJeux"><option>2</option><option selected>6</option><option>8</option></select></label>
@@ -352,13 +421,17 @@
 
 <!-- ════════════════════ À PLUSIEURS ════════════════════ -->
 <section class="vue" id="v-ensemble" hidden>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="prive">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Le salon privé</span><h2>Jouer à plusieurs</h2><p>Une vraie table jusqu'à cinq, ou la course au comptage — le même sabot pour tout le monde.</p></div>
+  </div>
   <!-- Deux façons de jouer à plusieurs : une VRAIE table de blackjack (jusqu'à cinq, des
        mises, un croupier, l'hôte tient le sabot) — et la course au comptage, le mode
        historique (le même sabot défile, chacun annonce son compte). Même code de huit
        caractères, mais un code de table et un code de course ne se croisent jamais. -->
   <div class="laque pad" id="mpAccueil">
-    <span class="grave">À plusieurs</span>
-    <h2 style="margin:4px 0 10px" id="mpTitre">Une vraie table, jusqu'à cinq</h2>
+    <h2 style="margin:0 0 10px;font-size:var(--t-titre)" id="mpTitre">Une vraie table, jusqu'à cinq</h2>
     <div class="onglets" id="mpModes" role="tablist">
       <button role="tab" aria-selected="true" data-mode="table">Table de blackjack</button>
       <button role="tab" aria-selected="false" data-mode="course">Course au comptage</button>
@@ -417,8 +490,11 @@
 
 <!-- ════════════════════ PROGRESSION ════════════════════ -->
 <section class="vue" id="v-progres" hidden>
-  <span class="grave">Progression</span>
-  <h2 id="progTitre" style="margin:4px 0 14px">Tes sessions</h2>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="jetons">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Le bureau</span><h2 id="progTitre">Tes sessions</h2><p>Ton écart au compte réel, session après session.</p></div>
+  </div>
   <div class="pave" id="progPave"></div>
   <div class="laque pad" style="margin-top:12px">
     <span class="grave">Écart au compte réel, trente dernières sessions</span>

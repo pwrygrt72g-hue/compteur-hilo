@@ -187,15 +187,18 @@ header{position:sticky;top:0;z-index:40;background:color-mix(in oklab, var(--enc
   position:relative;overflow:hidden}
 .marque .emb::after{content:"";position:absolute;inset:auto 0 0 0;height:9px;
   background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 1px, rgba(255,255,255,.35) 1px 2px, transparent 2px 5px)}
-nav{display:flex;gap:2px;margin-left:auto;flex-wrap:nowrap;min-width:0;overflow-x:auto;
-  scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
-  mask-image:linear-gradient(90deg,transparent,#000 10px,#000 calc(100% - 10px),transparent)}
-nav::-webkit-scrollbar{display:none}
-nav button{padding:9px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);
-  border:1px solid transparent;transition:color .15s,background .15s;flex:none;white-space:nowrap;
-  scroll-snap-align:center;min-height:44px}
-nav button:hover{color:var(--os)}
-nav button[aria-current="page"]{background:var(--laiton);color:var(--encre);font-weight:600}
+/* Les huit pastilles de vues ont quitté l'en-tête (Léo, 05/09 : « le menu est un casino »).
+   #nav reste dans le DOM, caché : la sonde, le banc, les raccourcis et les liens internes
+   passent par ses boutons. Ce qui se voit, c'est le fil d'Ariane. */
+#nav{display:flex;gap:2px;flex-wrap:nowrap;min-width:0}
+#nav button{padding:9px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);min-height:44px}
+.fil{display:flex;align-items:center;gap:2px;min-width:0;overflow:hidden;font-size:var(--t-petit);color:var(--os-eteint);white-space:nowrap}
+.fil button{min-height:44px;padding:0 9px;border-radius:9px;color:var(--os-eteint);transition:color .15s,background .15s;flex:none}
+.fil button:hover{color:var(--os);background:var(--ardoise)}
+.fil .sep{opacity:.45;padding:0 1px;font-size:var(--t-fort);line-height:1;flex:none}
+.fil span:not(.sep){padding:0 9px;flex:none}
+.fil b{color:var(--os);font-weight:600;padding:0 9px;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.icone{margin-left:auto}
 /* Le bloc d'outils n'a qu'un seul habitat visible : la feuille ⚙. */
 .outils{display:flex;flex-direction:column;gap:12px;align-items:stretch;text-align:left}
 .outils select{min-height:44px}
@@ -228,61 +231,149 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 .onglets button{padding:7px 15px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint)}
 .onglets button[aria-selected="true"]{background:var(--ardoise);color:var(--os);font-weight:600}
 
-/* ── Accueil ───────────────────────────────────────────────────────── */
-.heros{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:center;margin:8px 0 26px}
-.heros p{color:var(--os-eteint);max-width:52ch}
-.eventail{position:relative;height:210px}
-.eventail .carte{position:absolute;left:50%;top:16px;--w:112px;transform-origin:50% 132%;
-  animation:eventer .6s var(--ressort) both}
+/* ══════════════════════════════════════════════════════════════════════
+   LE HALL — le menu est un casino
+   On entre par le hall (le Strip la nuit, le nom en serif) et on pousse une
+   PORTE : chaque porte est une vraie photo, assombrie en bas, le nom dessus.
+   Les portes sont d'un seul aspect (casino la nuit) dans les deux thèmes :
+   une photo ne change pas de couleur parce qu'il fait jour dehors. Seuls les
+   titres de salle, le filtre et les crédits suivent le thème de la page.
+   ══════════════════════════════════════════════════════════════════════ */
+body.au-hall main{ max-width:none; padding:0 0 56px }
+.hall-int{ max-width:min(1400px, 100% - 2*max(var(--gap), var(--sg), var(--sd))); margin:0 auto }
+
+/* ── Le héros : la photo bord à bord, le titre posé dessus ─────────────── */
+.hall-heros{ position:relative; isolation:isolate; overflow:hidden; color:#F6F2E8; background:#070D0C;
+  min-height:clamp(440px, 66vh, 700px); display:flex; align-items:flex-end;
+  padding:clamp(48px,7vh,80px) 0 clamp(36px,5vh,56px) }
+.hall-heros>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 62%; z-index:-2;
+  filter:brightness(.7) saturate(1.05) }
+/* Vignette, puis le bas qui s'assombrit : le titre et le prénom se lisent sur toute photo. */
+.hall-heros::after{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(130% 95% at 50% 38%, transparent 42%, rgba(0,0,0,.55) 100%),
+    linear-gradient(180deg, rgba(7,13,12,.42) 0%, rgba(7,13,12,0) 26%, rgba(7,13,12,.5) 62%, rgba(7,13,12,.86) 100%) }
+.hall-heros-int{ width:100%; position:relative; z-index:1; text-shadow:0 1px 2px rgba(0,0,0,.6), 0 8px 30px rgba(0,0,0,.45) }
+.hall-kicker{ color:rgba(246,242,232,.74) }
+.hall-titre{ font-size:clamp(72px, 9.5vw, 150px); line-height:.9; letter-spacing:-.015em; margin:8px 0 16px }
+.hall-phrase{ max-width:58ch; font-size:var(--t-fort); line-height:1.45; color:rgba(246,242,232,.88); margin:0 0 20px }
+.hall-salut{ font-family:"Instrument Serif",Georgia,serif; font-size:1.3em; color:#F3C866 }
+.hall-salut:not(:empty)::after{ content:" " }
+.hall-entree{ display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; text-shadow:none }
+.hall-entree .grave{ color:rgba(246,242,232,.74) }
+.hall-entree #prenom{ min-width:180px; min-height:48px; background:rgba(0,0,0,.42); border-color:rgba(255,255,255,.3); color:#F6F2E8;
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px) }
+.hall-entree #prenom::placeholder{ color:rgba(246,242,232,.45) }
+.hall-entree .btn{ min-height:48px; background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 10px 22px -10px rgba(0,0,0,.9) }
+/* L'éventail : cinq cartes tirées au hasard, posées sur le comptoir à droite du titre. */
+.eventail{ position:absolute; right:clamp(16px, 7vw, 140px); bottom:clamp(28px, 6vh, 72px); width:340px; height:240px; z-index:1; pointer-events:none;
+  filter:drop-shadow(0 18px 24px rgba(0,0,0,.6)) }
+.eventail .carte{ position:absolute; left:50%; top:16px; --w:118px; transform-origin:50% 132%; animation:eventer .6s var(--ressort) both }
 @keyframes eventer{from{transform:translateX(-50%) rotate(0) translateY(50px);opacity:0}}
-.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:14px}
-.mode{text-align:left;padding:17px;display:flex;flex-direction:column;gap:7px;transition:transform .16s}
-.mode:hover{transform:translateY(-2px)}
-.mode h3{font-size:21px}
-.mode p{margin:0;color:var(--os-eteint);font-size:var(--t-petit)}
-.mode .fleche{margin-top:auto;color:var(--laiton);font-size:var(--t-fin);letter-spacing:.08em;text-transform:uppercase}
+
+/* ── Les salles du hall ────────────────────────────────────────────────── */
+.hall-salle{ margin-top:clamp(36px, 5vh, 60px); scroll-margin-top:calc(var(--h-entete, 64px) + 16px) }
+.hall-entete{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px }
+.hall-entete h2{ font-size:clamp(30px, 2.6vw, 40px); margin-top:4px }
+.hall-entete .onglets{ margin-bottom:4px }
+.salon, .hall-grille{ display:grid; gap:18px; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)) }
+.hall-grille.bureau{ grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)) }
+.hall-systeme{ align-self:stretch }
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-top:22px}
 
-/* ── Le salon : une grille de RÈGLES, pas une galerie de salles ──────
-   Pour un compteur, la table EST son règlement. La pénétration et le 3:2
-   décident si elle est comptable, et savoir refuser une table est une
-   compétence que personne n'entraîne. */
-.salon{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
-.tbl{padding:16px;display:flex;flex-direction:column;gap:10px;text-align:left}
-.tbl .num{order:-3;font-size:var(--t-micro);letter-spacing:.14em;text-transform:uppercase;color:var(--os-eteint)}
-.tbl h3{order:-2;font-size:24px}
-.tbl .lieu{font-size:var(--t-fin);color:var(--os-eteint);margin-top:-4px}
-.jauge{height:22px;border-radius:6px;overflow:hidden;position:relative;
-  background:linear-gradient(180deg,#2A2114 0%,#1A1409 52%,#241B0F 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 -2px 6px rgba(0,0,0,.55)}
-.jauge i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#8A6416,#E0A83C);opacity:.85}
-.jauge b{position:absolute;inset:0;display:grid;place-items:center;font-family:"Martian Mono",monospace;
-  font-size:var(--t-fin);color:#FFF3D8;text-shadow:0 1px 2px rgba(0,0,0,.8);font-weight:700}
-.jauge::after{content:"";position:absolute;inset:auto 0 0 0;height:8px;
-  background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.6) 0 1px, rgba(224,168,60,.3) 1px 2px, transparent 2px 8px)}
+/* ── Une porte : la photo, le voile, le nom ────────────────────────────── */
+.salle-porte{ position:relative }
+.salle-carte{ position:relative; display:block; width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden; isolation:isolate;
+  padding:0; margin:0; text-align:left; color:#F6F2E8; background:#0B1211; cursor:pointer; -webkit-tap-highlight-color:transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(0,0,0,.65), 0 16px 32px -20px rgba(0,0,0,.85);
+  transition:transform .28s var(--ressort), box-shadow .28s }
+div.salle-carte{ cursor:default }
+.salle-carte:hover, .salle-porte:hover .salle-carte, .salle-carte:focus-visible{ transform:translateY(-4px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px color-mix(in oklab, var(--laiton) 60%, transparent), 0 28px 44px -20px rgba(0,0,0,.9) }
+.salle-carte:focus-visible{ outline:2px solid var(--laiton); outline-offset:3px }
+.salle-carte>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; transform:scale(1.03);
+  filter:brightness(.78) saturate(1.05); transition:transform .7s var(--sec), filter .3s }
+.salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo, .salle-carte:focus-visible>.photo{ transform:scale(1.08); filter:brightness(.98) saturate(1.12) }
+.salle-carte>.voile{ position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(180deg, rgba(7,13,12,.28) 0%, rgba(7,13,12,0) 30%, rgba(7,13,12,.42) 56%, rgba(7,13,12,.93) 100%) }
+.salle-carte .bas, .salle-carte .haut{ position:absolute; left:20px; right:20px; display:flex; text-shadow:0 1px 2px rgba(0,0,0,.7) }
+.salle-carte .bas{ bottom:16px; flex-direction:column; gap:6px }
+.salle-carte .haut{ top:14px; right:96px; align-items:center; gap:10px }
+.salle-carte .lieu, .salle-carte .num{ font-size:var(--t-micro); letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:rgba(246,242,232,.74) }
+.salle-carte .nom{ font-family:"Instrument Serif",Georgia,serif; font-size:clamp(26px, 2.1vw, 34px); line-height:1.02; text-wrap:balance }
+.salle-carte .sous{ font-size:var(--t-petit); line-height:1.4; color:rgba(246,242,232,.84); max-width:52ch }
+.salle-carte .regles{ margin-top:2px }
+.salle-carte .regle{ border-color:rgba(255,255,255,.32); color:rgba(246,242,232,.92); background:rgba(0,0,0,.36);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px) }
+.salle-carte .regle.bien{ color:#5FE0C6; border-color:rgba(95,224,198,.62) }
+.salle-carte .regle.mal{ color:#FF9B7A; border-color:rgba(255,155,122,.62) }
+.salle-carte .chiffres{ display:flex; gap:18px; flex-wrap:wrap; font-size:var(--t-fin); color:rgba(246,242,232,.74); margin-top:2px }
+.salle-carte .chiffres b{ font-family:"Martian Mono",monospace; font-weight:600; font-size:var(--t-petit); color:#F6F2E8; margin-right:5px; letter-spacing:-.02em }
+.salle-carte .etat, .salle-carte .tampon{ font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; font-weight:700;
+  padding:5px 10px; border-radius:999px; white-space:nowrap; text-shadow:none }
+.salle-carte .etat{ background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206; box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 6px 14px -8px #000 }
+.salle-carte .tampon{ background:rgba(179,63,34,.88); color:#FFF1EA; box-shadow:0 0 0 1px rgba(255,155,122,.5) }
+/* Une table brûlée : photo désaturée, tampon cinabre. Enseigner par le refus. */
+.salle-porte.brulee .salle-carte>.photo{ filter:brightness(.55) saturate(.28) }
+.salle-porte.brulee:hover .salle-carte>.photo{ filter:brightness(.7) saturate(.4) }
+/* « Pourquoi » : un vrai bouton de 44 px, dont on ne voit que la pastille. */
+.salle-porte .pourquoi{ position:absolute; top:4px; right:6px; z-index:2; min-height:44px; min-width:44px; padding:0 6px;
+  display:grid; place-items:center; color:rgba(246,242,232,.88); border-radius:10px }
+.salle-porte .pourquoi i{ font-style:normal; font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; font-weight:600;
+  padding:6px 11px; border-radius:999px; border:1px solid rgba(255,255,255,.3); background:rgba(0,0,0,.42);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:border-color .15s, color .15s }
+.salle-porte .pourquoi:hover i, .salle-porte .pourquoi:focus-visible i{ border-color:#F3C866; color:#F3C866 }
+/* La grande porte du salon privé : plus large que haute, le texte à gauche. */
+.salle-carte.grande{ aspect-ratio:auto; min-height:clamp(240px, 32vh, 340px) }
+.salle-carte.grande .bas{ left:28px; bottom:24px; max-width:640px }
+.salle-carte.grande .nom{ font-size:clamp(36px, 3.2vw, 52px) }
+.salle-carte.grande .sous{ font-size:var(--t-corps) }
+/* La table où l'on va s'asseoir (À plusieurs) : la même porte, en panneau. À 300 px de
+   large, un 16:9 fait 169 px de haut et le nom montait sur le numéro : on la fait en 4:3. */
+.mp-table .salle-porte{ margin:0 }
+.mp-table .salle-carte{ aspect-ratio:4/3 }
+.mp-table .salle-carte .haut{ right:20px }
+
+/* ── Les crédits : discrets, présents ──────────────────────────────────── */
+.hall-credits{ margin-top:clamp(40px, 6vh, 72px); padding-top:18px; border-top:1px solid var(--ardoise);
+  font-size:var(--t-fin); color:var(--os-eteint); line-height:1.75 }
+.hall-credits p{ margin:6px 0 0 }
+.hall-credits a{ color:var(--os-eteint); text-decoration-color:color-mix(in oklab, var(--os-eteint) 40%, transparent); text-underline-offset:2px }
+.hall-credits a:hover{ color:var(--laiton) }
+.hall-credits .lic{ text-decoration:none; opacity:.75 }
+.hall-credits .credit{ white-space:nowrap }
+
+/* ── Le bandeau de salle : une bande de photo, un titre — on sait où l'on est ── */
+.bandeau-salle{ position:relative; isolation:isolate; overflow:hidden; border-radius:var(--r); min-height:clamp(96px, 13vh, 136px);
+  display:flex; align-items:flex-end; padding:14px 22px; margin-bottom:14px; color:#F6F2E8; background:#0B1211;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55), 0 12px 28px -20px rgba(0,0,0,.85) }
+.bandeau-salle>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 42%; z-index:-2; filter:brightness(.58) saturate(1) }
+.bandeau-salle::after{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(90deg, rgba(7,13,12,.86) 0%, rgba(7,13,12,.5) 48%, rgba(7,13,12,.12) 100%),
+             linear-gradient(180deg, transparent 40%, rgba(7,13,12,.55) 100%) }
+.bandeau-texte{ display:flex; flex-direction:column; gap:2px; text-shadow:0 1px 2px rgba(0,0,0,.65) }
+.bandeau-texte .grave{ color:rgba(246,242,232,.72) }
+.bandeau-texte h2{ font-size:clamp(26px, 2.2vw, 34px) }
+.bandeau-texte p{ margin:0; font-size:var(--t-petit); color:rgba(246,242,232,.82) }
+
+/* ── Les puces de règles (partagées : portes, barre de table, modales) ── */
 .regles{display:flex;flex-wrap:wrap;gap:5px}
 .regle{font-size:var(--t-micro);letter-spacing:.06em;padding:3px 8px;border-radius:999px;
   border:1px solid var(--bord);color:var(--os-eteint);white-space:nowrap;font-weight:600}
 .regle.bien{border-color:var(--jade);color:var(--jade)}
 .regle.mal{border-color:var(--cinabre);color:var(--cinabre)}
-.tbl .lecon{font-family:"Instrument Serif",serif;font-size:var(--t-fort);line-height:1.25}
-.tbl .chiffres{display:flex;gap:14px;font-size:var(--t-fin);color:var(--os-eteint)}
-.tbl .chiffres b{display:block;font-family:"Martian Mono",monospace;font-size:var(--t-fort);color:var(--os);font-weight:600;white-space:nowrap}
-.tbl .chiffres>div{flex:1;min-width:0}
-.tbl .pied{margin-top:auto;display:flex;gap:8px}
-.tbl .pied .btn{padding:9px 12px;font-size:var(--t-petit);white-space:nowrap}
-/* Une table brûlée : laque désaturée et tampon en travers. Enseigner par le
-   refus marche mieux qu'un paragraphe. */
-.tbl.brulee{filter:saturate(.62)}
-/* Le refus est une BANDE dans le flux, pas un tampon en travers : posé sur la
-   carte, il recouvrait l'avantage maison et le nombre d'écarts — les deux
-   chiffres qui justifient précisément le refus. */
-.tbl.brulee::before{
-  content:attr(data-tampon);display:block;order:-1;margin-top:2px;
-  font-family:"Instrument Serif",serif;font-size:19px;line-height:1.2;letter-spacing:.02em;
-  color:var(--cinabre);padding:8px 11px;border-radius:9px;
-  background:color-mix(in oklab, var(--cinabre) 13%, transparent);
-  box-shadow:0 0 0 1px color-mix(in oklab, var(--cinabre) 42%, transparent) inset;
+
+@media (prefers-reduced-motion:reduce){
+  .salle-carte, .salle-carte>.photo{ transition:none }
+  .salle-carte:hover, .salle-porte:hover .salle-carte{ transform:none }
+  .salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo{ transform:scale(1.03) }
+}
+@media (max-width:860px){
+  .hall-heros{ min-height:min(78vh, 560px) }
+  .hall-titre{ font-size:clamp(56px, 16vw, 92px) }
+  .eventail{ display:none }
+  .salle-carte.grande{ min-height:220px }
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -346,11 +437,12 @@ input[type=range]{accent-color:var(--laiton);width:170px}
    qu'un même halo brun sur un même fond noir. La photo du lieu (embarquée,
    créditée — cf. build.mjs), floutée et assombrie, fait la salle derrière le
    croupier ; la lueur du filament et les lampes se posent PAR-DESSUS (::after). */
-.salle .decor{ position:absolute; inset:-12px; z-index:0; pointer-events:none;
-  background:var(--photo, none) center 20% / cover no-repeat, var(--sol);
-  filter:blur(4px) brightness(.45) saturate(1.1);
-  /* La photo s'efface vers le bas : nette autour du croupier, fondue sous le rail. */
-  mask-image:linear-gradient(#000 45%, transparent 100%); -webkit-mask-image:linear-gradient(#000 45%, transparent 100%) }
+.salle .decor{ position:absolute; inset:-18px; z-index:0; pointer-events:none;
+  background:var(--photo, none) center 30% / cover no-repeat, var(--sol);
+  filter:blur(7px) brightness(.36) saturate(1.1);
+  /* La photo fait toute la salle : pleine autour du croupier, retenue à 55 % sous le
+     rail — un fond de salle, pas un mur noir. Le feutre garde son contraste : il est opaque. */
+  mask-image:linear-gradient(#000 38%, rgba(0,0,0,.55) 100%); -webkit-mask-image:linear-gradient(#000 38%, rgba(0,0,0,.55) 100%) }
 .salle::after{
   content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
   background:
@@ -370,12 +462,12 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 #v-table[data-lieu="boulevard"] .salle, #v-table[data-lieu="mainchaude"] .salle{
   --lampes:radial-gradient(18% 12% at 22% 6%, rgba(255,200,120,.28), transparent 70%), radial-gradient(18% 12% at 78% 6%, rgba(255,200,120,.28), transparent 70%) }
 #v-table[data-lieu="cotai"]{ --lueur:rgba(242,193,90,.46) }
-#v-table[data-lieu="cotai"] .salle .decor{ filter:blur(4px) brightness(.55) saturate(1.5) }
+#v-table[data-lieu="cotai"] .salle .decor{ filter:blur(7px) brightness(.44) saturate(1.5) }
 #v-table[data-lieu="cotai"] .salle{ --lampes:repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 3px, transparent 3px 90px) }
 #v-table[data-lieu="cotai"] .tapis{ --rail:#3A0F0C; --rail-clair:#5A1A14 }
-#v-table[data-lieu="neon"] .salle .decor, #v-table[data-lieu="aquarium"] .salle .decor{ filter:blur(4px) brightness(.48) saturate(1.4) }
+#v-table[data-lieu="neon"] .salle .decor, #v-table[data-lieu="aquarium"] .salle .decor{ filter:blur(7px) brightness(.4) saturate(1.4) }
 #v-table[data-lieu="cercle"]{ --lueur:rgba(212,180,106,.24) }
-#v-table[data-lieu="cercle"] .salle .decor{ filter:blur(5px) brightness(.4) saturate(.9) }
+#v-table[data-lieu="cercle"] .salle .decor{ filter:blur(8px) brightness(.34) saturate(.9) }
 /* Le Salon Privé : cuir capitonné et or, pas un feutre gris dans le noir. */
 #v-table[data-lieu="salonprive"]{ --rail-liseret:#E6C773; --feutre:#2A2D31; --feutre-clair:#3B4046; --dos-carte:#2E2416 }
 #v-table[data-lieu="salonprive"] .tapis{
@@ -385,8 +477,8 @@ input[type=range]{accent-color:var(--laiton);width:170px}
     repeating-linear-gradient(-45deg, rgba(0,0,0,.30) 0 1px, rgba(255,255,255,.06) 1px 2px, transparent 2px 28px),
     linear-gradient(180deg, rgba(255,255,255,.08), transparent 18%),
     linear-gradient(180deg, #221A16 0%, #100B09 45%, #070504 100%) }
-#v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(5px) brightness(.36) saturate(.95) }
-#v-table[data-lieu="reno"] .salle .decor{ filter:blur(5px) brightness(.4) saturate(.8) sepia(.3) }
+#v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(8px) brightness(.34) saturate(1) }
+#v-table[data-lieu="reno"] .salle .decor{ filter:blur(8px) brightness(.34) saturate(.8) sepia(.3) }
 #croupierScene{ position:absolute; left:50%; top:0; transform:translateX(-50%); z-index:1;
   width:min(560px, 80%); height:calc(var(--salle-haut) + 170px); pointer-events:none }
 #jetonsCalque{ position:absolute; inset:0; z-index:8; pointer-events:none }
@@ -803,8 +895,6 @@ td.U{background:var(--ardoise)}
 .mp-ligne .btn:not(.creux){ min-height:48px }
 .mp-comment{ margin-top:14px; font-size:var(--t-fin); color:var(--os-eteint) }
 .mp-comment summary{ cursor:pointer; min-height:44px; display:flex; align-items:center }
-.mp-table .tbl{ margin:0 }
-.mp-table .tbl .pied .btn{ min-height:44px }
 /* Ta couleur = un jeton du rack, cerclé d'or quand il est choisi. Pas d'arc-en-ciel. */
 .couleurs{ display:flex; gap:6px; align-items:center; min-height:44px }
 .couleur{ cursor:pointer; transition:transform .14s var(--ressort), filter .2s; filter:saturate(.75) brightness(.85) }
@@ -900,11 +990,7 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 }
 @media (max-width:720px){
   :root{--t-ecran:31px;--t-section:24px;--t-cadran:50px;--t-verdict:72px}
-  .heros{grid-template-columns:1fr;gap:16px}
-  .eventail{height:160px}.eventail .carte{--w:88px}
   .duo{grid-template-columns:1fr}
-  nav{margin-left:0;width:100%;justify-content:flex-start;overflow-x:auto}
-  nav button{padding:7px 10px;font-size:var(--t-fin);white-space:nowrap}
   .tete{padding:8px 0}
   .scene .carte{--w:116px}.scene .groupe{gap:18px}
   .reponses button{width:92px;height:62px;font-size:23px}
@@ -1034,15 +1120,9 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   .siege.toi{ width:clamp(110px,17vw,150px) }
   .cercle{ width:26px; height:26px }
 }
-/* ── L'en-tête : 181 px, soit 27 % d'un téléphone ─────────────────────────
-   `nav` portait `flex-wrap:wrap` ET `overflow-x:auto` : le repli gagnait et le
-   défilement était du code mort. La barre se repliait sur deux lignes. */
 @media (max-width:759.98px){
-  #nav{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
-    scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch }
-  #nav::-webkit-scrollbar{ display:none }
-  #nav button{ flex:0 0 auto; scroll-snap-align:start; min-height:44px }
   .marque{ font-size:var(--t-corps) }
+  .fil{ font-size:var(--t-fin) }
 }
 
 /* ── Une modale ne doit jamais être amputée ───────────────────────────────
@@ -1054,8 +1134,6 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 @media (max-width:759.98px){
   .marque .nom{display:none}
   .marque{gap:0}
-  nav{margin-left:0}
-  nav button{padding:9px 10px}
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1320,8 +1398,11 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 
 </style>
 <header><div class="tete">
-  <button class="marque" data-vue="accueil"><span class="emb"></span><span class="nom">Le Sabot</span></button>
-  <nav id="nav">
+  <button class="marque" data-vue="accueil" title="Retour au hall"><span class="emb"></span><span class="nom">Le Sabot</span></button>
+  <!-- Le hall EST le menu : on n'arrive à une salle qu'en poussant sa porte. Les huit
+       vues restent adressables par ces boutons (raccourcis, sonde, banc, liens internes,
+       modales « Changer de table ») — un DOM qui les perdrait casserait tout ça sans le dire. -->
+  <nav id="nav" hidden>
     <button data-vue="accueil" aria-current="page">Accueil</button>
     <button data-vue="salon">Salon</button>
     <button data-vue="table">Table</button>
@@ -1331,6 +1412,9 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
     <button data-vue="ensemble">À plusieurs</button>
     <button data-vue="progres">Progression</button>
   </nav>
+  <!-- Le fil d'Ariane : « Hall › Le Cotai », « Hall › Salle d'entraînement › Exercices ».
+       Rendu par socle.js (rendreFil) à chaque changement de vue ou d'onglet. Vide dans le hall. -->
+  <nav class="fil" id="fil" aria-label="Fil d'Ariane"></nav>
   <button class="icone" id="bReglages" title="Réglages" aria-label="Réglages">&#9881;</button>
   <!-- Les outils vivent ici en permanence : la feuille &#9881; les EMPRUNTE puis les rend.
        Les dupliquer dans la modale casserait l'unicité des identifiants, et les
@@ -1347,49 +1431,99 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 
 <main>
 
-<!-- ════════════════════ ACCUEIL ════════════════════ -->
+<!-- ════════════════════ LE HALL ════════════════════
+     Le menu est un casino. On entre par le hall (la photo du Strip, le nom en serif),
+     puis on choisit une PORTE : une des neuf tables, une salle d'entraînement, le salon
+     privé, le bureau. Chaque porte est une photo — une vraie, créditée en bas de page.
+     « Le salon » d'avant n'est plus une vue : c'est l'ancre #lesTables de ce hall. -->
 <section class="vue" id="v-accueil">
-  <div class="heros">
-    <div>
-      <span class="grave">Entraînement au comptage de cartes</span>
-      <h1 style="margin:8px 0 12px">On ne compte pas des cartes.<br>On compte ce qui reste.</h1>
-      <p>Neuf tables de casino réelles, avec leurs vraies règles et leur vrai avantage maison — mesuré ici, pas recopié. Une stratégie de base <em>calculée</em> pour chaque table. Un sabot dont tu peux vérifier le mélange. Et de quoi t'entraîner jusqu'à ce que le compte devienne un réflexe.</p>
-      <div class="champs" style="margin-top:14px">
-        <label class="ch"><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" style="min-width:150px"></label>
-        <button class="btn" data-vue="salon">Entrer dans le salon</button>
+  <div class="hall-heros" id="hallHeros" data-photo="hall">
+    <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async">
+    <div class="hall-int hall-heros-int">
+      <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
+      <h1 class="hall-titre">Le Sabot</h1>
+      <p class="hall-phrase"><span class="hall-salut" id="hallSalut"></span>Neuf tables de casino, une salle d'entraînement, un salon privé. Le compte est masqué : c'est à toi de le tenir.</p>
+      <div class="hall-entree">
+        <label class="ch"><span class="grave">Ton prénom</span><input type="text" id="prenom" placeholder="Léo" maxlength="18" autocomplete="given-name"></label>
+        <button class="btn" data-hall="lesTables">Voir les tables</button>
       </div>
     </div>
     <div class="eventail" id="eventail" aria-hidden="true"></div>
   </div>
 
-  <div class="modes" id="modes"></div>
+  <div class="hall-int">
+    <!-- LES TABLES : neuf cartes-photos, rendues par salon.js (rendreSalon). -->
+    <section class="hall-salle" id="lesTables" aria-labelledby="hTables">
+      <div class="hall-entete">
+        <div><span class="grave">Neuf salles, neuf règlements, neuf leçons</span><h2 id="hTables">Les tables</h2></div>
+        <div class="onglets" id="filtreSalon" role="tablist" aria-label="Filtrer les tables">
+          <button role="tab" aria-selected="true" data-f="tout">Toutes</button>
+          <button role="tab" aria-selected="false" data-f="battable">Battables</button>
+          <button role="tab" aria-selected="false" data-f="fuir">À fuir</button>
+        </div>
+      </div>
+      <div class="salon" id="salon"></div>
+    </section>
 
-  <div class="duo">
-    <div class="laque pad">
-      <span class="grave">Le système sélectionné</span>
-      <h3 id="sysNom" style="margin:4px 0 2px">Hi-Lo</h3>
-      <p class="muet" id="sysNote" style="font-size:var(--t-petit)"></p>
-      <div class="regles" id="sysTable" style="margin-top:8px"></div>
-    </div>
-    <div class="laque pad">
-      <span class="grave">Ce qu'il faut avoir compris</span>
-      <p style="margin-top:6px">Le <b>compte courant</b> additionne la valeur de chaque carte sortie. Le <b>compte vrai</b> le divise par le nombre de jeux qui restent à distribuer : c'est lui, et lui seul, qui dit si la table t'est favorable.</p>
-      <p class="muet" style="font-size:var(--t-petit);margin:0">Un bon compteur ne se trompe jamais sur le compte courant, estime les jeux restants à un demi-jeu près, et ne laisse rien paraître. Les trois se travaillent séparément — c'est ce que font les exercices.</p>
-    </div>
-  </div>
-</section>
+    <!-- LA SALLE D'ENTRAÎNEMENT : trois portes. -->
+    <section class="hall-salle" id="entrainement" aria-labelledby="hEntrainement">
+      <div class="hall-entete"><div><span class="grave">Trois muscles, travaillés séparément</span><h2 id="hEntrainement">La salle d'entraînement</h2></div></div>
+      <div class="hall-grille trois">
+        <button class="salle-carte" data-vue="exercices" data-photo="entrainement">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">Le réflexe</span><span class="nom">Exercices</span>
+            <span class="sous">Les cartes défilent à la vitesse que tu veux ; un sabot chronométré ; le coup d'œil sur le tas de défausse.</span></span>
+        </button>
+        <button class="salle-carte" data-vue="strategie" data-photo="strategie">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">La décision</span><span class="nom">Stratégie</span>
+            <span class="sous">La stratégie de base main par main, puis les écarts au compte — calculés pour la table où tu es assis.</span></span>
+        </button>
+        <button class="salle-carte" data-vue="concentration" data-photo="concentration">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">Le sang-froid</span><span class="nom">Concentration</span>
+            <span class="sous">Tu comptes en silence pendant que la table te parle et que le chef de table te fixe.</span></span>
+        </button>
+      </div>
+    </section>
 
-<!-- ════════════════════ SALON ════════════════════ -->
-<section class="vue" id="v-salon" hidden>
-  <span class="grave">Le salon</span>
-  <h2 style="margin:4px 0 6px">Choisis ta table</h2>
-  <p class="muet" style="max-width:66ch">Pour un compteur, une table <em>est</em> son règlement. La pénétration et le paiement du blackjack décident si elle se bat ; le reste se joue en dixièmes de point. Deux de ces tables sont imbattables quoi que tu fasses : elles sont là pour que tu apprennes à les refuser.</p>
-  <div class="onglets" id="filtreSalon" role="tablist" style="margin-top:12px">
-    <button role="tab" aria-selected="true" data-f="tout">Toutes</button>
-    <button role="tab" aria-selected="false" data-f="battable">Battables</button>
-    <button role="tab" aria-selected="false" data-f="fuir">À fuir</button>
+    <!-- LE SALON PRIVÉ : une grande porte. -->
+    <section class="hall-salle" id="prive" aria-labelledby="hPrive">
+      <div class="hall-entete"><div><span class="grave">Entre amis</span><h2 id="hPrive">Le salon privé</h2></div></div>
+      <button class="salle-carte grande" data-vue="ensemble" data-photo="prive">
+        <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+        <span class="bas"><span class="lieu">Sans serveur, avec vos caméras</span><span class="nom">Jouer à plusieurs</span>
+          <span class="sous">Jusqu'à cinq autour d'une table : le même sabot, un croupier, chacun sa main — ou la course au comptage, où chacun annonce son compte.</span></span>
+      </button>
+    </section>
+
+    <!-- LE BUREAU : la progression, les réglages, le système de comptage. -->
+    <section class="hall-salle" id="bureau" aria-labelledby="hBureau">
+      <div class="hall-entete"><div><span class="grave">Derrière la porte du fond</span><h2 id="hBureau">Le bureau</h2></div></div>
+      <div class="hall-grille bureau">
+        <button class="salle-carte" data-vue="progres" data-photo="jetons">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">Le registre</span><span class="nom">Progression</span>
+            <span class="sous">Tes sessions, ton écart au compte réel, ton journal.</span></span>
+        </button>
+        <button class="salle-carte" id="bHallReglages" data-photo="cartes">
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <span class="bas"><span class="lieu">Le tiroir</span><span class="nom">Réglages</span>
+            <span class="sous">Le système de comptage, le thème, les sons.</span></span>
+        </button>
+        <div class="laque pad hall-systeme">
+          <span class="grave">Le système sélectionné</span>
+          <h3 id="sysNom" style="margin:4px 0 2px">Hi-Lo</h3>
+          <p class="muet" id="sysNote" style="font-size:var(--t-petit)"></p>
+          <div class="regles" id="sysTable" style="margin-top:8px"></div>
+          <p class="muet" style="font-size:var(--t-fin);margin:12px 0 0">Le <b>compte courant</b> additionne la valeur de chaque carte sortie. Le <b>compte vrai</b> le divise par les jeux qui restent : c'est lui seul qui dit si la table t'est favorable.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Les crédits : une CC BY sans crédit est une violation. Rendus depuis window.PHOTOS_CREDITS. -->
+    <footer class="hall-credits" id="hallCredits"></footer>
   </div>
-  <div class="salon" id="salon"></div>
 </section>
 
 <!-- ════════════════════ TABLE ════════════════════ -->
@@ -1488,6 +1622,11 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 
 <!-- ════════════════════ EXERCICES ════════════════════ -->
 <section class="vue" id="v-exercices" hidden>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="entrainement">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Exercices</h2><p>Le réflexe : les cartes défilent, tu tiens le compte.</p></div>
+  </div>
   <div class="onglets" id="ongletsEx" role="tablist">
     <button role="tab" aria-selected="true" data-ex="defilement">Défilement</button>
     <button role="tab" aria-selected="false" data-ex="chrono">Sabot chrono</button>
@@ -1583,6 +1722,11 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 
 <!-- ════════════════════ STRATÉGIE ════════════════════ -->
 <section class="vue" id="v-strategie" hidden>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="strategie">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Stratégie</h2><p>La décision : la bonne main, main par main, pour la table où tu es assis.</p></div>
+  </div>
   <div class="onglets" id="ongletsStrat" role="tablist">
     <button role="tab" aria-selected="true" data-s="base">Stratégie de base</button>
     <button role="tab" aria-selected="false" data-s="ecarts">Écarts au compte</button>
@@ -1615,9 +1759,12 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 
 <!-- ════════════════════ CONCENTRATION ════════════════════ -->
 <section class="vue" id="v-concentration" hidden>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="concentration">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Concentration</h2><p>Le sang-froid : compte sans te faire griller.</p></div>
+  </div>
   <div class="laque pad" id="coReglages">
-    <span class="grave">Concentration</span>
-    <h2 style="margin:4px 0 10px">Compte sans te faire griller</h2>
     <p class="muet" style="margin:0 0 14px;max-width:70ch">Les cartes défilent et tu comptes en silence. Pendant ce temps la table vit : un voisin te parle, le chef de table te fixe, un calcul te tombe dessus. Chaque hésitation fait monter la <b>jauge de suspicion</b>. À cent, on t'invite à quitter la table. Et il faudra quand même annoncer le compte.</p>
     <div class="champs">
       <label class="ch"><span class="grave">Jeux</span><select id="coJeux"><option>2</option><option selected>6</option><option>8</option></select></label>
@@ -1673,13 +1820,17 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 
 <!-- ════════════════════ À PLUSIEURS ════════════════════ -->
 <section class="vue" id="v-ensemble" hidden>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="prive">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Le salon privé</span><h2>Jouer à plusieurs</h2><p>Une vraie table jusqu'à cinq, ou la course au comptage — le même sabot pour tout le monde.</p></div>
+  </div>
   <!-- Deux façons de jouer à plusieurs : une VRAIE table de blackjack (jusqu'à cinq, des
        mises, un croupier, l'hôte tient le sabot) — et la course au comptage, le mode
        historique (le même sabot défile, chacun annonce son compte). Même code de huit
        caractères, mais un code de table et un code de course ne se croisent jamais. -->
   <div class="laque pad" id="mpAccueil">
-    <span class="grave">À plusieurs</span>
-    <h2 style="margin:4px 0 10px" id="mpTitre">Une vraie table, jusqu'à cinq</h2>
+    <h2 style="margin:0 0 10px;font-size:var(--t-titre)" id="mpTitre">Une vraie table, jusqu'à cinq</h2>
     <div class="onglets" id="mpModes" role="tablist">
       <button role="tab" aria-selected="true" data-mode="table">Table de blackjack</button>
       <button role="tab" aria-selected="false" data-mode="course">Course au comptage</button>
@@ -1738,8 +1889,11 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 
 <!-- ════════════════════ PROGRESSION ════════════════════ -->
 <section class="vue" id="v-progres" hidden>
-  <span class="grave">Progression</span>
-  <h2 id="progTitre" style="margin:4px 0 14px">Tes sessions</h2>
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <div class="bandeau-salle" data-photo="jetons">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <div class="bandeau-texte"><span class="grave">Le bureau</span><h2 id="progTitre">Tes sessions</h2><p>Ton écart au compte réel, session après session.</p></div>
+  </div>
   <div class="pave" id="progPave"></div>
   <div class="laque pad" style="margin-top:12px">
     <span class="grave">Écart au compte réel, trente dernières sessions</span>
@@ -2968,22 +3122,60 @@ addEventListener("resize", mesurerEntete);
 addEventListener("orientationchange", () => setTimeout(mesurerEntete, 120));
 
 function aller(v) {
+  // « Le salon » n'est plus une vue : c'est l'ancre « Les tables » du hall. Tout ce qui
+  // y envoyait (Changer de table, le rachat, la nav cachée) arrive au bon endroit.
+  if (v === "salon") return allerHall("lesTables");
   vue = v;
   // La table est un POSTE, pas un document : on empêche la page de défiler
   // sous elle, ce qui est aussi ce qui rend `100svh` stable quand la barre
   // d'URL d'un téléphone se rétracte.
   document.body.classList.toggle("a-table", v === "table");
+  // Le hall est le seul écran qui sort de la colonne de 1120 px : son héros va bord à bord.
+  document.body.classList.toggle("au-hall", v === "accueil");
   mesurerEntete();
   document.querySelectorAll(".vue").forEach(s => { s.hidden = s.id !== "v-" + v; });
-  document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-current", b.dataset.vue === v ? "page" : "false"));
+  document.querySelectorAll("#nav button").forEach(b => b.setAttribute("aria-current", b.dataset.vue === v ? "page" : "false"));
   if (v === "progres") rendreProgres();
-  if (v === "accueil") rendreEventail();
-  if (v === "salon") rendreSalon();
+  if (v === "accueil") { rendreEventail(); rendreSalon(); }
   if (v === "strategie") { if (!STR.main && !STR.ecart) nouveauCoup(); rendreGrille(); }
   if (v !== "concentration" && CO.encours) finConcentration(false);
+  rendreFil();
   window.scrollTo({ top: 0 });
 }
+// Le hall, ouvert sur une de ses salles (#lesTables, #entrainement, #prive, #bureau).
+function allerHall(ancre) {
+  aller("accueil");
+  const e = ancre && $(ancre); if (!e) return;
+  // Après le scrollTo(0) de aller() : la salle glisse sous l'en-tête collant (scroll-margin-top en CSS).
+  setTimeout(() => e.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }), 30);
+}
 document.querySelectorAll("[data-vue]").forEach(b => b.addEventListener("click", () => aller(b.dataset.vue)));
+document.querySelectorAll("[data-hall]").forEach(b => b.addEventListener("click", () => allerHall(b.dataset.hall)));
+
+/* ── Le fil d'Ariane ────────────────────────────────────────────────────
+   « Hall › Le Cotai · Macao », « Hall › Salle d'entraînement › Exercices › Sabot chrono ».
+   Chaque segment intermédiaire est une porte qu'on peut repousser ; le dernier dit où
+   l'on est. Dans le hall, rien : on est déjà à l'entrée. */
+function rendreFil() {
+  const f = $("fil"); if (!f) return;
+  const onglet = id => { const b = document.querySelector(`#${id} [role="tab"][aria-selected="true"]`); return b ? b.textContent.trim() : ""; };
+  const pas = [];                                            // [libellé, ancre du hall ou null]
+  if (vue === "table") pas.push([tableCourante().nom, null]);          // « Hall › Le Cotai » — le lieu est déjà dans la barre de la table
+  else if (vue === "exercices") pas.push(["Salle d'entraînement", "entrainement"], ["Exercices", null], [onglet("ongletsEx"), null]);
+  else if (vue === "strategie") pas.push(["Salle d'entraînement", "entrainement"], ["Stratégie", null], [onglet("ongletsStrat"), null]);
+  else if (vue === "concentration") pas.push(["Salle d'entraînement", "entrainement"], ["Concentration", null]);
+  else if (vue === "ensemble") pas.push(["Salon privé", "prive"], [onglet("mpModes"), null]);
+  else if (vue === "progres") pas.push(["Bureau", "bureau"], ["Progression", null]);
+  const segs = pas.filter(([l]) => l);
+  f.hidden = !segs.length;
+  f.innerHTML = segs.length ? `<button data-vue="accueil">Hall</button>` + segs.map(([l, a], i) =>
+    `<span class="sep" aria-hidden="true">›</span>` + (a ? `<button data-hall="${a}">${echap(l)}</button>`
+      : i === segs.length - 1 ? `<b aria-current="page">${echap(l)}</b>` : `<span>${echap(l)}</span>`)).join("") : "";
+  f.querySelectorAll("[data-vue]").forEach(b => b.onclick = () => aller(b.dataset.vue));
+  f.querySelectorAll("[data-hall]").forEach(b => b.onclick = () => allerHall(b.dataset.hall));
+}
+// Un onglet qui change (Défilement → Sabot chrono) change le dernier segment.
+document.addEventListener("click", e => { if (e.target.closest && e.target.closest('[role="tab"]')) setTimeout(rendreFil, 0); });
 
 /* ── Thème, son, système ────────────────────────────────────────────── */
 function appliquerTheme() {
@@ -2998,7 +3190,13 @@ function rendreSon() { $("son").textContent = DB.son ? "♪ Sons activés" : "�
   $("son").classList.toggle("eteint", !DB.son); }
 $("son").onclick = () => { DB.son = !DB.son; garder(); rendreSon(); if (DB.son) son("ok"); };
 $("prenom").value = DB.prenom;
-$("prenom").oninput = () => { DB.prenom = $("prenom").value; garder(); };
+$("prenom").oninput = () => { DB.prenom = $("prenom").value; garder(); rendreSalut(); };
+// Le hall salue par le prénom : « Bonsoir, Léo. » avant l'heure de fermeture, jamais un « Bonjour » à minuit.
+function rendreSalut() {
+  const e = $("hallSalut"); if (!e) return;
+  const p = prenom(), h = new Date().getHours();
+  e.textContent = p ? (h >= 18 || h < 5 ? "Bonsoir, " : "Bonjour, ") + p + "." : "";
+}
 
 $("sys").innerHTML = Object.entries(DONNEES.systemes).map(([k, s]) => `<option value="${k}">${s.nom}</option>`).join("");
 $("sys").value = DB.sys;
@@ -3021,17 +3219,6 @@ function rendreEventail() {
     e.style.transform = `translateX(-50%) rotate(${(k - 2) * 13}deg)`;
     e.style.animationDelay = (k * 65) + "ms"; f.appendChild(e); });
 }
-const MODES = [
-  ["salon", "Le choix", "Le salon", "Neuf tables réelles, neuf règlements, neuf leçons. Deux d'entre elles sont imbattables : apprends à les reconnaître avant de t'asseoir."],
-  ["exercices", "Le réflexe", "Exercices", "Défilement à la vitesse que tu veux, sabot chronométré, estimation du tas de défausse. Les trois muscles du comptage, travaillés séparément."],
-  ["table", "Le jeu", "La table", "Un croupier, des joueurs, un vrai sabot avec sa carte brûlée et sa carte de coupe. Le compte est masqué : c'est à toi de le tenir."],
-  ["strategie", "La décision", "Stratégie", "La stratégie de base main par main, puis les écarts au compte — tous calculés pour la table où tu es assis, pas recopiés d'un livre."],
-  ["concentration", "Le sang-froid", "Concentration", "Le chef de table te surveille pendant que tu comptes. Questions, calculs, regards, et un détecteur qui guette tes lèvres."],
-  ["ensemble", "À plusieurs", "Le même sabot", "Tes amis s'assoient à la même table, voient les mêmes cartes, et à la fin chacun annonce son compte."],
-];
-$("modes").innerHTML = MODES.map(([v, e, t, p]) =>
-  `<button class="laque mode" data-vue="${v}"><span class="grave">${e}</span><h3>${t}</h3><p>${p}</p><span class="fleche">Ouvrir →</span></button>`).join("");
-$("modes").querySelectorAll("[data-vue]").forEach(b => b.addEventListener("click", () => aller(b.dataset.vue)));
 
 
 /* ═══ cartes.js ═══ */
@@ -3362,7 +3549,11 @@ if (window.ResizeObserver && $("sieges")) new ResizeObserver(() => dimensionnerC
 
 
 /* ═══ salon.js ═══ */
-/* ══════════════════════ LE SALON ══════════════════════ */
+/* ══════════════════════ LE HALL ══════════════════════
+   Le menu est un casino : on ne choisit pas une « vue », on pousse une porte.
+   Ce fichier rend les portes des tables (rendreSalon), pose les photos sur les
+   portes fixes du hall (rendreHall) et écrit les crédits qui vont avec.
+   Il vit AVANT table.js : rien ici ne touche T au chargement — seulement au rendu. */
 function chipsRegles(t) {
   const d = DONNEES.tables[t.id];
   const c = [];
@@ -3377,6 +3568,16 @@ function chipsRegles(t) {
   if (t.doubleOn !== "any") c.push(["doubler " + t.doubleOn.join("-"), ""]);
   return c.map(([l, k]) => `<span class="regle ${k}">${l}</span>`).join("");
 }
+// Les TROIS puces qu'on garde partout où la place manque (la porte du hall, la barre de
+// la table) : le nombre de jeux, H17/S17, 3:2 ou 6:5 — plus la mélangeuse quand il y en
+// a une, parce que celle-là tue le comptage. Une seule définition pour les deux écrans.
+function pucesCourtes(t) {
+  const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
+  const puces = [...tmp.children], garde = puces.slice(0, 3);
+  const csm = puces.find(p => /mélangeuse/.test(p.textContent));
+  if (csm && !garde.includes(csm)) garde.push(csm);
+  return garde.map(p => p.outerHTML).join("");
+}
 // L'indice de comptabilité : ce que la table laisse VRAIMENT à un compteur.
 // La pénétration domine, le paiement du blackjack peut tout annuler.
 function indiceComptable(t) {
@@ -3387,63 +3588,103 @@ function indiceComptable(t) {
   return Math.max(4, Math.min(99, Math.round(brut)));
 }
 // Deux choses seulement tuent le comptage : le blackjack payé 6:5 et la mélangeuse
-// continue. Une pénétration médiocre rend la table faible — la jauge le dit déjà,
+// continue. Une pénétration médiocre rend la table faible — l'indice le dit déjà,
 // et la tamponner « morte » serait un mensonge utile à personne.
 function tableMorte(t) {
   if (t.blackjackPays < 1.5) return "Le blackjack payé 6 pour 5 — ne t'assieds pas ici";
   if (t.melange === "melangeuse_continue") return "Mélangeuse continue — le comptage est mort";
   return null;
 }
+const tamponCourt = t => t.blackjackPays < 1.5 ? "À fuir · 6:5" : "À fuir · mélangeuse";
+const photoDe = cle => (window.PHOTOS || {})[cle] || "";
+// Un sabot est ENTAMÉ dès qu'une main a été jouée ou qu'une donne est en cours : la
+// porte de cette table dit « Reprendre » et ne remélange pas quand on la pousse.
+const sabotEntame = () => T.mains > 0 || T.enJeu;
+
+/* ── La porte d'une table : sa photo, son nom en serif, trois puces, deux chiffres.
+   o.n = son numéro dans le catalogue · o.reprise = « Reprendre » · o.inerte = un
+   simple panneau (l'écran À plusieurs la montre sans qu'on puisse s'y asseoir en solo). */
+function carteTableHtml(t, o) {
+  o = o || {};
+  const d = DONNEES.tables[t.id], mort = tableMorte(t), ph = photoDe(t.id);
+  const balise = o.inerte ? "div" : "button";
+  const nomAccessible = (o.reprise ? "Reprendre ta place à " : "S'asseoir à ") + t.nom + ", " + t.lieu + (mort ? " — " + mort : "");
+  return `<article class="salle-porte ${mort ? "brulee" : ""}" ${mort ? `data-tampon="${echap(mort)}"` : ""}>
+    <${balise} class="salle-carte porte" ${o.inerte ? "" : `data-asseoir="${t.id}" aria-label="${echap(nomAccessible)}"`}>
+      ${ph ? `<img class="photo" src="${ph}" alt="" aria-hidden="true" loading="lazy" decoding="async">` : ""}<span class="voile"></span>
+      <span class="haut"><span class="num">${o.n ? "Table " + o.n : "Ta table"}</span>${o.reprise ? `<span class="etat">Reprendre</span>` : mort ? `<span class="tampon" title="${echap(mort)}">${tamponCourt(t)}</span>` : ""}</span>
+      <span class="bas">
+        <span class="lieu">${echap(t.lieu)}</span><span class="nom">${echap(t.nom)}</span>
+        <span class="regles">${pucesCourtes(t)}</span>
+        <span class="chiffres"><span><b>${fr2(d.avantage)} %</b>avantage maison</span><span><b>${fmtJ(t.mise_min)} – ${fmtJ(t.mise_max)}</b>mises</span></span>
+      </span>
+    </${balise}>
+    ${o.inerte ? "" : `<button class="pourquoi" data-pourquoi="${t.id}" title="Pourquoi cette table ?" aria-label="Pourquoi ${echap(t.nom)} ?"><i>Pourquoi</i></button>`}
+  </article>`;
+}
 function rendreSalon() {
+  const boite = $("salon"); if (!boite) return;
   const filtre = $("filtreSalon").querySelector('[aria-selected="true"]').dataset.f;
-  const liste = DONNEES.catalogue.filter(t => {
+  const entame = sabotEntame();
+  // Le numéro est celui du CATALOGUE, pas du filtre : « Table 4 » reste la quatrième.
+  boite.innerHTML = DONNEES.catalogue.map((t, i) => ({ t, n: i + 1 })).filter(({ t }) => {
     const i = indiceComptable(t);
     return filtre === "tout" || (filtre === "battable" ? i >= 25 : i < 25);
-  });
-  $("salon").innerHTML = liste.map((t, n) => {
-    const d = DONNEES.tables[t.id], ind = indiceComptable(t), tampon = tableMorte(t), brulee = !!tampon;
-    return `<article class="laque tbl ${brulee ? "brulee" : ""}" ${brulee ? `data-tampon="${tampon}"` : ""}>
-      <span class="num">Table ${n + 1} · ${echap(t.lieu)}</span>
-      <h3>${echap(t.nom)}</h3>
-      <div class="jauge" title="Indice de comptabilité"><i style="width:${ind}%"></i><b>${ind}</b></div>
-      <div class="regles">${chipsRegles(t)}</div>
-      <p class="lecon">« ${echap(t.lecon)} »</p>
-      <div class="chiffres">
-        <div><b>${fr2(d.avantage)} %</b><span class="grave">avantage maison</span></div>
-        <div><b>${d.assurance === null ? "—" : sgn(d.assurance)}</b><span class="grave">assurance dès</span></div>
-        <div><b>${d.ecarts.length}</b><span class="grave">écarts utiles</span></div>
-      </div>
-      <div class="pied">
-        <button class="btn" data-asseoir="${t.id}">${brulee ? "M'asseoir" : "Prendre place"}</button>
-        <button class="btn creux" data-pourquoi="${t.id}">Pourquoi</button>
-      </div>
-    </article>`;
-  }).join("") || `<p class="muet">Aucune table dans ce filtre.</p>`;
-  $("salon").querySelectorAll("[data-asseoir]").forEach(b => b.onclick = () => {
-    DB.table = b.dataset.asseoir; garder(); nouveauSabot(); aller("table");
+  }).map(({ t, n }) => carteTableHtml(t, { n, reprise: entame && t.id === DB.table })).join("")
+    || `<p class="muet">Aucune table dans ce filtre.</p>`;
+  boite.querySelectorAll("[data-asseoir]").forEach(b => b.onclick = () => {
+    const id = b.dataset.asseoir, t = DONNEES.catalogue.find(x => x.id === id) || tableCourante();
+    // La table où le sabot est entamé : on reprend sa place, on ne remélange pas.
+    if (id === DB.table && sabotEntame()) { aller("table"); bandeau("Tu reprends ta place à « " + t.nom + " »"); return; }
+    DB.table = id; garder(); nouveauSabot(); aller("table");
     bandeau("Tu t'assieds à « " + tableCourante().nom + " »");
   });
-  $("salon").querySelectorAll("[data-pourquoi]").forEach(b => b.onclick = () => {
+  boite.querySelectorAll("[data-pourquoi]").forEach(b => b.onclick = () => {
     const t = DONNEES.catalogue.find(x => x.id === b.dataset.pourquoi), d = DONNEES.tables[t.id];
     ouvrirModale(`<span class="grave">${echap(t.lieu)}</span><h2 style="margin:4px 0 8px">${echap(t.nom)}</h2>
       <p class="lecon" style="font-family:'Instrument Serif',serif;font-size:var(--t-titre);color:var(--laiton)">« ${echap(t.lecon)} »</p>
       <p style="text-align:left">${echap(t.detail)}</p>
       <div class="regles" style="justify-content:center">${chipsRegles(t)}</div>
-      <p class="muet" style="font-size:var(--t-petit);margin-top:12px">Avantage maison mesuré sur trois millions de mains jouées en stratégie parfaite : <b class="cadran">${fr2(d.avantage)} %</b>.</p>`);
+      <p class="muet" style="font-size:var(--t-petit);margin-top:12px">Avantage maison mesuré sur trois millions de mains jouées en stratégie parfaite : <b class="cadran">${fr2(d.avantage)} %</b>. Indice de comptabilité : <b class="cadran">${indiceComptable(t)}</b> sur 100.</p>`);
   });
 }
 $("filtreSalon").querySelectorAll("button").forEach(b => b.onclick = () => {
   $("filtreSalon").querySelectorAll("button").forEach(x => x.setAttribute("aria-selected", x === b ? "true" : "false"));
   rendreSalon();
 });
+
+/* ── Les portes fixes du hall et les bandeaux de salle : la photo vient de
+   window.PHOTOS (build.mjs), par la clé posée en data-photo. Sans photo, la porte
+   garde son voile sombre et son titre — rien ne casse, rien ne charge. */
+function rendreHall() {
+  const P = window.PHOTOS || {};
+  document.querySelectorAll("[data-photo]").forEach(e => {
+    const img = e.querySelector(":scope > img.photo"), src = P[e.dataset.photo];
+    if (!img) return;
+    if (src) { if (img.getAttribute("src") !== src) img.src = src; } else img.remove();
+  });
+  rendreCredits(); rendreSalut();
+}
+// Une CC BY sans crédit est une violation : auteur, licence, source, pour chaque photo.
+function rendreCredits() {
+  const c = $("hallCredits"), L = window.PHOTOS_CREDITS || [];
+  if (!c) return;
+  if (!L.length) { c.hidden = true; return; }
+  c.innerHTML = `<span class="grave">Photos</span><p>` + L.map(x =>
+    `<span class="credit"><a href="${echap(x.source)}" target="_blank" rel="noopener" title="${echap(x.titre)}">${echap(x.auteur)}</a>`
+    + ` <a class="lic" href="${echap(x.licence_url)}" target="_blank" rel="noopener">${echap(x.licence)}</a></span>`).join(" · ")
+    + `</p><p>Recadrées, redimensionnées et encodées en WebP ; les originaux sont chez leurs auteurs.</p>`;
+}
+$("bHallReglages").onclick = () => $("bReglages").click();
+
 // La feuille de réglages EMPRUNTE le bloc `#outils` à l'en-tête et le rend à la
 // fermeture. Recopier son HTML dupliquerait `#sys`, `#theme`, `#son` — des
 // identifiants en double, et les branchements posés au démarrage resteraient
 // accrochés à la copie cachée : les boutons de la feuille ne feraient rien.
 $("bReglages").onclick = () => {
-  ouvrirModale(`<h2>R\u00e9glages</h2><div id="accueilOutils"></div>
-    <p class="muet" style="margin-top:14px">Le syst\u00e8me de comptage change les valeurs
-    de toutes les cartes, partout dans l'application \u2014 y compris dans les exercices.</p>`);
+  ouvrirModale(`<h2>Réglages</h2><div id="accueilOutils"></div>
+    <p class="muet" style="margin-top:14px">Le système de comptage change les valeurs
+    de toutes les cartes, partout dans l'application — y compris dans les exercices.</p>`);
   const o = $("outils"); o.hidden = false; $("accueilOutils").appendChild(o);
   const fermer = $("modaleFermer").onclick;
   $("modaleFermer").onclick = () => { rendreOutils(); fermer(); };
@@ -3575,11 +3816,7 @@ async function nouveauSabot(o) {
 function poserLieu(t) {
   $("v-table").dataset.lieu = t.id; $("v-table").dataset.sieges = Math.max(1, Math.min(t.sieges, 6));
   $("tNom").textContent = t.nom + " · " + t.lieu;
-  const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
-  const puces = [...tmp.children], garde = puces.slice(0, 3);
-  const csm = puces.find(p => /mélangeuse/.test(p.textContent));
-  if (csm && !garde.includes(csm)) garde.push(csm);
-  $("tRegles").replaceChildren(...garde);
+  $("tRegles").innerHTML = pucesCourtes(t);   // les mêmes trois puces que la porte du hall (salon.js)
   // La salle a le décor de son lieu : la photo embarquée (window.PHOTOS, cf. build.mjs),
   // floutée et assombrie par la feuille de style. Sans photo, la salle reste celle de
   // la lueur et du sol posés par [data-lieu] — rien ne casse.
@@ -6350,19 +6587,10 @@ function rendreCouleurs() {
 // quelle (mêmes règles, même avantage maison), avec ses sièges — on voit ce qu'on ouvre.
 function rendreTableMP() {
   const boite = $("mpTable"); if (!boite) return;
-  const t = tableCourante(), d = DONNEES.tables[t.id], ind = indiceComptable(t);
-  boite.innerHTML = `<article class="laque tbl">
-      <span class="num">Ta table · ${echap(t.lieu)}</span>
-      <h3>${echap(t.nom)}</h3>
-      <div class="jauge" title="Indice de comptabilité"><i style="width:${ind}%"></i><b>${ind}</b></div>
-      <div class="regles">${chipsRegles(t)}</div>
-      <div class="chiffres">
-        <div><b>${fr2(d.avantage)} %</b><span class="grave">avantage maison</span></div>
-        <div><b>${Math.min(t.sieges, 5)}</b><span class="grave">sièges</span></div>
-        <div><b>${fmtJ(t.mise_min)}</b><span class="grave">mise minimale</span></div>
-      </div>
-      <div class="pied"><button class="btn creux" data-vue="salon">Changer de table</button></div>
-    </article>`;
+  const t = tableCourante(), n = DONNEES.catalogue.indexOf(t) + 1;
+  boite.innerHTML = carteTableHtml(t, { n, inerte: true })
+    + `<p class="muet mp-sieges" style="font-size:var(--t-fin);margin:8px 0 0">${Math.min(t.sieges, 5)} sièges · mise minimale ${fmtJ(t.mise_min)}</p>
+       <div class="rang-btn" style="margin-top:8px;justify-content:flex-start"><button class="btn creux" data-vue="salon">Changer de table</button></div>`;
   boite.querySelector("[data-vue]").onclick = () => aller("salon");
 }
 rendreCouleurs();
@@ -7005,6 +7233,9 @@ appliquerTheme(); rendreSon(); rendreSysteme(); mesurerEntete(); rendreReponses(
 $("eVitesse").dispatchEvent(new Event("input")); $("coVitesse").dispatchEvent(new Event("input"));
 $("plateau").style.setProperty("--intervalle", vitesse() + "ms");
 nouveauSabot();
+// Le hall : photos sur les portes, crédits, salut — puis on y entre, sauf si un lien
+// (#table=CODE, #course=CODE, traités plus haut) a déjà emmené ailleurs.
+rendreHall(); if (vue === "accueil") aller("accueil");
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 
 })();

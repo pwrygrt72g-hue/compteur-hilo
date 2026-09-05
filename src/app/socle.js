@@ -136,22 +136,60 @@ addEventListener("resize", mesurerEntete);
 addEventListener("orientationchange", () => setTimeout(mesurerEntete, 120));
 
 function aller(v) {
+  // « Le salon » n'est plus une vue : c'est l'ancre « Les tables » du hall. Tout ce qui
+  // y envoyait (Changer de table, le rachat, la nav cachée) arrive au bon endroit.
+  if (v === "salon") return allerHall("lesTables");
   vue = v;
   // La table est un POSTE, pas un document : on empêche la page de défiler
   // sous elle, ce qui est aussi ce qui rend `100svh` stable quand la barre
   // d'URL d'un téléphone se rétracte.
   document.body.classList.toggle("a-table", v === "table");
+  // Le hall est le seul écran qui sort de la colonne de 1120 px : son héros va bord à bord.
+  document.body.classList.toggle("au-hall", v === "accueil");
   mesurerEntete();
   document.querySelectorAll(".vue").forEach(s => { s.hidden = s.id !== "v-" + v; });
-  document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-current", b.dataset.vue === v ? "page" : "false"));
+  document.querySelectorAll("#nav button").forEach(b => b.setAttribute("aria-current", b.dataset.vue === v ? "page" : "false"));
   if (v === "progres") rendreProgres();
-  if (v === "accueil") rendreEventail();
-  if (v === "salon") rendreSalon();
+  if (v === "accueil") { rendreEventail(); rendreSalon(); }
   if (v === "strategie") { if (!STR.main && !STR.ecart) nouveauCoup(); rendreGrille(); }
   if (v !== "concentration" && CO.encours) finConcentration(false);
+  rendreFil();
   window.scrollTo({ top: 0 });
 }
+// Le hall, ouvert sur une de ses salles (#lesTables, #entrainement, #prive, #bureau).
+function allerHall(ancre) {
+  aller("accueil");
+  const e = ancre && $(ancre); if (!e) return;
+  // Après le scrollTo(0) de aller() : la salle glisse sous l'en-tête collant (scroll-margin-top en CSS).
+  setTimeout(() => e.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }), 30);
+}
 document.querySelectorAll("[data-vue]").forEach(b => b.addEventListener("click", () => aller(b.dataset.vue)));
+document.querySelectorAll("[data-hall]").forEach(b => b.addEventListener("click", () => allerHall(b.dataset.hall)));
+
+/* ── Le fil d'Ariane ────────────────────────────────────────────────────
+   « Hall › Le Cotai · Macao », « Hall › Salle d'entraînement › Exercices › Sabot chrono ».
+   Chaque segment intermédiaire est une porte qu'on peut repousser ; le dernier dit où
+   l'on est. Dans le hall, rien : on est déjà à l'entrée. */
+function rendreFil() {
+  const f = $("fil"); if (!f) return;
+  const onglet = id => { const b = document.querySelector(`#${id} [role="tab"][aria-selected="true"]`); return b ? b.textContent.trim() : ""; };
+  const pas = [];                                            // [libellé, ancre du hall ou null]
+  if (vue === "table") pas.push([tableCourante().nom, null]);          // « Hall › Le Cotai » — le lieu est déjà dans la barre de la table
+  else if (vue === "exercices") pas.push(["Salle d'entraînement", "entrainement"], ["Exercices", null], [onglet("ongletsEx"), null]);
+  else if (vue === "strategie") pas.push(["Salle d'entraînement", "entrainement"], ["Stratégie", null], [onglet("ongletsStrat"), null]);
+  else if (vue === "concentration") pas.push(["Salle d'entraînement", "entrainement"], ["Concentration", null]);
+  else if (vue === "ensemble") pas.push(["Salon privé", "prive"], [onglet("mpModes"), null]);
+  else if (vue === "progres") pas.push(["Bureau", "bureau"], ["Progression", null]);
+  const segs = pas.filter(([l]) => l);
+  f.hidden = !segs.length;
+  f.innerHTML = segs.length ? `<button data-vue="accueil">Hall</button>` + segs.map(([l, a], i) =>
+    `<span class="sep" aria-hidden="true">›</span>` + (a ? `<button data-hall="${a}">${echap(l)}</button>`
+      : i === segs.length - 1 ? `<b aria-current="page">${echap(l)}</b>` : `<span>${echap(l)}</span>`)).join("") : "";
+  f.querySelectorAll("[data-vue]").forEach(b => b.onclick = () => aller(b.dataset.vue));
+  f.querySelectorAll("[data-hall]").forEach(b => b.onclick = () => allerHall(b.dataset.hall));
+}
+// Un onglet qui change (Défilement → Sabot chrono) change le dernier segment.
+document.addEventListener("click", e => { if (e.target.closest && e.target.closest('[role="tab"]')) setTimeout(rendreFil, 0); });
 
 /* ── Thème, son, système ────────────────────────────────────────────── */
 function appliquerTheme() {
@@ -166,7 +204,13 @@ function rendreSon() { $("son").textContent = DB.son ? "♪ Sons activés" : "�
   $("son").classList.toggle("eteint", !DB.son); }
 $("son").onclick = () => { DB.son = !DB.son; garder(); rendreSon(); if (DB.son) son("ok"); };
 $("prenom").value = DB.prenom;
-$("prenom").oninput = () => { DB.prenom = $("prenom").value; garder(); };
+$("prenom").oninput = () => { DB.prenom = $("prenom").value; garder(); rendreSalut(); };
+// Le hall salue par le prénom : « Bonsoir, Léo. » avant l'heure de fermeture, jamais un « Bonjour » à minuit.
+function rendreSalut() {
+  const e = $("hallSalut"); if (!e) return;
+  const p = prenom(), h = new Date().getHours();
+  e.textContent = p ? (h >= 18 || h < 5 ? "Bonsoir, " : "Bonjour, ") + p + "." : "";
+}
 
 $("sys").innerHTML = Object.entries(DONNEES.systemes).map(([k, s]) => `<option value="${k}">${s.nom}</option>`).join("");
 $("sys").value = DB.sys;
@@ -189,14 +233,3 @@ function rendreEventail() {
     e.style.transform = `translateX(-50%) rotate(${(k - 2) * 13}deg)`;
     e.style.animationDelay = (k * 65) + "ms"; f.appendChild(e); });
 }
-const MODES = [
-  ["salon", "Le choix", "Le salon", "Neuf tables réelles, neuf règlements, neuf leçons. Deux d'entre elles sont imbattables : apprends à les reconnaître avant de t'asseoir."],
-  ["exercices", "Le réflexe", "Exercices", "Défilement à la vitesse que tu veux, sabot chronométré, estimation du tas de défausse. Les trois muscles du comptage, travaillés séparément."],
-  ["table", "Le jeu", "La table", "Un croupier, des joueurs, un vrai sabot avec sa carte brûlée et sa carte de coupe. Le compte est masqué : c'est à toi de le tenir."],
-  ["strategie", "La décision", "Stratégie", "La stratégie de base main par main, puis les écarts au compte — tous calculés pour la table où tu es assis, pas recopiés d'un livre."],
-  ["concentration", "Le sang-froid", "Concentration", "Le chef de table te surveille pendant que tu comptes. Questions, calculs, regards, et un détecteur qui guette tes lèvres."],
-  ["ensemble", "À plusieurs", "Le même sabot", "Tes amis s'assoient à la même table, voient les mêmes cartes, et à la fin chacun annonce son compte."],
-];
-$("modes").innerHTML = MODES.map(([v, e, t, p]) =>
-  `<button class="laque mode" data-vue="${v}"><span class="grave">${e}</span><h3>${t}</h3><p>${p}</p><span class="fleche">Ouvrir →</span></button>`).join("");
-$("modes").querySelectorAll("[data-vue]").forEach(b => b.addEventListener("click", () => aller(b.dataset.vue)));

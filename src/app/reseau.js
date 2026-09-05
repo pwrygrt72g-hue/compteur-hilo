@@ -55,19 +55,10 @@ function rendreCouleurs() {
 // quelle (mêmes règles, même avantage maison), avec ses sièges — on voit ce qu'on ouvre.
 function rendreTableMP() {
   const boite = $("mpTable"); if (!boite) return;
-  const t = tableCourante(), d = DONNEES.tables[t.id], ind = indiceComptable(t);
-  boite.innerHTML = `<article class="laque tbl">
-      <span class="num">Ta table · ${echap(t.lieu)}</span>
-      <h3>${echap(t.nom)}</h3>
-      <div class="jauge" title="Indice de comptabilité"><i style="width:${ind}%"></i><b>${ind}</b></div>
-      <div class="regles">${chipsRegles(t)}</div>
-      <div class="chiffres">
-        <div><b>${fr2(d.avantage)} %</b><span class="grave">avantage maison</span></div>
-        <div><b>${Math.min(t.sieges, 5)}</b><span class="grave">sièges</span></div>
-        <div><b>${fmtJ(t.mise_min)}</b><span class="grave">mise minimale</span></div>
-      </div>
-      <div class="pied"><button class="btn creux" data-vue="salon">Changer de table</button></div>
-    </article>`;
+  const t = tableCourante(), n = DONNEES.catalogue.indexOf(t) + 1;
+  boite.innerHTML = carteTableHtml(t, { n, inerte: true })
+    + `<p class="muet mp-sieges" style="font-size:var(--t-fin);margin:8px 0 0">${Math.min(t.sieges, 5)} sièges · mise minimale ${fmtJ(t.mise_min)}</p>
+       <div class="rang-btn" style="margin-top:8px;justify-content:flex-start"><button class="btn creux" data-vue="salon">Changer de table</button></div>`;
   boite.querySelector("[data-vue]").onclick = () => aller("salon");
 }
 rendreCouleurs();

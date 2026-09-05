@@ -170,15 +170,18 @@ header{position:sticky;top:0;z-index:40;background:color-mix(in oklab, var(--enc
   position:relative;overflow:hidden}
 .marque .emb::after{content:"";position:absolute;inset:auto 0 0 0;height:9px;
   background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 1px, rgba(255,255,255,.35) 1px 2px, transparent 2px 5px)}
-nav{display:flex;gap:2px;margin-left:auto;flex-wrap:nowrap;min-width:0;overflow-x:auto;
-  scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
-  mask-image:linear-gradient(90deg,transparent,#000 10px,#000 calc(100% - 10px),transparent)}
-nav::-webkit-scrollbar{display:none}
-nav button{padding:9px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);
-  border:1px solid transparent;transition:color .15s,background .15s;flex:none;white-space:nowrap;
-  scroll-snap-align:center;min-height:44px}
-nav button:hover{color:var(--os)}
-nav button[aria-current="page"]{background:var(--laiton);color:var(--encre);font-weight:600}
+/* Les huit pastilles de vues ont quitté l'en-tête (Léo, 05/09 : « le menu est un casino »).
+   #nav reste dans le DOM, caché : la sonde, le banc, les raccourcis et les liens internes
+   passent par ses boutons. Ce qui se voit, c'est le fil d'Ariane. */
+#nav{display:flex;gap:2px;flex-wrap:nowrap;min-width:0}
+#nav button{padding:9px 12px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint);min-height:44px}
+.fil{display:flex;align-items:center;gap:2px;min-width:0;overflow:hidden;font-size:var(--t-petit);color:var(--os-eteint);white-space:nowrap}
+.fil button{min-height:44px;padding:0 9px;border-radius:9px;color:var(--os-eteint);transition:color .15s,background .15s;flex:none}
+.fil button:hover{color:var(--os);background:var(--ardoise)}
+.fil .sep{opacity:.45;padding:0 1px;font-size:var(--t-fort);line-height:1;flex:none}
+.fil span:not(.sep){padding:0 9px;flex:none}
+.fil b{color:var(--os);font-weight:600;padding:0 9px;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.icone{margin-left:auto}
 /* Le bloc d'outils n'a qu'un seul habitat visible : la feuille ⚙. */
 .outils{display:flex;flex-direction:column;gap:12px;align-items:stretch;text-align:left}
 .outils select{min-height:44px}
@@ -211,61 +214,149 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 .onglets button{padding:7px 15px;border-radius:999px;font-size:var(--t-petit);color:var(--os-eteint)}
 .onglets button[aria-selected="true"]{background:var(--ardoise);color:var(--os);font-weight:600}
 
-/* ── Accueil ───────────────────────────────────────────────────────── */
-.heros{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:center;margin:8px 0 26px}
-.heros p{color:var(--os-eteint);max-width:52ch}
-.eventail{position:relative;height:210px}
-.eventail .carte{position:absolute;left:50%;top:16px;--w:112px;transform-origin:50% 132%;
-  animation:eventer .6s var(--ressort) both}
+/* ══════════════════════════════════════════════════════════════════════
+   LE HALL — le menu est un casino
+   On entre par le hall (le Strip la nuit, le nom en serif) et on pousse une
+   PORTE : chaque porte est une vraie photo, assombrie en bas, le nom dessus.
+   Les portes sont d'un seul aspect (casino la nuit) dans les deux thèmes :
+   une photo ne change pas de couleur parce qu'il fait jour dehors. Seuls les
+   titres de salle, le filtre et les crédits suivent le thème de la page.
+   ══════════════════════════════════════════════════════════════════════ */
+body.au-hall main{ max-width:none; padding:0 0 56px }
+.hall-int{ max-width:min(1400px, 100% - 2*max(var(--gap), var(--sg), var(--sd))); margin:0 auto }
+
+/* ── Le héros : la photo bord à bord, le titre posé dessus ─────────────── */
+.hall-heros{ position:relative; isolation:isolate; overflow:hidden; color:#F6F2E8; background:#070D0C;
+  min-height:clamp(440px, 66vh, 700px); display:flex; align-items:flex-end;
+  padding:clamp(48px,7vh,80px) 0 clamp(36px,5vh,56px) }
+.hall-heros>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 62%; z-index:-2;
+  filter:brightness(.7) saturate(1.05) }
+/* Vignette, puis le bas qui s'assombrit : le titre et le prénom se lisent sur toute photo. */
+.hall-heros::after{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(130% 95% at 50% 38%, transparent 42%, rgba(0,0,0,.55) 100%),
+    linear-gradient(180deg, rgba(7,13,12,.42) 0%, rgba(7,13,12,0) 26%, rgba(7,13,12,.5) 62%, rgba(7,13,12,.86) 100%) }
+.hall-heros-int{ width:100%; position:relative; z-index:1; text-shadow:0 1px 2px rgba(0,0,0,.6), 0 8px 30px rgba(0,0,0,.45) }
+.hall-kicker{ color:rgba(246,242,232,.74) }
+.hall-titre{ font-size:clamp(72px, 9.5vw, 150px); line-height:.9; letter-spacing:-.015em; margin:8px 0 16px }
+.hall-phrase{ max-width:58ch; font-size:var(--t-fort); line-height:1.45; color:rgba(246,242,232,.88); margin:0 0 20px }
+.hall-salut{ font-family:"Instrument Serif",Georgia,serif; font-size:1.3em; color:#F3C866 }
+.hall-salut:not(:empty)::after{ content:" " }
+.hall-entree{ display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; text-shadow:none }
+.hall-entree .grave{ color:rgba(246,242,232,.74) }
+.hall-entree #prenom{ min-width:180px; min-height:48px; background:rgba(0,0,0,.42); border-color:rgba(255,255,255,.3); color:#F6F2E8;
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px) }
+.hall-entree #prenom::placeholder{ color:rgba(246,242,232,.45) }
+.hall-entree .btn{ min-height:48px; background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 10px 22px -10px rgba(0,0,0,.9) }
+/* L'éventail : cinq cartes tirées au hasard, posées sur le comptoir à droite du titre. */
+.eventail{ position:absolute; right:clamp(16px, 7vw, 140px); bottom:clamp(28px, 6vh, 72px); width:340px; height:240px; z-index:1; pointer-events:none;
+  filter:drop-shadow(0 18px 24px rgba(0,0,0,.6)) }
+.eventail .carte{ position:absolute; left:50%; top:16px; --w:118px; transform-origin:50% 132%; animation:eventer .6s var(--ressort) both }
 @keyframes eventer{from{transform:translateX(-50%) rotate(0) translateY(50px);opacity:0}}
-.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:14px}
-.mode{text-align:left;padding:17px;display:flex;flex-direction:column;gap:7px;transition:transform .16s}
-.mode:hover{transform:translateY(-2px)}
-.mode h3{font-size:21px}
-.mode p{margin:0;color:var(--os-eteint);font-size:var(--t-petit)}
-.mode .fleche{margin-top:auto;color:var(--laiton);font-size:var(--t-fin);letter-spacing:.08em;text-transform:uppercase}
+
+/* ── Les salles du hall ────────────────────────────────────────────────── */
+.hall-salle{ margin-top:clamp(36px, 5vh, 60px); scroll-margin-top:calc(var(--h-entete, 64px) + 16px) }
+.hall-entete{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px }
+.hall-entete h2{ font-size:clamp(30px, 2.6vw, 40px); margin-top:4px }
+.hall-entete .onglets{ margin-bottom:4px }
+.salon, .hall-grille{ display:grid; gap:18px; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)) }
+.hall-grille.bureau{ grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)) }
+.hall-systeme{ align-self:stretch }
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-top:22px}
 
-/* ── Le salon : une grille de RÈGLES, pas une galerie de salles ──────
-   Pour un compteur, la table EST son règlement. La pénétration et le 3:2
-   décident si elle est comptable, et savoir refuser une table est une
-   compétence que personne n'entraîne. */
-.salon{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
-.tbl{padding:16px;display:flex;flex-direction:column;gap:10px;text-align:left}
-.tbl .num{order:-3;font-size:var(--t-micro);letter-spacing:.14em;text-transform:uppercase;color:var(--os-eteint)}
-.tbl h3{order:-2;font-size:24px}
-.tbl .lieu{font-size:var(--t-fin);color:var(--os-eteint);margin-top:-4px}
-.jauge{height:22px;border-radius:6px;overflow:hidden;position:relative;
-  background:linear-gradient(180deg,#2A2114 0%,#1A1409 52%,#241B0F 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 -2px 6px rgba(0,0,0,.55)}
-.jauge i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#8A6416,#E0A83C);opacity:.85}
-.jauge b{position:absolute;inset:0;display:grid;place-items:center;font-family:"Martian Mono",monospace;
-  font-size:var(--t-fin);color:#FFF3D8;text-shadow:0 1px 2px rgba(0,0,0,.8);font-weight:700}
-.jauge::after{content:"";position:absolute;inset:auto 0 0 0;height:8px;
-  background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.6) 0 1px, rgba(224,168,60,.3) 1px 2px, transparent 2px 8px)}
+/* ── Une porte : la photo, le voile, le nom ────────────────────────────── */
+.salle-porte{ position:relative }
+.salle-carte{ position:relative; display:block; width:100%; aspect-ratio:16/9; border-radius:14px; overflow:hidden; isolation:isolate;
+  padding:0; margin:0; text-align:left; color:#F6F2E8; background:#0B1211; cursor:pointer; -webkit-tap-highlight-color:transparent;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(0,0,0,.65), 0 16px 32px -20px rgba(0,0,0,.85);
+  transition:transform .28s var(--ressort), box-shadow .28s }
+div.salle-carte{ cursor:default }
+.salle-carte:hover, .salle-porte:hover .salle-carte, .salle-carte:focus-visible{ transform:translateY(-4px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px color-mix(in oklab, var(--laiton) 60%, transparent), 0 28px 44px -20px rgba(0,0,0,.9) }
+.salle-carte:focus-visible{ outline:2px solid var(--laiton); outline-offset:3px }
+.salle-carte>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; transform:scale(1.03);
+  filter:brightness(.78) saturate(1.05); transition:transform .7s var(--sec), filter .3s }
+.salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo, .salle-carte:focus-visible>.photo{ transform:scale(1.08); filter:brightness(.98) saturate(1.12) }
+.salle-carte>.voile{ position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(180deg, rgba(7,13,12,.28) 0%, rgba(7,13,12,0) 30%, rgba(7,13,12,.42) 56%, rgba(7,13,12,.93) 100%) }
+.salle-carte .bas, .salle-carte .haut{ position:absolute; left:20px; right:20px; display:flex; text-shadow:0 1px 2px rgba(0,0,0,.7) }
+.salle-carte .bas{ bottom:16px; flex-direction:column; gap:6px }
+.salle-carte .haut{ top:14px; right:96px; align-items:center; gap:10px }
+.salle-carte .lieu, .salle-carte .num{ font-size:var(--t-micro); letter-spacing:.14em; text-transform:uppercase; font-weight:600; color:rgba(246,242,232,.74) }
+.salle-carte .nom{ font-family:"Instrument Serif",Georgia,serif; font-size:clamp(26px, 2.1vw, 34px); line-height:1.02; text-wrap:balance }
+.salle-carte .sous{ font-size:var(--t-petit); line-height:1.4; color:rgba(246,242,232,.84); max-width:52ch }
+.salle-carte .regles{ margin-top:2px }
+.salle-carte .regle{ border-color:rgba(255,255,255,.32); color:rgba(246,242,232,.92); background:rgba(0,0,0,.36);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px) }
+.salle-carte .regle.bien{ color:#5FE0C6; border-color:rgba(95,224,198,.62) }
+.salle-carte .regle.mal{ color:#FF9B7A; border-color:rgba(255,155,122,.62) }
+.salle-carte .chiffres{ display:flex; gap:18px; flex-wrap:wrap; font-size:var(--t-fin); color:rgba(246,242,232,.74); margin-top:2px }
+.salle-carte .chiffres b{ font-family:"Martian Mono",monospace; font-weight:600; font-size:var(--t-petit); color:#F6F2E8; margin-right:5px; letter-spacing:-.02em }
+.salle-carte .etat, .salle-carte .tampon{ font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; font-weight:700;
+  padding:5px 10px; border-radius:999px; white-space:nowrap; text-shadow:none }
+.salle-carte .etat{ background:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); color:#1A1206; box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 6px 14px -8px #000 }
+.salle-carte .tampon{ background:rgba(179,63,34,.88); color:#FFF1EA; box-shadow:0 0 0 1px rgba(255,155,122,.5) }
+/* Une table brûlée : photo désaturée, tampon cinabre. Enseigner par le refus. */
+.salle-porte.brulee .salle-carte>.photo{ filter:brightness(.55) saturate(.28) }
+.salle-porte.brulee:hover .salle-carte>.photo{ filter:brightness(.7) saturate(.4) }
+/* « Pourquoi » : un vrai bouton de 44 px, dont on ne voit que la pastille. */
+.salle-porte .pourquoi{ position:absolute; top:4px; right:6px; z-index:2; min-height:44px; min-width:44px; padding:0 6px;
+  display:grid; place-items:center; color:rgba(246,242,232,.88); border-radius:10px }
+.salle-porte .pourquoi i{ font-style:normal; font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; font-weight:600;
+  padding:6px 11px; border-radius:999px; border:1px solid rgba(255,255,255,.3); background:rgba(0,0,0,.42);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:border-color .15s, color .15s }
+.salle-porte .pourquoi:hover i, .salle-porte .pourquoi:focus-visible i{ border-color:#F3C866; color:#F3C866 }
+/* La grande porte du salon privé : plus large que haute, le texte à gauche. */
+.salle-carte.grande{ aspect-ratio:auto; min-height:clamp(240px, 32vh, 340px) }
+.salle-carte.grande .bas{ left:28px; bottom:24px; max-width:640px }
+.salle-carte.grande .nom{ font-size:clamp(36px, 3.2vw, 52px) }
+.salle-carte.grande .sous{ font-size:var(--t-corps) }
+/* La table où l'on va s'asseoir (À plusieurs) : la même porte, en panneau. À 300 px de
+   large, un 16:9 fait 169 px de haut et le nom montait sur le numéro : on la fait en 4:3. */
+.mp-table .salle-porte{ margin:0 }
+.mp-table .salle-carte{ aspect-ratio:4/3 }
+.mp-table .salle-carte .haut{ right:20px }
+
+/* ── Les crédits : discrets, présents ──────────────────────────────────── */
+.hall-credits{ margin-top:clamp(40px, 6vh, 72px); padding-top:18px; border-top:1px solid var(--ardoise);
+  font-size:var(--t-fin); color:var(--os-eteint); line-height:1.75 }
+.hall-credits p{ margin:6px 0 0 }
+.hall-credits a{ color:var(--os-eteint); text-decoration-color:color-mix(in oklab, var(--os-eteint) 40%, transparent); text-underline-offset:2px }
+.hall-credits a:hover{ color:var(--laiton) }
+.hall-credits .lic{ text-decoration:none; opacity:.75 }
+.hall-credits .credit{ white-space:nowrap }
+
+/* ── Le bandeau de salle : une bande de photo, un titre — on sait où l'on est ── */
+.bandeau-salle{ position:relative; isolation:isolate; overflow:hidden; border-radius:var(--r); min-height:clamp(96px, 13vh, 136px);
+  display:flex; align-items:flex-end; padding:14px 22px; margin-bottom:14px; color:#F6F2E8; background:#0B1211;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55), 0 12px 28px -20px rgba(0,0,0,.85) }
+.bandeau-salle>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 42%; z-index:-2; filter:brightness(.58) saturate(1) }
+.bandeau-salle::after{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(90deg, rgba(7,13,12,.86) 0%, rgba(7,13,12,.5) 48%, rgba(7,13,12,.12) 100%),
+             linear-gradient(180deg, transparent 40%, rgba(7,13,12,.55) 100%) }
+.bandeau-texte{ display:flex; flex-direction:column; gap:2px; text-shadow:0 1px 2px rgba(0,0,0,.65) }
+.bandeau-texte .grave{ color:rgba(246,242,232,.72) }
+.bandeau-texte h2{ font-size:clamp(26px, 2.2vw, 34px) }
+.bandeau-texte p{ margin:0; font-size:var(--t-petit); color:rgba(246,242,232,.82) }
+
+/* ── Les puces de règles (partagées : portes, barre de table, modales) ── */
 .regles{display:flex;flex-wrap:wrap;gap:5px}
 .regle{font-size:var(--t-micro);letter-spacing:.06em;padding:3px 8px;border-radius:999px;
   border:1px solid var(--bord);color:var(--os-eteint);white-space:nowrap;font-weight:600}
 .regle.bien{border-color:var(--jade);color:var(--jade)}
 .regle.mal{border-color:var(--cinabre);color:var(--cinabre)}
-.tbl .lecon{font-family:"Instrument Serif",serif;font-size:var(--t-fort);line-height:1.25}
-.tbl .chiffres{display:flex;gap:14px;font-size:var(--t-fin);color:var(--os-eteint)}
-.tbl .chiffres b{display:block;font-family:"Martian Mono",monospace;font-size:var(--t-fort);color:var(--os);font-weight:600;white-space:nowrap}
-.tbl .chiffres>div{flex:1;min-width:0}
-.tbl .pied{margin-top:auto;display:flex;gap:8px}
-.tbl .pied .btn{padding:9px 12px;font-size:var(--t-petit);white-space:nowrap}
-/* Une table brûlée : laque désaturée et tampon en travers. Enseigner par le
-   refus marche mieux qu'un paragraphe. */
-.tbl.brulee{filter:saturate(.62)}
-/* Le refus est une BANDE dans le flux, pas un tampon en travers : posé sur la
-   carte, il recouvrait l'avantage maison et le nombre d'écarts — les deux
-   chiffres qui justifient précisément le refus. */
-.tbl.brulee::before{
-  content:attr(data-tampon);display:block;order:-1;margin-top:2px;
-  font-family:"Instrument Serif",serif;font-size:19px;line-height:1.2;letter-spacing:.02em;
-  color:var(--cinabre);padding:8px 11px;border-radius:9px;
-  background:color-mix(in oklab, var(--cinabre) 13%, transparent);
-  box-shadow:0 0 0 1px color-mix(in oklab, var(--cinabre) 42%, transparent) inset;
+
+@media (prefers-reduced-motion:reduce){
+  .salle-carte, .salle-carte>.photo{ transition:none }
+  .salle-carte:hover, .salle-porte:hover .salle-carte{ transform:none }
+  .salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo{ transform:scale(1.03) }
+}
+@media (max-width:860px){
+  .hall-heros{ min-height:min(78vh, 560px) }
+  .hall-titre{ font-size:clamp(56px, 16vw, 92px) }
+  .eventail{ display:none }
+  .salle-carte.grande{ min-height:220px }
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -329,11 +420,12 @@ input[type=range]{accent-color:var(--laiton);width:170px}
    qu'un même halo brun sur un même fond noir. La photo du lieu (embarquée,
    créditée — cf. build.mjs), floutée et assombrie, fait la salle derrière le
    croupier ; la lueur du filament et les lampes se posent PAR-DESSUS (::after). */
-.salle .decor{ position:absolute; inset:-12px; z-index:0; pointer-events:none;
-  background:var(--photo, none) center 20% / cover no-repeat, var(--sol);
-  filter:blur(4px) brightness(.45) saturate(1.1);
-  /* La photo s'efface vers le bas : nette autour du croupier, fondue sous le rail. */
-  mask-image:linear-gradient(#000 45%, transparent 100%); -webkit-mask-image:linear-gradient(#000 45%, transparent 100%) }
+.salle .decor{ position:absolute; inset:-18px; z-index:0; pointer-events:none;
+  background:var(--photo, none) center 30% / cover no-repeat, var(--sol);
+  filter:blur(7px) brightness(.36) saturate(1.1);
+  /* La photo fait toute la salle : pleine autour du croupier, retenue à 55 % sous le
+     rail — un fond de salle, pas un mur noir. Le feutre garde son contraste : il est opaque. */
+  mask-image:linear-gradient(#000 38%, rgba(0,0,0,.55) 100%); -webkit-mask-image:linear-gradient(#000 38%, rgba(0,0,0,.55) 100%) }
 .salle::after{
   content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
   background:
@@ -353,12 +445,12 @@ input[type=range]{accent-color:var(--laiton);width:170px}
 #v-table[data-lieu="boulevard"] .salle, #v-table[data-lieu="mainchaude"] .salle{
   --lampes:radial-gradient(18% 12% at 22% 6%, rgba(255,200,120,.28), transparent 70%), radial-gradient(18% 12% at 78% 6%, rgba(255,200,120,.28), transparent 70%) }
 #v-table[data-lieu="cotai"]{ --lueur:rgba(242,193,90,.46) }
-#v-table[data-lieu="cotai"] .salle .decor{ filter:blur(4px) brightness(.55) saturate(1.5) }
+#v-table[data-lieu="cotai"] .salle .decor{ filter:blur(7px) brightness(.44) saturate(1.5) }
 #v-table[data-lieu="cotai"] .salle{ --lampes:repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 3px, transparent 3px 90px) }
 #v-table[data-lieu="cotai"] .tapis{ --rail:#3A0F0C; --rail-clair:#5A1A14 }
-#v-table[data-lieu="neon"] .salle .decor, #v-table[data-lieu="aquarium"] .salle .decor{ filter:blur(4px) brightness(.48) saturate(1.4) }
+#v-table[data-lieu="neon"] .salle .decor, #v-table[data-lieu="aquarium"] .salle .decor{ filter:blur(7px) brightness(.4) saturate(1.4) }
 #v-table[data-lieu="cercle"]{ --lueur:rgba(212,180,106,.24) }
-#v-table[data-lieu="cercle"] .salle .decor{ filter:blur(5px) brightness(.4) saturate(.9) }
+#v-table[data-lieu="cercle"] .salle .decor{ filter:blur(8px) brightness(.34) saturate(.9) }
 /* Le Salon Privé : cuir capitonné et or, pas un feutre gris dans le noir. */
 #v-table[data-lieu="salonprive"]{ --rail-liseret:#E6C773; --feutre:#2A2D31; --feutre-clair:#3B4046; --dos-carte:#2E2416 }
 #v-table[data-lieu="salonprive"] .tapis{
@@ -368,8 +460,8 @@ input[type=range]{accent-color:var(--laiton);width:170px}
     repeating-linear-gradient(-45deg, rgba(0,0,0,.30) 0 1px, rgba(255,255,255,.06) 1px 2px, transparent 2px 28px),
     linear-gradient(180deg, rgba(255,255,255,.08), transparent 18%),
     linear-gradient(180deg, #221A16 0%, #100B09 45%, #070504 100%) }
-#v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(5px) brightness(.36) saturate(.95) }
-#v-table[data-lieu="reno"] .salle .decor{ filter:blur(5px) brightness(.4) saturate(.8) sepia(.3) }
+#v-table[data-lieu="salonprive"] .salle .decor{ filter:blur(8px) brightness(.34) saturate(1) }
+#v-table[data-lieu="reno"] .salle .decor{ filter:blur(8px) brightness(.34) saturate(.8) sepia(.3) }
 #croupierScene{ position:absolute; left:50%; top:0; transform:translateX(-50%); z-index:1;
   width:min(560px, 80%); height:calc(var(--salle-haut) + 170px); pointer-events:none }
 #jetonsCalque{ position:absolute; inset:0; z-index:8; pointer-events:none }
@@ -786,8 +878,6 @@ td.U{background:var(--ardoise)}
 .mp-ligne .btn:not(.creux){ min-height:48px }
 .mp-comment{ margin-top:14px; font-size:var(--t-fin); color:var(--os-eteint) }
 .mp-comment summary{ cursor:pointer; min-height:44px; display:flex; align-items:center }
-.mp-table .tbl{ margin:0 }
-.mp-table .tbl .pied .btn{ min-height:44px }
 /* Ta couleur = un jeton du rack, cerclé d'or quand il est choisi. Pas d'arc-en-ciel. */
 .couleurs{ display:flex; gap:6px; align-items:center; min-height:44px }
 .couleur{ cursor:pointer; transition:transform .14s var(--ressort), filter .2s; filter:saturate(.75) brightness(.85) }
@@ -883,11 +973,7 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 }
 @media (max-width:720px){
   :root{--t-ecran:31px;--t-section:24px;--t-cadran:50px;--t-verdict:72px}
-  .heros{grid-template-columns:1fr;gap:16px}
-  .eventail{height:160px}.eventail .carte{--w:88px}
   .duo{grid-template-columns:1fr}
-  nav{margin-left:0;width:100%;justify-content:flex-start;overflow-x:auto}
-  nav button{padding:7px 10px;font-size:var(--t-fin);white-space:nowrap}
   .tete{padding:8px 0}
   .scene .carte{--w:116px}.scene .groupe{gap:18px}
   .reponses button{width:92px;height:62px;font-size:23px}
@@ -1017,15 +1103,9 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   .siege.toi{ width:clamp(110px,17vw,150px) }
   .cercle{ width:26px; height:26px }
 }
-/* ── L'en-tête : 181 px, soit 27 % d'un téléphone ─────────────────────────
-   `nav` portait `flex-wrap:wrap` ET `overflow-x:auto` : le repli gagnait et le
-   défilement était du code mort. La barre se repliait sur deux lignes. */
 @media (max-width:759.98px){
-  #nav{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
-    scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch }
-  #nav::-webkit-scrollbar{ display:none }
-  #nav button{ flex:0 0 auto; scroll-snap-align:start; min-height:44px }
   .marque{ font-size:var(--t-corps) }
+  .fil{ font-size:var(--t-fin) }
 }
 
 /* ── Une modale ne doit jamais être amputée ───────────────────────────────
@@ -1037,8 +1117,6 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 @media (max-width:759.98px){
   .marque .nom{display:none}
   .marque{gap:0}
-  nav{margin-left:0}
-  nav button{padding:9px 10px}
 }
 
 /* ══════════════════════════════════════════════════════════════════════
