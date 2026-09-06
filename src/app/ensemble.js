@@ -33,7 +33,10 @@ async function ouvrirSalon(code) {
     $("mpRelais").textContent = "Relié par " + url.replace("wss://", "").split(":")[0] + ". Les messages passent en clair par un courtier public.";
     rendrePairs(); rendreClassement();
   } catch (e) {
-    $("mpEtat").innerHTML = `Aucun courtier n'a répondu. Deux causes possibles : ton réseau bloque les connexions WebSocket, ou tu es sur une page publiée dont la politique de sécurité les interdit — dans ce cas, joue sur <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">la version GitHub Pages</a>. <b>Le reste de l'application fonctionne normalement.</b>`;
+    // ⚠️ L'adresse vient de visio.mjs (LIEN_SITE), la seule du dépôt, et le texte du
+    // lien ne nomme AUCUN hébergeur : « la version GitHub Pages » deviendra faux le
+    // jour du déménagement, et personne ne pense à relire un message d'erreur.
+    $("mpEtat").innerHTML = `Aucun courtier n'a répondu. Deux causes possibles : ton réseau bloque les connexions WebSocket, ou tu es sur une page publiée dont la politique de sécurité les interdit — dans ce cas, joue sur <a href="${M.visio.LIEN_SITE}" target="_blank" rel="noopener">la version en ligne</a>. <b>Le reste de l'application fonctionne normalement.</b>`;
     son("ko");
   }
 }

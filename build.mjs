@@ -94,8 +94,10 @@ const corps = readFileSync("src/app/corps.html", "utf8");
 // il vient après eux trois, et après ensemble.js dont il complète l'écran d'accueil.
 // visio.js (les têtes des amis sur les sièges, le bouton Caméra, le relais de ⚙) écoute
 // les événements « sabot:reseau-* » que reseau.js émet : il vient juste après lui.
+// dons.js (la caisse) ne dépend que du socle : $ pour les deux états de la page, aller()
+// pour la porte vers la table entre amis. Il tient en vingt lignes et ne branche rien d'autre.
 const MORCEAUX = ["socle.js","cartes.js","salon.js","table.js","jetons.js","croupier.js",
-  "exercices.js","strategie.js","concentration.js","ensemble.js","reseau.js","visio.js","progres.js","clavier.js","demarrage.js"];
+  "exercices.js","strategie.js","concentration.js","ensemble.js","reseau.js","visio.js","dons.js","progres.js","clavier.js","demarrage.js"];
 const app = MORCEAUX.map(f => {
   try { return `\n/* ═══ ${f} ═══ */\n` + readFileSync(`src/app/${f}`, "utf8"); }
   catch (e) { throw new Error(`morceau d'interface manquant : src/app/${f}`); }

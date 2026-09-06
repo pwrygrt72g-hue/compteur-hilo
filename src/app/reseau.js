@@ -29,7 +29,12 @@ const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, 
   // Le crochet de visio.js : un message du courtier lui est d'abord proposé (sujets visio/*),
   // et il le garde ou le rend. net.mjs n'a qu'un seul onMessage, posé à la connexion.
   onBrut: null };
-const PAGES_URL = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
+// 🚨 L'ADRESSE DU SITE NE VIT PLUS ICI. Elle était recopiée dans quatre fichiers,
+// et les textes NOMMAIENT l'hébergeur (« la version GitHub Pages ») — le jour où
+// l'application déménage sous son propre nom de domaine, une copie oubliée envoie
+// un joueur sur une page morte, et une phrase oubliée lui donne un nom d'hébergeur
+// qui n'est plus le nôtre. Une seule constante, dans visio.mjs.
+const PAGES_URL = M.visio.LIEN_SITE;
 // Ta couleur à la table = un JETON du rack (jetons.js), pas une pastille arc-en-ciel :
 // la pastille devant ton nom en prend la face. Une ancienne couleur enregistrée
 // qui n'est plus dans la liste retombe sur un jeton tiré au sort.
@@ -72,8 +77,16 @@ document.addEventListener("sabot:table", rendreTableMP);
 async function rsConnecter(code) {
   const sujet = NET.sujetTable(code);
   if (window.__reseauTransport) {
-    const t = window.__reseauTransport({ sujet, id: RS.moi, onMessage: m => rsRecevoir(m) });
-    return { publier: o => t.publier(JSON.stringify(o)), fermer: () => t.fermer && t.fermer(), nom: "transport local" };
+    // ⚠️ `onBrut` et `brut` sont passés pour que la VISIO puisse vivre sous un
+    // transport injecté. Sans eux, une capture ou une sonde ouvrait bien la table
+    // mais jamais une seule vignette reliée : le seul écran qu'on pouvait regarder
+    // était « en attente », et la limite « son seul » — celle qu'il faut justement
+    // relire à l'œil — n'était visible NULLE PART hors d'un vrai courtier.
+    // Un transport qui ne les fournit pas (la sonde d'aujourd'hui) est inchangé :
+    // `brut` vaut alors null, visio.js ne démarre pas, comme avant.
+    const t = window.__reseauTransport({ sujet, id: RS.moi, onMessage: m => rsRecevoir(m),
+      onBrut: (s, m) => { if (RS.onBrut) RS.onBrut(s, m); } });
+    return { publier: o => t.publier(JSON.stringify(o)), fermer: () => t.fermer && t.fermer(), nom: "transport local", brut: t.brut || null };
   }
   const { api, url } = await NET.connecterAvecRepli({
     clientId: "hilo-" + RS.moi + "-" + Date.now().toString(36).slice(-4),
@@ -90,7 +103,7 @@ async function rsConnecter(code) {
 function rsRecevoir(m) { if (RS.salle) RS.salle.recevoir(m, Date.now()); }
 function rsEtatTexte(t) { const e = $("mpEtat"); if (e) e.textContent = t; }
 function rsEchec() {
-  $("mpEtat").innerHTML = `Aucun courtier joignable en trois secondes. Dans un Artifact publié, les connexions WebSocket sont bloquées sans un mot : la table à plusieurs se joue sur <a href="${PAGES_URL}" target="_blank" rel="noopener">pwrygrt72g-hue.github.io/compteur-hilo</a>. <b>Le reste de l'application marche normalement.</b>`;
+  $("mpEtat").innerHTML = `Aucun courtier joignable en trois secondes. Dans un Artifact publié, les connexions WebSocket sont bloquées sans un mot : la table à plusieurs se joue sur <a href="${PAGES_URL}" target="_blank" rel="noopener">la version en ligne</a>. <b>Le reste de l'application marche normalement.</b>`;
   son("ko");
 }
 function rsDeconnecte() {

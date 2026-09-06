@@ -27,7 +27,7 @@ const TAILLES = [
   ["tablette paysage", 1024, 768], ["portable", 1280, 800], ["grand écran", 1920, 1080],
 ];
 const VUES = process.argv.slice(2).length ? process.argv.slice(2)
-  : ["accueil", "salon", "table", "exercices", "strategie", "concentration", "ensemble", "progres"];
+  : ["accueil", "salon", "table", "exercices", "strategie", "concentration", "ensemble", "progres", "dons"];
 
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
 const serveur = createServer((q, r) => {

@@ -6,6 +6,14 @@
    (src/camera.mjs — la même caméra que le détecteur du mode Concentration, comptée par
    références).
 
+   🚨 UNE VIGNETTE PAR SIÈGE, MAIS PAS UNE IMAGE PAR SIÈGE. La table compte huit
+   places ; la vidéo s'arrête à six personnes (visio.mjs, VIDEO_MAX) parce que la
+   SIGNALISATION ne suit pas au-delà — pas le débit, la signalisation. Les sièges
+   au-delà gardent leur vignette, leur silhouette et leur nom, et la vignette DIT
+   « son seul » : on s'entend et on se parle, on ne se voit pas. Ne va pas
+   « réparer » ça en masquant ces vignettes ou en les noircissant : une place
+   occupée qui n'affiche rien, c'est un siège qu'on croit vide.
+
    🔄 CE FICHIER A LONGTEMPS DIT « JAMAIS de micro : on compte en silence ». C'ÉTAIT UNE
    RÈGLE, ELLE EST LEVÉE — Léo, le 6 septembre 2026 : « c'est possible de rajouter la
    possibilité de parler entre nous sur la table ? » Le raisonnement d'origine (la parole
@@ -211,27 +219,80 @@ function rvEtatMoi() {
   if (e === "coupee") return ["ko", "coupée", r];
   return ["eteinte", "coupée", "Ta caméra est coupée : clique « Caméra » pour que tes amis te voient."];
 }
+// Suis-je en SON SEUL avec cet ami ? Le maillage relie huit personnes, mais les
+// images s'arrêtent aux six premières assises (visio.mjs, VIDEO_MAX) — au-delà on
+// se parle et on s'entend, on ne se voit pas. On lit le drapeau sur la paire
+// elle-même plutôt que de passer par onEtat : les états ICE (« connected »…)
+// écrasent tout ce qu'on poserait dans RV.etats, et le rationnement de l'image
+// n'est pas un état de connexion, c'est une propriété de la paire.
+//
+// 🚨 CE DRAPEAU DIT « NI LUI NI MOI », ET C'EST CE QUI REND LA PHRASE HONNÊTE.
+// Il a dit autre chose : jusqu'au 6 septembre 2026 il répondait « est-ce que
+// J'ENVOIE mon image à lui ? », alors que la vignette qu'il étiquette montre ce
+// que JE REÇOIS DE LUI. Les deux côtés ne classaient pas la table pareil (tri sur
+// une horloge locale) : sur huit personnes, 12 paires sur 28 étaient asymétriques,
+// et l'écran de celui qui ne recevait rien affichait « Relié, mais sa caméra est
+// coupée » sur quelqu'un dont la caméra était allumée et qui émettait — soit
+// exactement ce que le 🚨 vingt lignes plus bas interdit. visio.mjs décide
+// désormais par PAIRE, sur une liste identique chez les deux : si l'un est en son
+// seul, l'autre l'est aussi. Ne rebranche pas ce drapeau sur autre chose sans
+// rendre la règle symétrique d'abord.
+function rvSonSeul(id) {
+  const p = RV.visio && RV.visio.pairs && RV.visio.pairs.get(id);
+  return !!p && p.image === false;
+}
+// ⚠️ LES DEUX NOMBRES DE CES PHRASES SORTENT DES CONSTANTES, jamais de la frappe.
+// Écrits en toutes lettres, ils MENTENT dès qu'on touche à VIDEO_MAX — et vu en
+// capture le 6 septembre : un écran servi avec un plafond de trois annonçait
+// tranquillement « vidéo limitée à 5 amis ». Un chiffre faux dans un message
+// d'explication est pire que pas de message : il envoie chercher une cause qui
+// n'existe pas.
+// ⚠️ ON COMPTE DES PERSONNES ASSISES, PLUS DES « AMIS VISIBLES ». Depuis que le
+// rationnement se décide par PAIRE (visio.mjs, repartirImages), la règle n'est plus
+// « tu vois cinq personnes » — celui qui est hors de la tête de liste n'en voit
+// AUCUNE. Ce qui est vrai pour tout le monde, c'est le seuil : les VIDEO_MAX
+// premières personnes assises échangent leurs images. C'est donc ça qu'on affiche.
+const rvPersonnesVideo = () => VI.VIDEO_MAX || 6;
+const rvPersonnesMax = () => VI.PAIRS_MAX || 8;
 // Ce que dit la vignette d'un ami sans flux, d'après l'état ICE de sa paire.
 function rvEtatPair(id, st) {
   if (st.absent) return ["parti", "parti", "Il a quitté la table."];
   const e = RV.etats.get(id);
   // 🚨 « VIDÉO BLOQUÉE », « CINQ CAMÉRAS », « PAS DE VISIO » : trois libellés qui ne
   // parlaient que de l'image, alors que la VOIX voyage sur la même connexion et tombe
-  // avec elle. Dans les trois cas on ne peut ni entendre ni être entendu — et pour la
-  // sixième personne d'une table, aucune RTCPeerConnection n'est même créée (visio.mjs,
-  // ajouter() rend null). Le dire « caméra » laissait croire qu'il restait la parole.
+  // avec elle. Dans les trois cas on ne peut ni entendre ni être entendu, et le dire
+  // « caméra » laissait croire qu'il restait la parole.
+  // ⚠️ CE BLOC A LONGTEMPS AJOUTÉ « et pour la sixième personne d'une table, aucune
+  // RTCPeerConnection n'est même créée » : c'était FAUX, et c'est précisément le
+  // couplage que visio.mjs a défait. La sixième personne a une connexion complète et
+  // une voix ; le refus sec (`ajouter()` rend null) ne tombe qu'au NEUVIÈME arrivant,
+  // quand PAIRS_MAX est atteint. La phrase enseignait l'hypothèse « PAIRS_MAX =
+  // VIDEO_MAX » que ce module passe cinquante lignes à démonter.
   if (RV.bloques.has(id) && e !== "connected" && e !== "completed")
     return ["bloque", "ni vu ni entendu", RV.visio && RV.visio.sansRelais ? VI.SANS_RELAIS_MESSAGE : VI.AVEC_RELAIS_MESSAGE];
   if (!RV.visio) return ["attente", "en attente", "La visio n'est pas reliée : ni image ni voix."];
-  if (e === "refuse") return ["ko", "table pleine", "Cinq liens au plus : la sixième personne n'est ni vue ni entendue."];
+  if (e === "refuse") return ["ko", "table pleine", rvPersonnesMax() + " personnes au plus autour de la table : au-delà, on n'est ni vu ni entendu."];
   if (e === "indisponible") return ["ko", "ni voix ni vidéo", "Ce navigateur n'a pas WebRTC : ni image ni voix."];
   if (e === "parti" || e === "closed") return ["parti", "parti", "Sa connexion est fermée."];
   if (e === "disconnected") return ["connexion", "coupure…", "Sa connexion hoquette ; on réessaie. Ni image ni voix en attendant."];
   // Relié sans image : la silhouette reste, mais si sa VOIX arrive elle s'éclaire et le
   // dit — « sans caméra » sur quelqu'un qu'on est en train d'entendre serait faux.
-  if (e === "connected" || e === "completed") return RVX.parlent.has(id)
-    ? ["sanscam", "parle", "Il parle — sa caméra est coupée."]
-    : ["sanscam", "sans caméra", "Relié, mais sa caméra est coupée."];
+  //
+  // 🚨 ET « SANS CAMÉRA » SERAIT FAUX AUSSI POUR UN SON SEUL : sa caméra est
+  // peut-être allumée, c'est NOUS qui ne prenons pas son image. Le lui reprocher
+  // sur sa vignette enverrait quelqu'un cliquer sur un bouton déjà allumé, puis
+  // conclure que l'application est cassée. La limite se DIT, elle ne se devine
+  // pas : la silhouette et le nom restent (jamais un rectangle noir), et le titre
+  // explique que la voix, elle, passe dans les deux sens.
+  if (e === "connected" || e === "completed") {
+    const seul = rvSonSeul(id), qui = st.nom || "Ce joueur";
+    if (RVX.parlent.has(id)) return ["sanscam", "parle", seul
+      ? qui + " parle. Vous vous entendez, mais l'image s'arrête aux " + rvPersonnesVideo() + " premières personnes assises : aucun de vous deux ne voit l'autre."
+      : "Il parle — sa caméra est coupée."];
+    return seul
+      ? ["sanscam", "son seul", "L'image s'arrête aux " + rvPersonnesVideo() + " premières personnes assises — tu es en son seul avec " + qui + " : vous vous entendez et vous vous parlez normalement, mais aucun de vous deux ne voit l'autre."]
+      : ["sanscam", "sans caméra", "Relié, mais sa caméra est coupée."];
+  }
   return ["connexion", "connexion…", "La visio se négocie avec " + (st.nom || "ce joueur") + "."];
 }
 function rvRendreVignette(t, st) {
@@ -378,7 +439,7 @@ if ($("turnUrl")) {
    · L'OR EST AU JEU, LE JADE EST À LA VOIX. L'or dit « c'est son tour », « c'est sa
      mise », « sa vidéo est reliée » ; un anneau or qui voudrait dire « il parle » se
      lirait comme « c'est à lui de jouer ». Deux langages, jamais mélangés.
-   · Là où la vidéo marche, la voix marche : GitHub Pages oui, artefact non (le
+   · Là où la vidéo marche, la voix marche : le site oui, artefact non (le
      WebSocket y est bloqué et reseau.js le dit en moins de trois secondes — on n'arrive
      jamais jusqu'ici, donc le micro n'est jamais demandé pour rien). Aucun chemin
      d'échec de plus.

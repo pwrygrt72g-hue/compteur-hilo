@@ -2,10 +2,16 @@
 //
 // ══ Comment ça marche ══════════════════════════════════════════════════════
 // Maillage complet (mesh) : chaque pair ouvre UNE RTCPeerConnection vers
-// chacun des autres, jusqu'à cinq pairs — un par siège. À cinq, ça fait
-// quatre flux sortants de 320×240 à 15 i/s par personne : ~1 Mbit/s de
-// montée, ce qu'une 4G moyenne tient. Au-delà de cinq il faudrait un serveur
-// qui mélange les flux, et on n'en a pas.
+// chacun des autres. Au-delà, il faudrait un serveur qui mélange les flux, et
+// on n'en a pas.
+//
+// 🚨 LE MAILLAGE NE SUIT PAS LE NOMBRE DE SIÈGES — c'est le couplage qu'on a
+// défait le 6 septembre 2026, quand la table est passée à huit places. DEUX
+// nombres, pas un : PAIRS_MAX (les CONNEXIONS, donc les VOIX) et VIDEO_MAX
+// (les IMAGES). Les VIDEO_MAX premières personnes assises échangent leurs images ;
+// celles d'après sont en SON SEUL : elles parlent, elles entendent, elles gardent
+// leur silhouette et leur nom — elles n'échangent pas d'images. À huit, ce sont
+// donc la septième et la huitième. Voir le gros bloc au-dessus de ces constantes.
 //
 // La SIGNALISATION (offres, réponses, candidats ICE) passe par le courtier
 // MQTT public de net.mjs — le même que les cartes du mode « À plusieurs ». Pas
@@ -42,17 +48,18 @@
 // `adieu` au départ — et le TESTAMENT MQTT de net.mjs publie cet adieu à ta
 // place si ton onglet meurt brutalement (le courtier le fait dès que la
 // connexion tombe, en moins d'une seconde). Sans testament, un pair mort
-// n'est vu qu'au silence : sept secondes sans salut, ou trois si ICE est
-// tombé en même temps. Dans tous les cas moins de douze.
+// n'est vu qu'au silence : sept secondes sans salut, ou quatre et demie si ICE
+// est tombé en même temps. Dans tous les cas moins de douze.
 //
 // ══ Où ça marche, où c'est mort ═══════════════════════════════════════════
-// · GitHub Pages (https://pwrygrt72g-hue.github.io/compteur-hilo/) : tout
-//   marche — WebSocket vers le courtier, caméra, WebRTC, STUN et TURN.
+// · LE SITE (LIEN_SITE, plus bas — une seule constante dans tout le dépôt,
+//   parce que l'adresse changera) : tout marche — WebSocket vers le courtier,
+//   caméra, WebRTC, STUN et TURN.
 // · L'ARTEFACT Claude : MORT. Sa politique de sécurité bloque tout WebSocket
 //   externe, SANS erreur visible — la connexion échoue en quelques
 //   millisecondes et net.mjs le dit (« connexion refusée »). La visio doit
 //   détecter ça en moins de trois secondes (`sonderReseau`, 2,5 s au plus) et
-//   afficher `MESSAGE_ARTEFACT` avec le lien GitHub Pages, plutôt qu'une
+//   afficher `MESSAGE_ARTEFACT` avec le lien du site, plutôt qu'une
 //   roue qui tourne. La caméra y est le plus souvent refusée aussi (iframe
 //   sans droit caméra) — camera.mjs le dit à son tour.
 //
@@ -101,14 +108,88 @@
 
 import { sujet } from "./net.mjs";
 
-export const PAIRS_MAX = 5;
+// ══ COMBIEN DE MONDE, ET COMBIEN D'IMAGES ═════════════════════════════════
+// 🚨 DEUX NOMBRES, ET IL FAUT QU'ILS RESTENT DEUX. Le maillage accueille huit
+// personnes (PAIRS_MAX) ; les images, elles, s'arrêtent à six (VIDEO_MAX).
+// ⚠️ AUCUN DES DEUX N'EST LE NOMBRE DE SIÈGES. Celui-là vit ailleurs (NB_SIEGES,
+// table-reseau.mjs) et ce fichier n'a pas à le recopier : un commentaire qui
+// annonce un chiffre qu'il ne possède pas devient faux le jour où l'autre bouge,
+// et personne ne va relire un commentaire. Faire suivre le maillage par les
+// sièges — « autant de vignettes que de places » — casse la visio de TOUT LE
+// MONDE, et pas pour la raison qu'on croit : le mur n'est pas le débit, c'est la
+// SIGNALISATION.
+//
+// ⚠️ MESURÉ LE 6 SEPTEMBRE 2026, en faisant tourner ce fichier contre un faux
+// courtier qui horodate ce qu'il délivre (scénario : une table installée, une
+// personne de plus qui entre — c'est elle qui prend la salve). Rappel du quota
+// d'emqx : ~10 messages par seconde et par client, et ce qui dépasse est jeté
+// SANS RIEN DIRE.
+//   maillage = sièges, réglages d'avant, 8 personnes ......... 20 msg/s
+//   + lots de candidats à 2,5 s, salut à 3 s, les deux gigues . 13 msg/s
+//   + images bornées à VIDEO_MAX ............................. 13 msg/s
+//
+// 🚨 LISEZ BIEN LA DERNIÈRE LIGNE : VIDEO_MAX NE FAIT PAS BAISSER LES MESSAGES.
+// C'est contre-intuitif et ça vaut d'être écrit, parce que quelqu'un le
+// re-supposera : une paire SANS image coûte exactement la même signalisation
+// qu'une paire avec (même offre, même réponse, mêmes candidats ICE — ils sont
+// par CONNEXION, pas par piste). Ce qui fait baisser les messages, ce sont les
+// cadences et les gigues, au-dessus. VIDEO_MAX, lui, économise du DÉBIT : cinq
+// flux sortants au lieu de sept, et plus sobres (PALIERS_ENCODAGE).
+// ⚠️ Il n'y a QU'UNE façon de descendre à 7 msg/s à huit : refuser la CONNEXION
+// aux deux derniers, donc leur retirer la voix. Ç'a été mesuré, et écarté — voir
+// le bloc suivant. On ne fait pas taire quelqu'un pour gagner trois messages.
+//
+// Pour mémoire, ce qui TOURNAIT EN PRODUCTION à cinq personnes : 14 msg/s. Le
+// même fichier après ce changement, à cinq : 10 msg/s. Autrement dit une table
+// de huit coûte à peu près ce que coûtait une table de cinq la veille — et une
+// table de cinq, elle, est passée sous le quota.
+//
+// ⚠️ Ce qui a été essayé et qui NE MARCHE PAS, pour qu'on ne le refasse pas :
+// ralentir la file d'envoi (ENVOI_ECART_MS de 130 à 200 puis 260) ne change
+// RIEN à la pointe reçue. Le levier est le NOMBRE de messages, jamais leur
+// cadence — un émetteur plus lent est un émetteur qui parle plus longtemps.
+//
+// 🚨 ET LA VOIX N'EST PAS PLAFONNÉE. Elle coûte 24 à 40 kbit/s par pair : à
+// huit, ~280 kbit/s, rien du tout à côté d'une seule vignette. Quelqu'un qui
+// n'a pas d'image DOIT entendre et être entendu normalement — c'est le sens
+// même de « tu es en son seul », et une table où deux personnes sont muettes
+// n'est pas une table. Ne « simplifie » pas ces deux constantes en une seule :
+// ce serait rendre muettes les deux dernières personnes assises.
+//
+// ⚠️ Le prix payé, dit franchement : à huit, la pointe reçue (13 msg/s) reste
+// au-dessus du quota d'emqx pendant la seconde où la dernière personne entre.
+// Ce n'est pas un échec, c'est le fonctionnement décrit plus haut — un message
+// jeté est renvoyé après REOFFRE_MS, « quatre secondes, jamais la visio », et
+// c'est celui qui ARRIVE qui les attend, pas la table. Le marché est donc :
+// la huitième personne met quelques secondes de plus à voir tout le monde,
+// contre deux personnes définitivement muettes. On a choisi les secondes.
+export const PAIRS_MAX = 8;    // CONNEXIONS, donc VOIX : tout le monde, jusqu'à sept pairs
+export const VIDEO_MAX = 6;    // IMAGES : moi et cinq vignettes distantes, pas une de plus
+// Les paliers d'encodage de MA caméra, choisis d'après le nombre de pairs à qui
+// je l'envoie vraiment. La vignette fait 56 à 96 px de côté CSS, soit 112 à 192
+// px physiques : 320 px est DÉJÀ 1,7 fois trop grand, et la réduction ne se voit
+// pas. À cinq images sortantes : ~0,75 Mbit/s de montée, moins qu'aujourd'hui à
+// quatre. On les recalcule à chaque arrivée et à chaque départ.
+// ⚠️ Ça se règle ICI, sur l'ÉMETTEUR, jamais dans camera.mjs : la caméra est
+// PARTAGÉE avec le mode Concentration, et un applyConstraints dégraderait aussi
+// le détecteur de présence, qui n'a rien demandé.
+export const PALIERS_ENCODAGE = [
+  { pairs: 4, bits: 250000, images: 15, reduction: 1 },      // 1 à 4 : ce qu'on faisait déjà
+  { pairs: 7, bits: 150000, images: 12, reduction: 1.33 },   // 5 et plus : 240×180, invisible
+];
 // Ce qu'un pair peut dire de son micro. « ferme » (pas de micro du tout) et « coupe »
 // (tenu, mais muet) se ressemblent pour l'oreille — jamais pour ce qu'on en fait : on
 // relance quelqu'un en sourdine, on n'attend rien de quelqu'un sans micro. Le SILENCE,
 // lui, ne s'en déduit pas : il se lit sur le son reçu (l'anneau de parole).
 export const ETATS_VOIX = ["ferme", "coupe", "ouvert"];
-export const LIEN_PAGES = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
-export const MESSAGE_ARTEFACT = "La visio ne peut pas marcher sur cette page publiée : sa politique de sécurité bloque les connexions vers le courtier. Ouvre le site pour voir tes amis : " + LIEN_PAGES;
+// 🚨 L'ADRESSE DU SITE, UNE FOIS POUR TOUTES. Elle était recopiée à six endroits,
+// et — pire — les textes NOMMAIENT l'hébergeur (« la version GitHub Pages »).
+// Le jour où l'application déménage sous son propre nom de domaine, une constante
+// se change ; six phrases qui nomment un hébergeur, on en oublie toujours une, et
+// celle-là envoie un joueur sur une page morte. Les textes visibles disent donc
+// « le site » ou « la version en ligne » — jamais qui l'héberge.
+export const LIEN_SITE = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
+export const MESSAGE_ARTEFACT = "La visio ne peut pas marcher sur cette page publiée : sa politique de sécurité bloque les connexions vers le courtier. Ouvre le site pour voir tes amis : " + LIEN_SITE;
 // STUN seul : deux serveurs de Google, gratuits, qui ne font qu'apprendre à chacun
 // son adresse publique. C'est ce qu'on a quand aucun relais n'est configuré.
 export const SERVEURS_STUN = ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"];
@@ -145,11 +226,41 @@ export function serveursIce(turn) {
 export const relaisConfigure = turn => serveursIce(turn).length > 1;
 // La liste par défaut, sans relais. Gardée pour qui l'importait.
 export const SERVEURS_ICE = serveursIce(null);
-export const SALUT_INTERVALLE_MS = 2000;   // un salut toutes les 2 s (quarante octets — rien, même à cinq)
+export const SALUT_INTERVALLE_MS = 3000;   // un salut toutes les 3 s (quarante octets — mais huit personnes en émettent)
+// ⚠️ LES DEUX GIGUES. Elles ne « lissent » pas par élégance : sans elles, huit
+// navigateurs qui ouvrent la table à la même seconde envoient leur salve à la
+// même seconde, et le courtier en jette la moitié. Mesuré : le seul réglage des
+// cadences, sans gigue, laissait la pointe à 22 msg/s au lieu de 13.
+// 🚨 LA GIGUE DÉCALE TOUT LE CALENDRIER, pas seulement le premier salut : un
+// setTimeout suivi d'un setInterval PARTI EN MÊME TEMPS que celui des autres se
+// resynchronise dès la deuxième ronde, et on n'a rien gagné. C'est la faute qui
+// a été faite d'abord, et elle ne se voit pas — les chiffres, eux, la voient.
+export const GIGUE_SALUT_MS = 1500;        // 0 à 1,5 s avant mon premier salut, puis l'horloge en découle
+export const GIGUE_OFFRE_MS = 1200;        // 0 à 1,2 s avant ma première offre à un pair
 export const SILENCE_MAX_MS = 7000;        // 7 s sans salut = parti (repli si le testament n'est pas arrivé)
-export const SILENCE_ICE_MS = 3000;        // ICE coupé ET 3 s sans salut = parti (un onglet mort, pas un réseau qui hoquette)
+// 🚨 CES DEUX SEUILS SE LISENT EN NOMBRE DE SALUTS, JAMAIS EN SECONDES. Ils comptent
+// des saluts manqués ; le jour où SALUT_INTERVALLE_MS bouge et qu'eux ne bougent pas,
+// ils changent de sens sans que rien ne le dise. C'est arrivé le 6 septembre 2026 : le
+// salut est passé de 2 s à 3 s pour tenir sous le quota du courtier, et ce seuil-ci est
+// resté à 3 s. Le rapport est alors tombé à 1,00 — c'est-à-dire ZÉRO marge : mesuré, un
+// pair PARFAITEMENT VIVANT qui saluait à la cadence normale mais dont ICE hoquetait
+// était retiré à 3,00 s, avant même son deuxième salut. Or « disconnected » est l'état
+// passager par excellence (4G, wifi qui vacille) — exactement la population que le
+// travail sur le relais vise — et le retrait jette la RTCPeerConnection entière, donc
+// les cinq redémarrages ICE prévus, là où un simple redémarrage suffisait.
+// ⚠️ ET LES DEUX SIGNAUX NE SONT PAS INDÉPENDANTS : le salut passe par le courtier,
+// donc par le même réseau qu'ICE. Un hoquet les retarde ENSEMBLE — la coïncidence que
+// le commentaire d'origine croyait improbable est en fait le cas courant.
+// 4500 ms rend le rapport de 1,5 qu'avait la version d'avant (3000 / 2000) : il faut
+// rater un salut ENTIER pour être déclaré parti, et la promesse du haut de ce fichier
+// (« dans tous les cas moins de douze secondes ») tient toujours.
+export const SILENCE_ICE_MS = 4500;        // ICE coupé ET un salut entier manqué = parti (un onglet mort, pas un réseau qui hoquette)
 export const ENVOI_ECART_MS = 130;         // un message par 130 ms par client : sous le quota d'emqx (~10/s), mesuré
-export const LOT_CANDIDATS_MS = 250;       // les candidats ICE partent par lots de 250 ms
+// 2,5 s : les candidats d'une paire partent en UN lot à la fin de la collecte
+// (elle dure ~0,6 s) plutôt qu'en trois. Trois messages deviennent un, par paire
+// et par côté — c'est la moitié de l'économie mesurée. Le prix est ~1,5 s de plus
+// avant que l'image apparaisse ; on l'a payé volontiers.
+export const LOT_CANDIDATS_MS = 2500;      // les candidats ICE partent par lots de 2,5 s
 export const ATTENTE_POLIE_MS = 2500;      // le poli laisse l'impoli offrir d'abord
 export const REOFFRE_MS = 4000;            // une offre sans réponse est renvoyée après 4 s
 
@@ -224,7 +335,9 @@ const hex = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); retur
 //   onDepart(id)              ce pair est parti, sa vignette doit disparaître
 //   onVoix(id, voix)          ce pair dit où en est SON micro : « ouvert », « coupe », « ferme »
 //   onEtat(id, etat)          ice : new·checking·connected·completed·disconnected·failed·closed
-//                             + refuse (sixième pair), + parti,
+//                             + refuse (au-delà de PAIRS_MAX personnes, donc au
+//                               NEUVIÈME arrivant — pas au sixième : celui-là est
+//                               connecté, il est seulement en son seul), + parti,
 //                             + bloque (ICE `failed` : la connexion directe ne passe pas —
 //                               `api.sansRelais` dit si un relais aurait pu aider)
 // 🚨 `onFlux` NE VOIT QUE LA VIDÉO, `onAudio` QUE LA VOIX — deux rappels, jamais un
@@ -245,6 +358,11 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
   const pairs = new Map();
   const base = `${sujet(salon)}/visio/`;
   let local = flux, localMicro = micro, salutMinuteur = null, menageMinuteur = null, ferme = false;
+  // 🚨 L'INSTANT OÙ JE ME SUIS ASSIS, ET IL VOYAGE. C'est la seule donnée qui permet
+  // aux deux côtés d'une paire de classer la table DANS LE MÊME ORDRE — voir le gros
+  // bloc devant repartirImages(). Il part dans le salut, qui est déjà périodique :
+  // zéro message de plus, exactement comme l'état de ma voix.
+  const monArrivee = Date.now();
   const journal = (...a) => { if (onJournal) try { onJournal(a.join(" ")); } catch (_) {} };
   const etat = (id, e) => { if (onEtat) try { onEtat(id, e); } catch (_) {} };
   // Ce qu'un pair dit de SON micro : « ouvert », « coupe », « ferme ». On ne le déduit
@@ -273,7 +391,7 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
   // sous le quota du courtier, se rattrapent tout seuls à la prochaine ronde — sans
   // quoi un badge « en sourdine » pourrait rester faux jusqu'à la fin de la partie.
   let maVoix = "ferme";
-  const salut = a => pousser(a || "tous", { t: "salut", n: nom, v: maVoix });
+  const salut = a => pousser(a || "tous", { t: "salut", n: nom, v: maVoix, a: monArrivee });
 
   const disponible = () => typeof RTCPeerConnection === "function";
   // Une offre ou une réponse emporte les candidats déjà connus : si elle doit être
@@ -316,11 +434,116 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
   // l'offreur est toujours l'un de nous deux, celui qui répond en hérite. Ne pas
   // séparer ni inverser ces deux lignes.
   //
+  // ── Qui a droit à l'image, et à quelle qualité ───────────────────────────
+  // 🚨 LA RÈGLE DOIT DONNER LA MÊME RÉPONSE DES DEUX CÔTÉS D'UNE PAIRE. Ce n'est
+  // pas une élégance : `p.image` est lu par l'écran pour dire « vous êtes en son
+  // seul, vous ne vous voyez pas » (app/visio.js, rvSonSeul). Une paire où l'un
+  // envoie et l'autre non fait afficher à celui qui ne reçoit rien « sa caméra
+  // est coupée » — sur quelqu'un dont la caméra est allumée et qui émet.
+  //
+  // 🚨 ELLE NE L'A PAS TOUJOURS FAIT, ET IL FAUT DIRE POURQUOI. La règle d'avant
+  // triait les pairs par `ne`, l'instant où JE les ai rencontrés, et donnait
+  // l'image aux VIDEO_MAX - 1 premiers. Le commentaire qui l'accompagnait
+  // affirmait « les deux navigateurs ont vu la table dans le même ordre, donc ils
+  // tombent d'accord tout seuls » : c'est FAUX, et mesuré faux. `ne` est une
+  // horloge LOCALE — le dernier arrivé rencontre tout le monde à la même seconde
+  // alors que tout le monde l'a rencontré en dernier. Mesuré le 6 septembre 2026,
+  // huit personnes qui s'asseyent l'une après l'autre, ce fichier contre un faux
+  // courtier : sur 28 paires, 12 étaient ASYMÉTRIQUES en régime établi (20 pendant
+  // les arrivées). Et le plafond lui-même sautait : quatre personnes RECEVAIENT
+  // six ou sept flux vidéo là où VIDEO_MAX promet « moi et cinq vignettes ».
+  //
+  // Ce qu'on fait à la place : chacun classe LA TABLE ENTIÈRE, lui compris, et les
+  // VIDEO_MAX premiers échangent leurs images ENTRE EUX. Une paire échange donc
+  // ses images si et seulement si SES DEUX MEMBRES sont dans cette tête de liste —
+  // un prédicat sur la PAIRE, calculé sur une liste identique chez les deux, donc
+  // forcément symétrique. Les autres sont en son seul avec tout le monde, ce que
+  // le haut de ce fichier décrit déjà mot pour mot (« elle n'échange pas d'images »).
+  // Chacun émet vers cinq personnes au plus, et en reçoit cinq au plus : les deux
+  // moitiés du budget sont tenues, pas seulement celle qui monte.
+  //
+  // 🚨 LA CLÉ DE TRI DOIT ÊTRE LA MÊME CHEZ TOUT LE MONDE — c'est là qu'était la
+  // faute. On trie donc sur l'instant d'arrivée que CHACUN ANNONCE (`a` du salut),
+  // jamais sur une horloge locale, et l'identifiant départage les ex æquo. Deux
+  // horloges mal réglées ne cassent RIEN : tout le monde lit les mêmes valeurs
+  // annoncées, donc tout le monde trie pareil ; seule l'équité de l'ordre en
+  // souffrirait, jamais sa symétrie.
+  // ⚠️ Tant qu'un pair n'a pas encore salué, on se rabat sur l'instant où on l'a
+  // rencontré — la valeur d'avant. C'est le SEUL moment où un désaccord subsiste,
+  // il dure au plus une ronde de saluts (SALUT_INTERVALLE_MS), et il se corrige
+  // tout seul. Un vieux client qui n'annonce rien retombe dans ce cas : la table
+  // se comporte alors comme avant ce correctif, pas plus mal.
+  //
+  // ⚠️ On la rejoue à CHAQUE arrivée, à CHAQUE départ et à chaque arrivée qu'on
+  // apprend, et c'est le point : une place qui se libère doit RENDRE SON IMAGE à
+  // quelqu'un. Sans ça, la septième personne resterait une silhouette jusqu'à la
+  // fin de la partie alors que la table s'est vidée — et personne ne comprendrait.
+  //
+  // L'instant d'arrivée d'un pair, tel que TOUT LE MONDE le lit : celui qu'il
+  // annonce, et à défaut celui où je l'ai rencontré.
+  // 🚨 LE DÉFAUT EST BORNÉ APRÈS LE MIEN, ET CE N'EST PAS UNE PRÉCAUTION GRATUITE :
+  // `ne` et `monArrivee` sortent de la MÊME horloge, et huit onglets ouverts d'un
+  // coup les posent dans la même milliseconde. L'égalité passe alors la main à
+  // l'identifiant — qui peut très bien me placer huitième de ma propre table et me
+  // retirer l'image que je viens de m'accorder. Or je me suis forcément assis AVANT
+  // de rencontrer qui que ce soit : `monArrivee + 1` n'invente rien, il écrit ce
+  // qu'on sait déjà. Un pair qui ANNONCE son arrivée n'est jamais concerné.
+  const arriveeDe = p => p.arrivee || Math.max(p.ne, monArrivee + 1);
+  function repartirImages() {
+    // ⚠️ Pas pendant la fermeture : fermer() retire les pairs UN PAR UN, et chaque
+    // retrait rejouerait la répartition sur des connexions qu'on est en train de
+    // clore — des replaceTrack sur des RTCPeerConnection fermées, une renégociation
+    // par pair, tout ça pour une table qui n'existe plus dans deux millisecondes.
+    if (ferme) return;
+    // 🚨 MOI COMPRIS : c'est ce qui rend la liste identique chez les huit. Une liste
+    // qui ne contient que MES pairs n'est pas la même que celle du voisin, et on
+    // retombe exactement sur le défaut qu'on vient de réparer.
+    const table = [{ id: moi, t: monArrivee }]
+      .concat([...pairs.values()].map(p => ({ id: p.id, t: arriveeDe(p) })));
+    table.sort((a, b) => a.t - b.t || (a.id < b.id ? -1 : 1));
+    const enImage = new Set(table.slice(0, VIDEO_MAX).map(x => x.id));
+    const jenSuis = enImage.has(moi);
+    const changes = [];
+    for (const p of pairs.values()) {
+      // Les deux conditions sont la même chez lui, sur la même liste : s'il me voit,
+      // je le vois, et si l'un de nous deux est hors de la tête de liste, personne
+      // n'envoie rien. C'est ça, « vous ne vous voyez pas » — et c'est vrai.
+      const droit = jenSuis && enImage.has(p.id);
+      if (p.image !== droit) { p.image = droit; changes.push(p); }
+    }
+    // On ne rebranche QUE ceux qui changent : un replaceTrack pour rien renégocie
+    // pour rien, et c'est huit fois rien qui fait une salve.
+    for (const p of changes) { journal(p.image ? "image rendue" : "image retirée", p.id); if (p.tr) brancher(p, "image"); }
+    reglerEncodage();
+  }
+  // Le palier d'encodage de MA caméra : il ne dépend QUE du nombre de pairs à qui
+  // je l'envoie vraiment — ceux qui sont en son seul ne coûtent rien.
+  function reglerEncodage() {
+    const n = [...pairs.values()].filter(p => p.image).length;
+    const pal = PALIERS_ENCODAGE.find(x => n <= x.pairs) || PALIERS_ENCODAGE[PALIERS_ENCODAGE.length - 1];
+    for (const p of pairs.values()) {
+      const env = p.tr && p.tr.sender;
+      // Un vieux navigateur — ou la fausse RTCPeerConnection d'un banc — n'a pas
+      // ces deux méthodes : on s'en passe, la visio marche, elle est juste moins
+      // économe. Jamais une exception pour un réglage de confort.
+      if (!env || typeof env.getParameters !== "function" || typeof env.setParameters !== "function") continue;
+      let prm; try { prm = env.getParameters(); } catch (e) { continue; }
+      if (!prm) continue;
+      if (!prm.encodings || !prm.encodings.length) prm.encodings = [{}];
+      const e = prm.encodings[0];
+      if (e.maxBitrate === pal.bits && e.maxFramerate === pal.images && e.scaleResolutionDownBy === pal.reduction) continue;
+      e.maxBitrate = pal.bits; e.maxFramerate = pal.images; e.scaleResolutionDownBy = pal.reduction;
+      try {
+        const r = env.setParameters(prm);
+        if (r && typeof r.catch === "function") r.catch(x => journal("encodage refusé", p.id, x.message));
+      } catch (x) { journal("encodage refusé", p.id, x.message); }
+    }
+  }
   // `seulement` vaut "image", "voix", ou rien du tout pour les deux. Attacher la
   // caméra ne doit pas venir remuer le transcepteur de la voix, ni l'inverse : ce sont
   // deux gestes indépendants et un `replaceTrack` de trop est un risque pour rien.
   function brancher(p, seulement) {
-    const v = local && local.getVideoTracks()[0];
+    const v = p.image ? (local && local.getVideoTracks()[0]) : null;
     const a = localMicro && localMicro.getAudioTracks()[0];
     for (const [tr, piste, quoi] of [[p.tr, v, "image"], [p.trA, a, "voix"]]) {
       if (!tr || (seulement && seulement !== quoi)) continue;   // je réponds et l'offre n'est pas encore là : adopter() s'en chargera
@@ -330,10 +553,16 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
   }
   function garnir(p) {
     if (p.tr) return;
-    const v = local && local.getVideoTracks()[0];
+    // ⚠️ `p.image` FAUX ne supprime PAS la ligne vidéo : elle reste, en recvonly et
+    // sans piste — exactement comme quelqu'un qui n'a pas allumé sa caméra. C'est
+    // ce qui permet de la rallumer plus tard (une place se libère) par un simple
+    // replaceTrack, sans jamais toucher à l'ORDRE des sections m=, qui est un
+    // contrat entre les deux côtés.
+    const v = p.image ? (local && local.getVideoTracks()[0]) : null;
     p.tr = p.pc.addTransceiver(v || "video", { direction: v ? "sendrecv" : "recvonly" });
     const a = localMicro && localMicro.getAudioTracks()[0];
     p.trA = p.pc.addTransceiver(a || "audio", { direction: a ? "sendrecv" : "recvonly" });
+    reglerEncodage();
   }
   // Après une offre distante : les transcepteurs qui portent un mid sont ceux qui
   // comptent, on prend ceux-là. Et on ferme les nôtres restés SANS mid : deux offres
@@ -354,6 +583,7 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
     p.tr = pris.video || p.tr;
     p.trA = pris.audio || p.trA;
     brancher(p);   // ma caméra et ma voix partent DANS LA RÉPONSE, pas dans une ronde de plus
+    reglerEncodage();
   }
   async function offrir(p, pourquoi) {
     const pc = p.pc;
@@ -373,10 +603,17 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
 
   function ajouter(id, sess) {
     if (pairs.has(id)) return pairs.get(id);
+    // ⚠️ CE PLAFOND-CI EST CELUI DES CONNEXIONS, donc des VOIX — huit personnes,
+    // sept pairs. Il n'a plus rien à voir avec les images : celles-là sont
+    // rationnées par repartirImages(), plus bas, sans refuser personne.
     if (pairs.size >= PAIRS_MAX - 1) { etat(id, "refuse"); journal("refusé (table pleine)", id); return null; }
     if (!disponible()) { etat(id, "indisponible"); return null; }
     const polite = moi < id;
-    const p = { id, session: sess, polite, ice: "new", vu: Date.now(), ne: Date.now(), pc: null,
+    // `image` : ai-je le droit d'échanger mon image avec lui ? Faux au départ, posé
+    // pour de bon par repartirImages() quelques lignes plus bas — AVANT la première
+    // offre, donc garnir() le lit déjà juste. `arrivee` reste à 0 tant qu'il n'a pas
+    // salué ; arriveeDe() se rabat alors sur `ne`.
+    const p = { id, session: sess, polite, image: false, arrivee: 0, ice: "new", vu: Date.now(), ne: Date.now(), pc: null,
       makingOffer: false, ignoreOffer: false, answerPending: false, attente: [], redemarrages: 0,
       candidats: [], lot: [], lotMinuteur: null, dernierEnvoiOffre: 0, attentePolie: null, collecteMs: null,
       tr: null, trA: null };   // posés par garnir() si j'offre, par adopter() si je réponds
@@ -437,11 +674,25 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
     // banc : la collecte ICE passait de 0,3 s à 4,8 s, jusqu'à dépasser son plafond.
     // L'impoli offre tout de suite, le poli laisse passer ATTENTE_POLIE_MS — mot pour
     // mot ce que faisait onnegotiationneeded, mais déclenché explicitement.
-    if (polite) p.attentePolie = setTimeout(() => {
+    // ⚠️ ET ELLE PART AVEC UNE GIGUE, des deux côtés. Sept pairs qui offrent tous
+    // à la même milliseconde à celui qui vient d'entrer, c'est sa salve — et le
+    // courtier en jette le tiers. Étalée, elle passe.
+    // 🚨 MAIS LA GIGUE EST PROPORTIONNELLE À LA FOULE, et c'est tout l'intérêt :
+    // à deux, elle vaut ZÉRO — la paire se négocie exactement comme avant, sans
+    // une milliseconde de plus, et l'impoli offre encore de façon SYNCHRONE.
+    // Une table pleine l'étale sur GIGUE_OFFRE_MS entier. On ne fait pas payer à
+    // deux amis le prix d'une salve qui ne peut pas se produire chez eux.
+    // 🚨 Le total (ATTENTE_POLIE_MS + GIGUE_OFFRE_MS = 3,7 s) doit RESTER SOUS
+    // REOFFRE_MS : au-delà, le filet de menage() offrirait par-dessus l'attente
+    // polie et on aurait deux offres pour une paire — la collision qu'on évite.
+    const foule = Math.min(1, Math.max(0, pairs.size - 1) / Math.max(1, PAIRS_MAX - 2));
+    const attente = (polite ? ATTENTE_POLIE_MS : 0) + Math.random() * GIGUE_OFFRE_MS * foule;
+    repartirImages();
+    if (!attente) offrir(p, "");
+    else p.attentePolie = setTimeout(() => {
       p.attentePolie = null;
-      if (pairs.get(id) === p && !pc.remoteDescription) offrir(p, "(le poli n'a rien reçu)");
-    }, ATTENTE_POLIE_MS);
-    else offrir(p, "");
+      if (pairs.get(id) === p && !pc.remoteDescription) offrir(p, polite ? "(le poli n'a rien reçu)" : "");
+    }, attente);
     return p;
   }
   function retirer(id, pourquoi) {
@@ -450,6 +701,7 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
     clearTimeout(p.lotMinuteur); clearTimeout(p.attentePolie);
     try { p.pc.onnegotiationneeded = p.pc.onicecandidate = p.pc.ontrack = p.pc.oniceconnectionstatechange = p.pc.onsignalingstatechange = p.pc.onicegatheringstatechange = null; p.pc.close(); } catch (_) {}
     journal("pair retiré", id, pourquoi || "");
+    repartirImages();   // une place libérée rend son image à quelqu'un
     etat(id, "parti");
     if (onDepart) try { onDepart(id); } catch (_) {}
   }
@@ -472,6 +724,17 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
     if (!p.pc.remoteDescription) { p.attente.push(c); return; }
     try { await p.pc.addIceCandidate(c); }
     catch (e) { if (!p.ignoreOffer) journal("candidat refusé", p.id, e.message); }
+  }
+  // L'instant d'arrivée qu'un pair annonce dans son salut. On le RETIENT et on
+  // rejoue la répartition : sans ça, la clé de tri resterait l'horloge locale et
+  // les deux côtés d'une paire ne classeraient pas la table pareil.
+  // ⚠️ Le salut revient toutes les SALUT_INTERVALLE_MS : on ne rejoue la répartition
+  // que si la valeur CHANGE, sinon on renégocierait à chaque ronde, pour rien.
+  function noterArrivee(id, t) {
+    const p = pairs.get(id), n = +t;
+    if (!p || !n || !isFinite(n) || p.arrivee === n) return;
+    p.arrivee = n;
+    repartirImages();
   }
   // Un pair qu'on connaissait revient avec une autre session : c'est un
   // rechargement de page. On ferme l'ancienne connexion et on repart.
@@ -513,8 +776,14 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
       if (ferme) return;
       reseau.souscrire(base + "+/tous");
       reseau.souscrire(base + "+/" + moi);
-      salut();
-      salutMinuteur = setInterval(salut, SALUT_INTERVALLE_MS);
+      // 🚨 L'INTERVALLE NAÎT DANS LE setTimeout, pas à côté : c'est ce qui décale
+      // le calendrier ENTIER. Lancé dehors, il repartirait à la même seconde que
+      // celui des autres et tout se resynchroniserait à la deuxième ronde.
+      salutMinuteur = setTimeout(() => {
+        if (ferme) return;
+        salut();
+        salutMinuteur = setInterval(salut, SALUT_INTERVALLE_MS);
+      }, Math.random() * GIGUE_SALUT_MS);
       menageMinuteur = setInterval(menage, 1000);
     },
     // Relaye un message net.mjs. Rend true s'il était pour la visio.
@@ -526,7 +795,7 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
       // L'adieu du TESTAMENT est écrit par le courtier, sans session : on le prend avant tout.
       if (m && m.t === "adieu") { retirer(de, "adieu"); return true; }
       if (!m || !m.s) return true;
-      if (m.t === "salut") { accueillir(de, m.s); if (m.v) voix(de, m.v); return true; }
+      if (m.t === "salut") { accueillir(de, m.s); noterArrivee(de, m.a); if (m.v) voix(de, m.v); return true; }
       const p = accueillir(de, m.s);   // une description d'un inconnu vaut un salut
       if (!p) return true;
       if (m.t === "description" && m.d) description(p, m.d, m.c).catch(e => journal("description ratée", de, e.message));
@@ -580,7 +849,10 @@ export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom 
     depart(id) { retirer(id, "départ annoncé"); },
     fermer() {
       if (ferme) return; ferme = true;
-      clearInterval(salutMinuteur); clearInterval(menageMinuteur); clearTimeout(pompe);
+      // ⚠️ `salutMinuteur` est un TIMEOUT tant que la gigue court, un INTERVAL
+      // ensuite : on coupe les deux, sinon fermer() pendant la gigue laisse un
+      // salut partir depuis une visio qu'on vient de fermer.
+      clearTimeout(salutMinuteur); clearInterval(salutMinuteur); clearInterval(menageMinuteur); clearTimeout(pompe);
       publier("tous", { t: "adieu" });   // tout de suite, pas par la file : la page se ferme
       for (const id of [...pairs.keys()]) retirer(id, "fermeture");
     },

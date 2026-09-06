@@ -28,15 +28,30 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
  try {
   await dodo(1500);
   ok("démarrage sans erreur", __err.length === 0, __err.join(" / "));
-  for (const v of ["exercices","strategie","concentration","ensemble","progres","table","accueil"]) {
+  for (const v of ["exercices","strategie","concentration","ensemble","progres","dons","table","accueil"]) {
     clic('nav [data-vue="' + v + '"]'); await dodo(250);
     const s = document.getElementById("v-" + v);
     ok("vue " + v, s && !s.hidden && s.textContent.trim().length > 40, s ? "hidden=" + s.hidden : "absente");
     // Hors du hall, le fil d'Ariane dit où l'on est et ramène au hall ; dans le hall, il se tait.
     ok("fil d'Ariane " + v, v === "accueil" ? q("#fil").hidden : /^Hall/.test(txt("#fil")) && !!q('#fil [data-vue="accueil"]'), "fil = " + txt("#fil"));
   }
-  // Le hall EST le menu : les huit pastilles ont disparu de l'en-tête, la nav reste adressable.
-  ok("en-tête : la nav est cachée, ses huit boutons restent", q("#nav").hidden && qa("#nav [data-vue]").length === 8, "hidden=" + q("#nav").hidden);
+  // La caisse : elle est livrée SANS cagnotte (dons.js, DONS_LIEN vide) — c'est l'état
+  // normal, pas une panne. On vérifie qu'elle le DIT au lieu d'offrir un bouton mort,
+  // et qu'aucune ressource extérieure ne s'y est glissée (la CSP en avalerait l'échec).
+  clic('nav [data-vue="dons"]'); await dodo(250);
+  // `#donsLien` n'est pas caché lui-même : c'est son bloc qui l'est. On lit donc l'état
+  // des deux blocs, et on vérifie que l'état livré ne contient AUCUN lien du tout.
+  ok("caisse : sans cagnotte, une phrase et pas un bouton mort",
+     !q("#donsSans").hidden && q("#donsAvec").hidden && !q("#donsSans a"),
+     "sans=" + q("#donsSans").hidden + " avec=" + q("#donsAvec").hidden);
+  ok("caisse : le numéro d'aide au jeu y est", /09 74 75 13 13/.test(txt("#v-dons")), "numéro absent");
+  ok("caisse : rien ne vient de l'extérieur",
+     qa("#v-dons img[src], #v-dons script, #v-dons iframe").filter(e => !/^data:|^static\//.test(e.getAttribute("src") || "")).length === 0,
+     "une ressource externe dans la caisse");
+  clic('nav [data-vue="accueil"]'); await dodo(200);
+  // Le hall EST le menu : les pastilles ont disparu de l'en-tête, la nav reste adressable.
+  // Une vue = un bouton : le compte suit donc le nombre d'écrans (neuf depuis la caisse).
+  ok("en-tête : la nav est cachée, ses neuf boutons restent", q("#nav").hidden && qa("#nav [data-vue]").length === 9, "hidden=" + q("#nav").hidden);
   ok("hall : quatre salles + crédits photos", !!q("#lesTables") && !!q("#entrainement") && !!q("#prive") && !!q("#bureau") && qa("#hallCredits a").length >= 10, qa("#hallCredits a").length + " liens de crédit");
   ok("hall : les portes ont leurs photos", qa("#v-accueil img.photo[src]").length >= 15, qa("#v-accueil img.photo[src]").length + " photos");
   // « Salon » n'est plus une vue : c'est l'ancre « Les tables » du hall.

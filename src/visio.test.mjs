@@ -8,7 +8,9 @@
 //   node src/visio.test.mjs
 import { serveursIce, urlsRelais, relaisConfigure, SERVEURS_ICE, SERVEURS_STUN, sujetVisio, testamentVisio,
   expliquerEchec, MESSAGE_ARTEFACT, SANS_RELAIS_MESSAGE, AVEC_RELAIS_MESSAGE, ETATS_VOIX, PAIRS_MAX,
-  ATTENTE_POLIE_MS, ENVOI_ECART_MS, creerVisio } from "./visio.mjs";
+  VIDEO_MAX, PALIERS_ENCODAGE, LIEN_SITE, GIGUE_SALUT_MS, GIGUE_OFFRE_MS, REOFFRE_MS,
+  ATTENTE_POLIE_MS, ENVOI_ECART_MS, SALUT_INTERVALLE_MS, SILENCE_ICE_MS, SILENCE_MAX_MS,
+  creerVisio } from "./visio.mjs";
 
 let pass = 0, fail = 0;
 function ok(nom, a, b) {
@@ -60,9 +62,32 @@ ok("sujet adressé", sujetVisio("A7K2M9PQ", "jA", "jB"), "compteur-hilo/v1/A7K2M
 ok("testament : un adieu sur mon sujet /tous", testamentVisio("A7K2M9PQ", "jA"), { sujet: "compteur-hilo/v1/A7K2M9PQ/visio/jA/tous", message: JSON.stringify({ t: "adieu" }) });
 ok("échec réseau muet → le message de l'artefact", expliquerEchec(new Error("connexion refusée")), MESSAGE_ARTEFACT);
 ok("échec sans message → le message de l'artefact", expliquerEchec(null), MESSAGE_ARTEFACT);
-ok("le message de l'artefact porte le lien GitHub Pages", MESSAGE_ARTEFACT.includes("pwrygrt72g-hue.github.io/compteur-hilo"), true);
+ok("le message de l'artefact porte le lien du site", MESSAGE_ARTEFACT.includes(LIEN_SITE), true);
+// 🚨 UNE SEULE ADRESSE DANS TOUT LE MODULE, et aucun texte visible qui nomme
+// l'hébergeur : le jour où l'application déménage sous son nom de domaine, on
+// change LIEN_SITE et rien d'autre. « la version GitHub Pages » écrite en toutes
+// lettres serait alors une phrase fausse que personne n'irait relire.
+ok("l'adresse du site est une URL complète", /^https:\/\/[^\s]+\/$/.test(LIEN_SITE), true);
+ok("aucun texte destiné à l'écran ne nomme d'hébergeur", /github|pages|netlify|vercel/i.test(MESSAGE_ARTEFACT.replace(LIEN_SITE, "")), false);
 ok("le message « sans relais » envoie vers ⚙", SANS_RELAIS_MESSAGE.includes("⚙") && /relais/.test(SANS_RELAIS_MESSAGE), true);
-ok("cinq pairs au plus", PAIRS_MAX, 5);
+/* ══ LE PLAFOND : DEUX NOMBRES, PAS UN (6 septembre 2026) ═══════════════════
+   La table est passée à huit sièges. Si le maillage avait suivi, la pointe de
+   signalisation reçue par la dernière personne à entrer serait montée à 20
+   msg/s contre un quota d'emqx mesuré à ~10 — et ce qui dépasse est jeté sans
+   un mot. On a donc séparé ce qui coûte cher (les IMAGES) de ce qui ne coûte
+   rien (les VOIX, 24 à 40 kbit/s le pair).
+   🚨 Ces deux tests sont là pour empêcher qu'on les refusionne « pour
+   simplifier » : ce serait rendre muettes les deux dernières personnes assises. */
+ok("huit connexions : tout le monde a une voix", PAIRS_MAX, 8);
+ok("six images : moi et cinq vignettes distantes", VIDEO_MAX, 6);
+ok("le plafond des images est SOUS celui des connexions", VIDEO_MAX < PAIRS_MAX, true);
+ok("les deux gigues existent et sont bornées", [GIGUE_SALUT_MS, GIGUE_OFFRE_MS], [1500, 1200]);
+// Le filet de menage() ré-offre au bout de REOFFRE_MS. Si l'attente polie plus la
+// gigue le dépassait, il offrirait PAR-DESSUS l'attente : deux offres pour une
+// paire, la collision que tout ce fichier s'applique à éviter.
+ok("attente polie + gigue restent sous la ré-offre", ATTENTE_POLIE_MS + GIGUE_OFFRE_MS < REOFFRE_MS, true);
+ok("deux paliers d'encodage, du plus généreux au plus sobre", PALIERS_ENCODAGE.map(x => x.bits), [250000, 150000]);
+ok("le palier sobre couvre jusqu'à sept pairs", PALIERS_ENCODAGE[PALIERS_ENCODAGE.length - 1].pairs >= PAIRS_MAX - 1, true);
 
 /* ══ LA PAROLE (6 septembre 2026) ════════════════════════════════════════════
    Ce que ces tests protègent :
@@ -96,8 +121,14 @@ class FauxTransceiver {
     this.arrete = false;
     const genre = typeof source === "string" ? source : source.kind;
     this.receiver = { track: { kind: genre } };
+    // Les paramètres d'encodage : le vrai sender en a, le nôtre aussi — sans quoi
+    // reglerEncodage() passerait son chemin (il vérifie les deux méthodes) et les
+    // paliers ne seraient jamais éprouvés.
+    this.params = { encodings: [{}] };
     this.sender = { track: typeof source === "string" ? null : source,
-      replaceTrack: t => { this.remplacements.push(t); this.sender.track = t; return Promise.resolve(); } };
+      replaceTrack: t => { this.remplacements.push(t); this.sender.track = t; return Promise.resolve(); },
+      getParameters: () => this.params,
+      setParameters: prm => { this.params = prm; this.reglages = (this.reglages || 0) + 1; return Promise.resolve(); } };
   }
   stop() { this.arrete = true; }
 }
@@ -128,7 +159,12 @@ class FauxPC {
   async setLocalDescription() {
     this.appels.push("setLocalDescription");
     const reponse = this.signalingState === "have-remote-offer";
-    this.localDescription = { type: reponse ? "answer" : "offer", sdp: "" };
+    // ⚠️ LA DESCRIPTION PORTE SES LIGNES m=, comme une vraie SDP. Sans ça, une offre
+    // publiée par un pair et reçue par un autre n'annonce RIEN, setRemoteDescription
+    // ne crée aucun transcepteur et adopter() n'a rien à adopter : le côté qui RÉPOND
+    // reste sans pistes. Un banc de deux instances ne le voit pas (les tests d'en bas
+    // fabriquent l'offre à la main, avec ses mlignes) ; un maillage de huit, si.
+    this.localDescription = { type: reponse ? "answer" : "offer", sdp: "", mlignes: this.transceivers.map(x => x.genre) };
     this.signalingState = reponse ? "stable" : "have-local-offer";
   }
   getTransceivers() { return this.transceivers.map(x => x.tr); }
@@ -379,6 +415,201 @@ const luiOffre = t => t.api.recevoir(`compteur-hilo/v1/${SALON}/visio/${t.lui}/$
   ok("l'échec avec relais parle de la voix aussi", /voix/i.test(AVEC_RELAIS_MESSAGE), true);
   ok("l'échec sans relais dit encore où aller", /relais/.test(SANS_RELAIS_MESSAGE) && /⚙/.test(SANS_RELAIS_MESSAGE), true);
 }
+
+/* ══ 13. LE PLAFOND DES IMAGES, EN MARCHE ═══════════════════════════════════
+   Une table pleine, vue de MA place. Ce qu'on protège ici, dans l'ordre
+   d'importance :
+   · la VOIX de tout le monde. C'est la règle, pas un détail de réglage : la
+     sixième personne qui s'assied parle et entend comme les cinq premières.
+     Le mécanisme d'avant refusait la connexion ENTIÈRE au sixième pair — donc
+     l'image ET la voix — et l'écran lui disait « table pleine ». Depuis qu'on
+     peut se parler autour de la table (6 septembre 2026), ce refus-là voulait
+     dire « tu es assis et tu es muet », ce qui n'est pas une place.
+   · le rationnement des IMAGES, déterministe et SANS un message de plus : les
+     plus anciennement connus d'abord. Les deux côtés le calculent chacun de
+     leur côté et tombent d'accord — c'est le but.
+   · une place libérée qui REND son image. Sans ça, la sixième personne resterait
+     une silhouette jusqu'à la fin de la partie sur une table qui s'est vidée.
+   ═══════════════════════════════════════════════════════════════════════════ */
+{
+  const cam = new FaussePiste("video"), mic = new FaussePiste("audio");
+  const etats = [];
+  const api = creerVisio({
+    reseau: { publier: () => {}, souscrire: () => {} },
+    salon: SALON, moi: "jZ", nom: "moi",              // « jZ » : je suis l'impoli de tout le monde
+    flux: new FauxFlux([cam]), micro: new FauxFlux([mic]),
+    onFlux: () => {}, onAudio: () => {}, onDepart: () => {}, onEtat: (id, e) => etats.push([id, e]),
+  });
+  const venir = n => api.recevoir(`compteur-hilo/v1/${SALON}/visio/${n}/tous`, JSON.stringify({ s: "s" + n, t: "salut" }));
+  const assis = ["jA", "jB", "jC", "jD", "jE", "jF", "jG"];
+  assis.forEach(venir);
+  const de = n => api.pairs.get(n);
+
+  ok("sept pairs assis, donc huit personnes", api.pairs.size, PAIRS_MAX - 1);
+  ok("les cinq premiers ont droit à l'image", assis.slice(0, 5).map(n => de(n).image), [true, true, true, true, true]);
+  ok("les suivants sont en SON SEUL, pas dehors", assis.slice(5).map(n => de(n).image), [false, false]);
+  ok("…et ils ont bel et bien une connexion", assis.slice(5).map(n => !!de(n).pc), [true, true]);
+  ok("cinq images distantes, VIDEO_MAX - 1", assis.filter(n => de(n).image).length, VIDEO_MAX - 1);
+
+  // La neuvième personne, elle, est vraiment refusée : PAIRS_MAX est atteint.
+  venir("jH");
+  ok("au-delà de huit personnes, la connexion est refusée", api.pairs.has("jH"), false);
+  ok("et l'écran l'apprend", etats.some(([id, e]) => id === "jH" && e === "refuse"), true);
+
+  await new Promise(r => setTimeout(r, GIGUE_OFFRE_MS + 150));   // les offres partent avec leur gigue
+
+  ok("chaque paire a ses deux lignes m=, son seul compris", assis.map(n => de(n).pc.transceivers.length), [2, 2, 2, 2, 2, 2, 2]);
+  ok("ordre m= tenu partout : vidéo puis audio", de("jG").pc.transceivers.map(x => x.genre), ["video", "audio"]);
+  // 🚨 LE TEST QUI COMPTE : ma voix part vers TOUT LE MONDE, mon image vers cinq.
+  ok("ma voix part vers les sept", assis.map(n => de(n).trA.sender.track === mic), [true, true, true, true, true, true, true]);
+  ok("mon image part vers les cinq premiers", assis.slice(0, 5).map(n => de(n).tr.sender.track === cam), [true, true, true, true, true]);
+  ok("et vers personne d'autre", assis.slice(5).map(n => de(n).tr.sender.track), [null, null]);
+  ok("le son seul reste en recvonly pour l'image, sendrecv pour la voix",
+    [de("jG").tr.direction, de("jG").trA.direction], ["recvonly", "sendrecv"]);
+
+  // Les paliers : cinq images sortantes, donc le palier sobre.
+  const pal = PALIERS_ENCODAGE[1];
+  ok("à cinq images, le palier sobre est posé sur les émetteurs",
+    de("jA").tr.sender.getParameters().encodings[0],
+    { maxBitrate: pal.bits, maxFramerate: pal.images, scaleResolutionDownBy: pal.reduction });
+
+  // Une place se libère : la sixième personne récupère son image, sans rien demander.
+  ok("avant le départ, jF est en son seul", de("jF").image, false);
+  api.depart("jA");
+  ok("une place libérée rend l'image", de("jF").image, true);
+  ok("…et ma caméra part vraiment vers elle", de("jF").tr.sender.track, cam);
+  ok("celle d'après attend toujours son tour", de("jG").image, false);
+  ok("toujours cinq images distantes, jamais six", assis.slice(1).filter(n => de(n).image).length, VIDEO_MAX - 1);
+  api.fermer();
+}
+{
+  // À DEUX, RIEN N'A CHANGÉ : pas de gigue, l'impoli offre de façon SYNCHRONE.
+  // C'est ce qui garantit qu'une table ordinaire ne paie pas le prix d'une salve
+  // qui ne peut pas s'y produire — et que le banc à deux navigateurs reste aussi
+  // rapide qu'avant.
+  const t = table({});
+  ok("à deux : la paire est garnie tout de suite, sans attendre", [!!t.p.tr, !!t.p.trA], [true, true]);
+  ok("à deux : l'unique pair a droit à l'image", t.p.image, true);
+  ok("à deux : aucun minuteur d'attente n'a été posé", t.p.attentePolie, null);
+  t.api.fermer();
+}
+
+/* ══ 14. LE RATIONNEMENT DES IMAGES EST SYMÉTRIQUE ══════════════════════════
+   Ce que ces tests protègent, et pourquoi ils existent : `p.image` n'est pas
+   qu'un réglage de débit, c'est ce que l'ÉCRAN lit pour dire « vous êtes en son
+   seul, vous ne vous voyez pas » (app/visio.js, rvSonSeul). Si les deux côtés
+   d'une paire ne tombent pas d'accord, celui qui ne reçoit rien affiche « sa
+   caméra est coupée » sur quelqu'un dont la caméra est allumée et qui émet.
+   La règle d'avant triait sur `ne`, une horloge LOCALE : le dernier arrivé
+   rencontre tout le monde à la même seconde alors que tout le monde l'a
+   rencontré en dernier. Mesuré le 6 septembre 2026, huit personnes, ce module
+   contre un faux courtier : 12 paires asymétriques sur 28 en régime établi, et
+   quatre personnes qui RECEVAIENT six ou sept flux là où VIDEO_MAX en promet
+   cinq. On trie donc sur l'instant d'arrivée que chacun ANNONCE, et une paire
+   n'échange ses images que si SES DEUX MEMBRES sont en tête de liste.
+   ═══════════════════════════════════════════════════════════════════════════ */
+{
+  const noms = ["jA", "jB", "jC", "jD", "jE", "jF", "jG", "jH"];
+  const gens = new Map();
+  const pub = (de, s, m) => { for (const [id, v] of gens) if (id !== de) v.recevoir(s, m); };
+  // Chacun s'assied 100 ms après le précédent. On fige Date.now() le temps de la
+  // construction : c'est là que `monArrivee` est pris, et on veut huit valeurs connues.
+  const vraiNow = Date.now;
+  noms.forEach((n, i) => {
+    Date.now = () => 100000 + i * 100;
+    gens.set(n, creerVisio({
+      reseau: { publier: (s, m) => pub(n, s, m), souscrire: () => {} },
+      salon: SALON, moi: n, nom: n,
+      flux: new FauxFlux([new FaussePiste("video")]), micro: new FauxFlux([new FaussePiste("audio")]),
+      onFlux: () => {}, onAudio: () => {}, onDepart: () => {}, onEtat: () => {}, onVoix: () => {},
+    }));
+  });
+  Date.now = vraiNow;
+  // Le salut du vrai module porte `a` : on le rejoue à l'identique, deux rondes.
+  const saluer = () => noms.forEach((n, i) =>
+    pub(n, `compteur-hilo/v1/${SALON}/visio/${n}/tous`, JSON.stringify({ s: "s" + n, t: "salut", n, a: 100000 + i * 100 })));
+  saluer(); saluer();
+  // Les offres partent avec leur gigue et passent par la file cadencée à
+  // ENVOI_ECART_MS : à huit, la table met quelques secondes à se nouer entièrement.
+  await new Promise(r => setTimeout(r, ATTENTE_POLIE_MS + GIGUE_OFFRE_MS + 2500));
+
+  const envoie = (a, b) => { const p = gens.get(a).pairs.get(b); return !!p && p.image === true; };
+  let asym = 0;
+  for (let i = 0; i < noms.length; i++) for (let j = i + 1; j < noms.length; j++)
+    if (envoie(noms[i], noms[j]) !== envoie(noms[j], noms[i])) asym++;
+  ok("huit personnes : AUCUNE paire asymétrique", asym, 0);
+  ok("les six premiers assis échangent leurs images", noms.slice(0, VIDEO_MAX).map(n => noms.filter(m => m !== n && envoie(n, m)).length),
+    [5, 5, 5, 5, 5, 5]);
+  ok("les suivants sont en son seul avec TOUT LE MONDE", noms.slice(VIDEO_MAX).map(n => noms.filter(m => m !== n && envoie(n, m)).length), [0, 0]);
+  // 🚨 LE PLAFOND VAUT DANS LES DEUX SENS. Celui qui monte était tenu ; celui qui
+  // descend ne l'était pas, et c'est pourtant lui que l'écran promet (« moi et cinq
+  // vignettes distantes »). Sept flux à décoder, ce n'est pas cinq.
+  const entrants = noms.map(n => noms.filter(m => m !== n && envoie(m, n)).length);
+  ok("personne ne REÇOIT plus de VIDEO_MAX - 1 images", entrants.filter(x => x > VIDEO_MAX - 1).length, 0);
+  ok("…et ce que je reçois est exactement ce que j'envoie", entrants, noms.map(n => noms.filter(m => m !== n && envoie(n, m)).length));
+  // 🚨 ET LA VOIX DE TOUT LE MONDE, Y COMPRIS DES DEUX QUI N'ONT PAS D'IMAGE. C'est
+  // la promesse du 🚨 en tête de visio.mjs (« ne rends pas muettes les deux dernières
+  // personnes assises »), et c'est le seul endroit où on la vérifie sur une table
+  // ENTIÈRE plutôt que du point de vue d'une seule personne.
+  const voixVersTous = n => {
+    const v = gens.get(n);
+    return [...v.pairs.values()].every(p => p.trA && p.trA.sender.track && p.trA.sender.track.kind === "audio");
+  };
+  ok("tout le monde émet sa voix vers tous ses pairs, son seul compris", noms.map(voixVersTous), [true, true, true, true, true, true, true, true]);
+  ok("…et les deux sans image ont bien sept pairs chacun", noms.slice(VIDEO_MAX).map(n => gens.get(n).pairs.size), [PAIRS_MAX - 1, PAIRS_MAX - 1]);
+
+  // Une place se libère : tout le monde le voit pareil, et le premier en attente entre.
+  for (const [id, v] of gens) { if (id !== "jA") v.depart("jA"); }
+  gens.get("jA").fermer(); gens.delete("jA");
+  const restants = [...gens.keys()];
+  let asym2 = 0;
+  for (let i = 0; i < restants.length; i++) for (let j = i + 1; j < restants.length; j++)
+    if (envoie(restants[i], restants[j]) !== envoie(restants[j], restants[i])) asym2++;
+  ok("après un départ : toujours aucune paire asymétrique", asym2, 0);
+  ok("la place libérée revient au premier en attente (jG)", restants.filter(m => m !== "jG" && envoie("jG", m)).length, 5);
+  ok("et le dernier attend toujours son tour", restants.filter(m => m !== "jH" && envoie("jH", m)).length, 0);
+  for (const v of gens.values()) v.fermer();
+}
+{
+  // 🚨 CELUI QUI RÉPOND À UN SON SEUL DOIT QUAND MÊME ENVOYER SA VOIX. C'est
+  // brancher() qui la pose (adopter l'appelle), et RIEN ne le vérifiait : la
+  // mutation qui gate la voix sur `p.image` dans brancher() laissait la suite
+  // entièrement verte, alors que la même mutation dans garnir() était bien
+  // attrapée. Vérifié en vrai WebRTC : avec elle, un côté n'entend plus rien.
+  const cam = new FaussePiste("video"), mic = new FaussePiste("audio");
+  const api = creerVisio({
+    reseau: { publier: () => {}, souscrire: () => {} },
+    salon: SALON, moi: "jA", nom: "moi",       // « jA » : je suis le POLI de tout le monde, donc je RÉPONDS
+    flux: new FauxFlux([cam]), micro: new FauxFlux([mic]),
+    onFlux: () => {}, onAudio: () => {}, onDepart: () => {}, onEtat: () => {}, onVoix: () => {},
+  });
+  // Ils s'asseyent tous APRÈS moi : je suis donc en tête de liste, et ce sont eux
+  // que le plafond repousse — pas moi.
+  const apres = Date.now() + 1000;
+  ["jB", "jC", "jD", "jE", "jF", "jG", "jH"].forEach((n, i) =>
+    api.recevoir(`compteur-hilo/v1/${SALON}/visio/${n}/tous`, JSON.stringify({ s: "s" + n, t: "salut", a: apres + i })));
+  const seul = api.pairs.get("jH");
+  ok("le dernier assis est bien en son seul", seul.image, false);
+  api.recevoir(`compteur-hilo/v1/${SALON}/visio/jH/jA`, JSON.stringify({ s: "sjH", t: "description", d: offreDistante }));
+  await new Promise(r => setTimeout(r, 0));
+  ok("je RÉPONDS à un son seul : ma voix part quand même", seul.trA.sender.track, mic);
+  ok("…et sa direction dit bien que j'émets", seul.trA.direction, "sendrecv");
+  ok("je RÉPONDS à un son seul : mon image, elle, ne part pas", seul.tr.sender.track, null);
+  ok("…et deux sections m=, pas quatre", seul.pc.transceivers.length, 2);
+  api.fermer();
+}
+/* ══ 15. LES SEUILS DE SILENCE SE COMPTENT EN SALUTS ════════════════════════
+   Le 6 septembre 2026, SALUT_INTERVALLE_MS est passé de 2 s à 3 s pour tenir
+   sous le quota du courtier, et SILENCE_ICE_MS est resté à 3 s : le rapport est
+   tombé à 1,00, donc ZÉRO marge. Mesuré : un pair parfaitement vivant, qui
+   saluait à la cadence normale mais dont ICE hoquetait, était retiré à 3,00 s —
+   avant même son deuxième salut. Ces deux tests existent pour que le prochain
+   qui touche à la cadence des saluts voie tout de suite ce qu'il déplace.
+   ═══════════════════════════════════════════════════════════════════════════ */
+ok("un salut entier de marge avant de déclarer parti sur ICE coupé", SILENCE_ICE_MS >= SALUT_INTERVALLE_MS * 1.5, true);
+ok("deux saluts entiers de marge quand ICE tient encore", SILENCE_MAX_MS >= SALUT_INTERVALLE_MS * 2, true);
+ok("le seuil « ICE coupé » reste le plus rapide des deux", SILENCE_ICE_MS < SILENCE_MAX_MS, true);
+ok("la promesse du haut du fichier tient : moins de douze secondes", SILENCE_MAX_MS < 12000, true);
 
 console.log(`\n${pass} tests passés, ${fail} échecs`);
 process.exit(fail ? 1 : 0);

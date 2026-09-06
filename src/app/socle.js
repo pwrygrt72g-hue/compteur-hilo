@@ -340,6 +340,7 @@ function rendreFil() {
   else if (vue === "concentration") pas.push(["Salle d'entraînement", "entrainement"], ["Concentration", null]);
   else if (vue === "ensemble") pas.push(["Entre amis", "prive"], [onglet("mpModes"), null]);
   else if (vue === "progres") pas.push(["Bureau", "bureau"], ["Progression", null]);
+  else if (vue === "dons") pas.push(["Bureau", "bureau"], ["Soutenir", null]);
   const segs = pas.filter(([l]) => l);
   f.hidden = !segs.length;
   f.innerHTML = segs.length ? `<button data-vue="accueil">Hall</button>` + segs.map(([l, a], i) =>

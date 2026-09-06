@@ -1395,6 +1395,39 @@ table.journal th,table.journal td{text-align:left;padding:7px 9px;border-bottom:
 table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--os-eteint);font-weight:600}
 .defile{overflow-x:auto}
 
+/* ── La caisse (page de dons) ────────────────────────────────────────
+   Aucune couleur neuve : la page emprunte la laque, l'or du bouton et les
+   filets du reste de l'application. Une page de dons qui se peint autrement
+   ressemble à une campagne posée par-dessus le produit. */
+.dons-bloc{margin-bottom:var(--gap)}
+.dons-bloc h2{font-size:var(--t-section);margin-bottom:10px}
+.dons-bloc p{max-width:74ch}
+.dons-preuves{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:11px;margin-top:16px}
+/* `.laque` n'a pas de rembourrage à elle : `.pad` le donne d'habitude, mais 18/20 est
+   trop pour trois cartouches de trois lignes. (Le `.t` du prototype ne fait rien ici :
+   il n'existe que dans `.pave`.) */
+.dons-preuves .laque{padding:14px 16px}
+.dons-preuves p{margin:6px 0 0;font-size:var(--t-petit);color:var(--os-eteint);max-width:none}
+.dons-caisse{display:flex;align-items:center;justify-content:space-between;gap:24px 32px;flex-wrap:wrap}
+.dons-caisse h2{margin:4px 0 6px}
+/* Après `.dons-bloc p` : même spécificité, c'est l'ordre qui tranche. */
+.dons-caisse p{margin:0;font-size:var(--t-petit);max-width:46ch}
+.dons-geste{display:flex;flex-direction:column;gap:8px;align-items:flex-start;max-width:38ch}
+.dons-geste .btn{min-height:52px;padding:0 26px;text-decoration:none}
+/* Sans cagnotte, la colonne de droite ne porte plus un bouton mais une phrase :
+   38ch en feraient une bande de texte haute et étroite à côté d'un titre. */
+.dons-sans .dons-geste{max-width:46ch}
+.dons-ou{font-size:var(--t-fin);line-height:1.45}
+.dons-ailleurs{justify-content:flex-start;margin-top:14px}
+.dons-mot{margin-top:28px;padding-top:18px;border-top:1px solid color-mix(in oklab,var(--bord) 45%,transparent)}
+.dons-mot p{color:var(--os-eteint);font-size:var(--t-petit);max-width:82ch;margin:8px 0 0}
+.dons-duo{margin-top:0}
+.dons-duo p{max-width:none;margin:0}
+.dons-chute{margin-top:16px;padding-top:14px;border-top:1px solid color-mix(in oklab,var(--bord) 35%,transparent);max-width:none}
+.dons-paire{margin-top:0}
+.dons-paire .dons-bloc{margin-bottom:0;height:100%}
+.dons-paire p{max-width:none}
+
 /* ── Fenêtre modale et bandeau ─────────────────────────────────────── */
 .modale{position:fixed;inset:0;background:rgba(0,0,0,.62);display:grid;place-items:center;padding:20px;z-index:60;animation:paraitre .2s}
 .modale .boite{max-width:520px;width:100%;padding:24px 26px;text-align:center}
