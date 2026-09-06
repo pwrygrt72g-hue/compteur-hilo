@@ -3,7 +3,11 @@ const R = [], q = s => document.querySelector(s), qa = s => [...document.querySe
 const ok = (n, c, d) => R.push((c ? "ok " : "KO ") + n + (c ? "" : " >> " + d));
 const clic = s => { const e = q(s); if (e) e.click(); return !!e; };
 const txt = s => (q(s) ? q(s).textContent : "").trim();
-const entier = t => /^[+-]?\d+$/.test(t);
+// Le signe moins de l'application est U+2212 (socle.js, sgn) — pas le trait d'union de la
+// conversion numérique de JavaScript. La sonde lit ce que l'écran AFFICHE.
+const entier = t => /^[+\u2212-]?\d+$/.test(t);
+// …et pour le COMPARER, il faut d'abord le rendre à JavaScript.
+const nombre = t => parseFloat(String(t).replace(/\u2212/g, "-").replace(",", "."));
 window.__modales = 0;
 new MutationObserver(() => { if (!document.getElementById("modale").hidden) window.__modales++; })
   .observe(document.getElementById("modale"), { attributes: true, attributeFilter: ["hidden"] });
@@ -69,13 +73,17 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
       const min = +(q("#rackJetons").dataset.min || 5), libres = qa("#rjJetons button:not([disabled])");
       const j = libres.find(b => +b.dataset.v >= min) || libres[libres.length - 1];
       if (!j) break; j.click(); await dodo(90); } };
+  let ISSUES_VUES = 0, FEUTRE_PROPRE = 0;
   const jouerUneMain = async (tire) => {
     await attendre(); await miser();
     clic("#bDonne"); await dodo(600);
     let g = 0;
     while (g++ < 150 && phase() !== "mise") { await dodo(200);
+      if (phase() === "reglement") ISSUES_VUES = Math.max(ISSUES_VUES, qa("#sieges .issue").filter(e => e.textContent.trim()).length);
       if (!q("#bTire").disabled) clic(tire && g % 4 === 0 ? "#bTire" : "#bReste");
       const a = q("#boiteAssurance .opts button:last-child"); if (a) a.click(); }
+    // Les mises rouvertes, le feutre de la manche d'avant est VIDE : ni cartes, ni verdicts.
+    if (phase() === "mise" && !qa("#sieges .main .carte").length && !qa("#sieges .issue").filter(e => e.textContent.trim()).length) FEUTRE_PROPRE++;
     await attendre();
     if (!q("#modale").hidden) {
       const champ = q("#mcRC"), bouton = q("#mcOk");
@@ -111,7 +119,10 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   ok("compte courant entier (jamais NaN)", entier(txt("#tRC")), txt("#tRC"));
   ok("compte vrai chiffré", /[0-9]/.test(txt("#tTC")), txt("#tTC"));
   ok("mise recommandée chiffrée", entier(txt("#tMise")), txt("#tMise"));
-  ok("issues affichées", qa("#sieges .issue").filter(e => e.textContent.trim()).length >= 3, "aucune");
+  ok("issues affichées pendant le règlement", ISSUES_VUES >= 3, ISSUES_VUES + " issues au mieux");
+  // Le défaut du 06/09 : « Pose ta mise · minimum 10 » s'affichait au-dessus de cinq
+  // pastilles « PERDU » et des cartes de la manche finie, sans limite de durée.
+  ok("table : les mises rouvrent sur un feutre VIDE", FEUTRE_PROPRE >= 8, FEUTRE_PROPRE + " manches sur 10 rangées");
   ok("défausse alimentée", +txt("#defausseN") > 5, txt("#defausseN"));
   ok("jetons : tapis chiffré après dix mains", /^\d[\d\u202f ]*(,\d+)?$/.test(txt("#tTapis")), txt("#tTapis"));
   ok("jetons : le rack est rouvert entre deux mains", phase() === "mise" && q("#rackJetons").classList.contains("ouvert"), "phase " + phase());
@@ -149,7 +160,7 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   // Une mélangeuse n'affiche pas de compte (le meuble n'a ni chiffre ni carte de coupe) : le nombre vit en data-n.
   ok("mélangeuse : le sabot se recharge", +q("#sabot").dataset.n > 280, q("#sabot").dataset.n);
   ok("mélangeuse : ni chiffre, ni défausse, ni carte de coupe", txt("#sabot") === "" && q("#v-table").dataset.melange === "csm" && getComputedStyle(q("#defausse")).display === "none", "sabot=" + txt("#sabot") + " melange=" + q("#v-table").dataset.melange);
-  ok("mélangeuse : le compte ne s'accumule pas", entier(txt("#tRC")) && Math.abs(+txt("#tRC")) < 12, txt("#tRC"));
+  ok("mélangeuse : le compte ne s'accumule pas", entier(txt("#tRC")) && Math.abs(nombre(txt("#tRC"))) < 12, txt("#tRC"));
 
   // ── Stratégie : 20 réponses, figures incluses
   clic('nav [data-vue="strategie"]'); await dodo(300);

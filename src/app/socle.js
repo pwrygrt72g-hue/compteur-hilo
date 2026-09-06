@@ -43,7 +43,7 @@ const $ = id => document.getElementById(id);
 const emettre = (nom, detail) => document.dispatchEvent(new CustomEvent("sabot:" + nom, { detail: detail || {} }));
 const E = M.engine, SOL = M.solver, SH = M.shuffle, CT = M.counting, NET = M.net, TR = M["table-reseau"];
 const RANKS = E.RANKS, SUITS = E.SUITS;
-const sgn = n => (n > 0 ? "+" : "") + n;
+const sgn = n => n > 0 ? "+" + n : n < 0 ? "\u2212" + Math.abs(n) : String(n);
 const fr1 = x => x.toFixed(1).replace(".", ",");
 const fr2 = x => x.toFixed(2).replace(".", ",");
 const dodo = ms => new Promise(r => setTimeout(r, ms));
@@ -382,7 +382,7 @@ function rendreSysteme() {
   $("sysNom").textContent = s.nom; $("sysNote").textContent = s.note;
   const groupes = {};
   RANKS.forEach((r, i) => { const k = s.v[i >= 9 ? 9 : i]; (groupes[k] = groupes[k] || []).push(r); });
-  $("sysTable").innerHTML = Object.keys(groupes).sort((a, b) => b - a)
+  $("sysTable").innerHTML = Object.keys(groupes).sort((a, b) => a - b)
     .map(k => `<span class="regle ${+k > 0 ? "bien" : +k < 0 ? "mal" : ""}"><b class="cadran">${sgn(+k)}</b>&nbsp; ${groupes[k].join(" ")}</span>`).join("")
     + (s.equilibre ? "" : `<span class="regle">déséquilibré · départ à ${sgn(CT.compteInitial(DB.sys, +($("eJeux").value || 6)))}</span>`);
   $("cCible").textContent = sgn(CT.compteInitial(DB.sys, +$("cJeux").value) + (s.equilibre ? 0 : 4 * +$("cJeux").value));

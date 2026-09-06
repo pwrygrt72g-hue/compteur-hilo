@@ -17,7 +17,14 @@ function chipsRegles(t) {
   if (t.surrender !== "none") c.push(["abandon", "bien", "Abandon : on peut rendre une mauvaise main et récupérer la moitié de sa mise"]);
   if (!t.holeCard) c.push(["sans carte cachée", "mal", "Le croupier ne prend sa seconde carte qu'à la fin : s'il fait blackjack, tu perds aussi tes doublements"]);
   if (t.doubleOn !== "any") c.push(["doubler " + t.doubleOn.join("-"), "", "On ne peut doubler que sur un total de " + t.doubleOn.join(", ")]);
-  return c.map(([l, k, aide]) => `<span class="regle ${k}"${aide ? ` title="${echap(aide)}"` : ""}>${l}</span>`).join("");
+  return c.map(([l, k, aide]) => `<span class="regle ${k}"${aide ? ` title="${echap(aide)}" data-aide="1"` : ""}>${l}</span>`).join("");
+}
+// …et la même liste EN TOUTES LETTRES, pour la feuille « Les règles de cette table » : un
+// `title` ne s'atteint ni au doigt, ni sous 1000 px (où la rangée est retirée). Les textes ne
+// sont pas réécrits — une seule source, celle des pastilles.
+function chipsReglesTexte(t) {
+  const div = document.createElement("div"); div.innerHTML = chipsRegles(t);
+  return [...div.children].map(e => [e.textContent.trim(), e.getAttribute("title") || "", e.className.replace("regle", "").trim()]);
 }
 // Les TROIS puces qu'on garde partout où la place manque (la porte du hall, la barre de
 // la table) : le nombre de jeux, H17/S17, 3:2 ou 6:5 — plus la mélangeuse quand il y en
@@ -163,6 +170,7 @@ function leconHtml() {
   const tete = `<div class="lecon"><span class="lecon-etape">Apprendre à compter · ${e + 1} sur 3</span>`;
   if (e === 0) return tete + `<h2>Le but du jeu, en une phrase.</h2>
     <p>Au blackjack, tu joues <b>contre le croupier</b>, pas contre les autres joueurs : il faut faire <b>plus que lui sans dépasser 21</b>. Les figures valent 10, l'as vaut 1 ou 11, le reste sa valeur.</p>
+    <p>Tant qu'un as compte 11, on dit que la main est <b>souple</b> : « 17 souple », c'est as + 6, et elle ne peut pas sauter — tirer une carte de plus est sans risque, l'as redescend à 1. C'est le mot que tu verras sous tes cartes et sur le feutre.</p>
     <p>Le croupier, lui, n'a pas le choix : il tire jusqu'à 17. C'est pour ça que <b>ce qui reste dans le sabot</b> change tout — beaucoup de dix et d'as à venir, c'est bon pour toi (tes blackjacks paient une fois et demie, ses 16 sautent) ; beaucoup de petites cartes, c'est bon pour lui.</p>
     <p><b>Compter, c'est savoir de quel côté penche le sabot.</b> Et miser plus quand il penche vers toi.</p>
     <div class="rang-btn"><button class="btn" id="leconSuite">Les trois valeurs →</button></div></div>`;

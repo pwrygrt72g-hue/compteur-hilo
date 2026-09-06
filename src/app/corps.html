@@ -165,7 +165,10 @@
   <!-- BANDE 1 — la barre : nom de la table, trois puces, le compte en petits chiffres, ⚙.
        Discrète : elle ne vole rien au feutre. -->
   <div class="laque hud" id="hud">
-    <div class="hud-table"><b id="tNom">—</b><span class="regles" id="tRegles"></span><span class="hud-limites" id="rjLimites" title="Mise minimale et maximale de la table">min 10 · max 1 000</span></div>
+    <!-- Les puces de règles s'OUVRENT : leur explication ne vivait que dans un `title`, qui ne
+         s'atteint ni au doigt ni sous 1000 px (où la rangée est carrément retirée). Le bouton
+         porte la rangée entière ; les textes sont ceux des pastilles, pas une seconde version. -->
+    <div class="hud-table"><b id="tNom">—</b><button class="regles regles-btn" id="tRegles" title="Voir les règles de cette table, en toutes lettres"></button><span class="hud-limites" id="rjLimites" title="Mise minimale et maximale de la table">min 10 · max 1 000</span></div>
     <div class="hud-compte" id="hudCompte" title="Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.">
       <span title="Compte courant : la somme des valeurs des cartes sorties depuis le mélange (+1, 0, −1 en Hi-Lo)"><i>Courant</i><b id="tRC">—</b></span>
       <span title="Compte vrai : le compte courant divisé par les jeux qui restent — c'est lui qui dit si la table t'est favorable"><i>Vrai</i><b id="tTC">—</b></span>
@@ -183,6 +186,11 @@
   <div class="salle" id="salle">
     <!-- Le décor du lieu : la photo embarquée (window.PHOTOS), floutée et assombrie par le CSS. -->
     <div class="decor" aria-hidden="true"></div>
+    <!-- La note de table : une ligne persistante pour ce qui vaut toute la session (une
+         mélangeuse continue rend le comptage inutile ; personne ne demande jamais son compte).
+         Posée SUR le décor, à gauche du croupier : le feutre n'a que 405 px à 1280 × 800, une
+         bannière en flux lui en volerait quarante. Vide, elle n'existe pas. -->
+    <p class="note-table" id="noteTable"></p>
     <div id="croupierScene" aria-hidden="true"></div>
     <div class="tapis plateau" id="plateau">
       <!-- Le grain du cuir du rail : la même tuile de bruit que le feutre (#grainP), en calque. -->
@@ -243,13 +251,15 @@
       <button class="btn verre" id="bSepare" disabled title="Séparer : je joue deux mains à partir de ma paire, une mise sur chacune">Séparer<kbd>S</kbd></button>
       <button class="btn verre" id="bAbandon" disabled title="Abandon : je rends la main et je récupère la moitié de ma mise">Abandon<kbd>A</kbd></button>
     </div>
-    <!-- Les utilitaires de la table, à droite, en retrait : ils ne se jouent pas à chaque main.
-         « Montrer le compte » et « Caméra » restent toujours à portée ; le reste vit dans un
-         menu « Plus » sous 1400 px (mesuré le 05/09 à 1280 × 800 à plusieurs : sept boutons
-         passaient sur une deuxième rangée et volaient 54 px au feutre). Les identifiants ne
-         bougent pas : la sonde, le banc et reseau.js les cliquent tels quels. -->
+    <!-- Les utilitaires de la table, en retrait derrière les coups : ils ne se jouent pas à chaque
+         main. Le menu « Plus » existe à TOUTES les largeurs (mesuré le 06/09 : au-delà de 1400 px
+         il se dépliait et la barre passait à ONZE boutons d'un seul rang, où « Nouveau sabot
+         (abandonne la manche) » n'était séparé que par un trait à 14 % d'opacité — plus l'écran
+         est grand, plus il y avait de chrome). Restent toujours à portée les trois gestes du
+         joueur : s'annoncer, la stratégie, la caméra. Les identifiants ne bougent pas : la
+         sonde, le banc et reseau.js les cliquent tels quels. -->
     <div class="rang-table" id="rangTable">
-      <button class="btn verre mini" id="bMontrer" aria-pressed="false" title="Afficher le compte courant, le compte vrai, les jeux restants et la rampe de mise dans la barre">Montrer le compte</button>
+      <button class="btn verre mini" id="bMonCompte" title="Annonce ton compte courant : la table le compare au vrai">Annoncer mon compte</button>
       <!-- L'aide à la décision (« Stratégie : Tirer ») : allumée d'office les vingt premières mains (table.js,
            aideActive). Elle vivait au fond du menu « Plus » — la seule chose dont un débutant a besoin. -->
       <button class="btn verre mini" id="bAide" aria-pressed="false" title="Afficher la stratégie de base pendant ton tour">Aide à la décision</button>
@@ -259,7 +269,7 @@
       <div class="plus" id="plusTable">
         <button class="btn verre mini plus-btn" id="bPlus" aria-expanded="false" aria-controls="plusMenu" title="Plus d'options">Plus <span class="chevron" aria-hidden="true"></span></button>
         <div class="plus-menu" id="plusMenu">
-          <button class="btn verre mini" id="bMonCompte" title="Annonce ton compte courant : la table le compare au vrai">Annoncer mon compte</button>
+          <button class="btn verre mini" id="bMontrer" aria-pressed="false" title="Afficher le compte courant, le compte vrai, les jeux restants et la rampe de mise dans la barre">Montrer le compte</button>
           <button class="btn verre mini" id="bRecu" title="Le reçu du sabot : l'empreinte scellée du mélange, vérifiable par n'importe qui">Vérifier le mélange</button>
           <button class="btn verre mini" id="bReglagesTable" title="Rythme de la donne, rythme des voisins, choix du croupier">Cadence &amp; croupier</button>
           <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->

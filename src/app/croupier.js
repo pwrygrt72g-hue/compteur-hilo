@@ -286,7 +286,9 @@ const CR = { id: "", el: null, scene: null, bulle: null, visible: false, salue: 
   // La tête tourne de deux angles ADDITIONNÉS : le regard (vers un siège) et le penché (une
   // émotion), plus une avancée (le menton qui vient). Une émotion sans penché la redresse,
   // sans toucher au regard.
-  regard: 0, penche: 0, avance: 0, annonceT: 0, bulleGenre: "", paieFin: 0 };
+  regard: 0, penche: 0, avance: 0, annonceT: 0, bulleGenre: "", paieFin: 0,
+  // L'articulation est une BOUCLE : un jeton pour l'annuler, une minuterie, la forme de repos.
+  articule: 0, articuleT: null, articuleRetour: "calme" };
 const CR_RESSORT = "cubic-bezier(.22,.72,.24,1)";
 
 const crQ = s => CR.el ? CR.el.querySelector(s) : null;
@@ -444,7 +446,9 @@ function crCibleRepos(cote) {
   // recouvrait le chrome). Quand l'intervalle rack → sabot est plus étroit que la main, elle se
   // pose contre le sabot et déborde sur le bord du rack — un croupier a la main sur son rack,
   // pas sur son sabot.
-  if (cote === "D") { const sb = crRect("sabot"); const hi = sb ? sb.left - 22 * s : Infinity, lo = rk.right + 12 * s;
+  // 30 px de dégagement, pas 22 : au repos la main droite est TOURNÉE vers le sabot
+  // (crReposer) et son gabarit déborde — mesuré le 06/09, elle mordait le chrome du sabot.
+  if (cote === "D") { const sb = crRect("sabot"); const hi = sb ? sb.left - 30 * s : Infinity, lo = rk.right + 12 * s;
     return { x: hi < lo ? hi : Math.max(lo, Math.min(hi, voulu)), y }; }
   const qui = document.querySelector(".croupier .qui"), q = qui && qui.getBoundingClientRect(), df = crRect("defausse");
   return { x: cale(voulu, df ? df.right + 24 * s : -Infinity, Math.min(rk.left - 14 * s, q && q.width ? q.left - 24 * s : Infinity)), y };
@@ -452,7 +456,12 @@ function crCibleRepos(cote) {
 function crReposer(ms) {
   ms = ms === undefined ? 340 : ms; CR.arme = false;
   const d = crCibleRepos("D"), g = crCibleRepos("G"); if (!d) return;
-  crPoseBras("D", d.x, d.y, ms, 0, { theta: CR_THETA_REPOS, doigtsBas: true }); crPoseBras("G", g.x, g.y, ms, 0, { theta: CR_THETA_REPOS, doigtsBas: true });
+  // Les deux mains ne sont PAS le miroir l'une de l'autre : la droite est tournée vers le
+  // sabot — c'est d'elle que sortent les cartes —, la gauche posée à plat. Mesuré le 06/09 :
+  // deux mains identiques, symétriques, doigts écartés, à 200 px de part et d'autre du rack,
+  // se lisaient comme un mannequin. (Les bras BOUGENT bien à la donne, crFlick les emmène au
+  // sabot puis vers le siège ; c'est la pose de REPOS qui ne racontait rien.)
+  crPoseBras("D", d.x, d.y, ms, -8, { theta: CR_THETA_REPOS, doigtsBas: true }); crPoseBras("G", g.x, g.y, ms, 5, { theta: CR_THETA_REPOS, doigtsBas: true });
 }
 function crArmer(ms, o) {
   const c = crCibleSabot(); if (!c) return false;
@@ -535,12 +544,24 @@ function crPaie(si, issue, retard) {
   crMinuteur(() => { if (performance.now() >= CR.paieFin - 30) crReposer(380); }, (retard || 0) + (gagne ? 540 : 400));
 }
 // Le mélange : les deux mains ramassent au centre et se croisent, 1,2 s.
+// Mesuré le 06/09 : les deux mains atterrissaient sur (570-740, 250-320) et couvraient le
+// tiers haut de la carte visible du croupier, index de rang compris — `crFlick` a pourtant
+// `crEviterCartes` pour exactement ce problème. Un croupier ne mélange jamais par-dessus une
+// main en cours : les mains passent par le même évitement, et le pas est repoussé sous les cartes.
 function crMelange() {
   if (!CR.el || !CR.visible || MOUVEMENT_REDUIT.on) return;
   const rd = crRect("defausse"), rs = crRect("sabot"); if (!rd || !rs) return;
-  const cx = (rd.right + rs.left) / 2, cy = rd.top + rd.height * .3, e = rd.width * .9;
+  const dm = crRect("dMain");
+  const cx = (rd.right + rs.left) / 2, e = rd.width * .9;
+  let cy = rd.top + rd.height * .3;
+  // S'il y a des cartes au centre, on mélange SOUS elles, pas dessus.
+  if (dm && dm.height) cy = Math.max(cy, dm.bottom + 10);
+  const ev = (x, y) => { const p = crEviterCartes(x, y); return [p, y]; };
   const pas = [[cx - e, cy + 22, cx + e, cy + 22], [cx + e * .5, cy + 4, cx - e * .5, cy + 4], [cx - e, cy + 26, cx + e, cy + 26], [cx + e * .4, cy, cx - e * .4, cy]];
-  pas.forEach((p, i) => crMinuteur(() => { crPoseBras("G", p[0], p[1], 230, i % 2 ? 18 : -16); crPoseBras("D", p[2], p[3], 230, i % 2 ? -18 : 16); }, i * 240));
+  pas.forEach((p, i) => crMinuteur(() => {
+    const [gx, gy] = ev(p[0], p[1]), [dx2, dy2] = ev(p[2], p[3]);
+    crPoseBras("G", gx, gy, 230, i % 2 ? 18 : -16); crPoseBras("D", dx2, dy2, 230, i % 2 ? -18 : 16);
+  }, i * 240));
   crMinuteur(() => { if (!CR.arme) crReposer(360); }, 1000);
   crRegarde(cx, cy, 240);
   crVisage(EMOTIONS.concentre); crMinuteur(() => { if (CR.emotion === CR.base) crVisage(EMOTIONS[CR.base]); }, 1300);
@@ -577,6 +598,9 @@ const BOUCHES = {
   calme: ["M-13 0C-6 4 6 4 13 0"], sourire: ["M-15-3C-8 8 8 8 15-3"], grand: ["M-16-3C-8 12 8 12 16-3Z", "#4A1A16", 1],
   encoin: ["M-12 1C-4 4 6 3 15-5"], ferme: ["M-13 0h26"], boude: ["M-12 3C-5-3 5-3 12 3"],
   serre: ["M-14-2C-6-5 6-5 14-2C12 8-12 8-14-2z", "#4A1A16", 1], ouverte: ["M-9-3C-4-8 4-8 9-3C9 8-9 8-9-3z", "#4A1A16"],
+  // La mi-ouverte : entre « ouverte » et « calme ». Trois formes, c'est le minimum pour que la
+  // bouche ait l'air de FORMER des sons plutôt que de battre.
+  mi: ["M-11-1C-5-4 5-4 11-1C10 5-10 5-11-1z", "#4A1A16"],
 };
 const EMOTIONS = {
   neutre: { sg: [0, 0], sd: [0, 0], bouche: "calme", joues: 0, plisse: [0, 0] },
@@ -603,14 +627,41 @@ function crVisage(o) {
   ["crPaupG", "crPaupD"].forEach((k, i) => { const e = crQ("#cr-" + k); if (e) e.style.transform = `scaleY(${pl[i]})`; });
   CR.fixe = !!o.fixe;
 }
-// La bouche s'ouvre et se ferme deux fois : il parle, même sans son.
+/* La bouche articule TANT QUE la bulle est ouverte. Mesuré le 06/09 en rAF : l'ancienne
+   version ouvrait et fermait deux fois en 400 ms, quelle que soit la durée de la réplique —
+   dernier mouvement à t=417, bulle encore là à t=5001, soit 4584 ms de mannequin figé, 92 %
+   du temps où il parle. Pour la question d'assurance, qui n'a AUCUNE minuterie, il restait
+   bouche close aussi longtemps qu'on ne répondait pas.
+   Trois formes tirées au sort (ouverte / mi / calme), 110-160 ms chacune ; après 1,5 s le
+   cycle ralentit — on passe d'« il parle » à « il attend », plutôt que de tout couper. */
+function crArreteArticule(retour) {
+  if (CR.articuleT) { clearTimeout(CR.articuleT); CR.articuleT = null; }
+  CR.articule = 0;
+  const b = crQ("#cr-crBouche"), d = crQ("#cr-crDents"); if (!b) return;
+  const f = BOUCHES[retour || CR.articuleRetour] || BOUCHES.calme;
+  b.setAttribute("d", f[0]); b.setAttribute("fill", f[1] || "none"); if (d) d.setAttribute("opacity", f[2] ? "1" : "0");
+}
 function crArticule(retour) {
   if (!CR.el || MOUVEMENT_REDUIT.on) return;
   const b = crQ("#cr-crBouche"), d = crQ("#cr-crDents"); if (!b) return;
-  const p = BOUCHES.ouverte, f = BOUCHES[retour] || BOUCHES.calme;
-  const ouvre = () => { b.setAttribute("d", p[0]); b.setAttribute("fill", p[1]); if (d) d.setAttribute("opacity", "0"); };
-  const ferme = () => { b.setAttribute("d", f[0]); b.setAttribute("fill", f[1] || "none"); if (d) d.setAttribute("opacity", f[2] ? "1" : "0"); };
-  ouvre(); crMinuteur(ferme, 130); crMinuteur(ouvre, 260); crMinuteur(ferme, 400);
+  CR.articuleRetour = retour;
+  const jeton = ++CR.articule, depart = performance.now();
+  const f = BOUCHES[retour] || BOUCHES.calme, formes = [BOUCHES.ouverte, BOUCHES.mi || BOUCHES.ouverte, f];
+  const poser = g => { b.setAttribute("d", g[0]); b.setAttribute("fill", g[1] || "none"); if (d) d.setAttribute("opacity", g[2] ? "1" : "0"); };
+  const pas = () => {
+    if (CR.articule !== jeton) return;
+    // La bulle fermée, la bouche se repose : c'est ELLE qui commande, pas une durée.
+    const b2 = CR.bulle;
+    if (!b2 || !b2.classList.contains("on")) { crArreteArticule(retour); return; }
+    const age = performance.now() - depart;
+    // Passé ~2,7 s il n'articule plus, il ATTEND : la bouche se repose au lieu de battre dans
+    // le vide (une bulle d'annonce ou de question peut rester des dizaines de secondes).
+    if (age > 2700) { crArreteArticule(retour); return; }
+    const lent = age > 1500;
+    poser(lent ? f : formes[alea(formes.length)]);
+    CR.articuleT = crMinuteur(pas, lent ? 300 + alea(260) : 110 + alea(50));
+  };
+  poser(BOUCHES.ouverte); CR.articuleT = crMinuteur(pas, 120);
 }
 function crSecoue() {
   if (!CR.el || MOUVEMENT_REDUIT.on) return;
@@ -623,6 +674,11 @@ function crSecoue() {
 /* ── La bulle : hors de #croupierScene (qui est aria-hidden), dans un
    aria-live poli, 1,8 s, Instrument Serif. Elle SUIT la tête : posée à droite
    du visage, à la hauteur des yeux, d'après la boîte réelle de la tête. ─── */
+// Vrai si la bulle est ouverte À CET INSTANT. C'est la seule définition de « le croupier parle ».
+function crParleMaj() {
+  const v = $("v-table"); if (!v) return;
+  v.classList.toggle("cr-parle", !!(CR.visible && CR.bulle && CR.bulle.classList.contains("on")));
+}
 function crBulleEl() {
   if (CR.bulle) return CR.bulle;
   const salle = $("salle"); if (!salle) return null;
@@ -643,19 +699,45 @@ function crDireQuestion(texte, aide, options, sur) {
   const o = b.querySelector(".cr-opts"); o.innerHTML = "";
   options.forEach(([libelle, valeur, defaut]) => {
     const bt = document.createElement("button"); bt.type = "button"; bt.textContent = libelle; if (defaut) bt.className = "defaut";
-    bt.onclick = () => { o.innerHTML = ""; b.querySelector(".cr-aide").textContent = ""; b.classList.remove("question", "on"); CR.bulleGenre = ""; sur(valeur); };
+    bt.onclick = () => { o.innerHTML = ""; b.querySelector(".cr-aide").textContent = ""; b.classList.remove("question", "on"); CR.bulleGenre = ""; crParleMaj(); crArreteArticule("ferme"); sur(valeur); };
     o.appendChild(bt);
   });
-  CR.bulleGenre = "question"; b.classList.add("question", "on");
+  CR.bulleGenre = "question"; b.classList.add("question", "on"); crParleMaj();
+  crPoserBulle(b);   // la classe .question change sa largeur ET son ancrage : on repose après
   crArticule("ferme");
   setTimeout(() => { const d = o.querySelector(".defaut"); if (d && d.isConnected) d.focus(); }, 80);
   return true;
 }
+/* Mesuré le 06/09 : ancrée par son COIN HAUT à droite du visage, la bulle d'assurance
+   (675→1116 × 147→300) recouvrait 161 × 83 px du bras droit (597→834 × 209→453) — la moitié
+   de sa boîte —, laissait la main visible en dessous (une main flottante détachée d'un
+   moignon) et posait sa pointe 56 px SOUS la bouche. Une réplique de 897 px de large, c'est
+   35 % de l'écran et 151 px du plateau à jetons recouverts.
+   Trois règles : on ancre par la POINTE (elle arrive à hauteur de bouche), on ne traverse
+   jamais un bras (une question grandit VERS LE HAUT, là où il n'y a rien), et on bascule à
+   gauche du visage quand la place manque à droite. */
 function crPoserBulle(b) {
   const t = crQ("#cr-crTete"), salle = $("salle"); if (!t || !salle) return;
   const r = t.getBoundingClientRect(), sr = salle.getBoundingClientRect(); if (!r.width) return;
-  b.style.left = Math.round(r.right - r.width * .04 - sr.left) + "px";
-  b.style.top = Math.max(4, Math.round(r.top + r.height * .1 - sr.top)) + "px";
+  const question = b.classList.contains("question");
+  // La bulle doit être mesurable : on la rend visible (opacité pilotée par .on) avant de lire.
+  b.style.maxWidth = "";
+  // La largeur ne dépasse jamais la place réellement libre entre la tête et le bord de la salle.
+  const libreD = Math.max(0, sr.right - (r.right - r.width * .04) - 14);
+  const libreG = Math.max(0, (r.left + r.width * .04) - sr.left - 14);
+  const aDroite = libreD >= Math.min(300, libreG) || libreD >= libreG;
+  const place = Math.max(180, Math.min(aDroite ? libreD : libreG, sr.width * .34));
+  b.style.maxWidth = Math.round(place) + "px";
+  const h = b.offsetHeight || 90, w = b.offsetWidth || 240;
+  // Ancrage vertical par la pointe : le ::before est à 6 px du bas, la bouche est à ~62 %
+  // de la hauteur de la tête. Une question monte au-dessus de la tête, elle ne coupe rien.
+  const bouche = r.top + r.height * .62 - sr.top;
+  let top = question ? Math.round(r.top - sr.top - h - 8) : Math.round(bouche - h + 14);
+  top = Math.max(4, Math.min(top, sr.height - h - 6));
+  b.style.top = top + "px";
+  b.classList.toggle("a-gauche", !aDroite);
+  b.style.left = aDroite ? Math.round(r.right - r.width * .04 - sr.left) + "px"
+    : Math.round(Math.max(4, r.left + r.width * .04 - sr.left - w)) + "px";
 }
 // o.genre = « annonce » (ce que dit la table : le règlement, le sabot neuf, l'assurance…) ou
 // « replique » (le personnage). Une bulle déjà ouverte se REFERME avant de changer de texte
@@ -670,12 +752,14 @@ function crDire(texte, ms, o) {
     b.querySelector(".cr-nom").textContent = crNom();
     b.querySelector(".cr-texte").textContent = texte;
     CR.bulleGenre = o.genre || "replique"; if (CR.bulleGenre === "annonce") CR.annonceT = performance.now();
-    b.classList.add("on");
-    clearTimeout(CR.bulleT); CR.bulleT = setTimeout(() => { b.classList.remove("on"); CR.bulleGenre = ""; }, ms || 1800);
+    b.classList.add("on"); crParleMaj();
+    crPoserBulle(b);   // reposée une fois la hauteur réelle connue (le texte vient d'être écrit)
+    if (!o.muet) crArticule((EMOTIONS[CR.emotion] || EMOTIONS.neutre).bouche);
+    clearTimeout(CR.bulleT); CR.bulleT = setTimeout(() => { b.classList.remove("on"); CR.bulleGenre = ""; crParleMaj(); }, ms || 1800);
   };
   clearTimeout(CR.bulleT); clearTimeout(CR.bulleR);
   if (b.classList.contains("on") && b.querySelector(".cr-texte").textContent !== texte && !MOUVEMENT_REDUIT.on) {
-    b.classList.remove("on"); CR.bulleR = setTimeout(poser, 170);
+    b.classList.remove("on"); crParleMaj(); CR.bulleR = setTimeout(poser, 170);
   } else poser();
 }
 // Fermer la bulle tout de suite : le croupier ne parle pas pendant qu'il distribue.
@@ -684,6 +768,7 @@ function crTaire(genre) {
   if (genre && CR.bulleGenre && CR.bulleGenre !== genre) return;
   if (CR.bulleGenre === "question" && genre !== "question") return;
   clearTimeout(CR.bulleT); clearTimeout(CR.bulleR); CR.bulleGenre = ""; if (CR.bulle) CR.bulle.classList.remove("on");
+  crParleMaj(); crArreteArticule();
 }
 function crReplique(genre) {
   const banque = crPerso().dit[genre] || []; if (!banque.length) return "";
@@ -708,7 +793,7 @@ function crEmotion(nom, o) {
   }
   if (e.fixe) crRegardeSiege("toi", 220);
   if (o.texte) {
-    const dire = () => { if (CR.jeton !== jeton) return; crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400)); crArticule(e.bouche); };
+    const dire = () => { if (CR.jeton !== jeton) return; crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400), { muet: true }); crArticule(e.bouche); };
     if (apres) crMinuteur(dire, apres); else dire();
   } else crTaire("replique");
   crMinuteur(() => { if (CR.jeton === jeton) { CR.emotion = CR.base; crVisage(EMOTIONS[CR.base] || EMOTIONS.neutre); } }, tenue);
@@ -723,7 +808,12 @@ document.addEventListener("sabot:annonce", e => {
   if (!CR.el || !CR.visible || !matchMedia("(min-width:1000px)").matches || $("v-table").dataset.reseau) return;
   const t = ((e.detail || {}).texte || "").trim();
   if (!t) { crTaire("annonce"); return; }
-  crDire(t, 3400, { genre: "annonce" });
+  // 3,4 s, c'était le temps qu'une phrase reste lisible — pas le temps qu'elle reste VRAIE.
+  // « À toi : 17 souple contre un 5 » disparaissait pendant qu'on réfléchissait encore, et
+  // rien ne la reprenait (le repli du feutre était éteint en permanence, cf. crParleMaj).
+  // Ce que dit la TABLE tient jusqu'à ce que la table dise autre chose : c'est `annoncer("")`
+  // qui referme, comme pour la question d'assurance.
+  crDire(t, 60000, { genre: "annonce" });
 });
 // L'assurance : LE croupier pose la question, dans sa bulle, à la première personne, avec le
 // montant ; Oui/Non dedans ; il te regarde, concentré, jusqu'à la réponse. Sur ordinateur, en
@@ -754,12 +844,15 @@ window.__croupierGeste = nom => {
   monterCroupier(); CR.visible = true;
   const toi = document.querySelector("#sieges .siege.toi"), ti = toi ? [...document.querySelectorAll("#sieges .siege")].indexOf(toi) : 0;
   const cible = () => { const r = crRect("m_" + ti + "_0") || (toi && toi.getBoundingClientRect()); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: innerWidth / 2, y: innerHeight * .7 }; };
+  // Geler la pose = invalider les minuteries de retour (elles testent `CR.gestes === n`),
+  // pas ralentir le geste. Il se joue à sa vitesse NATURELLE et reste là où il est arrivé.
+  const figer = ms => { CR.paieFin = performance.now() + 600000; crMinuteur(() => { CR.gestes++; CR.arme = false; }, ms); };
   if (nom === "armer") crArmer(320);
-  else if (nom === "flick") { crArmer(1); crFlick(cible(), 900, { duree: 100000, delai: 0 }); }
-  else if (nom === "retourne") crRetourne($("dMain").children[1] || $("dMain"));
-  else if (nom === "paie") crPaie(ti, "gagne", 0);
-  else if (nom === "ramasse") crPaie(ti, "perd", 0);
-  else if (nom === "melange") crMelange();
+  else if (nom === "flick") { crArmer(1); crFlick(cible(), 900); figer(360); }
+  else if (nom === "retourne") { crRetourne($("dMain").children[1] || $("dMain")); figer(300); }
+  else if (nom === "paie") { crPaie(ti, "gagne", 0); figer(420); }
+  else if (nom === "ramasse") { crPaie(ti, "perd", 0); figer(240); }
+  else if (nom === "melange") { crMelange(); figer(620); }
   else if (nom === "regarde") crRegardeSiege(ti, 240);
   else crReposer(300);
 };
@@ -910,7 +1003,12 @@ document.addEventListener("sabot:manche-fin", () => {
 // pose qu'à ce moment-là, et le croupier salue à la première apparition.
 if (window.ResizeObserver && $("croupierScene")) new ResizeObserver(entries => {
   const r = entries[0].contentRect, avant = CR.visible; CR.visible = r.width > 20 && r.height > 20;
-  $("v-table").classList.toggle("cr-parle", CR.visible);
+  // « cr-parle » disait « le croupier est à l'écran » — et style.css cachait la pastille du
+  // feutre en permanence, donc « À toi : 17 souple contre un 5 » n'apparaissait JAMAIS sur
+  // ordinateur (mesuré le 06/09 : à 8 s, le texte est dans le DOM en display:none, la bulle à
+  // opacité 0). La classe suit maintenant la BULLE ; « cr-la » porte la présence.
+  $("v-table").classList.toggle("cr-la", CR.visible);
+  if (!CR.visible) crParleMaj();
   if (!CR.visible) return;
   if (!CR.el) monterCroupier();
   if (!CR.arme) crReposer(avant ? 200 : 1);

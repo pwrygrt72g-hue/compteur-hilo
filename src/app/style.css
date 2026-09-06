@@ -20,7 +20,10 @@
    blanche parce qu'il fait jour. */
 :root{
   color-scheme:light dark;
-  --encre:#E6E4DD; --laque:#F4F2EC; --relief:#FBFAF6;
+  /* Mesuré le 06/09 : avec --encre #E6E4DD, le panneau (.laque) faisait 1,03:1 contre la page
+     en haut et 1,13:1 en bas — il n'existait comme surface à AUCUN endroit, toute la frontière
+     tenait à un filet d'un pixel. La page descend, le panneau ne passe plus jamais sous elle. */
+  --encre:#DBD7CB; --laque:#F6F4EE; --relief:#FCFBF7;
   --tapis:#245043; --tapis-clair:#2F6353;
   --os:#131C1A; --os-eteint:#55605C;
   --laiton:#8A5C0B; --filet:#C9A227; --bord:#6F6A5C;
@@ -45,7 +48,7 @@
      --or-lumiere pour ce qui est ÉCRIT (salutation, lettrage du feutre, appels) et --or-matiere pour
      ce qui est FAIT d'or (rails, liserés, cercles de mise). Les neuf lieux DÉRIVENT leur or de
      --or-matiere par color-mix, ils n'en écrivent plus un chacun. */
-  --or-lumiere:#F3C866; --or-matiere:#D9B45B;
+  --or-base:#D9B45B; --or-lumiere:#F3C866; --or-matiere:var(--or-base);
   --ressort:cubic-bezier(.22,.72,.24,1);
   --sec:cubic-bezier(.3,0,.2,1);
 }
@@ -111,12 +114,13 @@ button{cursor:pointer;background:none;border:0}
    le fond qui s'assombrit, et un balayage de vernis très plat en travers. */
 .laque{
   position:relative;border-radius:var(--r);isolation:isolate;
+  /* Le bas du vernis ne descend plus qu'à 96 % : à 90 % il passait SOUS la page en thème clair. */
   background:linear-gradient(178deg,
     color-mix(in oklab, var(--relief) 88%, transparent) 0%, var(--laque) 44%,
-    color-mix(in oklab, var(--laque) 90%, #000) 100%);
+    color-mix(in oklab, var(--laque) 96%, #000) 100%);
   box-shadow:
     inset 0 1px 0 var(--trame-clair), inset 0 -1px 0 var(--trame-sombre),
-    inset 0 0 0 1px color-mix(in oklab, var(--filet) 26%, transparent),
+    inset 0 0 0 1px color-mix(in oklab, var(--filet) 42%, transparent),
     0 1px 2px -1px var(--ombre), 0 14px 30px -18px var(--ombre);
 }
 .laque::after{
@@ -283,7 +287,10 @@ body.au-hall{ color-scheme:dark;
     linear-gradient(180deg, rgba(7,13,12,.42) 0%, rgba(7,13,12,0) 26%, rgba(7,13,12,.5) 62%, rgba(7,13,12,.86) 100%) }
 .hall-heros-int{ width:100%; position:relative; z-index:1; text-shadow:0 1px 2px rgba(0,0,0,.6), 0 8px 30px rgba(0,0,0,.45) }
 .hall-kicker{ color:rgba(246,242,232,.74) }
-.hall-titre{ font-size:clamp(44px, 5.6vw, 92px); line-height:.96; letter-spacing:-.012em; margin:6px 0 14px; text-wrap:balance }
+/* Mesuré le 06/09 : à 71,7 px pour 68,8 px de ligne, les deux lignes se chevauchaient de 24 px
+   et l'accent du « À » de « À toi de le tenir » tombait dans les jambages de la ligne du dessus.
+   En français, un titre display accentué (À, È, Ê, Ô, Î) ne tient pas sous 1. */
+.hall-titre{ font-size:clamp(44px, 5.6vw, 92px); line-height:1.04; letter-spacing:-.012em; margin:6px 0 14px; text-wrap:balance }
 .hall-phrase{ max-width:54ch; font-size:var(--t-fort); line-height:1.45; color:rgba(246,242,232,.88); margin:0 0 18px }
 .hall-entree{ display:flex; gap:10px 22px; align-items:center; flex-wrap:wrap; text-shadow:none }
 .hall-entree .grave{ color:rgba(246,242,232,.74) }
@@ -506,13 +513,13 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="boulevard"]{ --feutre:#1F5E44; --feutre-clair:#2B7659; --feutre-ombre:#0C3324;
   --rail:#2A1810; --rail-clair:#43291B; --dos-carte:#8A2420; --lueur:rgba(226,184,87,.20) }
 #v-table[data-lieu="neon"]{ --feutre:#1E3F8F; --feutre-clair:#2A55B5; --feutre-ombre:#0E2358;
-  --rail:#1F1A1A; --rail-clair:#332A2A; --or-matiere:color-mix(in oklab, #D9B45B, #FFF3C0 30%);
+  --rail:#1F1A1A; --rail-clair:#332A2A; --or-matiere:color-mix(in oklab, var(--or-base), #FFF3C0 30%);
   --dos-carte:#1F3A93; --neon:#FF2E7A; --lueur:rgba(34,211,238,.22); --sol:#07090F; --sol-clair:#121628 }
 #v-table[data-lieu="frontdemer"]{ --feutre:#6E1F30; --feutre-clair:#872A3E; --feutre-ombre:#3E0F1B;
   --rail:#221612; --rail-clair:#38251C;
   --dos-carte:#7A1F2E; --lueur:rgba(216,179,106,.18); --sol:#0B0A0B; --sol-clair:#181416 }
 #v-table[data-lieu="cotai"]{ --feutre:#951C1C; --feutre-clair:#B72A26; --feutre-ombre:#560C0C;
-  --rail:#1B0E0C; --rail-clair:#2E1814; --or-matiere:color-mix(in oklab, #D9B45B, #FFD060 45%);
+  --rail:#1B0E0C; --rail-clair:#2E1814; --or-matiere:color-mix(in oklab, var(--or-base), #FFD060 45%);
   --dos-carte:#B8202A; --lueur:rgba(242,193,90,.28); --sol:#0D0707; --sol-clair:#1E1010;
   --dos-motif:radial-gradient(circle, rgba(255,230,160,.45) 0 1.2px, transparent 1.8px) 0 0 / 8px 8px }
 #v-table[data-lieu="cercle"]{ --feutre:#1B2A4E; --feutre-clair:#273B6B; --feutre-ombre:#0D1530;
@@ -522,14 +529,14 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="mainchaude"]{ --feutre:#1C4D2A; --feutre-clair:#27643A; --feutre-ombre:#0B2A15;
   --rail:#2A1810; --rail-clair:#43291B; --dos-carte:#2E5E3A; --lueur:rgba(226,184,87,.26) }
 #v-table[data-lieu="salonprive"]{ --feutre:#25282B; --feutre-clair:#353A3E; --feutre-ombre:#121415;
-  --rail:#15110F; --rail-clair:#241C18; --or-matiere:color-mix(in oklab, #D9B45B 88%, #000);
+  --rail:#15110F; --rail-clair:#241C18; --or-matiere:color-mix(in oklab, var(--or-base) 88%, #000);
   --dos-carte:#17181B; --lueur:rgba(201,166,90,.16); --sol:#050505; --sol-clair:#101010;
   --dos-motif:repeating-linear-gradient(90deg, rgba(230,199,115,.22) 0 1px, transparent 1px 6px) }
 #v-table[data-lieu="reno"]{ --feutre:#59602F; --feutre-clair:#6C7440; --feutre-ombre:#33381A;
-  --rail:#4A3620; --rail-clair:#634A2E; --or-matiere:color-mix(in oklab, #D9B45B, #EDE7D9 28%);
+  --rail:#4A3620; --rail-clair:#634A2E; --or-matiere:color-mix(in oklab, var(--or-base), #EDE7D9 28%);
   --dos-carte:#3D2B1F; --lueur:rgba(255,240,200,.10); --sol:#0F0E0B; --sol-clair:#1B1913 }
 #v-table[data-lieu="aquarium"]{ --feutre:#136A72; --feutre-clair:#1B838C; --feutre-ombre:#083E44;
-  --rail:#1A1F22; --rail-clair:#2B3338; --or-matiere:color-mix(in oklab, #D9B45B, #CFE3E6 35%);
+  --rail:#1A1F22; --rail-clair:#2B3338; --or-matiere:color-mix(in oklab, var(--or-base), #CFE3E6 35%);
   --dos-carte:#0F5C66; --lueur:rgba(34,211,238,.20); --neon:#22D3EE; --sol:#050A0C; --sol-clair:#0E181B }
 
 /* Les encres SOUS le feutre lui appartiennent : il est sombre dans les deux
@@ -589,7 +596,7 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="cercle"]{ --lueur:rgba(212,180,106,.24) }
 #v-table[data-lieu="cercle"] .salle .decor{ filter:blur(3px) brightness(.46) saturate(.95) }
 /* Le Salon Privé : cuir capitonné et or, pas un feutre gris dans le noir. */
-#v-table[data-lieu="salonprive"]{ --or-matiere:color-mix(in oklab, #D9B45B, #FFF0B0 22%); --feutre:#1E2226; --feutre-clair:#2E3338; --dos-carte:#2E2416 }
+#v-table[data-lieu="salonprive"]{ --or-matiere:color-mix(in oklab, var(--or-base), #FFF0B0 22%); --feutre:#1E2226; --feutre-clair:#2E3338; --dos-carte:#2E2416 }
 #v-table[data-lieu="salonprive"] .tapis{
   background:
     radial-gradient(circle at 14px 14px, rgba(255,255,255,.22) 0 1.6px, transparent 2.8px) 0 0 / 28px 28px,
@@ -693,13 +700,21 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 .feutre>svg.grain, .feutre>svg.motif, .feutre>svg.lettrage{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none }
 .feutre>svg.grain{ mix-blend-mode:overlay; opacity:.55 }
 .feutre>svg.lettrage{ z-index:1 }
-.feutre>svg.lettrage text{ font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:700; fill:var(--or);
-  letter-spacing:.22em; opacity:.88; paint-order:stroke; stroke:rgba(0,0,0,.45); stroke-width:1px;
+/* Mesuré le 06/09 : avec fill:var(--or) — l'or MÉLANGÉ À 12 % DE FEUTRE — la grande ligne
+   sortait à 2,19:1 sur le vert (seuil 3:1) et à 2,95:1 sur le rouge du Cotai. On désaturait
+   l'encre vers le fond exactement là où elle doit s'en détacher. L'encre est donc l'or de
+   LUMIÈRE, à pleine opacité, sur un contre-filet noir : le lettrage reste mat (il ne brille
+   pas) mais il se lit. */
+.feutre>svg.lettrage text{ font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:700; fill:var(--or-lumiere);
+  letter-spacing:.22em; opacity:1; paint-order:stroke; stroke:rgba(0,0,0,.66); stroke-width:1.7px;
   transition:opacity .3s }
 /* Les deux lignes du rail sont petites (12 px) : elles portent des RÈGLES (6 TO 5 =
    table imbattable, H17/S17). Mesuré à .62 d'opacité : 2,7:1 sur le vert. Le liseré
    du rail, plus clair, passe le seuil des 4,5:1. */
-.feutre>svg.lettrage text.rail{ fill:var(--or-lumiere); opacity:1; stroke:rgba(0,0,0,.6); stroke-width:1.4px }
+/* Les lignes de rail sont du texte COURANT (seuil 4,5:1) : le contre-filet est plus épais
+   qu'ailleurs, c'est lui qui porte le contraste sur les neuf feutres — le rouge du Cotai est
+   le pire cas, pas le vert du Boulevard. */
+.feutre>svg.lettrage text.rail{ fill:var(--or-lumiere); opacity:1; stroke:rgba(0,0,0,.8); stroke-width:2.1px }
 .feutre>*:not(svg){ position:relative; z-index:2 }
 
 /* La rangée haute passe AU-DESSUS des sièges : le sabot y a rang 3, une carte qui
@@ -720,9 +735,13 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   /* Le conseil (« Stratégie : Rester · masquer l'aide ») vit en BAS du feutre, sur le rail devant ton
      cercle, juste au-dessus des boutons qu'il commente — à « bande-haut + 38 » il s'écrivait sur tes
      cartes dès qu'il était allumé (mesuré le 05/09, Salon Privé). Même pastille que l'annonce. */
-  .feutre>.conseil{ top:auto; bottom:10px }
+  /* Sous les noms des sièges (--bas-noms, mesuré par rendreLettrage), et jamais hors du feutre. */
+  .feutre>.conseil{ bottom:auto; top:var(--bas-noms, calc(100% - 28px)) }
+  /* Compacte : sous les noms, un feutre de 405 px (1280 × 800) n'offre que vingt-cinq pixels.
+     C'est la contrainte qui fixe la hauteur, pas l'inverse — et 24 px suffisent à la lire. */
   .feutre>.conseil:not(:empty){ width:max-content; max-width:min(92%, 720px); left:50%; right:auto; transform:translateX(-50%);
-    background:rgba(0,0,0,.62); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px; padding:6px 18px;
+    min-height:0; line-height:1.3; padding:2px 16px;
+    background:rgba(0,0,0,.62); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px;
     box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or) 35%, transparent) }
   /* Quand il est là, la ligne du coach (jetons.js, #coachMise) monte d'un cran. */
   .salle:has(.feutre>.conseil:not(:empty)) .coach-mise{ bottom:54px }
@@ -734,6 +753,12 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   .feutre>.annonce:not(:empty){ width:max-content; max-width:min(92%, 720px); left:50%; right:auto; transform:translateX(-50%);
     background:rgba(0,0,0,.6); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px; padding:5px 18px }
   #v-table.cr-parle:not([data-reseau]) .feutre>.annonce{ display:none }
+  /* …et quand la pastille EST là (le croupier s'est tu, cf. crParleMaj), elle occupe la même
+     bande que l'arc doré — 50 px de haut à 1280 × 800, il n'y a pas la place pour les deux.
+     Le lettrage ne DISPARAÎT pas (un feutre imprimé ne s'efface pas) : il passe en second
+     plan le temps qu'on lise la phrase, et revient. */
+  #v-table:not(.cr-parle) .feutre:has(>.annonce:not(:empty)) > svg.lettrage{ opacity:.3 }
+  .feutre > svg.lettrage{ transition:opacity .35s ease }
   .sabot, .defausse{ margin-top:-10px }
   .rack{ padding-bottom:14px }   /* le bas du buste du croupier passe derrière */
 }
@@ -759,8 +784,11 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.55), inset 0 -2px 3px rgba(0,0,0,.45) }
 .rack i::before{ content:""; position:absolute; top:-4px; left:8%; right:8%; height:8px; border-radius:50% 50% 0 0 / 100% 100% 0 0;
   background:var(--c); box-shadow:inset 0 2px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.35) }
-.rack::after{ content:"100"; position:absolute; right:-16px; top:9px; width:30px; height:19px; border-radius:3px; transform:rotate(-14deg); z-index:1;
-  font-family:"Martian Mono",monospace; font-size:9px; font-weight:700; line-height:19px; text-align:center; color:var(--or-lumiere);
+/* La limite est celle de la TABLE (jetons.js, rendreRack pose data-min) : « 100 » écrit en dur
+   mentait sur huit tables sur neuf. Et posée à −16 px elle sortait du rack sur la manche du
+   croupier — un autocollant sur son bras. */
+.rack::after{ content:attr(data-min); position:absolute; right:5px; top:9px; min-width:30px; height:19px; border-radius:3px; transform:rotate(-14deg); z-index:1;
+  font-family:"Martian Mono",monospace; font-size:9px; font-weight:700; line-height:19px; text-align:center; padding:0 3px; color:var(--or-lumiere);
   background:linear-gradient(180deg,#2C2C33,#111114); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or-lumiere) 50%, transparent), inset 0 1px 0 rgba(255,255,255,.12), 0 4px 8px -3px rgba(0,0,0,.9) }
 .rack i:nth-child(1){--c:#EDE7D9} .rack i:nth-child(2){--c:#C8252B} .rack i:nth-child(3){--c:#1E7A44}
 .rack i:nth-child(4){--c:#1A1A1D} .rack i:nth-child(5){--c:#6D3D9C} .rack i:nth-child(6){--c:#E67E22}
@@ -877,10 +905,15 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   transform:translateY(calc(var(--lift, 0px) + var(--surelev, 0px))) rotate(var(--tilt, 0deg)); transition:filter .35s ease }
 .siege.toi{ --surelev:var(--surelev-toi, 0px) }
 .siege.toi .cercle{ box-shadow:0 0 0 2px var(--or) inset, 0 0 14px -4px var(--or); opacity:1 }
-.siege.toi .score{ font-size:clamp(17px, calc(var(--w-table, 84px) * .22), 23px); color:var(--or); font-weight:600; min-height:1.3em; min-height:1lh }
-#v-table[data-phase="jeu"] .siege:not(.toi):not(.actif){ filter:brightness(.88) saturate(.92) }
-/* Quand c'est à toi de jouer : un liseré d'or sur TES cartes. */
-#v-table[data-phase="jeu"] .siege.toi.actif .carte{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
+.siege.toi .score{ font-size:clamp(17px, calc(var(--w-table, 84px) * .22), 23px); color:var(--or); font-weight:600 }
+/* Mesuré le 06/09 : les deux règles qui te DÉSIGNENT étaient conditionnées à la phase « jeu »
+   et tombaient ENSEMBLE au règlement — mon « 7♣ 9♥ · 16 · PERDU » devenait strictement
+   indiscernable de celui de Sonia, au moment précis où je le cherche. Elles valent maintenant
+   du premier carton jusqu'au balayage : le liseré ne dépend plus de `.actif` (la main est
+   finie, elle est toujours la mienne). */
+#v-table:is([data-phase="jeu"],[data-phase="reglement"]) .siege:not(.toi):not(.actif){ filter:brightness(.88) saturate(.92) }
+/* Quand c'est à toi de jouer — et jusqu'au verdict : un liseré d'or sur TES cartes. */
+#v-table:is([data-phase="jeu"],[data-phase="reglement"]) .siege.toi .carte{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
   0 0 0 2px var(--or), 0 0 18px -2px var(--or), 0 6px 10px -4px rgba(0,0,0,.5) }
 /* Mesuré le 05/09 : un grand rectangle doré PLUS un pointillé autour des cartes = deux
    cadres imbriqués, penchés par --tilt et coupés par le rail. Le siège qui joue, c'est
@@ -905,7 +938,10 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    calculé pendant la mise passait sous tes cartes. Tes cartes font × 1,12 (cartes.js). */
 .siege .mains{ position:relative; display:flex; gap:10px; align-items:flex-end;
   min-height:calc(var(--w-table, 84px) * 1.4 + 6px + 1.5 * clamp(13px, var(--w-table, 84px) * .16, 17px)) }
-.siege.toi .mains{ min-height:calc(var(--w-table, 84px) * 1.4 * var(--k-toi, 1.12) + 7px + 1.5 * clamp(17px, var(--w-table, 84px) * .22, 23px)) }
+/* Tes cartes sont plus grandes (× --k-toi) : ta boîte l'est aussi. Mais la LIGNE DU TOTAL est
+   réservée à la même hauteur pour tout le monde — ton total est écrit plus gros, il déborde
+   symétriquement de sa ligne au lieu de la creuser (cf. .siege .score, height fixe). */
+.siege.toi .mains{ min-height:calc(var(--w-table, 84px) * 1.4 * var(--k-toi, 1.12) + 7px + 1.5 * clamp(13px, var(--w-table, 84px) * .16, 17px)) }
 /* Le total est CENTRÉ sous l'éventail : en grille « auto auto », le score vivait dans la première
    colonne et pendait sous la première carte — 66 à 78 px à gauche du centre sur une main de trois
    ou cinq (mesuré le 05/09). La main prend la ligne, le score et la pastille se centrent dessous. */
@@ -917,7 +953,8 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    23, la boîte grandissait quand le total s'écrivait et poussait les cartes posées de 7,5 px vers le
    haut, en une image, 20 ms après l'atterrissage (mesuré le 05/09, trace image par image). */
 .siege .score{ font-family:"Martian Mono",monospace; font-size:clamp(13px, calc(var(--w-table, 84px) * .16), 17px); line-height:1.3; color:var(--ivoire);
-  min-height:1.3em; min-height:1lh; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,.5) }
+  height:calc(1.35 * clamp(13px, calc(var(--w-table, 84px) * .16), 17px)); display:flex; align-items:center; justify-content:center;
+  white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,.5) }
 .siege .issue{ font-size:var(--t-micro); letter-spacing:.07em; text-transform:uppercase; padding:1px 7px; border-radius:999px; font-weight:600 }
 .siege .issue:empty{ display:none }
 /* La pastille surgit quand le croupier PAIE ce siège (jetons.js espace les paiements de 140 ms) :
@@ -950,14 +987,21 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 /* LE VERDICT (table.js, inscrireVerdict) : « Gagné », « Sauté », « Blackjack »… en Instrument
    Serif italique, posé au-dessus de tes cartes (left/top en ligne). Il s'INSCRIT de gauche à
    droite (un clip qui s'ouvre, comme une plume qui écrit), tient, puis s'efface en montant. */
+/* Ton siège est SURÉLEVÉ (--surelev-toi) : le mot tombe donc dans la bande où passe l'arc doré.
+   Un halo sombre le détache de ce qu'il y a dessous — sans effacer le lettrage, qui est imprimé. */
 .feutre>.verdict{ position:absolute; z-index:6; left:50%; top:45%; transform:translate(-50%,-100%); margin:0; pointer-events:none;
   font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:clamp(30px, 3.1vw, 58px); line-height:1.05; letter-spacing:.01em; white-space:nowrap;
-  color:var(--ivoire); opacity:0; padding:0 .12em;
+  color:var(--ivoire); opacity:0; padding:0 .12em; isolation:isolate;
   text-shadow:0 2px 0 rgba(0,0,0,.35), 0 6px 22px rgba(0,0,0,.65), 0 0 34px color-mix(in oklab, var(--or) 50%, transparent) }
+.feutre>.verdict::before{ content:""; position:absolute; z-index:-1; left:-42%; right:-42%; top:-46%; bottom:-46%;
+  background:radial-gradient(closest-side, rgba(6,14,11,.86), rgba(6,14,11,.55) 52%, transparent 78%) }
 .feutre>.verdict.g, .feutre>.verdict.bj{ color:var(--or) }
 .feutre>.verdict.bj{ font-size:clamp(34px, 3.6vw, 66px) }
 .feutre>.verdict.p{ color:#FF9B7A }
-.feutre>.verdict.on{ animation:verdict-inscrit 2.3s cubic-bezier(.3,0,.2,1) both }
+/* 1,9 s : la même durée que VERDICT_TENUE (table.js), qui cadence aussi le balayage du feutre
+   et la réouverture des mises. UNE horloge, pas deux — sinon « Pose ta mise » s'affiche
+   au-dessus de cinq verdicts encore en place. */
+.feutre>.verdict.on{ animation:verdict-inscrit 1.9s cubic-bezier(.3,0,.2,1) both }
 @keyframes verdict-inscrit{
   0%{ opacity:1; clip-path:inset(-30% 100% -30% -4%); translate:0 6px; filter:blur(0) }
   30%{ opacity:1; clip-path:inset(-30% -8% -30% -4%); translate:0 0 }
@@ -1031,7 +1075,7 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 #coups .btn.verre:not([disabled]) kbd{ opacity:.6 }
 /* « Abandon » se joue une fois sur cinquante : plus petit, en retrait, à droite du groupe. */
 #coups #bAbandon{ margin-left:6px; min-height:44px; padding:6px 12px; font-size:13px; align-self:center }
-#coups #bAbandon:not([disabled]){ background:rgba(251,247,236,.82); box-shadow:inset 0 1px 0 #fff, 0 4px 10px -6px rgba(0,0,0,.9) }
+#coups #bAbandon:not([disabled]):not(.conseille){ background:rgba(251,247,236,.82); box-shadow:inset 0 1px 0 #fff, 0 4px 10px -6px rgba(0,0,0,.9) }
 /* Armé : « Rendre la moitié ? » — un second clic abandonne (table.js, les dix premières mains). */
 #coups #bAbandon.confirme:not([disabled]){ background:#FBF7EC; color:#8A2A18; border-color:#B33F22; box-shadow:0 0 0 2px rgba(179,63,34,.45), inset 0 1px 0 #fff }
 /* Le raccourci se lit comme une TOUCHE, pas comme la fin du libellé (« Tirer T »). */
@@ -1046,29 +1090,28 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 .rang-table .btn.verre.mini:hover{ background:rgba(255,255,255,.08); color:var(--ivoire) }
 /* « Nouveau sabot » jette la manche en cours : un filet le sépare des autres — sans or,
    l'or est réservé à « Distribuer ». */
-#bNouveauSabot{ margin-left:8px; position:relative; border-color:rgba(255,255,255,.14); color:rgba(246,241,228,.74) }
-#bNouveauSabot::before{ content:""; position:absolute; left:-8px; top:6px; bottom:6px; width:1px; background:rgba(255,255,255,.14) }
+#bNouveauSabot{ margin-left:8px; position:relative; border-color:color-mix(in oklab, var(--cinabre) 40%, transparent); color:color-mix(in oklab, var(--cinabre) 78%, #F6F1E4) }
+#bNouveauSabot:hover{ border-color:var(--cinabre); color:var(--cinabre) }
+#bNouveauSabot::before{ content:""; position:absolute; left:-8px; top:6px; bottom:6px; width:1px; background:rgba(255,255,255,.35) }
 .btn.mini[aria-pressed="true"], .rang-table .btn.verre.mini[aria-pressed="true"]{ color:var(--or); border-color:var(--or) }
-.rang-table{ display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto; align-items:center }
-/* Le menu « Plus » : sous 1400 px, cinq utilitaires derrière un bouton ; au-delà, ils
-   sont tous sur la rangée (display:contents — le menu n'existe pas). */
-.plus{ position:relative; display:contents }
-.plus-menu{ display:contents }
+/* Les utilitaires suivent les coups, séparés par un filet : à 1280 px, `margin-left:auto` les
+   jetait contre le bord droit et laissait 420 px de vide au milieu de la barre — un tiers de sa
+   largeur, exactement là où le regard retombe en sortant du feutre. */
+.rang-table{ display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-start; align-items:center;
+  margin-left:6px; padding-left:12px; border-left:1px solid rgba(255,255,255,.16) }
+/* Le menu « Plus » : les utilitaires rares vivent derrière un bouton, à TOUTES les largeurs. */
+.plus{ position:relative; display:block }
+.plus-menu{ display:none; position:absolute; right:0; bottom:calc(100% + 8px); z-index:30; flex-direction:column; align-items:stretch; gap:4px; min-width:220px;
+  padding:8px; border-radius:14px; background:linear-gradient(180deg,#171B1F,#0E1114); border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 18px 40px -16px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.6); animation:bascule 140ms var(--sec) }
+.plus.ouvert .plus-menu{ display:flex }
+.plus-menu .btn.verre.mini{ width:100%; justify-content:flex-start; text-align:left; padding:8px 12px }
+.plus-menu #bNouveauSabot{ margin-left:0; margin-top:4px }
+.plus-menu #bNouveauSabot::before{ left:8px; right:8px; top:-4px; bottom:auto; width:auto; height:1px }
 .plus-btn .chevron{ display:inline-block; width:7px; height:7px; margin-left:6px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
   transform:rotate(-135deg) translate(-2px,2px); transition:transform .15s }
 .plus.ouvert .plus-btn .chevron{ transform:rotate(45deg) translate(-2px,-2px) }
-#bPlus{ display:none }
-@media (max-width:1399.98px){
-  .plus{ display:block }
-  #bPlus{ display:inline-flex }
-  .plus-menu{ display:none; position:absolute; right:0; bottom:calc(100% + 8px); z-index:30; flex-direction:column; align-items:stretch; gap:4px; min-width:220px;
-    padding:8px; border-radius:14px; background:linear-gradient(180deg,#171B1F,#0E1114); border:1px solid rgba(255,255,255,.14);
-    box-shadow:0 18px 40px -16px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.6); animation:bascule 140ms var(--sec) }
-  .plus.ouvert .plus-menu{ display:flex }
-  .plus-menu .btn.verre.mini{ width:100%; justify-content:flex-start; text-align:left; padding:8px 12px }
-  .plus-menu #bNouveauSabot{ margin-left:0; margin-top:4px }
-  .plus-menu #bNouveauSabot::before{ left:8px; right:8px; top:-4px; bottom:auto; width:auto; height:1px }
-}
+#bPlus{ display:inline-flex }
 .zone-actions .bulle{ bottom:auto; top:-8px; transform:translate(-50%,-100%) }
 /* La barre a la MÊME hauteur pendant la mise et pendant la main : sinon le feutre, qui prend
    la place qu'elle laisse, saute de 60 px à chaque donne (mesuré le 05/09 à 1280×800 : rack
@@ -1365,7 +1408,13 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 }
 
 /* ── Téléphone ─────────────────────────────────────────────────────── */
-@media (pointer:coarse){ .onglets button, .hud-limites, .regle{ min-height:44px; display:inline-flex; align-items:center } }
+/* Relevé le 06/09 : « Le Sabot » 107×34, les trois filtres du hall 34 px de haut, et les dix
+   liens de crédit photo 14 px. Les crédits s'agrandissent par le padding — la marge négative
+   annule le déplacement, la mise en page ne bouge pas d'un pixel. */
+@media (pointer:coarse){
+  .onglets button, .hud-limites, .regle, .marque, .hall-tri button, [role="tab"]{ min-height:44px; display:inline-flex; align-items:center }
+  .hall-credits a{ display:inline-block; padding-block:15px; margin-block:-15px }
+}
 @media (max-width:860px){
   .concentration{grid-template-columns:1fr}
 }
@@ -1678,6 +1727,32 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px -8px rgba(0,0,0,.9) }
 
 /* La ligne du coach : ta mise en unités et, si le compte est affiché, sa cohérence. */
+/* Une pastille de règle qui a une explication le DIT : sans ce signe, personne ne survole,
+   et au doigt personne ne peut. La rangée entière est un bouton (corps.html, #tRegles). */
+.regle[data-aide]{ cursor:help; text-decoration:underline dotted currentColor; text-underline-offset:3px; text-decoration-thickness:1px }
+.regles-btn{ background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; cursor:pointer; min-height:44px; display:flex; flex-wrap:wrap; gap:6px; align-items:center }
+.regles-btn:focus-visible{ outline:2px solid var(--or-lumiere); outline-offset:3px; border-radius:8px }
+/* La note de table : une ligne, sous la barre, que la table écrit quand elle a quelque chose
+   à dire qui vaut pour toute la session (une mélangeuse continue, l'invite à compter). */
+.note-table{ position:absolute; top:8px; left:10px; z-index:8; max-width:min(40ch, 32%); margin:0;
+  font-family:Archivo,sans-serif; font-size:var(--t-fin); line-height:1.45; text-wrap:pretty;
+  color:color-mix(in oklab, var(--ivoire) 82%, transparent);
+  background:rgba(0,0,0,.5); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  border-radius:12px; padding:7px 12px; box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or-matiere) 26%, transparent) }
+.note-table:empty{ display:none }
+.note-table b{ color:var(--or-lumiere); font-weight:600 }
+/* Le geste sur SA ligne : glissé dans le texte, une cible de 44 px déchirait l'interligne. */
+.note-table .lien{ display:flex; align-items:center; justify-content:center; min-height:44px; margin:8px 0 0; width:100%;
+  background:color-mix(in oklab, var(--or-matiere) 16%, transparent); border:1px solid color-mix(in oklab, var(--or-matiere) 45%, transparent);
+  border-radius:9px; padding:4px 12px; color:var(--or-lumiere); font-family:Archivo,sans-serif; font-size:var(--t-fin); font-weight:600; cursor:pointer }
+.note-table .lien:hover{ background:color-mix(in oklab, var(--or-matiere) 28%, transparent); color:var(--nacre) }
+/* Sur un écran étroit, elle passe sous la barre plutôt que sur la tête du croupier. */
+@media (max-width:1023.98px){ .note-table{ position:static; max-width:none; margin:6px 0 0 } }
+/* Les règles de la table, en toutes lettres (la feuille ouverte par #tRegles). */
+.regles-liste{ list-style:none; margin:14px 0 0; padding:0; display:grid; gap:10px }
+.regles-liste li{ display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:baseline }
+.regles-liste .regle{ justify-self:start }
+
 .coach-mise{ position:absolute; left:50%; transform:translateX(-50%); bottom:16px; z-index:7; margin:0; pointer-events:none;
   font-family:Archivo,sans-serif; font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
   padding:5px 13px; border-radius:999px; background:rgba(0,0,0,.5); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or) 30%, transparent);
@@ -1771,6 +1846,14 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .cr-bulle.on{ opacity:1; transform:none }
 .cr-bulle::before{ content:""; position:absolute; left:-7px; bottom:6px; width:12px; height:12px;
   background:#EFE7D2; transform:skewX(-30deg) rotate(20deg); border-radius:2px; box-shadow:-1px 1px 0 rgba(0,0,0,.25) }
+/* Basculée à gauche du visage (croupier.js, crPoserBulle) : le coin plat et la pointe passent
+   de l'autre côté, sinon la queue montre le bord de l'écran. */
+.cr-bulle.a-gauche{ border-radius:18px 18px 5px 18px; transform-origin:100% 100%; transform:translate(4px,6px) scale(.96) }
+.cr-bulle.a-gauche.on{ transform:none }
+.cr-bulle.a-gauche::before{ left:auto; right:-7px; transform:skewX(30deg) rotate(-20deg); box-shadow:1px 1px 0 rgba(0,0,0,.25) }
+/* Une question monte AU-DESSUS de la tête : sa pointe regarde vers le bas. */
+.cr-bulle.question::before{ bottom:-6px; left:16px; transform:rotate(45deg) }
+.cr-bulle.question.a-gauche::before{ left:auto; right:16px }
 .cr-bulle .cr-nom{ display:block; font-family:Archivo,sans-serif; font-weight:700; font-size:10px; letter-spacing:.14em;
   text-transform:uppercase; color:#8A6A1E; margin-bottom:2px }
 /* Une question (croupier.js, crDireQuestion — l'assurance) : la bulle prend la souris, une ligne d'aide en

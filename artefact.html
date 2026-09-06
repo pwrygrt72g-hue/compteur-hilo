@@ -30,7 +30,10 @@
    blanche parce qu'il fait jour. */
 :root{
   color-scheme:light dark;
-  --encre:#E6E4DD; --laque:#F4F2EC; --relief:#FBFAF6;
+  /* Mesuré le 06/09 : avec --encre #E6E4DD, le panneau (.laque) faisait 1,03:1 contre la page
+     en haut et 1,13:1 en bas — il n'existait comme surface à AUCUN endroit, toute la frontière
+     tenait à un filet d'un pixel. La page descend, le panneau ne passe plus jamais sous elle. */
+  --encre:#DBD7CB; --laque:#F6F4EE; --relief:#FCFBF7;
   --tapis:#245043; --tapis-clair:#2F6353;
   --os:#131C1A; --os-eteint:#55605C;
   --laiton:#8A5C0B; --filet:#C9A227; --bord:#6F6A5C;
@@ -55,7 +58,7 @@
      --or-lumiere pour ce qui est ÉCRIT (salutation, lettrage du feutre, appels) et --or-matiere pour
      ce qui est FAIT d'or (rails, liserés, cercles de mise). Les neuf lieux DÉRIVENT leur or de
      --or-matiere par color-mix, ils n'en écrivent plus un chacun. */
-  --or-lumiere:#F3C866; --or-matiere:#D9B45B;
+  --or-base:#D9B45B; --or-lumiere:#F3C866; --or-matiere:var(--or-base);
   --ressort:cubic-bezier(.22,.72,.24,1);
   --sec:cubic-bezier(.3,0,.2,1);
 }
@@ -121,12 +124,13 @@ button{cursor:pointer;background:none;border:0}
    le fond qui s'assombrit, et un balayage de vernis très plat en travers. */
 .laque{
   position:relative;border-radius:var(--r);isolation:isolate;
+  /* Le bas du vernis ne descend plus qu'à 96 % : à 90 % il passait SOUS la page en thème clair. */
   background:linear-gradient(178deg,
     color-mix(in oklab, var(--relief) 88%, transparent) 0%, var(--laque) 44%,
-    color-mix(in oklab, var(--laque) 90%, #000) 100%);
+    color-mix(in oklab, var(--laque) 96%, #000) 100%);
   box-shadow:
     inset 0 1px 0 var(--trame-clair), inset 0 -1px 0 var(--trame-sombre),
-    inset 0 0 0 1px color-mix(in oklab, var(--filet) 26%, transparent),
+    inset 0 0 0 1px color-mix(in oklab, var(--filet) 42%, transparent),
     0 1px 2px -1px var(--ombre), 0 14px 30px -18px var(--ombre);
 }
 .laque::after{
@@ -293,7 +297,10 @@ body.au-hall{ color-scheme:dark;
     linear-gradient(180deg, rgba(7,13,12,.42) 0%, rgba(7,13,12,0) 26%, rgba(7,13,12,.5) 62%, rgba(7,13,12,.86) 100%) }
 .hall-heros-int{ width:100%; position:relative; z-index:1; text-shadow:0 1px 2px rgba(0,0,0,.6), 0 8px 30px rgba(0,0,0,.45) }
 .hall-kicker{ color:rgba(246,242,232,.74) }
-.hall-titre{ font-size:clamp(44px, 5.6vw, 92px); line-height:.96; letter-spacing:-.012em; margin:6px 0 14px; text-wrap:balance }
+/* Mesuré le 06/09 : à 71,7 px pour 68,8 px de ligne, les deux lignes se chevauchaient de 24 px
+   et l'accent du « À » de « À toi de le tenir » tombait dans les jambages de la ligne du dessus.
+   En français, un titre display accentué (À, È, Ê, Ô, Î) ne tient pas sous 1. */
+.hall-titre{ font-size:clamp(44px, 5.6vw, 92px); line-height:1.04; letter-spacing:-.012em; margin:6px 0 14px; text-wrap:balance }
 .hall-phrase{ max-width:54ch; font-size:var(--t-fort); line-height:1.45; color:rgba(246,242,232,.88); margin:0 0 18px }
 .hall-entree{ display:flex; gap:10px 22px; align-items:center; flex-wrap:wrap; text-shadow:none }
 .hall-entree .grave{ color:rgba(246,242,232,.74) }
@@ -516,13 +523,13 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="boulevard"]{ --feutre:#1F5E44; --feutre-clair:#2B7659; --feutre-ombre:#0C3324;
   --rail:#2A1810; --rail-clair:#43291B; --dos-carte:#8A2420; --lueur:rgba(226,184,87,.20) }
 #v-table[data-lieu="neon"]{ --feutre:#1E3F8F; --feutre-clair:#2A55B5; --feutre-ombre:#0E2358;
-  --rail:#1F1A1A; --rail-clair:#332A2A; --or-matiere:color-mix(in oklab, #D9B45B, #FFF3C0 30%);
+  --rail:#1F1A1A; --rail-clair:#332A2A; --or-matiere:color-mix(in oklab, var(--or-base), #FFF3C0 30%);
   --dos-carte:#1F3A93; --neon:#FF2E7A; --lueur:rgba(34,211,238,.22); --sol:#07090F; --sol-clair:#121628 }
 #v-table[data-lieu="frontdemer"]{ --feutre:#6E1F30; --feutre-clair:#872A3E; --feutre-ombre:#3E0F1B;
   --rail:#221612; --rail-clair:#38251C;
   --dos-carte:#7A1F2E; --lueur:rgba(216,179,106,.18); --sol:#0B0A0B; --sol-clair:#181416 }
 #v-table[data-lieu="cotai"]{ --feutre:#951C1C; --feutre-clair:#B72A26; --feutre-ombre:#560C0C;
-  --rail:#1B0E0C; --rail-clair:#2E1814; --or-matiere:color-mix(in oklab, #D9B45B, #FFD060 45%);
+  --rail:#1B0E0C; --rail-clair:#2E1814; --or-matiere:color-mix(in oklab, var(--or-base), #FFD060 45%);
   --dos-carte:#B8202A; --lueur:rgba(242,193,90,.28); --sol:#0D0707; --sol-clair:#1E1010;
   --dos-motif:radial-gradient(circle, rgba(255,230,160,.45) 0 1.2px, transparent 1.8px) 0 0 / 8px 8px }
 #v-table[data-lieu="cercle"]{ --feutre:#1B2A4E; --feutre-clair:#273B6B; --feutre-ombre:#0D1530;
@@ -532,14 +539,14 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="mainchaude"]{ --feutre:#1C4D2A; --feutre-clair:#27643A; --feutre-ombre:#0B2A15;
   --rail:#2A1810; --rail-clair:#43291B; --dos-carte:#2E5E3A; --lueur:rgba(226,184,87,.26) }
 #v-table[data-lieu="salonprive"]{ --feutre:#25282B; --feutre-clair:#353A3E; --feutre-ombre:#121415;
-  --rail:#15110F; --rail-clair:#241C18; --or-matiere:color-mix(in oklab, #D9B45B 88%, #000);
+  --rail:#15110F; --rail-clair:#241C18; --or-matiere:color-mix(in oklab, var(--or-base) 88%, #000);
   --dos-carte:#17181B; --lueur:rgba(201,166,90,.16); --sol:#050505; --sol-clair:#101010;
   --dos-motif:repeating-linear-gradient(90deg, rgba(230,199,115,.22) 0 1px, transparent 1px 6px) }
 #v-table[data-lieu="reno"]{ --feutre:#59602F; --feutre-clair:#6C7440; --feutre-ombre:#33381A;
-  --rail:#4A3620; --rail-clair:#634A2E; --or-matiere:color-mix(in oklab, #D9B45B, #EDE7D9 28%);
+  --rail:#4A3620; --rail-clair:#634A2E; --or-matiere:color-mix(in oklab, var(--or-base), #EDE7D9 28%);
   --dos-carte:#3D2B1F; --lueur:rgba(255,240,200,.10); --sol:#0F0E0B; --sol-clair:#1B1913 }
 #v-table[data-lieu="aquarium"]{ --feutre:#136A72; --feutre-clair:#1B838C; --feutre-ombre:#083E44;
-  --rail:#1A1F22; --rail-clair:#2B3338; --or-matiere:color-mix(in oklab, #D9B45B, #CFE3E6 35%);
+  --rail:#1A1F22; --rail-clair:#2B3338; --or-matiere:color-mix(in oklab, var(--or-base), #CFE3E6 35%);
   --dos-carte:#0F5C66; --lueur:rgba(34,211,238,.20); --neon:#22D3EE; --sol:#050A0C; --sol-clair:#0E181B }
 
 /* Les encres SOUS le feutre lui appartiennent : il est sombre dans les deux
@@ -599,7 +606,7 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="cercle"]{ --lueur:rgba(212,180,106,.24) }
 #v-table[data-lieu="cercle"] .salle .decor{ filter:blur(3px) brightness(.46) saturate(.95) }
 /* Le Salon Privé : cuir capitonné et or, pas un feutre gris dans le noir. */
-#v-table[data-lieu="salonprive"]{ --or-matiere:color-mix(in oklab, #D9B45B, #FFF0B0 22%); --feutre:#1E2226; --feutre-clair:#2E3338; --dos-carte:#2E2416 }
+#v-table[data-lieu="salonprive"]{ --or-matiere:color-mix(in oklab, var(--or-base), #FFF0B0 22%); --feutre:#1E2226; --feutre-clair:#2E3338; --dos-carte:#2E2416 }
 #v-table[data-lieu="salonprive"] .tapis{
   background:
     radial-gradient(circle at 14px 14px, rgba(255,255,255,.22) 0 1.6px, transparent 2.8px) 0 0 / 28px 28px,
@@ -703,13 +710,21 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 .feutre>svg.grain, .feutre>svg.motif, .feutre>svg.lettrage{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none }
 .feutre>svg.grain{ mix-blend-mode:overlay; opacity:.55 }
 .feutre>svg.lettrage{ z-index:1 }
-.feutre>svg.lettrage text{ font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:700; fill:var(--or);
-  letter-spacing:.22em; opacity:.88; paint-order:stroke; stroke:rgba(0,0,0,.45); stroke-width:1px;
+/* Mesuré le 06/09 : avec fill:var(--or) — l'or MÉLANGÉ À 12 % DE FEUTRE — la grande ligne
+   sortait à 2,19:1 sur le vert (seuil 3:1) et à 2,95:1 sur le rouge du Cotai. On désaturait
+   l'encre vers le fond exactement là où elle doit s'en détacher. L'encre est donc l'or de
+   LUMIÈRE, à pleine opacité, sur un contre-filet noir : le lettrage reste mat (il ne brille
+   pas) mais il se lit. */
+.feutre>svg.lettrage text{ font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-weight:700; fill:var(--or-lumiere);
+  letter-spacing:.22em; opacity:1; paint-order:stroke; stroke:rgba(0,0,0,.66); stroke-width:1.7px;
   transition:opacity .3s }
 /* Les deux lignes du rail sont petites (12 px) : elles portent des RÈGLES (6 TO 5 =
    table imbattable, H17/S17). Mesuré à .62 d'opacité : 2,7:1 sur le vert. Le liseré
    du rail, plus clair, passe le seuil des 4,5:1. */
-.feutre>svg.lettrage text.rail{ fill:var(--or-lumiere); opacity:1; stroke:rgba(0,0,0,.6); stroke-width:1.4px }
+/* Les lignes de rail sont du texte COURANT (seuil 4,5:1) : le contre-filet est plus épais
+   qu'ailleurs, c'est lui qui porte le contraste sur les neuf feutres — le rouge du Cotai est
+   le pire cas, pas le vert du Boulevard. */
+.feutre>svg.lettrage text.rail{ fill:var(--or-lumiere); opacity:1; stroke:rgba(0,0,0,.8); stroke-width:2.1px }
 .feutre>*:not(svg){ position:relative; z-index:2 }
 
 /* La rangée haute passe AU-DESSUS des sièges : le sabot y a rang 3, une carte qui
@@ -730,9 +745,13 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   /* Le conseil (« Stratégie : Rester · masquer l'aide ») vit en BAS du feutre, sur le rail devant ton
      cercle, juste au-dessus des boutons qu'il commente — à « bande-haut + 38 » il s'écrivait sur tes
      cartes dès qu'il était allumé (mesuré le 05/09, Salon Privé). Même pastille que l'annonce. */
-  .feutre>.conseil{ top:auto; bottom:10px }
+  /* Sous les noms des sièges (--bas-noms, mesuré par rendreLettrage), et jamais hors du feutre. */
+  .feutre>.conseil{ bottom:auto; top:var(--bas-noms, calc(100% - 28px)) }
+  /* Compacte : sous les noms, un feutre de 405 px (1280 × 800) n'offre que vingt-cinq pixels.
+     C'est la contrainte qui fixe la hauteur, pas l'inverse — et 24 px suffisent à la lire. */
   .feutre>.conseil:not(:empty){ width:max-content; max-width:min(92%, 720px); left:50%; right:auto; transform:translateX(-50%);
-    background:rgba(0,0,0,.62); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px; padding:6px 18px;
+    min-height:0; line-height:1.3; padding:2px 16px;
+    background:rgba(0,0,0,.62); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px;
     box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or) 35%, transparent) }
   /* Quand il est là, la ligne du coach (jetons.js, #coachMise) monte d'un cran. */
   .salle:has(.feutre>.conseil:not(:empty)) .coach-mise{ bottom:54px }
@@ -744,6 +763,12 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   .feutre>.annonce:not(:empty){ width:max-content; max-width:min(92%, 720px); left:50%; right:auto; transform:translateX(-50%);
     background:rgba(0,0,0,.6); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px; padding:5px 18px }
   #v-table.cr-parle:not([data-reseau]) .feutre>.annonce{ display:none }
+  /* …et quand la pastille EST là (le croupier s'est tu, cf. crParleMaj), elle occupe la même
+     bande que l'arc doré — 50 px de haut à 1280 × 800, il n'y a pas la place pour les deux.
+     Le lettrage ne DISPARAÎT pas (un feutre imprimé ne s'efface pas) : il passe en second
+     plan le temps qu'on lise la phrase, et revient. */
+  #v-table:not(.cr-parle) .feutre:has(>.annonce:not(:empty)) > svg.lettrage{ opacity:.3 }
+  .feutre > svg.lettrage{ transition:opacity .35s ease }
   .sabot, .defausse{ margin-top:-10px }
   .rack{ padding-bottom:14px }   /* le bas du buste du croupier passe derrière */
 }
@@ -769,8 +794,11 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.55), inset 0 -2px 3px rgba(0,0,0,.45) }
 .rack i::before{ content:""; position:absolute; top:-4px; left:8%; right:8%; height:8px; border-radius:50% 50% 0 0 / 100% 100% 0 0;
   background:var(--c); box-shadow:inset 0 2px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.35) }
-.rack::after{ content:"100"; position:absolute; right:-16px; top:9px; width:30px; height:19px; border-radius:3px; transform:rotate(-14deg); z-index:1;
-  font-family:"Martian Mono",monospace; font-size:9px; font-weight:700; line-height:19px; text-align:center; color:var(--or-lumiere);
+/* La limite est celle de la TABLE (jetons.js, rendreRack pose data-min) : « 100 » écrit en dur
+   mentait sur huit tables sur neuf. Et posée à −16 px elle sortait du rack sur la manche du
+   croupier — un autocollant sur son bras. */
+.rack::after{ content:attr(data-min); position:absolute; right:5px; top:9px; min-width:30px; height:19px; border-radius:3px; transform:rotate(-14deg); z-index:1;
+  font-family:"Martian Mono",monospace; font-size:9px; font-weight:700; line-height:19px; text-align:center; padding:0 3px; color:var(--or-lumiere);
   background:linear-gradient(180deg,#2C2C33,#111114); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or-lumiere) 50%, transparent), inset 0 1px 0 rgba(255,255,255,.12), 0 4px 8px -3px rgba(0,0,0,.9) }
 .rack i:nth-child(1){--c:#EDE7D9} .rack i:nth-child(2){--c:#C8252B} .rack i:nth-child(3){--c:#1E7A44}
 .rack i:nth-child(4){--c:#1A1A1D} .rack i:nth-child(5){--c:#6D3D9C} .rack i:nth-child(6){--c:#E67E22}
@@ -887,10 +915,15 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   transform:translateY(calc(var(--lift, 0px) + var(--surelev, 0px))) rotate(var(--tilt, 0deg)); transition:filter .35s ease }
 .siege.toi{ --surelev:var(--surelev-toi, 0px) }
 .siege.toi .cercle{ box-shadow:0 0 0 2px var(--or) inset, 0 0 14px -4px var(--or); opacity:1 }
-.siege.toi .score{ font-size:clamp(17px, calc(var(--w-table, 84px) * .22), 23px); color:var(--or); font-weight:600; min-height:1.3em; min-height:1lh }
-#v-table[data-phase="jeu"] .siege:not(.toi):not(.actif){ filter:brightness(.88) saturate(.92) }
-/* Quand c'est à toi de jouer : un liseré d'or sur TES cartes. */
-#v-table[data-phase="jeu"] .siege.toi.actif .carte{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
+.siege.toi .score{ font-size:clamp(17px, calc(var(--w-table, 84px) * .22), 23px); color:var(--or); font-weight:600 }
+/* Mesuré le 06/09 : les deux règles qui te DÉSIGNENT étaient conditionnées à la phase « jeu »
+   et tombaient ENSEMBLE au règlement — mon « 7♣ 9♥ · 16 · PERDU » devenait strictement
+   indiscernable de celui de Sonia, au moment précis où je le cherche. Elles valent maintenant
+   du premier carton jusqu'au balayage : le liseré ne dépend plus de `.actif` (la main est
+   finie, elle est toujours la mienne). */
+#v-table:is([data-phase="jeu"],[data-phase="reglement"]) .siege:not(.toi):not(.actif){ filter:brightness(.88) saturate(.92) }
+/* Quand c'est à toi de jouer — et jusqu'au verdict : un liseré d'or sur TES cartes. */
+#v-table:is([data-phase="jeu"],[data-phase="reglement"]) .siege.toi .carte{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
   0 0 0 2px var(--or), 0 0 18px -2px var(--or), 0 6px 10px -4px rgba(0,0,0,.5) }
 /* Mesuré le 05/09 : un grand rectangle doré PLUS un pointillé autour des cartes = deux
    cadres imbriqués, penchés par --tilt et coupés par le rail. Le siège qui joue, c'est
@@ -915,7 +948,10 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    calculé pendant la mise passait sous tes cartes. Tes cartes font × 1,12 (cartes.js). */
 .siege .mains{ position:relative; display:flex; gap:10px; align-items:flex-end;
   min-height:calc(var(--w-table, 84px) * 1.4 + 6px + 1.5 * clamp(13px, var(--w-table, 84px) * .16, 17px)) }
-.siege.toi .mains{ min-height:calc(var(--w-table, 84px) * 1.4 * var(--k-toi, 1.12) + 7px + 1.5 * clamp(17px, var(--w-table, 84px) * .22, 23px)) }
+/* Tes cartes sont plus grandes (× --k-toi) : ta boîte l'est aussi. Mais la LIGNE DU TOTAL est
+   réservée à la même hauteur pour tout le monde — ton total est écrit plus gros, il déborde
+   symétriquement de sa ligne au lieu de la creuser (cf. .siege .score, height fixe). */
+.siege.toi .mains{ min-height:calc(var(--w-table, 84px) * 1.4 * var(--k-toi, 1.12) + 7px + 1.5 * clamp(13px, var(--w-table, 84px) * .16, 17px)) }
 /* Le total est CENTRÉ sous l'éventail : en grille « auto auto », le score vivait dans la première
    colonne et pendait sous la première carte — 66 à 78 px à gauche du centre sur une main de trois
    ou cinq (mesuré le 05/09). La main prend la ligne, le score et la pastille se centrent dessous. */
@@ -927,7 +963,8 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    23, la boîte grandissait quand le total s'écrivait et poussait les cartes posées de 7,5 px vers le
    haut, en une image, 20 ms après l'atterrissage (mesuré le 05/09, trace image par image). */
 .siege .score{ font-family:"Martian Mono",monospace; font-size:clamp(13px, calc(var(--w-table, 84px) * .16), 17px); line-height:1.3; color:var(--ivoire);
-  min-height:1.3em; min-height:1lh; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,.5) }
+  height:calc(1.35 * clamp(13px, calc(var(--w-table, 84px) * .16), 17px)); display:flex; align-items:center; justify-content:center;
+  white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,.5) }
 .siege .issue{ font-size:var(--t-micro); letter-spacing:.07em; text-transform:uppercase; padding:1px 7px; border-radius:999px; font-weight:600 }
 .siege .issue:empty{ display:none }
 /* La pastille surgit quand le croupier PAIE ce siège (jetons.js espace les paiements de 140 ms) :
@@ -960,14 +997,21 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 /* LE VERDICT (table.js, inscrireVerdict) : « Gagné », « Sauté », « Blackjack »… en Instrument
    Serif italique, posé au-dessus de tes cartes (left/top en ligne). Il s'INSCRIT de gauche à
    droite (un clip qui s'ouvre, comme une plume qui écrit), tient, puis s'efface en montant. */
+/* Ton siège est SURÉLEVÉ (--surelev-toi) : le mot tombe donc dans la bande où passe l'arc doré.
+   Un halo sombre le détache de ce qu'il y a dessous — sans effacer le lettrage, qui est imprimé. */
 .feutre>.verdict{ position:absolute; z-index:6; left:50%; top:45%; transform:translate(-50%,-100%); margin:0; pointer-events:none;
   font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:clamp(30px, 3.1vw, 58px); line-height:1.05; letter-spacing:.01em; white-space:nowrap;
-  color:var(--ivoire); opacity:0; padding:0 .12em;
+  color:var(--ivoire); opacity:0; padding:0 .12em; isolation:isolate;
   text-shadow:0 2px 0 rgba(0,0,0,.35), 0 6px 22px rgba(0,0,0,.65), 0 0 34px color-mix(in oklab, var(--or) 50%, transparent) }
+.feutre>.verdict::before{ content:""; position:absolute; z-index:-1; left:-42%; right:-42%; top:-46%; bottom:-46%;
+  background:radial-gradient(closest-side, rgba(6,14,11,.86), rgba(6,14,11,.55) 52%, transparent 78%) }
 .feutre>.verdict.g, .feutre>.verdict.bj{ color:var(--or) }
 .feutre>.verdict.bj{ font-size:clamp(34px, 3.6vw, 66px) }
 .feutre>.verdict.p{ color:#FF9B7A }
-.feutre>.verdict.on{ animation:verdict-inscrit 2.3s cubic-bezier(.3,0,.2,1) both }
+/* 1,9 s : la même durée que VERDICT_TENUE (table.js), qui cadence aussi le balayage du feutre
+   et la réouverture des mises. UNE horloge, pas deux — sinon « Pose ta mise » s'affiche
+   au-dessus de cinq verdicts encore en place. */
+.feutre>.verdict.on{ animation:verdict-inscrit 1.9s cubic-bezier(.3,0,.2,1) both }
 @keyframes verdict-inscrit{
   0%{ opacity:1; clip-path:inset(-30% 100% -30% -4%); translate:0 6px; filter:blur(0) }
   30%{ opacity:1; clip-path:inset(-30% -8% -30% -4%); translate:0 0 }
@@ -1041,7 +1085,7 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 #coups .btn.verre:not([disabled]) kbd{ opacity:.6 }
 /* « Abandon » se joue une fois sur cinquante : plus petit, en retrait, à droite du groupe. */
 #coups #bAbandon{ margin-left:6px; min-height:44px; padding:6px 12px; font-size:13px; align-self:center }
-#coups #bAbandon:not([disabled]){ background:rgba(251,247,236,.82); box-shadow:inset 0 1px 0 #fff, 0 4px 10px -6px rgba(0,0,0,.9) }
+#coups #bAbandon:not([disabled]):not(.conseille){ background:rgba(251,247,236,.82); box-shadow:inset 0 1px 0 #fff, 0 4px 10px -6px rgba(0,0,0,.9) }
 /* Armé : « Rendre la moitié ? » — un second clic abandonne (table.js, les dix premières mains). */
 #coups #bAbandon.confirme:not([disabled]){ background:#FBF7EC; color:#8A2A18; border-color:#B33F22; box-shadow:0 0 0 2px rgba(179,63,34,.45), inset 0 1px 0 #fff }
 /* Le raccourci se lit comme une TOUCHE, pas comme la fin du libellé (« Tirer T »). */
@@ -1056,29 +1100,28 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 .rang-table .btn.verre.mini:hover{ background:rgba(255,255,255,.08); color:var(--ivoire) }
 /* « Nouveau sabot » jette la manche en cours : un filet le sépare des autres — sans or,
    l'or est réservé à « Distribuer ». */
-#bNouveauSabot{ margin-left:8px; position:relative; border-color:rgba(255,255,255,.14); color:rgba(246,241,228,.74) }
-#bNouveauSabot::before{ content:""; position:absolute; left:-8px; top:6px; bottom:6px; width:1px; background:rgba(255,255,255,.14) }
+#bNouveauSabot{ margin-left:8px; position:relative; border-color:color-mix(in oklab, var(--cinabre) 40%, transparent); color:color-mix(in oklab, var(--cinabre) 78%, #F6F1E4) }
+#bNouveauSabot:hover{ border-color:var(--cinabre); color:var(--cinabre) }
+#bNouveauSabot::before{ content:""; position:absolute; left:-8px; top:6px; bottom:6px; width:1px; background:rgba(255,255,255,.35) }
 .btn.mini[aria-pressed="true"], .rang-table .btn.verre.mini[aria-pressed="true"]{ color:var(--or); border-color:var(--or) }
-.rang-table{ display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto; align-items:center }
-/* Le menu « Plus » : sous 1400 px, cinq utilitaires derrière un bouton ; au-delà, ils
-   sont tous sur la rangée (display:contents — le menu n'existe pas). */
-.plus{ position:relative; display:contents }
-.plus-menu{ display:contents }
+/* Les utilitaires suivent les coups, séparés par un filet : à 1280 px, `margin-left:auto` les
+   jetait contre le bord droit et laissait 420 px de vide au milieu de la barre — un tiers de sa
+   largeur, exactement là où le regard retombe en sortant du feutre. */
+.rang-table{ display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-start; align-items:center;
+  margin-left:6px; padding-left:12px; border-left:1px solid rgba(255,255,255,.16) }
+/* Le menu « Plus » : les utilitaires rares vivent derrière un bouton, à TOUTES les largeurs. */
+.plus{ position:relative; display:block }
+.plus-menu{ display:none; position:absolute; right:0; bottom:calc(100% + 8px); z-index:30; flex-direction:column; align-items:stretch; gap:4px; min-width:220px;
+  padding:8px; border-radius:14px; background:linear-gradient(180deg,#171B1F,#0E1114); border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 18px 40px -16px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.6); animation:bascule 140ms var(--sec) }
+.plus.ouvert .plus-menu{ display:flex }
+.plus-menu .btn.verre.mini{ width:100%; justify-content:flex-start; text-align:left; padding:8px 12px }
+.plus-menu #bNouveauSabot{ margin-left:0; margin-top:4px }
+.plus-menu #bNouveauSabot::before{ left:8px; right:8px; top:-4px; bottom:auto; width:auto; height:1px }
 .plus-btn .chevron{ display:inline-block; width:7px; height:7px; margin-left:6px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
   transform:rotate(-135deg) translate(-2px,2px); transition:transform .15s }
 .plus.ouvert .plus-btn .chevron{ transform:rotate(45deg) translate(-2px,-2px) }
-#bPlus{ display:none }
-@media (max-width:1399.98px){
-  .plus{ display:block }
-  #bPlus{ display:inline-flex }
-  .plus-menu{ display:none; position:absolute; right:0; bottom:calc(100% + 8px); z-index:30; flex-direction:column; align-items:stretch; gap:4px; min-width:220px;
-    padding:8px; border-radius:14px; background:linear-gradient(180deg,#171B1F,#0E1114); border:1px solid rgba(255,255,255,.14);
-    box-shadow:0 18px 40px -16px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.6); animation:bascule 140ms var(--sec) }
-  .plus.ouvert .plus-menu{ display:flex }
-  .plus-menu .btn.verre.mini{ width:100%; justify-content:flex-start; text-align:left; padding:8px 12px }
-  .plus-menu #bNouveauSabot{ margin-left:0; margin-top:4px }
-  .plus-menu #bNouveauSabot::before{ left:8px; right:8px; top:-4px; bottom:auto; width:auto; height:1px }
-}
+#bPlus{ display:inline-flex }
 .zone-actions .bulle{ bottom:auto; top:-8px; transform:translate(-50%,-100%) }
 /* La barre a la MÊME hauteur pendant la mise et pendant la main : sinon le feutre, qui prend
    la place qu'elle laisse, saute de 60 px à chaque donne (mesuré le 05/09 à 1280×800 : rack
@@ -1375,7 +1418,13 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 }
 
 /* ── Téléphone ─────────────────────────────────────────────────────── */
-@media (pointer:coarse){ .onglets button, .hud-limites, .regle{ min-height:44px; display:inline-flex; align-items:center } }
+/* Relevé le 06/09 : « Le Sabot » 107×34, les trois filtres du hall 34 px de haut, et les dix
+   liens de crédit photo 14 px. Les crédits s'agrandissent par le padding — la marge négative
+   annule le déplacement, la mise en page ne bouge pas d'un pixel. */
+@media (pointer:coarse){
+  .onglets button, .hud-limites, .regle, .marque, .hall-tri button, [role="tab"]{ min-height:44px; display:inline-flex; align-items:center }
+  .hall-credits a{ display:inline-block; padding-block:15px; margin-block:-15px }
+}
 @media (max-width:860px){
   .concentration{grid-template-columns:1fr}
 }
@@ -1688,6 +1737,32 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px -8px rgba(0,0,0,.9) }
 
 /* La ligne du coach : ta mise en unités et, si le compte est affiché, sa cohérence. */
+/* Une pastille de règle qui a une explication le DIT : sans ce signe, personne ne survole,
+   et au doigt personne ne peut. La rangée entière est un bouton (corps.html, #tRegles). */
+.regle[data-aide]{ cursor:help; text-decoration:underline dotted currentColor; text-underline-offset:3px; text-decoration-thickness:1px }
+.regles-btn{ background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; cursor:pointer; min-height:44px; display:flex; flex-wrap:wrap; gap:6px; align-items:center }
+.regles-btn:focus-visible{ outline:2px solid var(--or-lumiere); outline-offset:3px; border-radius:8px }
+/* La note de table : une ligne, sous la barre, que la table écrit quand elle a quelque chose
+   à dire qui vaut pour toute la session (une mélangeuse continue, l'invite à compter). */
+.note-table{ position:absolute; top:8px; left:10px; z-index:8; max-width:min(40ch, 32%); margin:0;
+  font-family:Archivo,sans-serif; font-size:var(--t-fin); line-height:1.45; text-wrap:pretty;
+  color:color-mix(in oklab, var(--ivoire) 82%, transparent);
+  background:rgba(0,0,0,.5); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  border-radius:12px; padding:7px 12px; box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or-matiere) 26%, transparent) }
+.note-table:empty{ display:none }
+.note-table b{ color:var(--or-lumiere); font-weight:600 }
+/* Le geste sur SA ligne : glissé dans le texte, une cible de 44 px déchirait l'interligne. */
+.note-table .lien{ display:flex; align-items:center; justify-content:center; min-height:44px; margin:8px 0 0; width:100%;
+  background:color-mix(in oklab, var(--or-matiere) 16%, transparent); border:1px solid color-mix(in oklab, var(--or-matiere) 45%, transparent);
+  border-radius:9px; padding:4px 12px; color:var(--or-lumiere); font-family:Archivo,sans-serif; font-size:var(--t-fin); font-weight:600; cursor:pointer }
+.note-table .lien:hover{ background:color-mix(in oklab, var(--or-matiere) 28%, transparent); color:var(--nacre) }
+/* Sur un écran étroit, elle passe sous la barre plutôt que sur la tête du croupier. */
+@media (max-width:1023.98px){ .note-table{ position:static; max-width:none; margin:6px 0 0 } }
+/* Les règles de la table, en toutes lettres (la feuille ouverte par #tRegles). */
+.regles-liste{ list-style:none; margin:14px 0 0; padding:0; display:grid; gap:10px }
+.regles-liste li{ display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:baseline }
+.regles-liste .regle{ justify-self:start }
+
 .coach-mise{ position:absolute; left:50%; transform:translateX(-50%); bottom:16px; z-index:7; margin:0; pointer-events:none;
   font-family:Archivo,sans-serif; font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
   padding:5px 13px; border-radius:999px; background:rgba(0,0,0,.5); box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or) 30%, transparent);
@@ -1781,6 +1856,14 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .cr-bulle.on{ opacity:1; transform:none }
 .cr-bulle::before{ content:""; position:absolute; left:-7px; bottom:6px; width:12px; height:12px;
   background:#EFE7D2; transform:skewX(-30deg) rotate(20deg); border-radius:2px; box-shadow:-1px 1px 0 rgba(0,0,0,.25) }
+/* Basculée à gauche du visage (croupier.js, crPoserBulle) : le coin plat et la pointe passent
+   de l'autre côté, sinon la queue montre le bord de l'écran. */
+.cr-bulle.a-gauche{ border-radius:18px 18px 5px 18px; transform-origin:100% 100%; transform:translate(4px,6px) scale(.96) }
+.cr-bulle.a-gauche.on{ transform:none }
+.cr-bulle.a-gauche::before{ left:auto; right:-7px; transform:skewX(30deg) rotate(-20deg); box-shadow:1px 1px 0 rgba(0,0,0,.25) }
+/* Une question monte AU-DESSUS de la tête : sa pointe regarde vers le bas. */
+.cr-bulle.question::before{ bottom:-6px; left:16px; transform:rotate(45deg) }
+.cr-bulle.question.a-gauche::before{ left:auto; right:16px }
 .cr-bulle .cr-nom{ display:block; font-family:Archivo,sans-serif; font-weight:700; font-size:10px; letter-spacing:.14em;
   text-transform:uppercase; color:#8A6A1E; margin-bottom:2px }
 /* Une question (croupier.js, crDireQuestion — l'assurance) : la bulle prend la souris, une ligne d'aide en
@@ -2043,7 +2126,10 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   <!-- BANDE 1 — la barre : nom de la table, trois puces, le compte en petits chiffres, ⚙.
        Discrète : elle ne vole rien au feutre. -->
   <div class="laque hud" id="hud">
-    <div class="hud-table"><b id="tNom">—</b><span class="regles" id="tRegles"></span><span class="hud-limites" id="rjLimites" title="Mise minimale et maximale de la table">min 10 · max 1 000</span></div>
+    <!-- Les puces de règles s'OUVRENT : leur explication ne vivait que dans un `title`, qui ne
+         s'atteint ni au doigt ni sous 1000 px (où la rangée est carrément retirée). Le bouton
+         porte la rangée entière ; les textes sont ceux des pastilles, pas une seconde version. -->
+    <div class="hud-table"><b id="tNom">—</b><button class="regles regles-btn" id="tRegles" title="Voir les règles de cette table, en toutes lettres"></button><span class="hud-limites" id="rjLimites" title="Mise minimale et maximale de la table">min 10 · max 1 000</span></div>
     <div class="hud-compte" id="hudCompte" title="Le compte est masqué tant que tu ne l'as pas demandé : c'est à toi de le tenir.">
       <span title="Compte courant : la somme des valeurs des cartes sorties depuis le mélange (+1, 0, −1 en Hi-Lo)"><i>Courant</i><b id="tRC">—</b></span>
       <span title="Compte vrai : le compte courant divisé par les jeux qui restent — c'est lui qui dit si la table t'est favorable"><i>Vrai</i><b id="tTC">—</b></span>
@@ -2061,6 +2147,11 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   <div class="salle" id="salle">
     <!-- Le décor du lieu : la photo embarquée (window.PHOTOS), floutée et assombrie par le CSS. -->
     <div class="decor" aria-hidden="true"></div>
+    <!-- La note de table : une ligne persistante pour ce qui vaut toute la session (une
+         mélangeuse continue rend le comptage inutile ; personne ne demande jamais son compte).
+         Posée SUR le décor, à gauche du croupier : le feutre n'a que 405 px à 1280 × 800, une
+         bannière en flux lui en volerait quarante. Vide, elle n'existe pas. -->
+    <p class="note-table" id="noteTable"></p>
     <div id="croupierScene" aria-hidden="true"></div>
     <div class="tapis plateau" id="plateau">
       <!-- Le grain du cuir du rail : la même tuile de bruit que le feutre (#grainP), en calque. -->
@@ -2121,13 +2212,15 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
       <button class="btn verre" id="bSepare" disabled title="Séparer : je joue deux mains à partir de ma paire, une mise sur chacune">Séparer<kbd>S</kbd></button>
       <button class="btn verre" id="bAbandon" disabled title="Abandon : je rends la main et je récupère la moitié de ma mise">Abandon<kbd>A</kbd></button>
     </div>
-    <!-- Les utilitaires de la table, à droite, en retrait : ils ne se jouent pas à chaque main.
-         « Montrer le compte » et « Caméra » restent toujours à portée ; le reste vit dans un
-         menu « Plus » sous 1400 px (mesuré le 05/09 à 1280 × 800 à plusieurs : sept boutons
-         passaient sur une deuxième rangée et volaient 54 px au feutre). Les identifiants ne
-         bougent pas : la sonde, le banc et reseau.js les cliquent tels quels. -->
+    <!-- Les utilitaires de la table, en retrait derrière les coups : ils ne se jouent pas à chaque
+         main. Le menu « Plus » existe à TOUTES les largeurs (mesuré le 06/09 : au-delà de 1400 px
+         il se dépliait et la barre passait à ONZE boutons d'un seul rang, où « Nouveau sabot
+         (abandonne la manche) » n'était séparé que par un trait à 14 % d'opacité — plus l'écran
+         est grand, plus il y avait de chrome). Restent toujours à portée les trois gestes du
+         joueur : s'annoncer, la stratégie, la caméra. Les identifiants ne bougent pas : la
+         sonde, le banc et reseau.js les cliquent tels quels. -->
     <div class="rang-table" id="rangTable">
-      <button class="btn verre mini" id="bMontrer" aria-pressed="false" title="Afficher le compte courant, le compte vrai, les jeux restants et la rampe de mise dans la barre">Montrer le compte</button>
+      <button class="btn verre mini" id="bMonCompte" title="Annonce ton compte courant : la table le compare au vrai">Annoncer mon compte</button>
       <!-- L'aide à la décision (« Stratégie : Tirer ») : allumée d'office les vingt premières mains (table.js,
            aideActive). Elle vivait au fond du menu « Plus » — la seule chose dont un débutant a besoin. -->
       <button class="btn verre mini" id="bAide" aria-pressed="false" title="Afficher la stratégie de base pendant ton tour">Aide à la décision</button>
@@ -2137,7 +2230,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
       <div class="plus" id="plusTable">
         <button class="btn verre mini plus-btn" id="bPlus" aria-expanded="false" aria-controls="plusMenu" title="Plus d'options">Plus <span class="chevron" aria-hidden="true"></span></button>
         <div class="plus-menu" id="plusMenu">
-          <button class="btn verre mini" id="bMonCompte" title="Annonce ton compte courant : la table le compare au vrai">Annoncer mon compte</button>
+          <button class="btn verre mini" id="bMontrer" aria-pressed="false" title="Afficher le compte courant, le compte vrai, les jeux restants et la rampe de mise dans la barre">Montrer le compte</button>
           <button class="btn verre mini" id="bRecu" title="Le reçu du sabot : l'empreinte scellée du mélange, vérifiable par n'importe qui">Vérifier le mélange</button>
           <button class="btn verre mini" id="bReglagesTable" title="Rythme de la donne, rythme des voisins, choix du croupier">Cadence &amp; croupier</button>
           <!-- La table à plusieurs (reseau.js) : le code, les joueurs, quitter. Caché en solo. -->
@@ -4116,7 +4209,7 @@ const $ = id => document.getElementById(id);
 const emettre = (nom, detail) => document.dispatchEvent(new CustomEvent("sabot:" + nom, { detail: detail || {} }));
 const E = M.engine, SOL = M.solver, SH = M.shuffle, CT = M.counting, NET = M.net, TR = M["table-reseau"];
 const RANKS = E.RANKS, SUITS = E.SUITS;
-const sgn = n => (n > 0 ? "+" : "") + n;
+const sgn = n => n > 0 ? "+" + n : n < 0 ? "\u2212" + Math.abs(n) : String(n);
 const fr1 = x => x.toFixed(1).replace(".", ",");
 const fr2 = x => x.toFixed(2).replace(".", ",");
 const dodo = ms => new Promise(r => setTimeout(r, ms));
@@ -4455,7 +4548,7 @@ function rendreSysteme() {
   $("sysNom").textContent = s.nom; $("sysNote").textContent = s.note;
   const groupes = {};
   RANKS.forEach((r, i) => { const k = s.v[i >= 9 ? 9 : i]; (groupes[k] = groupes[k] || []).push(r); });
-  $("sysTable").innerHTML = Object.keys(groupes).sort((a, b) => b - a)
+  $("sysTable").innerHTML = Object.keys(groupes).sort((a, b) => a - b)
     .map(k => `<span class="regle ${+k > 0 ? "bien" : +k < 0 ? "mal" : ""}"><b class="cadran">${sgn(+k)}</b>&nbsp; ${groupes[k].join(" ")}</span>`).join("")
     + (s.equilibre ? "" : `<span class="regle">déséquilibré · départ à ${sgn(CT.compteInitial(DB.sys, +($("eJeux").value || 6)))}</span>`);
   $("cCible").textContent = sgn(CT.compteInitial(DB.sys, +$("cJeux").value) + (s.equilibre ? 0 : 4 * +$("cJeux").value));
@@ -4906,7 +4999,14 @@ function chipsRegles(t) {
   if (t.surrender !== "none") c.push(["abandon", "bien", "Abandon : on peut rendre une mauvaise main et récupérer la moitié de sa mise"]);
   if (!t.holeCard) c.push(["sans carte cachée", "mal", "Le croupier ne prend sa seconde carte qu'à la fin : s'il fait blackjack, tu perds aussi tes doublements"]);
   if (t.doubleOn !== "any") c.push(["doubler " + t.doubleOn.join("-"), "", "On ne peut doubler que sur un total de " + t.doubleOn.join(", ")]);
-  return c.map(([l, k, aide]) => `<span class="regle ${k}"${aide ? ` title="${echap(aide)}"` : ""}>${l}</span>`).join("");
+  return c.map(([l, k, aide]) => `<span class="regle ${k}"${aide ? ` title="${echap(aide)}" data-aide="1"` : ""}>${l}</span>`).join("");
+}
+// …et la même liste EN TOUTES LETTRES, pour la feuille « Les règles de cette table » : un
+// `title` ne s'atteint ni au doigt, ni sous 1000 px (où la rangée est retirée). Les textes ne
+// sont pas réécrits — une seule source, celle des pastilles.
+function chipsReglesTexte(t) {
+  const div = document.createElement("div"); div.innerHTML = chipsRegles(t);
+  return [...div.children].map(e => [e.textContent.trim(), e.getAttribute("title") || "", e.className.replace("regle", "").trim()]);
 }
 // Les TROIS puces qu'on garde partout où la place manque (la porte du hall, la barre de
 // la table) : le nombre de jeux, H17/S17, 3:2 ou 6:5 — plus la mélangeuse quand il y en
@@ -5052,6 +5152,7 @@ function leconHtml() {
   const tete = `<div class="lecon"><span class="lecon-etape">Apprendre à compter · ${e + 1} sur 3</span>`;
   if (e === 0) return tete + `<h2>Le but du jeu, en une phrase.</h2>
     <p>Au blackjack, tu joues <b>contre le croupier</b>, pas contre les autres joueurs : il faut faire <b>plus que lui sans dépasser 21</b>. Les figures valent 10, l'as vaut 1 ou 11, le reste sa valeur.</p>
+    <p>Tant qu'un as compte 11, on dit que la main est <b>souple</b> : « 17 souple », c'est as + 6, et elle ne peut pas sauter — tirer une carte de plus est sans risque, l'as redescend à 1. C'est le mot que tu verras sous tes cartes et sur le feutre.</p>
     <p>Le croupier, lui, n'a pas le choix : il tire jusqu'à 17. C'est pour ça que <b>ce qui reste dans le sabot</b> change tout — beaucoup de dix et d'as à venir, c'est bon pour toi (tes blackjacks paient une fois et demie, ses 16 sautent) ; beaucoup de petites cartes, c'est bon pour lui.</p>
     <p><b>Compter, c'est savoir de quel côté penche le sabot.</b> Et miser plus quand il penche vers toi.</p>
     <div class="rang-btn"><button class="btn" id="leconSuite">Les trois valeurs →</button></div></div>`;
@@ -5300,6 +5401,7 @@ function poserLieu(t) {
   // replie le lieu (style.css, .hud-lieu) : le nom de la table suffit, il est dans le fil d'Ariane.
   $("tNom").innerHTML = echap(t.nom) + ' <small class="hud-lieu">· ' + echap(t.lieu) + "</small>";
   $("tRegles").innerHTML = pucesCourtes(t);   // les mêmes trois puces que la porte du hall (salon.js)
+  noteTable(t);
   // La salle a le décor de son lieu : la photo embarquée (window.PHOTOS, cf. build.mjs),
   // floutée et assombrie par la feuille de style. Sans photo, la salle reste celle de
   // la lueur et du sol posés par [data-lieu] — rien ne casse.
@@ -5307,6 +5409,47 @@ function poserLieu(t) {
   $("salle").style.setProperty("--photo", ph ? `url("${ph}")` : "none");
   rendreMotif(t.id); LETTRAGE.cle = ""; rendreLettrage();
   emettre("table", { table: t });
+}
+/* ── La note de table ─────────────────────────────────────────────────────────
+   Une ligne persistante sous la barre, pour ce qui vaut toute la session.
+   1. La MÉLANGEUSE CONTINUE : on pouvait s'asseoir au Cotai et y passer sa première session
+      entière sans qu'on nous dise que le comptage n'y sert à rien — la pastille rouge n'avait
+      qu'un `title`, et l'appareil dessiné sur le feutre porte le mot « MÉLANGEUSE » sans
+      conséquence énoncée. La phrase juste existe déjà deux fois dans le hall : on la reprend
+      MOT POUR MOT (chipsRegles, salon.js), on n'en écrit pas une seconde.
+   2. L'INVITE À COMPTER, pendant le PREMIER sabot seulement : à la table, rien ne demandait
+      jamais de compter. La seule vérification automatique arrive à la carte de coupe, après
+      ~78 cartes — une trentaine de mains. On terminait sa première session sans avoir compté
+      une seule carte, et sans que l'application s'en aperçoive. */
+/* Les règles de la table, EN TOUTES LETTRES. Les explications des pastilles ne vivaient que
+   dans un attribut `title` : rien n'invitait à survoler (ni curseur, ni soulignement), au doigt
+   elles étaient muettes, et sous 1000 px la rangée est carrément retirée de l'écran. Les textes
+   sont ceux de chipsRegles (salon.js) — une seule source, pas une seconde version. */
+function ouvrirReglesTable() {
+  const t = tableCourante(), tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
+  const lignes = [...tmp.children].map(e => `<li>${e.outerHTML}<span>${echap(e.getAttribute("title") || "")}</span></li>`).join("");
+  ouvrirModale(`<h2>Les règles de cette table</h2>
+    <p class="muet">${echap(t.nom)} · ${echap(t.lieu)} — mise de ${fmtJ(t.mise_min)} à ${fmtJ(t.mise_max)}.</p>
+    <ul class="regles-liste">${lignes}</ul>`);
+}
+$("tRegles").onclick = ouvrirReglesTable;
+function noteTable(t) {
+  const n = $("noteTable"); if (!n) return;
+  t = t || tableCourante();
+  const bouts = [];
+  if (t.melange === "melangeuse_continue") {
+    const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
+    const csm = [...tmp.children].find(e => /mélangeuse/i.test(e.textContent));
+    // Le texte est celui de la pastille du hall, MOT POUR MOT (chipsRegles) : une seule source.
+    bouts.push(`<b>Mélangeuse continue.</b> ${echap(csm ? csm.getAttribute("title") : "")} — ici, compter ne sert à rien.`);
+  } else if (!DB.aAnnonce && (DB.mainsJouees || 0) < 30 && !$("v-table").dataset.reseau) {
+    // Elle s'éteint à la première annonce, ou au bout de trente mains — comme l'aide à la
+    // décision s'éteint à vingt. Elle ne s'adresse qu'à quelqu'un qui n'a encore jamais compté.
+    bouts.push(`<b>À toi de tenir le compte.</b> Personne ne te le demandera pendant la main.` +
+      `<button class="lien" id="bNoteCompte">Annoncer mon compte</button>`);
+  }
+  n.innerHTML = bouts.join("");
+  const b = $("bNoteCompte"); if (b) b.onclick = () => demanderMonCompte(false);
 }
 /* Le lettrage doré en arc est DÉRIVÉ des règles : « 3 TO 2 » ou « 6 TO 5 »,
    « HIT SOFT 17 » ou « STAND ON ALL 17s », et l'assurance seulement là où le
@@ -5403,7 +5546,12 @@ function rendreLettrage() {
     const [x1, y1] = pointCoin(cote, d, a1), [x2, y2] = pointCoin(cote, d, a2);
     return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 ${a2 > a1 ? 1 : 0} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
   };
-  const petit = Math.max(11, Math.round(W * .013)), grand = Math.max(14, Math.round(W * .021));
+  // Mesuré le 06/09 sur la page vivante : 23,66 px à 1280, 18 px à 1600, 37 px à 1920 — la
+  // taille n'était pas monotone (à 1600 la grande ligne n'était plus qu'à 1,09 × la petite, la
+  // hiérarchie s'effondrait ; à 1920 elle passait à 2,3 × et devenait l'objet le plus fort du
+  // feutre, devant les cartes qui sont le sujet, traversant même la carte du croupier).
+  // Deux plafonds, et le rapport grand/petit reste stable de 1280 à 2560.
+  const petit = Math.max(11, Math.min(16, Math.round(W * .013))), grand = Math.max(14, Math.min(26, Math.round(W * .021)));
   // Un arc de coin, du bord (`ext`) vers l'intérieur (`int`), arrêté au premier degré où
   // la bande des lettres (la ligne de base et le haut des capitales) entre dans un siège.
   // Trop court pour porter une règle lisible (moins de 26°) : pas de ligne du tout —
@@ -5514,6 +5662,15 @@ function rendreLettrage() {
   // La bande où vivent l'annonce et le conseil (style.css) : celle du grand arc, sous la
   // main du croupier — jamais une hauteur codée en dur qui tomberait sur les cartes.
   f.style.setProperty("--bande-haut", Math.round(basCentre + 2) + "px");
+  // …et la ligne du CONSEIL (« Stratégie : Rester ») se pose SOUS les noms des sièges, jamais
+  // dessus. Mesuré le 06/09 à 1280 × 800 : le nom de ton siège occupait 653→669 et #conseil
+  // 664→684 — l'étiquette « TOI » disparaissait au moment précis où c'était à toi de jouer,
+  // alors qu'elle est bien là en phase de mise. Le repère qui te dit où tu es assis.
+  let basNoms = 0;
+  sieges.forEach(sg => { const n = sg.querySelector(".nom"); if (!n) return; const r = n.getBoundingClientRect(); if (r.height) basNoms = Math.max(basNoms, r.bottom - F.top); });
+  // Bornée à la hauteur RÉELLE de la ligne : sur un feutre bas (1280 × 800), la place sous les
+  // noms est de vingt-cinq pixels — on la colle au bord plutôt que de la laisser déborder.
+  if (basNoms) f.style.setProperty("--bas-noms", Math.round(Math.min(basNoms + 3, H - 25)) + "px");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = out;
   LETTRAGE.nu = !svg.textContent.trim();   // un rendu sans une lettre ne mérite pas d'être gardé
@@ -5531,6 +5688,14 @@ function rendreLettrage() {
     }
     if (taille < 9.5) tx.remove();
   });
+  // La boucle ci-dessus rétrécit chaque texte contre SON arc, sans jamais regarder ses frères :
+  // mesuré le 06/09 à 1920, les deux lignes de rail — même rang d'information, même table —
+  // sortaient à 19,91 et 16,18 px. On les réaccorde sur la plus petite.
+  const rails = [...svg.querySelectorAll("text.rail:not(.empile)")];
+  if (rails.length > 1) {
+    const mini = Math.min(...rails.map(e => parseFloat(e.getAttribute("font-size")) || 0));
+    if (mini > 0) rails.forEach(e => e.setAttribute("font-size", mini));
+  }
 }
 // Deux lieux ont un motif tissé dans le feutre : les losanges de la laque de
 // Macao, le guillochis d'un cadran pour Londres · Monte-Carlo. Les autres se
@@ -5681,10 +5846,17 @@ function boutons(o) {
 // transform:none, la même que la dernière image.
 // La durée suit la DISTANCE : 6,7 px/ms au départ pour Marc (112 px par image à 60 Hz),
 // c'était une carte qui se matérialise à 230 px du sabot, pas une carte qui en sort.
+// Un croupier a un poignet à vitesse à peu près CONSTANTE : c'est la durée qui suit la
+// distance, pas l'inverse. Mesuré le 06/09 sur les 11 cartes d'une donne : le siège le plus
+// lointain (595 px) filait à 1,84 px/ms et le plus proche (165 px) à 0,67 — trois fois moins,
+// avec un pic relevé à 80 px par image, soit une largeur de carte entière franchie entre deux
+// images. `dureeVol` n'étalait la durée que de 1,53 × pour un écart de distance de 3,6 ×.
 function dureeVol(d) {
   const cs = getComputedStyle($("plateau"));
   const don = parseFloat(cs.getPropertyValue("--don")) || 300, slot = parseFloat(cs.getPropertyValue("--intervalle")) || 450;
-  return Math.round(Math.max(120, Math.min(slot * .9, don * (.65 + .6 * Math.min(1.2, d / 600)))));
+  // Le plafond reste l'intervalle entre deux cartes (sinon elles se rattrapent) et la cadence
+  // choisie (--don) : une donne rapide reste une donne rapide, elle est juste homogène.
+  return Math.round(Math.max(150, Math.min(slot * .95, don * 1.5, d / 1.2)));
 }
 const DELAI_VOL = 40;   // ms : la main du croupier part en même temps que la carte (croupier.js)
 function animerDepuisSabot(e, cr) {
@@ -5823,7 +5995,7 @@ function actionAvecEcart(cards, up, st, h, tc) {
   for (const [f, k, u, idx, vers] of d.ecarts) if (f === fam && k === cle && u === ru && tc >= idx) trouve = { a: vers, idx };
   for (const [f, k, u, idx] of d.abandons) if (f === fam && k === cle && u === ru && tc >= idx && peutAbandonner(h, st)) trouve = { a: "U", idx };
   if (!trouve) return { a: base, ecart: null };
-  return { a: trouve.a, ecart: trouve.idx };
+  return { a: trouve.a, ecart: trouve.idx, base };
 }
 
 async function distribuer() {
@@ -5843,11 +6015,12 @@ async function distribuer() {
     await dodo(900); await nouveauSabot({ pendantDonne: true });
     annoncer("Sabot neuf, mélangé, carte brûlée.");
   }
-  // Les cartes de la manche précédente sont RAMASSÉES vers la défausse, pas
-  // effacées : un balayage en éventail, une carte après l'autre, puis le tas grimpe.
+  // Les cartes de la manche précédente ont déjà été ramassées à la FIN du règlement
+  // (rangerLaManche). Ces deux lignes sont le FILET : elles ne font rien dans le cas courant,
+  // et rattrapent une manche interrompue (rechargement, changement de table, remélange).
+  RANGEMENT++;   // un rangement encore en vol ne doit pas balayer la donne qui commence
   await ramasser();
-  for (const st of T.sieges) for (const h of st.mains) if (!h.defaussee) T.defausse += h.cards.length;
-  T.defausse += T.croupier.length; T.croupier = []; T.actif = null;
+  viderLeFeutre();
   // Chaque siège joue la mise qu'il a posée dans son cercle (st.mise, lot Jetons) ; `|| 1` = sans jetons, une unité.
   for (const st of T.sieges) st.mains = [E.newHand([], st.mise || 1)];
   rendreSieges(); $("dMain").innerHTML = ""; $("dMain").style.removeProperty("--pas"); $("dScore").textContent = "·";
@@ -6003,8 +6176,14 @@ function tonTour() {
   annoncer(`À toi${mains} : ${total}${soft ? " souple" : ""} contre ${upTxt}.`);
   if (aideActive()) {
     const tc = sys().equilibre ? CT.compteVrai(T.rc, T.sabot.length / 52) : null;
-    const { a, ecart } = actionAvecEcart(h.cards, T.croupier[0], st, h, tc);
-    $("conseil").innerHTML = `Stratégie : <b>${MOT[a]}</b>` + (ecart !== null ? ` <span class="muet">— écart au compte, à partir de ${sgn(ecart)}</span>` : "")
+    const { a, ecart, base } = actionAvecEcart(h.cards, T.croupier[0], st, h, tc);
+    // « — écart au compte, à partir de −1 » demandait d'appliquer une règle dont le déclencheur
+    // est invisible (le compte est masqué par construction), et ne disait pas si « Rester »
+    // était le coup de base ou l'écart. On énonce un FAIT, en NOMMANT les deux coups : ça
+    // s'apprend même compte masqué, et ça se vérifie.
+    const ecartTxt = ecart !== null && base && base !== a
+      ? ` <span class="muet">— écart : la base dit ${MOT[base]}, à partir d'un compte vrai de ${sgn(ecart)} c'est ${MOT[a]}</span>` : "";
+    $("conseil").innerHTML = `Stratégie : <b>${MOT[a]}</b>` + ecartTxt
       + ` <button class="lien" id="bMasquerAide" title="Ne plus afficher l'aide à la décision">masquer l'aide</button>`;
     $("bMasquerAide").onclick = () => { DB.conseil = false; garder(); rendreAide(); tonTour(); };
     // Le coup conseillé prend l'or du bouton principal (style.css, .conseille).
@@ -6075,7 +6254,7 @@ async function regler() {
     if (st.toi) { miennes.push(res.result); net += res.net; }
     if (!h.emis) fins.push({ siege: si, main: hi, toi: st.toi, issue: issues[si][hi], montant: res.net });
   }); });
-  T.solde += net; turbo(false); DB.mainsJouees = (DB.mainsJouees || 0) + 1;
+  T.solde += net; turbo(false); DB.mainsJouees = (DB.mainsJouees || 0) + 1; noteTable();
   T.actif = null; rendreSieges(); T.mains++; T.enJeu = false; T.occupe = false; rafraichirBarre(); garder();
   // Le pourquoi, en une phrase : « Le croupier saute à 24 : toutes les mains encore debout
   // gagnent. » ou « Croupier 20 contre ton 12 : perdu, −25. » Les pastilles disent le verdict,
@@ -6089,8 +6268,54 @@ async function regler() {
   // sur cet ordre pour faire glisser les jetons avant de tirer un bilan.
   assurances.forEach(a => emettre("assurance-fin", a));
   fins.forEach(f => emettre("main-fin", f));
-  emettre("manche-fin", { issues, toi: T.toi ? issues[T.sieges.indexOf(T.toi)] : [], net, solde: T.solde, croupier: dt });
+  // Le feutre se vide À LA FIN DU RÈGLEMENT, plus au DÉBUT de la donne suivante. Mesuré le
+  // 06/09 : le dernier jeton du règlement se posait à t=13618 et les mises de la manche
+  // SUIVANTE volaient à t=14484 — pendant que les cartes de la manche finie et les cinq
+  // pastilles « PERDU » étaient encore là, sous « Pose ta mise · minimum 10 ». Deux manches
+  // sur le tapis en même temps, sans limite de durée.
+  // `J.attente` (lot Jetons) est lu ICI, avant que « manche-fin » ne le remette à zéro :
+  // c'est l'étalement des paiements, siège après siège.
+  const attenteJ = (typeof J === "object" && J && typeof J.attente === "number") ? J.attente : 0;
+  const nCartes = $("feutre").querySelectorAll(".main .carte").length;
+  const vite = T.turbo ? .45 : 1;
+  const doux = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  // On attend que le VERDICT ait fini de se lire : le mot s'inscrit à attenteJ + 60 et tient
+  // VERDICT_TENUE. Sans siège occupé, il n'y a pas de verdict — seuls les jetons comptent.
+  const tenue = T.toi ? attenteJ + 60 + VERDICT_TENUE : Math.max(320, attenteJ + 260);
+  const balayage = doux ? 140 : (260 + nCartes * 28) * vite;
+  // `rangement` voyage dans l'événement : jetons.js n'ouvre les mises qu'APRÈS le balayage,
+  // au lieu de compter de son côté (deux minuteries parallèles = deux manches à l'écran).
+  emettre("manche-fin", { issues, toi: T.toi ? issues[T.sieges.indexOf(T.toi)] : [], net, solde: T.solde, croupier: dt,
+    rangement: Math.round(tenue + balayage) });
+  rangerLaManche(tenue);
   boutons({ donne: true });
+}
+/* Le rangement : on laisse lire le verdict, on balaie vers la défausse, et LE TAS MONTE au
+   moment où les cartes y arrivent — c'est le geste qui compte les cartes, pas le clic sur
+   « Distribuer » de la manche d'après. Mesuré le 06/09 en fin de main : sabot à 297 (15 cartes
+   sorties) et « 1 carte dans la défausse », pendant toute la phase de mise — le moment précis
+   où il faut estimer les jeux restants pour dimensionner sa mise, et où l'application consacre
+   un exercice entier (« Estimation ») à lire ce tas. */
+let RANGEMENT = 0;
+async function rangerLaManche(tenue) {
+  const jeton = ++RANGEMENT;
+  if (tenue > 0) await dodo(tenue);
+  if (jeton !== RANGEMENT || T.enJeu) return;
+  await ramasser();
+  if (jeton !== RANGEMENT || T.enJeu) return;
+  viderLeFeutre();
+}
+// Les cartes quittent le modèle ET la défausse les reçoit. Appelée par le rangement de fin de
+// manche ; `distribuer()` la rappelle en filet — elle ne fait alors plus rien.
+function viderLeFeutre() {
+  let bouge = false;
+  for (const st of T.sieges) for (const h of st.mains) if (!h.defaussee) { T.defausse += h.cards.length; h.defaussee = true; bouge = true; }
+  if (T.croupier.length) { T.defausse += T.croupier.length; T.croupier = []; bouge = true; }
+  for (const st of T.sieges) if (st.mains.length) { st.mains = []; bouge = true; }
+  T.actif = null;
+  if (!bouge) return;
+  rendreSieges(); $("dMain").innerHTML = ""; $("dMain").style.removeProperty("--pas"); $("dScore").textContent = "·";
+  rafraichirBarre(); rendreLettrage();
 }
 $("bDonne").onclick = distribuer;
 /* ── Le verdict de TA main : un mot en serif, au-dessus de tes cartes, qui s'INSCRIT (un balayage
@@ -6098,6 +6323,7 @@ $("bDonne").onclick = distribuer;
    valable pour la table à plusieurs aussi. Calé sur le paiement de ce siège (J.attente, lu avant que
    jetons.js ne l'incrémente : table.js est concaténé avant lui), pour que le mot, les jetons et la
    note tombent ensemble ; un bust et un abandon, eux, s'inscrivent à l'instant. */
+const VERDICT_TENUE = 1900;   // ms : le temps de lire un mot — et l'horloge du rangement (regler)
 const VERDICT_MOT = { bust: "Sauté", perd: "Perdu", gagne: "Gagné", blackjack: "Blackjack", egalite: "Égalité", abandon: "Abandon" };
 const VERDICT_TON = { bust: "p", perd: "p", gagne: "g", blackjack: "bj", egalite: "n", abandon: "n" };
 let VERDICT_T = null, VERDICT_D = null;
@@ -6113,7 +6339,7 @@ function inscrireVerdict(issue, retard) {
     clearTimeout(VERDICT_T);
     v.className = "verdict " + VERDICT_TON[issue]; v.textContent = VERDICT_MOT[issue];
     void v.offsetWidth; v.classList.add("on");   // relance l'animation même si le mot est le même
-    VERDICT_T = setTimeout(() => { v.classList.remove("on"); }, 2300);
+    VERDICT_T = setTimeout(() => { v.classList.remove("on"); }, VERDICT_TENUE);
   }, retard || 0);
 }
 document.addEventListener("sabot:main-fin", e => {
@@ -6207,6 +6433,8 @@ function demanderMonCompte(finSabot) {
       txt += ` À la donne, tu as misé ${fr1(u)} unité${u > 1 ? "s" : ""} pour un compte vrai de ${fr1(T.tcMise)} : ${Math.abs(u - ref) <= 1 ? "cohérent" : "incohérent — la rampe disait " + ref}.`;
     }
     $("mcRes").textContent = txt;
+    // Une fois qu'on a compté une fois, l'invite de la note de table n'a plus rien à apprendre.
+    DB.aAnnonce = true; noteTable();
     DB.sessions.push({ t: Date.now(), genre: "table", sys: sys().nom, n: vues, exact: bon, ecart: Math.abs(dit - rc) });
     while (DB.sessions.length > 240) DB.sessions.shift(); garder();
     if (vue === "progres") rendreProgres();
@@ -6556,6 +6784,10 @@ function rendreRack(o) {
   o = o || {};
   const l = limites(), r = $("rackJetons"), boite = $("rjJetons");
   r.dataset.min = l.min; r.dataset.max = l.max;
+  // La plaque plantée dans le rack du CROUPIER annonce la limite de CETTE table : « 100 »
+  // écrit en dur dans la feuille mentait sur huit tables sur neuf (Le Boulevard est à 10,
+  // Le Cotai à 25). C'est ici qu'on connaît la limite, c'est ici qu'on l'écrit.
+  const rk = $("rack"); if (rk) rk.dataset.min = fmtJ(l.min);
   if (!boite.children.length) RACK.forEach(v => {
     const b = jetonEl(v, 46, "button"); b.type = "button"; b.setAttribute("aria-label", `Poser un jeton de ${fmtJ(v)}`);
     b.onclick = () => poserJeton(v); boite.appendChild(b);
@@ -6767,7 +6999,15 @@ function rendreCoach() {
     return;
   }
   c.classList.remove("appel");
-  if (J.phase === "attente" || !T.miseDonne || !T.montre || typeof T.tcMise !== "number") { c.innerHTML = ""; return; }
+  // Le compte vrai affiché ici est celui FIGÉ À LA DONNE : la main est finie, il ne dévoile
+  // rien du compte en cours (le cadran « Vrai » de la barre, lui, reste masqué). Mesuré le
+  // 06/09 : la garde `!T.montre` réservait la seule correction de mise de l'application à
+  // ceux qui avaient cliqué « Montrer le compte » — jouer comme l'application le demande,
+  // compte masqué, de tête, ne rapportait aucun retour, jamais.
+  // …et seulement au RÈGLEMENT : pendant la main, cette ligne se pose sur « Stratégie : Rester »
+  // et sur les noms des sièges, et elle parle d'une décision déjà prise. La main finie, elle
+  // corrige — c'est le seul moment où elle sert.
+  if (J.phase !== "reglement" || !T.miseDonne || typeof T.tcMise !== "number") { c.innerHTML = ""; return; }
   const u = T.miseDonne / l.min, { ok, ref } = coherence(u, T.tcMise);
   // La phrase dit D'OÙ vient le chiffre — « à la donne » — parce que le cadran « Vrai » de la barre,
   // lui, vit en direct pendant la main : deux comptes vrais sur le même écran sans un mot, c'est une
@@ -6876,9 +7116,14 @@ document.addEventListener("sabot:assurance-fin", e => {
     else glisser(mise, ce, ancreCroupier(), { fondu: true });
   });
 });
-document.addEventListener("sabot:manche-fin", () => {
+document.addEventListener("sabot:manche-fin", e => {
   J.phase = "reglement"; $("v-table").dataset.phase = "reglement"; rendreCoach();
-  const d = J.attente + 1150; J.attente = 0;
+  // UNE horloge, pas deux. `rangement` vient de table.js (regler) : c'est l'instant où le
+  // verdict a fini de se lire ET où le balayage vers la défausse est terminé. Mesuré le
+  // 06/09 : avec sa propre constante (J.attente + 1150), la table redemandait « Pose ta
+  // mise · minimum 10 » pendant que cinq verdicts étaient encore sur le tapis.
+  const rangement = (e.detail && e.detail.rangement) || 0;
+  const d = Math.max(J.attente + 1150, rangement + 140); J.attente = 0;
   setTimeout(() => { if (!T.enJeu && !T.occupe) ouvrirMises(); }, reduit() ? 80 : d);
 });
 document.addEventListener("sabot:remelange", e => {
@@ -7181,7 +7426,9 @@ const CR = { id: "", el: null, scene: null, bulle: null, visible: false, salue: 
   // La tête tourne de deux angles ADDITIONNÉS : le regard (vers un siège) et le penché (une
   // émotion), plus une avancée (le menton qui vient). Une émotion sans penché la redresse,
   // sans toucher au regard.
-  regard: 0, penche: 0, avance: 0, annonceT: 0, bulleGenre: "", paieFin: 0 };
+  regard: 0, penche: 0, avance: 0, annonceT: 0, bulleGenre: "", paieFin: 0,
+  // L'articulation est une BOUCLE : un jeton pour l'annuler, une minuterie, la forme de repos.
+  articule: 0, articuleT: null, articuleRetour: "calme" };
 const CR_RESSORT = "cubic-bezier(.22,.72,.24,1)";
 
 const crQ = s => CR.el ? CR.el.querySelector(s) : null;
@@ -7339,7 +7586,9 @@ function crCibleRepos(cote) {
   // recouvrait le chrome). Quand l'intervalle rack → sabot est plus étroit que la main, elle se
   // pose contre le sabot et déborde sur le bord du rack — un croupier a la main sur son rack,
   // pas sur son sabot.
-  if (cote === "D") { const sb = crRect("sabot"); const hi = sb ? sb.left - 22 * s : Infinity, lo = rk.right + 12 * s;
+  // 30 px de dégagement, pas 22 : au repos la main droite est TOURNÉE vers le sabot
+  // (crReposer) et son gabarit déborde — mesuré le 06/09, elle mordait le chrome du sabot.
+  if (cote === "D") { const sb = crRect("sabot"); const hi = sb ? sb.left - 30 * s : Infinity, lo = rk.right + 12 * s;
     return { x: hi < lo ? hi : Math.max(lo, Math.min(hi, voulu)), y }; }
   const qui = document.querySelector(".croupier .qui"), q = qui && qui.getBoundingClientRect(), df = crRect("defausse");
   return { x: cale(voulu, df ? df.right + 24 * s : -Infinity, Math.min(rk.left - 14 * s, q && q.width ? q.left - 24 * s : Infinity)), y };
@@ -7347,7 +7596,12 @@ function crCibleRepos(cote) {
 function crReposer(ms) {
   ms = ms === undefined ? 340 : ms; CR.arme = false;
   const d = crCibleRepos("D"), g = crCibleRepos("G"); if (!d) return;
-  crPoseBras("D", d.x, d.y, ms, 0, { theta: CR_THETA_REPOS, doigtsBas: true }); crPoseBras("G", g.x, g.y, ms, 0, { theta: CR_THETA_REPOS, doigtsBas: true });
+  // Les deux mains ne sont PAS le miroir l'une de l'autre : la droite est tournée vers le
+  // sabot — c'est d'elle que sortent les cartes —, la gauche posée à plat. Mesuré le 06/09 :
+  // deux mains identiques, symétriques, doigts écartés, à 200 px de part et d'autre du rack,
+  // se lisaient comme un mannequin. (Les bras BOUGENT bien à la donne, crFlick les emmène au
+  // sabot puis vers le siège ; c'est la pose de REPOS qui ne racontait rien.)
+  crPoseBras("D", d.x, d.y, ms, -8, { theta: CR_THETA_REPOS, doigtsBas: true }); crPoseBras("G", g.x, g.y, ms, 5, { theta: CR_THETA_REPOS, doigtsBas: true });
 }
 function crArmer(ms, o) {
   const c = crCibleSabot(); if (!c) return false;
@@ -7430,12 +7684,24 @@ function crPaie(si, issue, retard) {
   crMinuteur(() => { if (performance.now() >= CR.paieFin - 30) crReposer(380); }, (retard || 0) + (gagne ? 540 : 400));
 }
 // Le mélange : les deux mains ramassent au centre et se croisent, 1,2 s.
+// Mesuré le 06/09 : les deux mains atterrissaient sur (570-740, 250-320) et couvraient le
+// tiers haut de la carte visible du croupier, index de rang compris — `crFlick` a pourtant
+// `crEviterCartes` pour exactement ce problème. Un croupier ne mélange jamais par-dessus une
+// main en cours : les mains passent par le même évitement, et le pas est repoussé sous les cartes.
 function crMelange() {
   if (!CR.el || !CR.visible || MOUVEMENT_REDUIT.on) return;
   const rd = crRect("defausse"), rs = crRect("sabot"); if (!rd || !rs) return;
-  const cx = (rd.right + rs.left) / 2, cy = rd.top + rd.height * .3, e = rd.width * .9;
+  const dm = crRect("dMain");
+  const cx = (rd.right + rs.left) / 2, e = rd.width * .9;
+  let cy = rd.top + rd.height * .3;
+  // S'il y a des cartes au centre, on mélange SOUS elles, pas dessus.
+  if (dm && dm.height) cy = Math.max(cy, dm.bottom + 10);
+  const ev = (x, y) => { const p = crEviterCartes(x, y); return [p, y]; };
   const pas = [[cx - e, cy + 22, cx + e, cy + 22], [cx + e * .5, cy + 4, cx - e * .5, cy + 4], [cx - e, cy + 26, cx + e, cy + 26], [cx + e * .4, cy, cx - e * .4, cy]];
-  pas.forEach((p, i) => crMinuteur(() => { crPoseBras("G", p[0], p[1], 230, i % 2 ? 18 : -16); crPoseBras("D", p[2], p[3], 230, i % 2 ? -18 : 16); }, i * 240));
+  pas.forEach((p, i) => crMinuteur(() => {
+    const [gx, gy] = ev(p[0], p[1]), [dx2, dy2] = ev(p[2], p[3]);
+    crPoseBras("G", gx, gy, 230, i % 2 ? 18 : -16); crPoseBras("D", dx2, dy2, 230, i % 2 ? -18 : 16);
+  }, i * 240));
   crMinuteur(() => { if (!CR.arme) crReposer(360); }, 1000);
   crRegarde(cx, cy, 240);
   crVisage(EMOTIONS.concentre); crMinuteur(() => { if (CR.emotion === CR.base) crVisage(EMOTIONS[CR.base]); }, 1300);
@@ -7472,6 +7738,9 @@ const BOUCHES = {
   calme: ["M-13 0C-6 4 6 4 13 0"], sourire: ["M-15-3C-8 8 8 8 15-3"], grand: ["M-16-3C-8 12 8 12 16-3Z", "#4A1A16", 1],
   encoin: ["M-12 1C-4 4 6 3 15-5"], ferme: ["M-13 0h26"], boude: ["M-12 3C-5-3 5-3 12 3"],
   serre: ["M-14-2C-6-5 6-5 14-2C12 8-12 8-14-2z", "#4A1A16", 1], ouverte: ["M-9-3C-4-8 4-8 9-3C9 8-9 8-9-3z", "#4A1A16"],
+  // La mi-ouverte : entre « ouverte » et « calme ». Trois formes, c'est le minimum pour que la
+  // bouche ait l'air de FORMER des sons plutôt que de battre.
+  mi: ["M-11-1C-5-4 5-4 11-1C10 5-10 5-11-1z", "#4A1A16"],
 };
 const EMOTIONS = {
   neutre: { sg: [0, 0], sd: [0, 0], bouche: "calme", joues: 0, plisse: [0, 0] },
@@ -7498,14 +7767,41 @@ function crVisage(o) {
   ["crPaupG", "crPaupD"].forEach((k, i) => { const e = crQ("#cr-" + k); if (e) e.style.transform = `scaleY(${pl[i]})`; });
   CR.fixe = !!o.fixe;
 }
-// La bouche s'ouvre et se ferme deux fois : il parle, même sans son.
+/* La bouche articule TANT QUE la bulle est ouverte. Mesuré le 06/09 en rAF : l'ancienne
+   version ouvrait et fermait deux fois en 400 ms, quelle que soit la durée de la réplique —
+   dernier mouvement à t=417, bulle encore là à t=5001, soit 4584 ms de mannequin figé, 92 %
+   du temps où il parle. Pour la question d'assurance, qui n'a AUCUNE minuterie, il restait
+   bouche close aussi longtemps qu'on ne répondait pas.
+   Trois formes tirées au sort (ouverte / mi / calme), 110-160 ms chacune ; après 1,5 s le
+   cycle ralentit — on passe d'« il parle » à « il attend », plutôt que de tout couper. */
+function crArreteArticule(retour) {
+  if (CR.articuleT) { clearTimeout(CR.articuleT); CR.articuleT = null; }
+  CR.articule = 0;
+  const b = crQ("#cr-crBouche"), d = crQ("#cr-crDents"); if (!b) return;
+  const f = BOUCHES[retour || CR.articuleRetour] || BOUCHES.calme;
+  b.setAttribute("d", f[0]); b.setAttribute("fill", f[1] || "none"); if (d) d.setAttribute("opacity", f[2] ? "1" : "0");
+}
 function crArticule(retour) {
   if (!CR.el || MOUVEMENT_REDUIT.on) return;
   const b = crQ("#cr-crBouche"), d = crQ("#cr-crDents"); if (!b) return;
-  const p = BOUCHES.ouverte, f = BOUCHES[retour] || BOUCHES.calme;
-  const ouvre = () => { b.setAttribute("d", p[0]); b.setAttribute("fill", p[1]); if (d) d.setAttribute("opacity", "0"); };
-  const ferme = () => { b.setAttribute("d", f[0]); b.setAttribute("fill", f[1] || "none"); if (d) d.setAttribute("opacity", f[2] ? "1" : "0"); };
-  ouvre(); crMinuteur(ferme, 130); crMinuteur(ouvre, 260); crMinuteur(ferme, 400);
+  CR.articuleRetour = retour;
+  const jeton = ++CR.articule, depart = performance.now();
+  const f = BOUCHES[retour] || BOUCHES.calme, formes = [BOUCHES.ouverte, BOUCHES.mi || BOUCHES.ouverte, f];
+  const poser = g => { b.setAttribute("d", g[0]); b.setAttribute("fill", g[1] || "none"); if (d) d.setAttribute("opacity", g[2] ? "1" : "0"); };
+  const pas = () => {
+    if (CR.articule !== jeton) return;
+    // La bulle fermée, la bouche se repose : c'est ELLE qui commande, pas une durée.
+    const b2 = CR.bulle;
+    if (!b2 || !b2.classList.contains("on")) { crArreteArticule(retour); return; }
+    const age = performance.now() - depart;
+    // Passé ~2,7 s il n'articule plus, il ATTEND : la bouche se repose au lieu de battre dans
+    // le vide (une bulle d'annonce ou de question peut rester des dizaines de secondes).
+    if (age > 2700) { crArreteArticule(retour); return; }
+    const lent = age > 1500;
+    poser(lent ? f : formes[alea(formes.length)]);
+    CR.articuleT = crMinuteur(pas, lent ? 300 + alea(260) : 110 + alea(50));
+  };
+  poser(BOUCHES.ouverte); CR.articuleT = crMinuteur(pas, 120);
 }
 function crSecoue() {
   if (!CR.el || MOUVEMENT_REDUIT.on) return;
@@ -7518,6 +7814,11 @@ function crSecoue() {
 /* ── La bulle : hors de #croupierScene (qui est aria-hidden), dans un
    aria-live poli, 1,8 s, Instrument Serif. Elle SUIT la tête : posée à droite
    du visage, à la hauteur des yeux, d'après la boîte réelle de la tête. ─── */
+// Vrai si la bulle est ouverte À CET INSTANT. C'est la seule définition de « le croupier parle ».
+function crParleMaj() {
+  const v = $("v-table"); if (!v) return;
+  v.classList.toggle("cr-parle", !!(CR.visible && CR.bulle && CR.bulle.classList.contains("on")));
+}
 function crBulleEl() {
   if (CR.bulle) return CR.bulle;
   const salle = $("salle"); if (!salle) return null;
@@ -7538,19 +7839,45 @@ function crDireQuestion(texte, aide, options, sur) {
   const o = b.querySelector(".cr-opts"); o.innerHTML = "";
   options.forEach(([libelle, valeur, defaut]) => {
     const bt = document.createElement("button"); bt.type = "button"; bt.textContent = libelle; if (defaut) bt.className = "defaut";
-    bt.onclick = () => { o.innerHTML = ""; b.querySelector(".cr-aide").textContent = ""; b.classList.remove("question", "on"); CR.bulleGenre = ""; sur(valeur); };
+    bt.onclick = () => { o.innerHTML = ""; b.querySelector(".cr-aide").textContent = ""; b.classList.remove("question", "on"); CR.bulleGenre = ""; crParleMaj(); crArreteArticule("ferme"); sur(valeur); };
     o.appendChild(bt);
   });
-  CR.bulleGenre = "question"; b.classList.add("question", "on");
+  CR.bulleGenre = "question"; b.classList.add("question", "on"); crParleMaj();
+  crPoserBulle(b);   // la classe .question change sa largeur ET son ancrage : on repose après
   crArticule("ferme");
   setTimeout(() => { const d = o.querySelector(".defaut"); if (d && d.isConnected) d.focus(); }, 80);
   return true;
 }
+/* Mesuré le 06/09 : ancrée par son COIN HAUT à droite du visage, la bulle d'assurance
+   (675→1116 × 147→300) recouvrait 161 × 83 px du bras droit (597→834 × 209→453) — la moitié
+   de sa boîte —, laissait la main visible en dessous (une main flottante détachée d'un
+   moignon) et posait sa pointe 56 px SOUS la bouche. Une réplique de 897 px de large, c'est
+   35 % de l'écran et 151 px du plateau à jetons recouverts.
+   Trois règles : on ancre par la POINTE (elle arrive à hauteur de bouche), on ne traverse
+   jamais un bras (une question grandit VERS LE HAUT, là où il n'y a rien), et on bascule à
+   gauche du visage quand la place manque à droite. */
 function crPoserBulle(b) {
   const t = crQ("#cr-crTete"), salle = $("salle"); if (!t || !salle) return;
   const r = t.getBoundingClientRect(), sr = salle.getBoundingClientRect(); if (!r.width) return;
-  b.style.left = Math.round(r.right - r.width * .04 - sr.left) + "px";
-  b.style.top = Math.max(4, Math.round(r.top + r.height * .1 - sr.top)) + "px";
+  const question = b.classList.contains("question");
+  // La bulle doit être mesurable : on la rend visible (opacité pilotée par .on) avant de lire.
+  b.style.maxWidth = "";
+  // La largeur ne dépasse jamais la place réellement libre entre la tête et le bord de la salle.
+  const libreD = Math.max(0, sr.right - (r.right - r.width * .04) - 14);
+  const libreG = Math.max(0, (r.left + r.width * .04) - sr.left - 14);
+  const aDroite = libreD >= Math.min(300, libreG) || libreD >= libreG;
+  const place = Math.max(180, Math.min(aDroite ? libreD : libreG, sr.width * .34));
+  b.style.maxWidth = Math.round(place) + "px";
+  const h = b.offsetHeight || 90, w = b.offsetWidth || 240;
+  // Ancrage vertical par la pointe : le ::before est à 6 px du bas, la bouche est à ~62 %
+  // de la hauteur de la tête. Une question monte au-dessus de la tête, elle ne coupe rien.
+  const bouche = r.top + r.height * .62 - sr.top;
+  let top = question ? Math.round(r.top - sr.top - h - 8) : Math.round(bouche - h + 14);
+  top = Math.max(4, Math.min(top, sr.height - h - 6));
+  b.style.top = top + "px";
+  b.classList.toggle("a-gauche", !aDroite);
+  b.style.left = aDroite ? Math.round(r.right - r.width * .04 - sr.left) + "px"
+    : Math.round(Math.max(4, r.left + r.width * .04 - sr.left - w)) + "px";
 }
 // o.genre = « annonce » (ce que dit la table : le règlement, le sabot neuf, l'assurance…) ou
 // « replique » (le personnage). Une bulle déjà ouverte se REFERME avant de changer de texte
@@ -7565,12 +7892,14 @@ function crDire(texte, ms, o) {
     b.querySelector(".cr-nom").textContent = crNom();
     b.querySelector(".cr-texte").textContent = texte;
     CR.bulleGenre = o.genre || "replique"; if (CR.bulleGenre === "annonce") CR.annonceT = performance.now();
-    b.classList.add("on");
-    clearTimeout(CR.bulleT); CR.bulleT = setTimeout(() => { b.classList.remove("on"); CR.bulleGenre = ""; }, ms || 1800);
+    b.classList.add("on"); crParleMaj();
+    crPoserBulle(b);   // reposée une fois la hauteur réelle connue (le texte vient d'être écrit)
+    if (!o.muet) crArticule((EMOTIONS[CR.emotion] || EMOTIONS.neutre).bouche);
+    clearTimeout(CR.bulleT); CR.bulleT = setTimeout(() => { b.classList.remove("on"); CR.bulleGenre = ""; crParleMaj(); }, ms || 1800);
   };
   clearTimeout(CR.bulleT); clearTimeout(CR.bulleR);
   if (b.classList.contains("on") && b.querySelector(".cr-texte").textContent !== texte && !MOUVEMENT_REDUIT.on) {
-    b.classList.remove("on"); CR.bulleR = setTimeout(poser, 170);
+    b.classList.remove("on"); crParleMaj(); CR.bulleR = setTimeout(poser, 170);
   } else poser();
 }
 // Fermer la bulle tout de suite : le croupier ne parle pas pendant qu'il distribue.
@@ -7579,6 +7908,7 @@ function crTaire(genre) {
   if (genre && CR.bulleGenre && CR.bulleGenre !== genre) return;
   if (CR.bulleGenre === "question" && genre !== "question") return;
   clearTimeout(CR.bulleT); clearTimeout(CR.bulleR); CR.bulleGenre = ""; if (CR.bulle) CR.bulle.classList.remove("on");
+  crParleMaj(); crArreteArticule();
 }
 function crReplique(genre) {
   const banque = crPerso().dit[genre] || []; if (!banque.length) return "";
@@ -7603,7 +7933,7 @@ function crEmotion(nom, o) {
   }
   if (e.fixe) crRegardeSiege("toi", 220);
   if (o.texte) {
-    const dire = () => { if (CR.jeton !== jeton) return; crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400)); crArticule(e.bouche); };
+    const dire = () => { if (CR.jeton !== jeton) return; crDire(o.texte, Math.min(o.ms || 1800, o.tenue || 2400), { muet: true }); crArticule(e.bouche); };
     if (apres) crMinuteur(dire, apres); else dire();
   } else crTaire("replique");
   crMinuteur(() => { if (CR.jeton === jeton) { CR.emotion = CR.base; crVisage(EMOTIONS[CR.base] || EMOTIONS.neutre); } }, tenue);
@@ -7618,7 +7948,12 @@ document.addEventListener("sabot:annonce", e => {
   if (!CR.el || !CR.visible || !matchMedia("(min-width:1000px)").matches || $("v-table").dataset.reseau) return;
   const t = ((e.detail || {}).texte || "").trim();
   if (!t) { crTaire("annonce"); return; }
-  crDire(t, 3400, { genre: "annonce" });
+  // 3,4 s, c'était le temps qu'une phrase reste lisible — pas le temps qu'elle reste VRAIE.
+  // « À toi : 17 souple contre un 5 » disparaissait pendant qu'on réfléchissait encore, et
+  // rien ne la reprenait (le repli du feutre était éteint en permanence, cf. crParleMaj).
+  // Ce que dit la TABLE tient jusqu'à ce que la table dise autre chose : c'est `annoncer("")`
+  // qui referme, comme pour la question d'assurance.
+  crDire(t, 60000, { genre: "annonce" });
 });
 // L'assurance : LE croupier pose la question, dans sa bulle, à la première personne, avec le
 // montant ; Oui/Non dedans ; il te regarde, concentré, jusqu'à la réponse. Sur ordinateur, en
@@ -7649,12 +7984,15 @@ window.__croupierGeste = nom => {
   monterCroupier(); CR.visible = true;
   const toi = document.querySelector("#sieges .siege.toi"), ti = toi ? [...document.querySelectorAll("#sieges .siege")].indexOf(toi) : 0;
   const cible = () => { const r = crRect("m_" + ti + "_0") || (toi && toi.getBoundingClientRect()); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: innerWidth / 2, y: innerHeight * .7 }; };
+  // Geler la pose = invalider les minuteries de retour (elles testent `CR.gestes === n`),
+  // pas ralentir le geste. Il se joue à sa vitesse NATURELLE et reste là où il est arrivé.
+  const figer = ms => { CR.paieFin = performance.now() + 600000; crMinuteur(() => { CR.gestes++; CR.arme = false; }, ms); };
   if (nom === "armer") crArmer(320);
-  else if (nom === "flick") { crArmer(1); crFlick(cible(), 900, { duree: 100000, delai: 0 }); }
-  else if (nom === "retourne") crRetourne($("dMain").children[1] || $("dMain"));
-  else if (nom === "paie") crPaie(ti, "gagne", 0);
-  else if (nom === "ramasse") crPaie(ti, "perd", 0);
-  else if (nom === "melange") crMelange();
+  else if (nom === "flick") { crArmer(1); crFlick(cible(), 900); figer(360); }
+  else if (nom === "retourne") { crRetourne($("dMain").children[1] || $("dMain")); figer(300); }
+  else if (nom === "paie") { crPaie(ti, "gagne", 0); figer(420); }
+  else if (nom === "ramasse") { crPaie(ti, "perd", 0); figer(240); }
+  else if (nom === "melange") { crMelange(); figer(620); }
   else if (nom === "regarde") crRegardeSiege(ti, 240);
   else crReposer(300);
 };
@@ -7805,7 +8143,12 @@ document.addEventListener("sabot:manche-fin", () => {
 // pose qu'à ce moment-là, et le croupier salue à la première apparition.
 if (window.ResizeObserver && $("croupierScene")) new ResizeObserver(entries => {
   const r = entries[0].contentRect, avant = CR.visible; CR.visible = r.width > 20 && r.height > 20;
-  $("v-table").classList.toggle("cr-parle", CR.visible);
+  // « cr-parle » disait « le croupier est à l'écran » — et style.css cachait la pastille du
+  // feutre en permanence, donc « À toi : 17 souple contre un 5 » n'apparaissait JAMAIS sur
+  // ordinateur (mesuré le 06/09 : à 8 s, le texte est dans le DOM en display:none, la bulle à
+  // opacité 0). La classe suit maintenant la BULLE ; « cr-la » porte la présence.
+  $("v-table").classList.toggle("cr-la", CR.visible);
+  if (!CR.visible) crParleMaj();
   if (!CR.visible) return;
   if (!CR.el) monterCroupier();
   if (!CR.arme) crReposer(avant ? 200 : 1);

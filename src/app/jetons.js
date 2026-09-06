@@ -270,6 +270,10 @@ function rendreRack(o) {
   o = o || {};
   const l = limites(), r = $("rackJetons"), boite = $("rjJetons");
   r.dataset.min = l.min; r.dataset.max = l.max;
+  // La plaque plantée dans le rack du CROUPIER annonce la limite de CETTE table : « 100 »
+  // écrit en dur dans la feuille mentait sur huit tables sur neuf (Le Boulevard est à 10,
+  // Le Cotai à 25). C'est ici qu'on connaît la limite, c'est ici qu'on l'écrit.
+  const rk = $("rack"); if (rk) rk.dataset.min = fmtJ(l.min);
   if (!boite.children.length) RACK.forEach(v => {
     const b = jetonEl(v, 46, "button"); b.type = "button"; b.setAttribute("aria-label", `Poser un jeton de ${fmtJ(v)}`);
     b.onclick = () => poserJeton(v); boite.appendChild(b);
@@ -481,7 +485,15 @@ function rendreCoach() {
     return;
   }
   c.classList.remove("appel");
-  if (J.phase === "attente" || !T.miseDonne || !T.montre || typeof T.tcMise !== "number") { c.innerHTML = ""; return; }
+  // Le compte vrai affiché ici est celui FIGÉ À LA DONNE : la main est finie, il ne dévoile
+  // rien du compte en cours (le cadran « Vrai » de la barre, lui, reste masqué). Mesuré le
+  // 06/09 : la garde `!T.montre` réservait la seule correction de mise de l'application à
+  // ceux qui avaient cliqué « Montrer le compte » — jouer comme l'application le demande,
+  // compte masqué, de tête, ne rapportait aucun retour, jamais.
+  // …et seulement au RÈGLEMENT : pendant la main, cette ligne se pose sur « Stratégie : Rester »
+  // et sur les noms des sièges, et elle parle d'une décision déjà prise. La main finie, elle
+  // corrige — c'est le seul moment où elle sert.
+  if (J.phase !== "reglement" || !T.miseDonne || typeof T.tcMise !== "number") { c.innerHTML = ""; return; }
   const u = T.miseDonne / l.min, { ok, ref } = coherence(u, T.tcMise);
   // La phrase dit D'OÙ vient le chiffre — « à la donne » — parce que le cadran « Vrai » de la barre,
   // lui, vit en direct pendant la main : deux comptes vrais sur le même écran sans un mot, c'est une
@@ -590,9 +602,14 @@ document.addEventListener("sabot:assurance-fin", e => {
     else glisser(mise, ce, ancreCroupier(), { fondu: true });
   });
 });
-document.addEventListener("sabot:manche-fin", () => {
+document.addEventListener("sabot:manche-fin", e => {
   J.phase = "reglement"; $("v-table").dataset.phase = "reglement"; rendreCoach();
-  const d = J.attente + 1150; J.attente = 0;
+  // UNE horloge, pas deux. `rangement` vient de table.js (regler) : c'est l'instant où le
+  // verdict a fini de se lire ET où le balayage vers la défausse est terminé. Mesuré le
+  // 06/09 : avec sa propre constante (J.attente + 1150), la table redemandait « Pose ta
+  // mise · minimum 10 » pendant que cinq verdicts étaient encore sur le tapis.
+  const rangement = (e.detail && e.detail.rangement) || 0;
+  const d = Math.max(J.attente + 1150, rangement + 140); J.attente = 0;
   setTimeout(() => { if (!T.enJeu && !T.occupe) ouvrirMises(); }, reduit() ? 80 : d);
 });
 document.addEventListener("sabot:remelange", e => {

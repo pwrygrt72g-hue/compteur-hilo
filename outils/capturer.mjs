@@ -77,8 +77,13 @@ const MISER = `(async () => { const q = s => document.querySelector(s), dodo = m
     const j = libres.find(b => +b.dataset.v >= min) || libres[libres.length - 1];
     if (!j) break; j.click(); await dodo(90);
   } })()`;
+// --jouer joue une main : il MISE et il DISTRIBUE, sinon il n'y a rien à jouer. Mesuré le
+// 06/09 : lancé seul, il tournait 120 × 150 ms = 18 s sur une table vide puis écrivait la
+// capture en annonçant « après une donne » — une phase de mise intacte livrée pour un
+// règlement demandé. Personne ne pouvait relire le règlement avec cet outil.
+if (opt.jouer && !opt.donne) opt.donne = true;
 if ((opt.donne && !opt.sansmise) || opt.mise) { await evaluer(MISER); await dodo(opt.donne ? 350 : +(opt.attendre || 900)); }
-if (opt.donne) { await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(+(opt.attendre || 3200)); }
+if (opt.donne) { await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(opt.jouer ? 900 : +(opt.attendre || 3200)); }
 // --jouer : joue la main jusqu'au RÈGLEMENT (Rester dès que c'est à toi, jamais d'assurance), puis
 // attend --attendre2 ms (700 par défaut) — le moment où les jetons glissent et où le verdict s'inscrit.
 if (opt.jouer) {
@@ -86,7 +91,11 @@ if (opt.jouer) {
     const phase = () => document.getElementById("v-table").dataset.phase || "";
     for (let g = 0; g < 120 && phase() !== "reglement"; g++) { await dodo(150);
       if (q("#bTire") && !q("#bTire").disabled) q("#bReste").click();
-      const a = q("#boiteAssurance .opts button:last-child"); if (a) a.click(); } })()`);
+      const a = q("#boiteAssurance .opts button:last-child"); if (a) a.click(); }
+    return phase(); })()`);
+  const arrive = await evaluer(`document.getElementById("v-table").dataset.phase || ""`);
+  // Une capture muette d'un état qu'on n'a pas demandé est pire que pas de capture.
+  if (String(arrive) !== "reglement") { console.error(`ÉCHEC --jouer : la table n'a jamais atteint le règlement (phase « ${arrive} ») — aucune capture écrite.`); ws.close(); chrome.kill(); serveur.close(); process.exit(2); }
   await dodo(+(opt.attendre2 || 700));
 }
 // --puis=bReste : un coup après la donne (pour voir le croupier retourner sa carte, un bust, un gain…).
@@ -97,5 +106,5 @@ if (opt.sonde) console.log("SONDE", JSON.stringify(await evaluer(String(opt.sond
 const erreurs = await evaluer(`(window.__err || []).join(" / ")`);
 const shot = await cdp("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
 writeFileSync(sortie, Buffer.from(shot.result.data, "base64"));
-console.log(`${sortie}  (${L}×${H}, vue ${vue}${opt.donne ? ", après une donne" : ""}${erreurs ? " — ERREURS JS : " + erreurs : ""})`);
+console.log(`${sortie}  (${L}×${H}, vue ${vue}${opt.jouer ? ", au règlement" : opt.donne ? ", après une donne" : ""}${erreurs ? " — ERREURS JS : " + erreurs : ""})`);
 ws.close(); chrome.kill(); serveur.close(); process.exit(0);

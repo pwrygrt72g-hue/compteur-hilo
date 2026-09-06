@@ -155,6 +155,7 @@ function poserLieu(t) {
   // replie le lieu (style.css, .hud-lieu) : le nom de la table suffit, il est dans le fil d'Ariane.
   $("tNom").innerHTML = echap(t.nom) + ' <small class="hud-lieu">· ' + echap(t.lieu) + "</small>";
   $("tRegles").innerHTML = pucesCourtes(t);   // les mêmes trois puces que la porte du hall (salon.js)
+  noteTable(t);
   // La salle a le décor de son lieu : la photo embarquée (window.PHOTOS, cf. build.mjs),
   // floutée et assombrie par la feuille de style. Sans photo, la salle reste celle de
   // la lueur et du sol posés par [data-lieu] — rien ne casse.
@@ -162,6 +163,47 @@ function poserLieu(t) {
   $("salle").style.setProperty("--photo", ph ? `url("${ph}")` : "none");
   rendreMotif(t.id); LETTRAGE.cle = ""; rendreLettrage();
   emettre("table", { table: t });
+}
+/* ── La note de table ─────────────────────────────────────────────────────────
+   Une ligne persistante sous la barre, pour ce qui vaut toute la session.
+   1. La MÉLANGEUSE CONTINUE : on pouvait s'asseoir au Cotai et y passer sa première session
+      entière sans qu'on nous dise que le comptage n'y sert à rien — la pastille rouge n'avait
+      qu'un `title`, et l'appareil dessiné sur le feutre porte le mot « MÉLANGEUSE » sans
+      conséquence énoncée. La phrase juste existe déjà deux fois dans le hall : on la reprend
+      MOT POUR MOT (chipsRegles, salon.js), on n'en écrit pas une seconde.
+   2. L'INVITE À COMPTER, pendant le PREMIER sabot seulement : à la table, rien ne demandait
+      jamais de compter. La seule vérification automatique arrive à la carte de coupe, après
+      ~78 cartes — une trentaine de mains. On terminait sa première session sans avoir compté
+      une seule carte, et sans que l'application s'en aperçoive. */
+/* Les règles de la table, EN TOUTES LETTRES. Les explications des pastilles ne vivaient que
+   dans un attribut `title` : rien n'invitait à survoler (ni curseur, ni soulignement), au doigt
+   elles étaient muettes, et sous 1000 px la rangée est carrément retirée de l'écran. Les textes
+   sont ceux de chipsRegles (salon.js) — une seule source, pas une seconde version. */
+function ouvrirReglesTable() {
+  const t = tableCourante(), tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
+  const lignes = [...tmp.children].map(e => `<li>${e.outerHTML}<span>${echap(e.getAttribute("title") || "")}</span></li>`).join("");
+  ouvrirModale(`<h2>Les règles de cette table</h2>
+    <p class="muet">${echap(t.nom)} · ${echap(t.lieu)} — mise de ${fmtJ(t.mise_min)} à ${fmtJ(t.mise_max)}.</p>
+    <ul class="regles-liste">${lignes}</ul>`);
+}
+$("tRegles").onclick = ouvrirReglesTable;
+function noteTable(t) {
+  const n = $("noteTable"); if (!n) return;
+  t = t || tableCourante();
+  const bouts = [];
+  if (t.melange === "melangeuse_continue") {
+    const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
+    const csm = [...tmp.children].find(e => /mélangeuse/i.test(e.textContent));
+    // Le texte est celui de la pastille du hall, MOT POUR MOT (chipsRegles) : une seule source.
+    bouts.push(`<b>Mélangeuse continue.</b> ${echap(csm ? csm.getAttribute("title") : "")} — ici, compter ne sert à rien.`);
+  } else if (!DB.aAnnonce && (DB.mainsJouees || 0) < 30 && !$("v-table").dataset.reseau) {
+    // Elle s'éteint à la première annonce, ou au bout de trente mains — comme l'aide à la
+    // décision s'éteint à vingt. Elle ne s'adresse qu'à quelqu'un qui n'a encore jamais compté.
+    bouts.push(`<b>À toi de tenir le compte.</b> Personne ne te le demandera pendant la main.` +
+      `<button class="lien" id="bNoteCompte">Annoncer mon compte</button>`);
+  }
+  n.innerHTML = bouts.join("");
+  const b = $("bNoteCompte"); if (b) b.onclick = () => demanderMonCompte(false);
 }
 /* Le lettrage doré en arc est DÉRIVÉ des règles : « 3 TO 2 » ou « 6 TO 5 »,
    « HIT SOFT 17 » ou « STAND ON ALL 17s », et l'assurance seulement là où le
@@ -258,7 +300,12 @@ function rendreLettrage() {
     const [x1, y1] = pointCoin(cote, d, a1), [x2, y2] = pointCoin(cote, d, a2);
     return `M${x1.toFixed(1)} ${y1.toFixed(1)}A${rx.toFixed(1)} ${ry.toFixed(1)} 0 0 ${a2 > a1 ? 1 : 0} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
   };
-  const petit = Math.max(11, Math.round(W * .013)), grand = Math.max(14, Math.round(W * .021));
+  // Mesuré le 06/09 sur la page vivante : 23,66 px à 1280, 18 px à 1600, 37 px à 1920 — la
+  // taille n'était pas monotone (à 1600 la grande ligne n'était plus qu'à 1,09 × la petite, la
+  // hiérarchie s'effondrait ; à 1920 elle passait à 2,3 × et devenait l'objet le plus fort du
+  // feutre, devant les cartes qui sont le sujet, traversant même la carte du croupier).
+  // Deux plafonds, et le rapport grand/petit reste stable de 1280 à 2560.
+  const petit = Math.max(11, Math.min(16, Math.round(W * .013))), grand = Math.max(14, Math.min(26, Math.round(W * .021)));
   // Un arc de coin, du bord (`ext`) vers l'intérieur (`int`), arrêté au premier degré où
   // la bande des lettres (la ligne de base et le haut des capitales) entre dans un siège.
   // Trop court pour porter une règle lisible (moins de 26°) : pas de ligne du tout —
@@ -369,6 +416,15 @@ function rendreLettrage() {
   // La bande où vivent l'annonce et le conseil (style.css) : celle du grand arc, sous la
   // main du croupier — jamais une hauteur codée en dur qui tomberait sur les cartes.
   f.style.setProperty("--bande-haut", Math.round(basCentre + 2) + "px");
+  // …et la ligne du CONSEIL (« Stratégie : Rester ») se pose SOUS les noms des sièges, jamais
+  // dessus. Mesuré le 06/09 à 1280 × 800 : le nom de ton siège occupait 653→669 et #conseil
+  // 664→684 — l'étiquette « TOI » disparaissait au moment précis où c'était à toi de jouer,
+  // alors qu'elle est bien là en phase de mise. Le repère qui te dit où tu es assis.
+  let basNoms = 0;
+  sieges.forEach(sg => { const n = sg.querySelector(".nom"); if (!n) return; const r = n.getBoundingClientRect(); if (r.height) basNoms = Math.max(basNoms, r.bottom - F.top); });
+  // Bornée à la hauteur RÉELLE de la ligne : sur un feutre bas (1280 × 800), la place sous les
+  // noms est de vingt-cinq pixels — on la colle au bord plutôt que de la laisser déborder.
+  if (basNoms) f.style.setProperty("--bas-noms", Math.round(Math.min(basNoms + 3, H - 25)) + "px");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = out;
   LETTRAGE.nu = !svg.textContent.trim();   // un rendu sans une lettre ne mérite pas d'être gardé
@@ -386,6 +442,14 @@ function rendreLettrage() {
     }
     if (taille < 9.5) tx.remove();
   });
+  // La boucle ci-dessus rétrécit chaque texte contre SON arc, sans jamais regarder ses frères :
+  // mesuré le 06/09 à 1920, les deux lignes de rail — même rang d'information, même table —
+  // sortaient à 19,91 et 16,18 px. On les réaccorde sur la plus petite.
+  const rails = [...svg.querySelectorAll("text.rail:not(.empile)")];
+  if (rails.length > 1) {
+    const mini = Math.min(...rails.map(e => parseFloat(e.getAttribute("font-size")) || 0));
+    if (mini > 0) rails.forEach(e => e.setAttribute("font-size", mini));
+  }
 }
 // Deux lieux ont un motif tissé dans le feutre : les losanges de la laque de
 // Macao, le guillochis d'un cadran pour Londres · Monte-Carlo. Les autres se
@@ -536,10 +600,17 @@ function boutons(o) {
 // transform:none, la même que la dernière image.
 // La durée suit la DISTANCE : 6,7 px/ms au départ pour Marc (112 px par image à 60 Hz),
 // c'était une carte qui se matérialise à 230 px du sabot, pas une carte qui en sort.
+// Un croupier a un poignet à vitesse à peu près CONSTANTE : c'est la durée qui suit la
+// distance, pas l'inverse. Mesuré le 06/09 sur les 11 cartes d'une donne : le siège le plus
+// lointain (595 px) filait à 1,84 px/ms et le plus proche (165 px) à 0,67 — trois fois moins,
+// avec un pic relevé à 80 px par image, soit une largeur de carte entière franchie entre deux
+// images. `dureeVol` n'étalait la durée que de 1,53 × pour un écart de distance de 3,6 ×.
 function dureeVol(d) {
   const cs = getComputedStyle($("plateau"));
   const don = parseFloat(cs.getPropertyValue("--don")) || 300, slot = parseFloat(cs.getPropertyValue("--intervalle")) || 450;
-  return Math.round(Math.max(120, Math.min(slot * .9, don * (.65 + .6 * Math.min(1.2, d / 600)))));
+  // Le plafond reste l'intervalle entre deux cartes (sinon elles se rattrapent) et la cadence
+  // choisie (--don) : une donne rapide reste une donne rapide, elle est juste homogène.
+  return Math.round(Math.max(150, Math.min(slot * .95, don * 1.5, d / 1.2)));
 }
 const DELAI_VOL = 40;   // ms : la main du croupier part en même temps que la carte (croupier.js)
 function animerDepuisSabot(e, cr) {
@@ -678,7 +749,7 @@ function actionAvecEcart(cards, up, st, h, tc) {
   for (const [f, k, u, idx, vers] of d.ecarts) if (f === fam && k === cle && u === ru && tc >= idx) trouve = { a: vers, idx };
   for (const [f, k, u, idx] of d.abandons) if (f === fam && k === cle && u === ru && tc >= idx && peutAbandonner(h, st)) trouve = { a: "U", idx };
   if (!trouve) return { a: base, ecart: null };
-  return { a: trouve.a, ecart: trouve.idx };
+  return { a: trouve.a, ecart: trouve.idx, base };
 }
 
 async function distribuer() {
@@ -698,11 +769,12 @@ async function distribuer() {
     await dodo(900); await nouveauSabot({ pendantDonne: true });
     annoncer("Sabot neuf, mélangé, carte brûlée.");
   }
-  // Les cartes de la manche précédente sont RAMASSÉES vers la défausse, pas
-  // effacées : un balayage en éventail, une carte après l'autre, puis le tas grimpe.
+  // Les cartes de la manche précédente ont déjà été ramassées à la FIN du règlement
+  // (rangerLaManche). Ces deux lignes sont le FILET : elles ne font rien dans le cas courant,
+  // et rattrapent une manche interrompue (rechargement, changement de table, remélange).
+  RANGEMENT++;   // un rangement encore en vol ne doit pas balayer la donne qui commence
   await ramasser();
-  for (const st of T.sieges) for (const h of st.mains) if (!h.defaussee) T.defausse += h.cards.length;
-  T.defausse += T.croupier.length; T.croupier = []; T.actif = null;
+  viderLeFeutre();
   // Chaque siège joue la mise qu'il a posée dans son cercle (st.mise, lot Jetons) ; `|| 1` = sans jetons, une unité.
   for (const st of T.sieges) st.mains = [E.newHand([], st.mise || 1)];
   rendreSieges(); $("dMain").innerHTML = ""; $("dMain").style.removeProperty("--pas"); $("dScore").textContent = "·";
@@ -858,8 +930,14 @@ function tonTour() {
   annoncer(`À toi${mains} : ${total}${soft ? " souple" : ""} contre ${upTxt}.`);
   if (aideActive()) {
     const tc = sys().equilibre ? CT.compteVrai(T.rc, T.sabot.length / 52) : null;
-    const { a, ecart } = actionAvecEcart(h.cards, T.croupier[0], st, h, tc);
-    $("conseil").innerHTML = `Stratégie : <b>${MOT[a]}</b>` + (ecart !== null ? ` <span class="muet">— écart au compte, à partir de ${sgn(ecart)}</span>` : "")
+    const { a, ecart, base } = actionAvecEcart(h.cards, T.croupier[0], st, h, tc);
+    // « — écart au compte, à partir de −1 » demandait d'appliquer une règle dont le déclencheur
+    // est invisible (le compte est masqué par construction), et ne disait pas si « Rester »
+    // était le coup de base ou l'écart. On énonce un FAIT, en NOMMANT les deux coups : ça
+    // s'apprend même compte masqué, et ça se vérifie.
+    const ecartTxt = ecart !== null && base && base !== a
+      ? ` <span class="muet">— écart : la base dit ${MOT[base]}, à partir d'un compte vrai de ${sgn(ecart)} c'est ${MOT[a]}</span>` : "";
+    $("conseil").innerHTML = `Stratégie : <b>${MOT[a]}</b>` + ecartTxt
       + ` <button class="lien" id="bMasquerAide" title="Ne plus afficher l'aide à la décision">masquer l'aide</button>`;
     $("bMasquerAide").onclick = () => { DB.conseil = false; garder(); rendreAide(); tonTour(); };
     // Le coup conseillé prend l'or du bouton principal (style.css, .conseille).
@@ -930,7 +1008,7 @@ async function regler() {
     if (st.toi) { miennes.push(res.result); net += res.net; }
     if (!h.emis) fins.push({ siege: si, main: hi, toi: st.toi, issue: issues[si][hi], montant: res.net });
   }); });
-  T.solde += net; turbo(false); DB.mainsJouees = (DB.mainsJouees || 0) + 1;
+  T.solde += net; turbo(false); DB.mainsJouees = (DB.mainsJouees || 0) + 1; noteTable();
   T.actif = null; rendreSieges(); T.mains++; T.enJeu = false; T.occupe = false; rafraichirBarre(); garder();
   // Le pourquoi, en une phrase : « Le croupier saute à 24 : toutes les mains encore debout
   // gagnent. » ou « Croupier 20 contre ton 12 : perdu, −25. » Les pastilles disent le verdict,
@@ -944,8 +1022,54 @@ async function regler() {
   // sur cet ordre pour faire glisser les jetons avant de tirer un bilan.
   assurances.forEach(a => emettre("assurance-fin", a));
   fins.forEach(f => emettre("main-fin", f));
-  emettre("manche-fin", { issues, toi: T.toi ? issues[T.sieges.indexOf(T.toi)] : [], net, solde: T.solde, croupier: dt });
+  // Le feutre se vide À LA FIN DU RÈGLEMENT, plus au DÉBUT de la donne suivante. Mesuré le
+  // 06/09 : le dernier jeton du règlement se posait à t=13618 et les mises de la manche
+  // SUIVANTE volaient à t=14484 — pendant que les cartes de la manche finie et les cinq
+  // pastilles « PERDU » étaient encore là, sous « Pose ta mise · minimum 10 ». Deux manches
+  // sur le tapis en même temps, sans limite de durée.
+  // `J.attente` (lot Jetons) est lu ICI, avant que « manche-fin » ne le remette à zéro :
+  // c'est l'étalement des paiements, siège après siège.
+  const attenteJ = (typeof J === "object" && J && typeof J.attente === "number") ? J.attente : 0;
+  const nCartes = $("feutre").querySelectorAll(".main .carte").length;
+  const vite = T.turbo ? .45 : 1;
+  const doux = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  // On attend que le VERDICT ait fini de se lire : le mot s'inscrit à attenteJ + 60 et tient
+  // VERDICT_TENUE. Sans siège occupé, il n'y a pas de verdict — seuls les jetons comptent.
+  const tenue = T.toi ? attenteJ + 60 + VERDICT_TENUE : Math.max(320, attenteJ + 260);
+  const balayage = doux ? 140 : (260 + nCartes * 28) * vite;
+  // `rangement` voyage dans l'événement : jetons.js n'ouvre les mises qu'APRÈS le balayage,
+  // au lieu de compter de son côté (deux minuteries parallèles = deux manches à l'écran).
+  emettre("manche-fin", { issues, toi: T.toi ? issues[T.sieges.indexOf(T.toi)] : [], net, solde: T.solde, croupier: dt,
+    rangement: Math.round(tenue + balayage) });
+  rangerLaManche(tenue);
   boutons({ donne: true });
+}
+/* Le rangement : on laisse lire le verdict, on balaie vers la défausse, et LE TAS MONTE au
+   moment où les cartes y arrivent — c'est le geste qui compte les cartes, pas le clic sur
+   « Distribuer » de la manche d'après. Mesuré le 06/09 en fin de main : sabot à 297 (15 cartes
+   sorties) et « 1 carte dans la défausse », pendant toute la phase de mise — le moment précis
+   où il faut estimer les jeux restants pour dimensionner sa mise, et où l'application consacre
+   un exercice entier (« Estimation ») à lire ce tas. */
+let RANGEMENT = 0;
+async function rangerLaManche(tenue) {
+  const jeton = ++RANGEMENT;
+  if (tenue > 0) await dodo(tenue);
+  if (jeton !== RANGEMENT || T.enJeu) return;
+  await ramasser();
+  if (jeton !== RANGEMENT || T.enJeu) return;
+  viderLeFeutre();
+}
+// Les cartes quittent le modèle ET la défausse les reçoit. Appelée par le rangement de fin de
+// manche ; `distribuer()` la rappelle en filet — elle ne fait alors plus rien.
+function viderLeFeutre() {
+  let bouge = false;
+  for (const st of T.sieges) for (const h of st.mains) if (!h.defaussee) { T.defausse += h.cards.length; h.defaussee = true; bouge = true; }
+  if (T.croupier.length) { T.defausse += T.croupier.length; T.croupier = []; bouge = true; }
+  for (const st of T.sieges) if (st.mains.length) { st.mains = []; bouge = true; }
+  T.actif = null;
+  if (!bouge) return;
+  rendreSieges(); $("dMain").innerHTML = ""; $("dMain").style.removeProperty("--pas"); $("dScore").textContent = "·";
+  rafraichirBarre(); rendreLettrage();
 }
 $("bDonne").onclick = distribuer;
 /* ── Le verdict de TA main : un mot en serif, au-dessus de tes cartes, qui s'INSCRIT (un balayage
@@ -953,6 +1077,7 @@ $("bDonne").onclick = distribuer;
    valable pour la table à plusieurs aussi. Calé sur le paiement de ce siège (J.attente, lu avant que
    jetons.js ne l'incrémente : table.js est concaténé avant lui), pour que le mot, les jetons et la
    note tombent ensemble ; un bust et un abandon, eux, s'inscrivent à l'instant. */
+const VERDICT_TENUE = 1900;   // ms : le temps de lire un mot — et l'horloge du rangement (regler)
 const VERDICT_MOT = { bust: "Sauté", perd: "Perdu", gagne: "Gagné", blackjack: "Blackjack", egalite: "Égalité", abandon: "Abandon" };
 const VERDICT_TON = { bust: "p", perd: "p", gagne: "g", blackjack: "bj", egalite: "n", abandon: "n" };
 let VERDICT_T = null, VERDICT_D = null;
@@ -968,7 +1093,7 @@ function inscrireVerdict(issue, retard) {
     clearTimeout(VERDICT_T);
     v.className = "verdict " + VERDICT_TON[issue]; v.textContent = VERDICT_MOT[issue];
     void v.offsetWidth; v.classList.add("on");   // relance l'animation même si le mot est le même
-    VERDICT_T = setTimeout(() => { v.classList.remove("on"); }, 2300);
+    VERDICT_T = setTimeout(() => { v.classList.remove("on"); }, VERDICT_TENUE);
   }, retard || 0);
 }
 document.addEventListener("sabot:main-fin", e => {
@@ -1062,6 +1187,8 @@ function demanderMonCompte(finSabot) {
       txt += ` À la donne, tu as misé ${fr1(u)} unité${u > 1 ? "s" : ""} pour un compte vrai de ${fr1(T.tcMise)} : ${Math.abs(u - ref) <= 1 ? "cohérent" : "incohérent — la rampe disait " + ref}.`;
     }
     $("mcRes").textContent = txt;
+    // Une fois qu'on a compté une fois, l'invite de la note de table n'a plus rien à apprendre.
+    DB.aAnnonce = true; noteTable();
     DB.sessions.push({ t: Date.now(), genre: "table", sys: sys().nom, n: vues, exact: bon, ecart: Math.abs(dit - rc) });
     while (DB.sessions.length > 240) DB.sessions.shift(); garder();
     if (vue === "progres") rendreProgres();
