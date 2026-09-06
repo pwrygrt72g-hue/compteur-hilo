@@ -1098,7 +1098,10 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    jetait contre le bord droit et laissait 420 px de vide au milieu de la barre — un tiers de sa
    largeur, exactement là où le regard retombe en sortant du feutre. */
 .rang-table{ display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-start; align-items:center;
-  margin-left:6px; padding-left:12px; border-left:1px solid rgba(255,255,255,.16) }
+  margin-left:6px }
+/* Le filet qui sépare les COUPS des OUTILS : seulement quand ils sont sur la même rangée.
+   Replié sur deux rangées (téléphone), il flottait tout seul à gauche sous « Distribuer ». */
+@media (min-width:1024px){ .rang-table{ padding-left:12px; border-left:1px solid rgba(255,255,255,.16) } }
 /* Le menu « Plus » : les utilitaires rares vivent derrière un bouton, à TOUTES les largeurs. */
 .plus{ position:relative; display:block }
 .plus-menu{ display:none; position:absolute; right:0; bottom:calc(100% + 8px); z-index:30; flex-direction:column; align-items:stretch; gap:4px; min-width:220px;
@@ -1152,7 +1155,11 @@ details.reglages > summary:hover{ border-color:var(--laiton) }
 details.reglages[open] > summary{ border-radius:var(--r) var(--r) 0 0; border-bottom-color:transparent }
 details.reglages > .laque{ border-radius:0 0 var(--r) var(--r) }
 #v-exercices:has(#exReglages[hidden]) #eDemarrer, #v-exercices:has(#exReglages[hidden]) #exScene{ display:none }
-.exo-scene{ min-height:min(52vh, 520px); display:grid; place-items:center; align-content:center; gap:14px; text-align:center }
+.exo-scene{ min-height:min(52vh, 520px); display:grid; grid-template-columns:minmax(0, 62ch); justify-content:center;
+  justify-items:stretch; align-content:center; gap:14px; text-align:center }
+/* La consigne et le bouton partagent le bord GAUCHE de la colonne. */
+.exo-scene .exo-quoi{ text-align:left }
+.exo-scene .btn{ justify-self:start }
 .exo-scene .exo-cadre{ display:flex; gap:18px; align-items:flex-end; justify-content:center; margin-bottom:6px }
 .exo-scene .exo-cadre .carte{ box-shadow:0 14px 30px -14px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.08) }
 .exo-scene .exo-cadre .carte:nth-child(1){ rotate:-7deg; translate:10px 8px; opacity:.55 }
@@ -1161,8 +1168,8 @@ details.reglages > .laque{ border-radius:0 0 var(--r) var(--r) }
 .exo-scene .carte{ --w:148px }
 .exo-scene .exo-compte{ display:flex; flex-direction:column; align-items:center; gap:2px }
 .exo-scene .exo-compte b{ font-family:"Martian Mono",monospace; font-size:var(--t-cadran); font-weight:600; line-height:1 }
-.exo-scene .exo-quoi{ max-width:52ch; color:var(--os-eteint); font-size:var(--t-petit); margin:0 }
-.exo-scene .exo-legende{ justify-content:center; gap:8px }
+.exo-scene .exo-quoi{ max-width:none; color:var(--os-eteint); font-size:var(--t-petit); margin:0 }
+.exo-scene .exo-legende{ justify-content:flex-start; gap:8px }
 .exo-scene .exo-legende .regle{ font-size:var(--t-fin); padding:5px 11px }
 .exo-scene .exo-legende:empty{ display:none }
 .exo-scene #eDemarrer2{ min-height:46px; padding:0 26px; margin-top:4px }
@@ -1350,9 +1357,14 @@ td.U{background:var(--ardoise)}
 
 /* ── Progression ───────────────────────────────────────────────────── */
 .pave{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:11px}
-.prog-vide{ text-align:center; padding:52px 24px 48px }
+/* Mesuré le 06/09 : l'état vide était centré dans un panneau puis la page s'arrêtait net —
+   550 px de vide dessous. Il s'aligne à GAUCHE sur la même colonne que le reste de l'écran, et
+   il occupe la hauteur qui reste, comme un panneau plein l'occuperait. */
+.prog-vide{ text-align:left; padding:52px 28px 48px; min-height:min(46vh, 420px);
+  display:flex; flex-direction:column; justify-content:center; align-items:flex-start }
 .prog-vide h2{ font-size:var(--t-section) }
-.prog-vide p{ color:var(--os-eteint); max-width:52ch; margin:8px auto 20px; line-height:1.5 }
+.prog-vide p{ color:var(--os-eteint); max-width:62ch; margin:8px 0 20px; line-height:1.5 }
+.prog-vide .rang-btn{ justify-content:flex-start }
 .pave .t{padding:13px}
 .pave b{display:block;font-family:"Instrument Serif",serif;font-size:34px;line-height:1.1}
 canvas#courbe{width:100%;height:216px;display:block;margin-top:6px}
@@ -1746,8 +1758,15 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   background:color-mix(in oklab, var(--or-matiere) 16%, transparent); border:1px solid color-mix(in oklab, var(--or-matiere) 45%, transparent);
   border-radius:9px; padding:4px 12px; color:var(--or-lumiere); font-family:Archivo,sans-serif; font-size:var(--t-fin); font-weight:600; cursor:pointer }
 .note-table .lien:hover{ background:color-mix(in oklab, var(--or-matiere) 28%, transparent); color:var(--nacre) }
-/* Sur un écran étroit, elle passe sous la barre plutôt que sur la tête du croupier. */
-@media (max-width:1023.98px){ .note-table{ position:static; max-width:none; margin:6px 0 0 } }
+/* Sur un écran étroit, une ligne compacte en haut de la salle — et SANS son bouton : sur
+   téléphone « Annoncer mon compte » est déjà dans la barre des coups, en toutes lettres. */
+@media (max-width:1023.98px){
+  .note-table{ left:6px; right:6px; top:4px; max-width:none; font-size:var(--t-micro); padding:5px 9px }
+  .note-table .lien{ display:none }
+  /* …et elle cède la place aux CARTES dès que la donne commence : sur un feutre de téléphone,
+     le haut de la table est la rangée du croupier. Elle revient à la mise suivante. */
+  #v-table[data-phase="jeu"] .note-table, #v-table[data-phase="reglement"] .note-table{ display:none }
+}
 /* Les règles de la table, en toutes lettres (la feuille ouverte par #tRegles). */
 .regles-liste{ list-style:none; margin:14px 0 0; padding:0; display:grid; gap:10px }
 .regles-liste li{ display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:baseline }

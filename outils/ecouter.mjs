@@ -35,6 +35,14 @@ await dodo(1500);
 
 // Ce que chaque son ANNONCE (durée approximative rendue par synthese), et ce qu'on exige de lui.
 const GENRES = ["carte", "pose", "jeton", "jetons", "raclement", "blackjack", "bust", "gain", "ok", "ko", "alerte"];
+/* Les trois FAMILLES. Un banc qui ne vérifie qu'« audible » et « ne sature pas » laisse
+   passer 26 dB d'écart entre une carte et un bust — c'est ce qu'on mesurait le 06/09 :
+   l'application criait quand on perdait et chuchotait quand on gagnait. Un son ne doit pas
+   s'écarter de plus de 8 dB de la médiane de sa famille, sinon la dérive revient en silence. */
+const FAMILLES = { geste: ["carte", "pose", "jeton", "jetons", "raclement"],
+  verdict: ["blackjack", "bust", "gain"], retour: ["ok", "ko", "alerte"] };
+const ECART_MAX_DB = 8;
+const rms = {};
 const echecs = [];
 console.log("genre        crête   rms      durée   annoncée");
 for (const g of GENRES) {
@@ -45,6 +53,19 @@ for (const g of GENRES) {
   if (r.crete > 1) echecs.push(g + " : sature (crête " + r.crete + ")");
   if (r.duree > r.annonce * 1.6 + .1) echecs.push(g + " : dure " + r.duree + " s pour " + r.annonce + " annoncés");
   if (r.duree < .02) echecs.push(g + " : trop court (" + r.duree + " s)");
+  rms[g] = r.rms;
+}
+// Le NIVEAU : chaque famille tient dans 8 dB autour de sa médiane.
+const dB = (a, b) => 20 * Math.log10(a / b);
+console.log("\nfamille      médiane   écart max");
+for (const [nom, genres] of Object.entries(FAMILLES)) {
+  const vals = genres.map(g => rms[g]).filter(v => v > 0).sort((a, b) => a - b);
+  if (vals.length < 2) continue;
+  const med = vals[Math.floor(vals.length / 2)];
+  let pire = 0, quiPire = "";
+  for (const g of genres) { const e = Math.abs(dB(rms[g] || med, med)); if (e > pire) { pire = e; quiPire = g; } }
+  console.log(nom.padEnd(12) + med.toFixed(4).padEnd(10) + pire.toFixed(1) + " dB (" + quiPire + ")");
+  if (pire > ECART_MAX_DB) echecs.push(`famille « ${nom} » : ${quiPire} à ${pire.toFixed(1)} dB de la médiane (plafond ${ECART_MAX_DB})`);
 }
 // Jamais deux fois la même hauteur de suite : on rend deux fois le même son et on compare les échantillons.
 const distincts = await evaluer(`(async () => {

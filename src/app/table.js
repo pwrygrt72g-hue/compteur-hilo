@@ -223,7 +223,20 @@ function texteLettrage(t) {
 function rendreLettrage() {
   const f = $("feutre"), svg = $("lettrage"); if (!f || !svg) return;
   const W = f.clientWidth, H = f.clientHeight;
-  if (W < 320 || H < 160) { if (LETTRAGE.cle !== "vide") { svg.innerHTML = ""; LETTRAGE.cle = "vide"; } return; }
+  if (W < 150 || H < 120) { if (LETTRAGE.cle !== "vide") { svg.innerHTML = ""; LETTRAGE.cle = "vide"; } return; }
+  // 🚨 Un feutre NU n'est plus une table de casino. Sous 400 px de large, les arcs n'ont plus
+  // la place de porter une règle (mesuré le 06/09 à 360 × 640 : « lettrage : vide ») — alors
+  // on imprime la seule qui compte, à plat, en une ligne : le paiement du blackjack.
+  if (W < 400 || H < 230) {
+    const tp = texteLettrage(tableCourante()), court = /3 CONTRE 2/.test(tp.paie) ? "BLACKJACK 3:2" : "BLACKJACK 6:5";
+    const cle = "petit|" + W + "|" + H + "|" + court;
+    if (LETTRAGE.cle === cle) return;
+    LETTRAGE.cle = cle; LETTRAGE.nu = false; LETTRAGE.mesure = { petit: true };
+    const taille = Math.max(9, Math.min(13, Math.round(W * .04)));
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = `<text class="grand" x="${(W / 2).toFixed(1)}" y="${(H * .46).toFixed(1)}" font-size="${taille}" text-anchor="middle">${echap(court)}</text>`;
+    return;
+  }
   const rangee = f.querySelector(".rangee-haute"), box = $("sieges");
   // Tout est mesuré HORS transformation (offsetTop) : les sièges du bord sont
   // remontés sur l'arc par un transform, ce n'est pas leur place dans le flux.

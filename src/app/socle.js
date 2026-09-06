@@ -151,8 +151,20 @@ function ton(a, sortie, t, o) {
 }
 /* La partition. `a` est un contexte (réel ou hors ligne), `sortie` un nœud, `t` l'instant.
    Rend la durée approximative du son, en secondes (pour la mesure). */
+/* Le NIVEAU de chaque son. Mesuré le 06/09 (outils/ecouter.mjs) : `bust` sortait à 0,0885 de
+   rms contre 0,0043 pour `carte` — un rapport de 21 pour 1, soit 26 dB —, et 4 fois plus fort
+   que `gain`. Pendant une donne on entendait onze cartes à la limite de l'audible, puis un
+   bust qui saute de 26 dB : l'application CRIAIT quand on perd et chuchotait quand on gagne.
+   Le timbre et l'enveloppe ne bougent pas : seul le volume est ramené à la cible de sa
+   FAMILLE — les gestes (carte, pose, jetons, raclement) à 0,014 de rms, les verdicts (bust,
+   gain, blackjack) à 0,041, les retours d'exercice (ok, ko, alerte) à 0,016. Les facteurs
+   sont le quotient mesuré ; le banc vérifie qu'aucun genre ne s'écarte de sa famille. */
+const NIVEAU = { carte: 3.33, pose: 5.19, jeton: 3.78, jetons: 2.55, raclement: 1.84,
+  blackjack: 1.15, bust: .46, gain: 1.83, ok: 1.82, ko: .91, alerte: 1.72 };
 function synthese(a, sortie, genre, t, k) {
   k = k || 1;
+  const niv = NIVEAU[genre];
+  if (niv && niv !== 1) { const n = a.createGain(); n.gain.value = niv; n.connect(sortie); sortie = n; }
   switch (genre) {
     case "carte":      // une carte qui SORT du sabot : un chuintement passe-bande de 60 ms
       bruit(a, sortie, t, { f: 2600, q: .7, g: .21, att: .006, dec: .016, dur: .07, k });

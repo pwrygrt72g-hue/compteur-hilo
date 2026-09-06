@@ -162,8 +162,10 @@ const LECON = { etape: 0, cartes: [], i: 0, rc: 0, bons: 0, dit: 0 };
 function leconRangs() {
   const v = sys().v, groupes = {};
   RANKS.forEach((r, i) => { const k = v[i >= 9 ? 9 : i]; (groupes[k] = groupes[k] || []).push(r); });
-  // Trié du + au − : ce qu'on retient d'abord, ce sont les petites cartes qui valent +1.
-  return Object.keys(groupes).map(Number).sort((a, b) => b - a).map(k => [k, groupes[k]]);
+  // Trié du − au + : dans l'ORDRE DES BOUTONS de l'exercice, qui est aussi celui des touches
+  // fléchées (← = −1, → = +1). Mémoriser « +1 » à gauche dans la leçon et le retrouver à droite
+  // sous le doigt une seconde plus tard, c'est une friction gratuite dans un exercice de réflexe.
+  return Object.keys(groupes).map(Number).sort((a, b) => a - b).map(k => [k, groupes[k]]);
 }
 function leconHtml() {
   const e = LECON.etape, S = sys();

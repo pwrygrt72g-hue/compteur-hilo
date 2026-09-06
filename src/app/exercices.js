@@ -29,7 +29,8 @@ function resumeExo() {
 function legendeSysteme() {
   const v = sys().v, groupes = {};
   RANKS.forEach((r, i) => { const k = v[i >= 9 ? 9 : i]; (groupes[k] = groupes[k] || []).push(r); });
-  return Object.keys(groupes).map(Number).sort((a, b) => b - a)
+  // De gauche à droite comme les boutons de réponse et les touches fléchées : −1, 0, +1.
+  return Object.keys(groupes).map(Number).sort((a, b) => a - b)
     .map(k => `<span class="regle ${k > 0 ? "bien" : k < 0 ? "mal" : ""}" title="Ces cartes valent ${sgn(k)}">${sgn(k)}&nbsp; ${groupes[k].join(" ")}</span>`).join("");
 }
 // La consigne des boutons, GÉNÉRÉE depuis le système : « Trois boutons : −1 pour A, 10, V, D, R ;

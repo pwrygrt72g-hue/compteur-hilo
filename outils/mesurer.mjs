@@ -211,7 +211,9 @@ for (const r of rapport) {
     const mini = Math.round((r.wTable || 84) * .3);
     exiger(r.ecartCroupier === null || r.ecartCroupier >= mini, `${ou} : les cartes du croupier touchent les tiennes (écart ${r.ecartCroupier} px, minimum ${mini})`);
     // Un feutre imprimé : le paiement du blackjack est TOUJOURS dessiné sur ordinateur (tables solo).
-    if (r.vue !== "reseau") exiger(/PAIE/.test(r.lettrage), `${ou} : le feutre est nu — « BLACKJACK PAIE… » n'est pas dessiné (lettrage : « ${r.lettrage.slice(0, 40)} » · dernier rendu : ${r.lettrageInfo})`);
+    // Sous 400 px de feutre (téléphone), les arcs n'ont plus la place de porter une règle :
+    // on imprime la version courte, « BLACKJACK 3:2 ». Un feutre nu reste un défaut.
+    if (r.vue !== "reseau") exiger(/BLACKJACK/.test(r.lettrage), `${ou} : le feutre est nu — le paiement du blackjack n'est pas dessiné (lettrage : « ${r.lettrage.slice(0, 40)} » · dernier rendu : ${r.lettrageInfo})`);
   }
   for (const c of r.petits) if (!TOLERE.test(c)) exiger(false, `${ou} : cible tactile ${c} sous 44 px`);
 }

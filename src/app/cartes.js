@@ -397,9 +397,19 @@ function placerSieges(box, sieges, feutre) {
     });
     return lift;
   });
+  // 🚨 La remontée ne fait JAMAIS monter un siège dans la rangée du croupier. Sur un feutre
+  // court (téléphone), la courbe du rail est si serrée que les sièges du bord grimpaient de
+  // 80 px et leurs cartes recouvraient celles du croupier — mesuré le 06/09 à 360 × 640,
+  // « écart −75 px » pour un minimum de 17. Le plafond est le bas de la rangée haute plus
+  // trois dixièmes de carte, la même marge que le banc exige.
+  const rangee = document.querySelector(".feutre .rangee-haute");
+  const plafond = rangee ? rangee.offsetTop + rangee.offsetHeight + Math.round(wT * .3) : -Infinity;
+  const hautMains = sieges.map(s => { const m = s.querySelector(".mains"); return m ? box.offsetTop + hautDans(m) : Infinity; });
   sieges.forEach((s, i) => {
     const ecart = i - (n - 1) / 2, j = n - 1 - i;
-    s.style.setProperty("--lift", -Math.max(lifts[i], lifts[j]) + "px");
+    const brut = Math.max(lifts[i], lifts[j]);
+    const marge2 = Math.min(hautMains[i], hautMains[j]) - plafond;
+    s.style.setProperty("--lift", -Math.max(0, Math.min(brut, isFinite(marge2) ? marge2 : brut)) + "px");
     s.style.setProperty("--tilt", (-Math.sign(ecart) * Math.min(7, Math.abs(ecart) * 3.5)).toFixed(1) + "deg");
   });
   // Les sièges viennent de bouger : l'arc doré se place dans le trou qu'ils laissent,
