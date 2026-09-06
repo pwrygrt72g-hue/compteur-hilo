@@ -205,5 +205,46 @@ async function avancer(salles, fil, t, jusqu, pas) {
   ok("rachat accepté à tapis vide, compté", [p.action({ id: "u", a: "rachat" }, 0).ok, p.etat.sieges[0].tapis, p.etat.sieges[0].rachats], [true, 1000, 1]);
 }
 
+/* ── 8. La carte de coupe : le SENS de la pénétration ────────────────────────
+   `P.coupe` compte les cartes LAISSÉES DERRIÈRE la carte de coupe, parce que le
+   remélange se déclenche sur `cartes.length <= coupe`. La pénétration, elle, est la
+   fraction du sabot qu'on JOUE : c'est la définition du catalogue (« on joue 75 % du
+   sabot avant de remélanger ») et celle du simulateur qui calcule l'avantage maison
+   affiché (sim.mjs). Les deux nombres sont donc COMPLÉMENTAIRES, pas égaux.
+   Jusqu'au 6 septembre 2026 on écrivait `length * penetration` : au Boulevard on
+   remélangeait après 78 cartes au lieu de 234, et Le Salon Privé — vendu sur sa
+   pénétration de 0,85 — était la table la MOINS profonde du catalogue. Autrement dit
+   l'application enseignait l'inverse de ce qu'elle affirmait.
+   Ces tests figent le sens : quiconque « répare » en retirant le `1 -` tombe ici.
+   Ne pas les assouplir sans relire sim.mjs et le catalogue. */
+{
+  const sabotDe = n => ({ cartes: Array.from({ length: n }, (_, k) => c(R[k % 13])), empreinte: "coupe-" + n, graine: null });
+  const coupeDe = pen => {
+    const p = creerPartie({ regles: REGLES, penetration: pen, cartes: [], empreinte: "" });
+    p.remelanger(sabotDe(312), false);
+    return p.etat.coupe;
+  };
+  ok("coupe : 6 jeux à 75 % de pénétration laissent 78 cartes derrière", coupeDe(.75), 78);
+  ok("coupe : à 50 %, le sabot est coupé en deux", coupeDe(.5), 156);
+  ok("coupe : PLUS on pénètre, MOINS il reste de cartes (Salon Privé 85 % > Boulevard 75 %)", coupeDe(.85) < coupeDe(.75), true);
+  ok("coupe : jamais la fraction jouée elle-même (le bogue d'avant renvoyait 234)", coupeDe(.75) === 234, false);
+
+  // Et la preuve par le jeu : on distribue jusqu'à ce que la table réclame un sabot,
+  // puis on compte les cartes réellement consommées. À 75 %, il en faut au moins 234.
+  {
+    const p = creerPartie({ regles: REGLES, table: "boulevard", jeux: 6, bots: true, cadence: 0,
+      penetration: .75, miseMin: 10, miseMax: 1000, tapis: 100000 });
+    p.remelanger(sabotDe(312), false);
+    const depart = p.etat.cartes.length;                 // 311 : la brûlée est déjà partie
+    let now = 0;
+    while (!p.etat.besoinRemelange && now < 4000000) { p.etape(now); now += 1000; }
+    const jouees = depart - p.etat.cartes.length;
+    ok("le sabot part au remélange APRÈS la fraction annoncée, pas avant", jouees >= 234, true);
+    ok("... et une seule manche de trop, pas un sabot entier", jouees < 234 + 60, true);
+    ok("... il reste alors moins de cartes que la carte de coupe", p.etat.cartes.length <= p.etat.coupe, true);
+    ok("... et la table a joué plus de dix manches, pas cinq", p.etat.manche >= 10, true);
+  }
+}
+
 console.log(`\n${pass} tests passés, ${fail} échecs`);
 process.exit(fail ? 1 : 0);

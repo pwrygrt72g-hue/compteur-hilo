@@ -143,6 +143,9 @@ function rendreHall() {
   rendreCredits(); rendreSalut();
 }
 // Une CC BY sans crédit est une violation : auteur, licence, source, pour chaque photo.
+// Le pied de page porte aussi la PORTÉE du partage à l'identique (les BY-SA obligent la photo,
+// pas la collection qui l'affiche) et la non-affiliation : les neuf tables sont inventées, mais
+// les lieux photographiés existent — sans la phrase, on croirait à un partenariat. Voir LICENSE.
 function rendreCredits() {
   const c = $("hallCredits"), L = window.PHOTOS_CREDITS || [];
   if (!c) return;
@@ -150,7 +153,7 @@ function rendreCredits() {
   c.innerHTML = `<span class="grave">Photos</span><p>` + L.map(x =>
     `<span class="credit"><a href="${echap(x.source)}" target="_blank" rel="noopener" title="${echap(x.titre)}">${echap(x.auteur)}</a>`
     + ` <a class="lic" href="${echap(x.licence_url)}" target="_blank" rel="noopener">${echap(x.licence)}</a></span>`).join(" · ")
-    + `</p><p>Recadrées, redimensionnées et encodées en WebP ; les originaux sont chez leurs auteurs.</p>`;
+    + `</p><p>Recadrées, redimensionnées et encodées en WebP ; les originaux sont chez leurs auteurs. Chaque photo modifiée reste sous la licence de son original — les CC BY-SA sont donc partagées à l'identique. Le reste de l'application ne l'est pas : elle les rassemble, elle n'en dérive pas. Le Sabot n'est affilié à aucun casino. Les noms de tables sont fictifs ; les photos montrent des lieux réels, sous licence libre.</p>`;
 }
 $("bHallReglages").onclick = () => $("bReglages").click();
 

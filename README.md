@@ -85,3 +85,11 @@ node src/regles.test.mjs   # 78 tests de stratégie et d'écarts
 `build.mjs` produit deux fichiers depuis les mêmes pièces : `index.html`, document complet pour l'hébergement, et `artefact.html`, le même corps sans `<head>` pour les plateformes qui l'enveloppent elles-mêmes.
 
 Le code source vit dans `src/` : `engine.mjs` (les règles), `solver.mjs` (la stratégie), `indices.mjs` (les écarts), `sim.mjs` (l'avantage maison), `shuffle.mjs` (le hasard), `net.mjs` (le multijoueur), `tables.mjs` et `counting.mjs` (les données), et `app/` (l'interface).
+
+## Licence
+
+Le code est sous **MIT** ; les dix-sept photos ne le sont pas — chacune reste sous la licence de son auteur (6 Unsplash, 5 CC BY, 5 CC BY-SA, 1 domaine public), et les versions recadrées sont partagées à l'identique quand l'original l'exige. Aucune n'est en NC ni en ND.
+
+Le partage à l'identique s'arrête à la photo : une application qui affiche des images ne dérive pas d'elles, elle les rassemble. Le détail est dans [`LICENSE`](LICENSE), photo par photo dans [`static/photos/CREDITS.md`](static/photos/CREDITS.md).
+
+Le Sabot n'est affilié à aucun casino : les noms de tables sont inventés, les lieux photographiés existent.

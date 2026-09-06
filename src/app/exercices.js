@@ -1,6 +1,184 @@
 /* ══════════════════════ EXERCICES ══════════════════════ */
 const X = { genre: "defilement", sabot: [], cartes: [], cachees: [], i: -1, minuteur: null, rc: 0, rep: [], encours: false,
   jeux: 6, t0: 0, delais: [], controles: [], prochainControle: 0, pause: false, depart: 0, chrono: null, silence: false, par: 1 };
+
+/* ── LES REPÈRES DE NIVEAU ────────────────────────────────────────────────
+   L'application MESURE depuis le premier jour et n'a jamais dit ce qui est BON.
+   « Meilleur jeu de 52 : 30,1 s », « Réaction moyenne : 1,2 s » : bien ? mal ?
+   Sans barème on ne sait pas si on progresse, et un entraîneur qui ne situe pas
+   ne sert qu'à moitié — c'était, au 6 septembre, le plus large trou de la maison :
+   pas une occurrence de seuil, d'objectif ou de palier dans tout src/app.
+
+   ⚠️ CETTE TABLE EST LA SEULE. Le bureau (progres.js, sous chaque tuile) et les
+   trois bilans y lisent les MÊMES paliers. Deux barèmes qui se contrediraient d'un
+   écran à l'autre valent moins que pas de barème du tout : on ne saurait plus lequel
+   croire. progres.js est concaténé APRÈS ce fichier (build.mjs, MORCEAUX) : il la voit.
+
+   Un palier = [borne, nom, ton, phrase?]. On descend la liste et le PREMIER qui
+   accepte la valeur gagne ; `null` est le reste, il ne refuse rien.
+   `sens:"bas"` = plus petit est meilleur (des secondes) ; `sens:"haut"` = plus grand
+   est meilleur (un pourcentage).
+
+   Le ton est ÉCRIT ici plutôt que déduit du rang, et il y en a TROIS, pas deux.
+   La maison peint en jade/cinabre ce qui est juste ou faux (rReel, estNote) : c'est
+   un vrai/faux, pas une échelle. Sur une échelle, peindre en rouge les trois quarts
+   du chemin d'un débutant dirait « raté » là où il faut lire « pas encore ». */
+const REPERES = {
+  // Le sabot chrono : le temps RAMENÉ à un jeu de 52 cartes — la seule mesure
+  // comparable d'une session à l'autre, puisqu'on ne compte jamais le même nombre de
+  // cartes. 25 à 30 s pour 52 cartes est le repère classique du comptage utilisable
+  // en salle : au-delà, le croupier distribue plus vite qu'on ne compte.
+  jeu52: { objectif: 30, unite: " s", quoi: "compter un jeu de 52", sens: "bas",
+    paliers: [[22, "Rythme de pro", "bien"], [30, "Rythme de salle", "bien"],
+              [40, "Tu tiens", ""], [60, "Tu apprends", ""], [null, "Premiers pas", "mal"]] },
+  // Le défilement : le délai entre la carte qui tombe et TON CLIC.
+  // ⚠️ Ce n'est pas la même grandeur que le jeu de 52 ci-dessus, et l'écart entre les
+  // deux objectifs (1 s par carte ici, 0,58 s là-haut) n'est PAS une incohérence à
+  // « corriger » : là-haut on compte en silence, ici il faut en plus viser un bouton
+  // et le pousser. Le geste coûte, et il ne coûte rien en salle.
+  reaction: { objectif: 1, unite: " s", quoi: "annoncer une carte", sens: "bas",
+    paliers: [[.6, "Rythme de pro", "bien"], [1, "Rythme de salle", "bien"],
+              [1.5, "Tu tiens", ""], [2.2, "Tu apprends", ""], [null, "Premiers pas", "mal"]] },
+  // L'estimation : la PART de manches jugées justes. « Juste » vaut un demi-jeu
+  // d'écart ou moins (repondreEstimation) — c'est la tolérance, et c'est elle qu'on
+  // annonce comme l'objectif. Les bornes 70 et 90 sont celles que finEstimation
+  // appliquait déjà EN DUR : elles ont été déplacées ici, pas réinventées.
+  estimation: { objectif: 70, unite: " %", quoi: "rester dans le demi-jeu de tolérance", sens: "haut",
+    paliers: [[90, "Œil de croupier", "bien", "Ton compte vrai sera juste, manche après manche."],
+              [70, "Tu tiens", "bien", "Correct. Un demi-jeu d'erreur coûte déjà un point de compte vrai, continue."],
+              [null, "À travailler", "mal", "Un compte courant parfait divisé par une mauvaise estimation donne une mauvaise décision."]] }
+};
+/* 🚨 Une moyenne de réaction ne mesure quelque chose que si l'on a RÉPONDU.
+   Vu en essai le 6 septembre : une session à 3 clics justes, 6 faux et 11 ratées
+   affichait « 0,2 s · Rythme de pro » — les trois seuls clics étaient tombés juste
+   après une carte, et l'application félicitait un naufrage, à côté de sa propre tuile
+   « 11 ratées ». On exige donc un échantillon : dix clics, et la moitié des cartes vues
+   (la plus petite session possible en compte 20, la règle n'interdit jamais rien).
+   Sans échantillon, PAS de pastille et PAS de `reaction` en base — sinon le bureau
+   moyennerait à parts égales une session de quarante clics et une de trois. */
+const REACTION_MINI = 10;
+const reactionFiable = (clics, vues) => clics >= REACTION_MINI && clics * 2 >= vues;
+// « 30 », « 1 », « 0,6 » — un nombre écrit comme on le dit, sans la décimale morte
+// de fr1 (qui rendrait « objectif 30,0 s »).
+const nbFr = x => (Math.round(x * 10) / 10).toString().replace(".", ",");
+const tonCouleur = t => t === "bien" ? "var(--jade)" : t === "mal" ? "var(--cinabre)" : "var(--os)";
+// Le palier d'une valeur — ou null si la mesure n'existe pas encore : on ne situe
+// personne sur zéro session, et « Premiers pas » sur un tiret serait un jugement
+// porté sur du vide.
+function palierDe(cle, v) {
+  const R = REPERES[cle];
+  if (!R || v === null || v === undefined || !isFinite(v)) return null;
+  const p = R.paliers.find(x => x[0] === null || (R.sens === "bas" ? v <= x[0] : v >= x[0]));
+  return { nom: p[1], ton: p[2], phrase: p[3] || "",
+    atteint: R.sens === "bas" ? v <= R.objectif : v >= R.objectif,
+    // ⚠️ `quoi` se lit APRÈS « pour » : c'est un GROUPE VERBAL, jamais un groupe nominal.
+    // L'estimation portait « de manches dans le demi-jeu… » et la bulle annonçait
+    // « Objectif : 70 % pour DE MANCHES dans le demi-jeu de tolérance » (vu le 06/09).
+    aide: "Objectif : " + nbFr(R.objectif) + R.unite + " pour " + R.quoi };
+}
+/* La pastille de palier, sous le chiffre — au bureau comme dans les bilans, le même
+   appel et donc le même verdict. `.regle` est la pastille de la maison ; `.bien` et
+   `.mal` sont ses deux tons, et l'absence de classe le troisième (neutre).
+   L'objectif chiffré voyage dans le `title` et non à côté : une tuile fait 148 px de
+   large au bureau, 138 px dans un bilan — « Rythme de salle · objectif 30 s » y
+   déborderait, et une pastille en pilule ne se coupe pas en deux lignes. */
+function badgeRepere(cle, v) {
+  const p = palierDe(cle, v);
+  if (!p) return "";
+  // 🚨 UN SPAN, jamais un div : `.tuiles div` (style.css) donne bordure, coin arrondi et
+  // padding à TOUT div descendant d'un bilan — la pastille se retrouvait enfermée dans
+  // une seconde boîte, et la tuile poussait d'un cran. Invisible dans le DOM, flagrant
+  // sur la capture (06/09).
+  return `<span style="display:block;margin-top:8px"><span class="regle ${p.ton}" title="${echap(p.aide)}">${echap(p.nom)}</span></span>`;
+}
+
+/* ── LA MONTÉE EN CADENCE : une PROPOSITION, jamais une contrainte ─────────
+   Le drill Stratégie fait déjà de la répétition espacée — les mains ratées reviennent
+   plus souvent (strategie.js, la pile DB.fautes). Le comptage, lui, n'avait jamais
+   rien fait de ce qu'il mesure : on pouvait rester trois mois à 1,2 s la carte sans
+   que rien ne suggère d'accélérer.
+
+   Trois défilements exacts d'affilée À LA MÊME CADENCE, avec de la marge sur la
+   réaction, et on propose 200 ms de moins. Deux ratés nets, et on propose 200 ms de
+   plus.
+
+   🚨 UN BOUTON, PAS UN RÉGLAGE QUI BOUGE TOUT SEUL. Rien ne change tant qu'on ne
+   clique pas, la boîte disparaît si on l'ignore, et le curseur reste où on l'a laissé.
+   Ce qui manque à cette application, c'est de dire OÙ ON EN EST — pas de décider à la
+   place du joueur. Un entraîneur qui accélère sans prévenir se fait éteindre. */
+const CADENCE_PAS = 200, CADENCE_PLANCHER = 300;
+// Le plus court intervalle (ms) auquel un défilement est ressorti exact. Il ne pilote
+// rien : il dit d'où l'on part, dans la scène de réglage et dans la boîte ci-dessous.
+if (DB.cadenceTenue === undefined) DB.cadenceTenue = null;
+
+let _boiteCadence = null, _cadenceCible = 0;
+// La boîte n'existe pas dans corps.html : elle est posée une fois dans le verdict,
+// juste au-dessus de la rangée de boutons, et réutilisée ensuite.
+function boiteCadence() {
+  if (_boiteCadence) return _boiteCadence;
+  const b = document.createElement("div");
+  b.id = "exCadence"; b.hidden = true;
+  b.style.cssText = "margin:18px auto 0;max-width:60ch;padding:12px 15px;border:1px solid var(--filet);" +
+    "border-radius:12px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:left";
+  b.innerHTML = '<span id="exCadenceTexte" style="font-size:var(--t-petit);flex:1 1 22ch;min-width:20ch"></span>' +
+    '<button class="btn creux" id="exCadenceBtn"></button>';
+  const v = $("exVerdict");
+  v.insertBefore(b, v.querySelector(".rang-btn"));
+  $("exCadenceBtn").onclick = () => {
+    // Sans cible, on ne touche à RIEN. Le bouton reste dans le document quand la boîte
+    // est repliée (personne ne peut le cliquer, `hidden` le retire de l'affichage) —
+    // mais un `value = 0` collerait le curseur sur son minimum, 0,2 s, ce qu'aucune
+    // proposition ne demande jamais. Un raccourci ou un test qui l'appelle malgré tout
+    // ne doit pas pouvoir dérégler l'exercice.
+    if (!_cadenceCible) return;
+    $("eVitesse").value = _cadenceCible;
+    $("eVitesse").oninput();     // l'étiquette du curseur et la variable CSS suivent
+    rendreSceneExo();            // le résumé du tiroir replié aussi
+    $("exCadenceTexte").innerHTML = `<b>Cadence réglée sur ${nbFr(_cadenceCible / 1000)} s.</b> Elle s'applique au prochain défilement.`;
+    $("exCadenceBtn").hidden = true;
+    bandeau(`Cadence : une carte toutes les ${nbFr(_cadenceCible / 1000)} s.`);
+  };
+  return (_boiteCadence = b);
+}
+function proposerCadence() {
+  const b = boiteCadence(); b.hidden = true; $("exCadenceBtn").hidden = false;
+  // Seul le défilement a une cadence imposée : le sabot chrono se fait défiler à la
+  // main, l'estimation n'a pas de carte qui tombe. Rien à proposer ailleurs.
+  if (X.genre !== "defilement") return;
+  const ms = +$("eVitesse").value;
+  const S = DB.sessions.filter(s => s.genre === "defilement" && s.ms === ms);
+  const trois = S.slice(-3), deux = S.slice(-2);
+  // Monter : trois exacts d'affilée, et une réaction qui garde 40 % de marge sur
+  // l'intervalle. Sans la marge on proposerait d'accélérer quelqu'un qui clique déjà
+  // au dernier moment — il raterait la première carte de la session suivante.
+  const marge = trois.every(s => s.reaction && s.reaction * 1000 < .6 * s.ms);
+  // Les deux bornes. Le plancher est à nous (300 ms : en dessous on ne lit plus une
+  // carte, on la devine) ; le plafond est celui du curseur lui-même, pour qu'une
+  // retouche de corps.html ne laisse pas les deux valeurs diverger en silence.
+  // 🚨 On ne propose JAMAIS un cran qui n'en est pas un : à 3 s, bout de course,
+  // « Ralentir à 3 s » s'est affiché en essai — un bouton qui ne change rien, sur un
+  // écran qui vient de dire qu'on a perdu le fil.
+  const plafond = +$("eVitesse").max || 3000;
+  const plusVite = Math.max(CADENCE_PLANCHER, ms - CADENCE_PAS);
+  const plusLent = Math.min(plafond, ms + CADENCE_PAS);
+  if (trois.length === 3 && trois.every(s => s.exact) && marge && plusVite < ms) {
+    _cadenceCible = plusVite;
+    $("exCadenceTexte").innerHTML = `Trois défilements exacts à ${nbFr(ms / 1000)} s, et tu réponds en ${fr1(trois[2].reaction)} s.
+      Il te reste de la marge : tu peux serrer d'un cran.`;
+    $("exCadenceBtn").textContent = `Passer à ${nbFr(plusVite / 1000)} s`;
+    b.hidden = false; return;
+  }
+  // Ralentir : deux échecs NETS de suite (un écart de 3 n'est pas une carte manquée,
+  // c'est le fil perdu). Un seul raté ne dit rien — tout le monde en fait.
+  if (deux.length === 2 && deux.every(s => !s.exact && s.ecart >= 3) && plusLent > ms) {
+    _cadenceCible = plusLent;
+    $("exCadenceTexte").innerHTML = `Deux fois de suite le fil perdu à ${nbFr(ms / 1000)} s.
+      On apprend à la cadence où l'on est juste, pas à celle qu'on vise.`;
+    $("exCadenceBtn").textContent = `Ralentir à ${nbFr(_cadenceCible / 1000)} s`;
+    b.hidden = false;
+  }
+}
+
 function ongletEx(g) {
   X.genre = g;
   $("ongletsEx").querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", b.dataset.ex === g ? "true" : "false"));
@@ -61,6 +239,10 @@ function rendreSceneExo() {
     : $("eMode").value === "silence"
     ? `Les cartes tombent ici, une toutes les <b>${sec} s</b> ; tu tiens le compte en silence, on te le demande à la fin.`
     : `Les cartes tombent ici, une toutes les <b>${sec} s</b> ; tu annonces la valeur de chacune. ${consigneBoutons()}`;
+  // Le meilleur intervalle déjà tenu : le seul endroit AVANT la session où l'on sache
+  // d'où l'on part. Il n'impose rien — le curseur reste exactement où on l'a laissé.
+  if (X.genre === "defilement" && DB.cadenceTenue)
+    $("exoQuoi").innerHTML += `<span class="muet" style="display:block;margin-top:6px">Ta meilleure cadence tenue&nbsp;: ${nbFr(DB.cadenceTenue / 1000)} s.</span>`;
 }
 $("exReglages").addEventListener("change", rendreSceneExo);
 $("exReglages").addEventListener("input", rendreSceneExo);
@@ -203,8 +385,13 @@ function verifierExercice() {
   $("rReel").textContent = sgn(X.rc); $("rReel").style.color = exact ? "var(--jade)" : "var(--cinabre)";
   const jeuxRestants = (X.sabot.length - vues) / 52, tc = CT.compteVrai(X.rc, jeuxRestants);
   const dj = parseFloat(($("rJeux").value || "").replace(",", ".")), dtc = parseInt($("rTC").value, 10);
+  // La cadence RAMENÉE à un jeu de 52 : c'est elle qu'on situe sur un barème, parce
+  // qu'un chrono brut dépend du nombre de cartes tirées et ne se compare à rien.
+  const par52 = X.genre === "chrono" && vues && X.secondes > 0 ? X.secondes / vues * 52 : null;
   let txt = exact ? (prenom() ? `Exact, ${prenom()}. ` : "Exact. ") + "Le compte courant est juste." : `Écart de ${ecart} sur ${vues} cartes.`;
-  if (X.genre === "chrono") txt += ` ${vues} cartes en ${fr1(X.secondes)} s, soit ${fr1(vues / Math.max(X.secondes, .1))} cartes par seconde.`;
+  if (X.genre === "chrono") txt += ` ${vues} cartes en ${fr1(X.secondes)} s, soit ${fr1(vues / Math.max(X.secondes, .1))} cartes par seconde`
+    // Sans chrono (arrêt avant la première carte), on n'invente pas un « 0 s par jeu ».
+    + (par52 === null ? "." : `, et ${nbFr(par52)} s ramenées à un jeu de 52 (objectif ${nbFr(REPERES.jeu52.objectif)} s).`);
   if (!isNaN(dj)) txt += ` Jeux restants estimés ${fr1(dj)} contre ${fr1(jeuxRestants)} réels${Math.abs(dj - jeuxRestants) <= .5 ? " ✓" : ""}.`;
   if (sys().equilibre && !isNaN(dtc)) txt += ` Compte vrai annoncé ${sgn(dtc)}, réel ${fr1(tc)}${Math.abs(dtc - tc) <= .5 ? " ✓" : ""}.`;
   $("rTexte").textContent = txt;
@@ -220,19 +407,35 @@ function verifierExercice() {
       : `Elles valent ${sgn(somme)}.`;
   }
   const moy = X.delais.length ? X.delais.reduce((a, b) => a + b, 0) / X.delais.length / 1000 : null;
+  // La moyenne s'AFFICHE toujours — trois clics à 0,2 s, c'est un fait — mais elle ne se
+  // SITUE que sur un échantillon suffisant. La tuile « Ratées » juste à côté dit le reste.
+  const moySure = moy !== null && reactionFiable(bons + faux, vues) ? moy : null;
+  // Troisième colonne d'une tuile : sa pastille de palier, quand la mesure en a une.
   const tuiles = [[sgn(dit), "Ta réponse"], [vues, "Cartes vues"]];
-  if (!X.silence) tuiles.push([bons, "Clics justes"], [faux, "Clics faux"], [rates, "Ratées"], [moy !== null ? fr1(moy) + " s" : "—", "Réaction"]);
-  if (X.genre === "chrono") tuiles.push([fr1(X.secondes) + " s", "Chrono"]);
+  if (!X.silence) tuiles.push([bons, "Clics justes"], [faux, "Clics faux"], [rates, "Ratées"],
+    [moy !== null ? fr1(moy) + " s" : "—", "Réaction", badgeRepere("reaction", moySure)]);
+  if (X.genre === "chrono") tuiles.push([fr1(X.secondes) + " s", "Chrono"],
+    [par52 !== null ? nbFr(par52) + " s" : "—", "Par jeu de 52", badgeRepere("jeu52", par52)]);
   else { tuiles.push([fr1(jeuxRestants), "Jeux restants"]); if (sys().equilibre) tuiles.push([fr1(tc), "Compte vrai"]); }
   if (X.controles.length) tuiles.push([`${X.controles.filter(Boolean).length}/${X.controles.length}`, "Contrôles"]);
-  $("rTuiles").innerHTML = tuiles.map(([b, l]) => `<div><b>${b}</b><span class="grave">${l}</span></div>`).join("");
+  $("rTuiles").innerHTML = tuiles.map(([b, l, r]) => `<div><b>${b}</b><span class="grave">${l}</span>${r || ""}</div>`).join("");
   $("rMise").textContent = sys().equilibre && X.genre === "defilement"
     ? `À ce compte vrai, un compteur miserait ${CT.misesUnites(tc, 12)} unité${CT.misesUnites(tc, 12) > 1 ? "s" : ""}.` : "";
+  // `ms` : la cadence à laquelle la session a été jouée. Sans elle, proposerCadence
+  // ne saurait pas si une série d'exacts a été faite au rythme d'aujourd'hui ou à un
+  // autre — et proposerait d'accélérer sur la foi de sessions plus lentes.
   DB.sessions.push({ t: Date.now(), genre: X.genre, sys: sys().nom, n: vues, exact, ecart,
-    reaction: moy, secondes: X.genre === "chrono" ? +X.secondes.toFixed(1) : null,
+    reaction: moySure, secondes: X.genre === "chrono" ? +X.secondes.toFixed(1) : null,
+    ms: X.genre === "defilement" ? +$("eVitesse").value : null,
     controles: X.controles.length ? [X.controles.filter(Boolean).length, X.controles.length] : null });
-  while (DB.sessions.length > 240) DB.sessions.shift(); garder();
+  while (DB.sessions.length > 240) DB.sessions.shift();
+  if (X.genre === "defilement" && exact) {
+    const ms = +$("eVitesse").value;
+    DB.cadenceTenue = DB.cadenceTenue ? Math.min(DB.cadenceTenue, ms) : ms;
+  }
+  garder();
   $("exDemande").hidden = true; $("exVerdict").hidden = false;
+  proposerCadence();
 }
 
 /* ── Estimation du sabot ─────────────────────────────────────────── */
@@ -269,15 +472,22 @@ function repondreEstimation(g) {
 function finEstimation() {
   const pct = Math.round(100 * ES.bons / Math.max(ES.erreurs.length, 1));
   const moy = ES.erreurs.length ? ES.erreurs.reduce((a, b) => a + b, 0) / ES.erreurs.length : 0;
+  // Le verdict, la couleur ET la phrase sortent tous de REPERES.estimation. Les seuils
+  // 70 et 90 vivaient ici en dur : ils sont partis dans la table, sans changer de valeur,
+  // pour que le bureau et ce bilan ne puissent plus dire deux choses du même joueur.
+  const p = palierDe("estimation", pct);
   $("estPiste").hidden = true; $("estBilan").hidden = false;
-  $("estNote").textContent = pct + " %"; $("estNote").style.color = pct >= 70 ? "var(--jade)" : "var(--cinabre)";
-  $("estTexte").textContent = pct >= 90 ? "Coup d'œil de croupier. Ton compte vrai sera juste."
-    : pct >= 70 ? "Correct. Un demi-jeu d'erreur coûte déjà un point de compte vrai, continue."
-    : "À travailler : un compte courant parfait divisé par une mauvaise estimation donne une mauvaise décision.";
-  $("estTuiles").innerHTML = [[`${ES.bons}/${ES.erreurs.length}`, "Justes"], [fr1(moy) + " jeu", "Écart moyen"],
+  $("estNote").textContent = pct + " %"; $("estNote").style.color = tonCouleur(p.ton);
+  $("estTexte").innerHTML = echap(p.phrase) +
+    `<span class="muet" style="display:block;margin-top:5px">Objectif&nbsp;: ${nbFr(REPERES.estimation.objectif)} % de manches à moins d'un demi-jeu d'écart.</span>`;
+  $("estTuiles").innerHTML = [[`${ES.bons}/${ES.erreurs.length}`, "Justes", badgeRepere("estimation", pct)],
+    [fr1(moy) + " jeu", "Écart moyen"],
     [fr1(Math.max.apply(null, ES.erreurs.concat([0]))) + " jeu", "Pire écart"], [ES.jeux, "Sabot"]]
-    .map(([b, l]) => `<div><b>${b}</b><span class="grave">${l}</span></div>`).join("");
-  DB.sessions.push({ t: Date.now(), genre: "estimation", sys: sys().nom, n: ES.erreurs.length, exact: pct >= 70, ecart: +moy.toFixed(2) });
+    .map(([b, l, r]) => `<div><b>${b}</b><span class="grave">${l}</span>${r || ""}</div>`).join("");
+  // `pct` n'est écrit QUE si des manches ont été jouées : « Terminer » au premier écran
+  // produit un 0 % qui ne mesure rien, et le bureau en ferait une moyenne.
+  DB.sessions.push({ t: Date.now(), genre: "estimation", sys: sys().nom, n: ES.erreurs.length, exact: p.atteint,
+    ecart: +moy.toFixed(2), pct: ES.erreurs.length ? pct : null });
   while (DB.sessions.length > 240) DB.sessions.shift(); garder();
 }
 $("estStop").onclick = finEstimation;

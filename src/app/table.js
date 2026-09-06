@@ -123,7 +123,25 @@ async function nouveauSabot(o) {
   const t = tableCourante();
   const s = await sabotProuvable(t.jeux);
   T.sabot = s.cartes; T.graine = s.graine; T.empreinte = s.empreinte; T.revele = false;
-  T.coupe = t.melange === "melangeuse_continue" ? Math.floor(T.sabot.length * .02) : Math.floor(T.sabot.length * (t.penetration || .75));
+  /* ── La carte de coupe · corrigé le 6 septembre 2026 ───────────────────────
+     `T.coupe` est le nombre de cartes qui RESTENT derrière la carte de coupe : le
+     remélange se déclenche sur `T.sabot.length <= T.coupe` (distribuer(), plus bas).
+     La pénétration, elle, est la fraction du sabot qu'on JOUE — c'est ce que dit le
+     catalogue (« on joue 75 % du sabot avant de remélanger ») et ce que mesure le
+     simulateur qui calcule l'avantage maison affiché (sim.mjs : `cut = shoeSize *
+     penetration`, remélange quand `dealt >= cut`).
+     On écrivait ici `length * penetration` : les deux nombres étaient INVERSÉS. Au
+     Boulevard (6 jeux, pénétration 0,75) on remélangeait dès qu'il restait 234 cartes,
+     soit 78 cartes jouées — 25 % au lieu de 75 %, cinq manches par sabot au lieu de
+     quinze. Le Salon Privé, vendu sur sa pénétration de 0,85 (« la carte de coupe est
+     le seul chiffre qui compte »), était en réalité la PIRE table du catalogue. Pour un
+     entraîneur au comptage c'est le paramètre qui décide si compter sert à quelque
+     chose : à 25 % de sabot joué, ça ne sert à rien, et l'application enseignait donc
+     l'inverse de ce qu'elle affirmait.
+     D'où `1 - penetration` : ce qu'on laisse derrière, c'est ce qu'on ne joue pas.
+     ⚠️ La branche mélangeuse continue garde son `* .02` : elle est INERTE (distribuer()
+     court-circuite sur `if (csm)` et l'affichage force `--coupe: 0`). */
+  T.coupe = t.melange === "melangeuse_continue" ? Math.floor(T.sabot.length * .02) : Math.floor(T.sabot.length * (1 - (t.penetration || .75)));
   T.rc = CT.compteInitial(DB.sys, t.jeux); T.vues = 0; T.defausse = 0;
   if (!o.pendantDonne) {
     T.mains = 0; T.croupier = []; T.enJeu = false; T.occupe = false; T.actif = null;
@@ -564,7 +582,7 @@ function rafraichirBarre() {
   sb.style.setProperty("--reste", (T.sabot.length / total).toFixed(3));
   sb.style.setProperty("--coupe", csm ? "0" : (T.coupe / total).toFixed(3));
   sb.title = csm ? "Mélangeuse continue : les cartes jouées y retournent après chaque main — rien à compter"
-    : `${T.sabot.length} cartes restent dans le sabot · la carte de coupe est plantée à ${T.coupe} cartes de la fin`;
+    : `${T.sabot.length} cartes restent dans le sabot · la carte de coupe est plantée à ${T.coupe} cartes de la fin : on joue ${Math.round((t.penetration || .75) * 100)} % du sabot avant de remélanger`;
   $("defausseN").textContent = T.defausse; $("defausse").classList.toggle("pleine", T.defausse > 0);
   $("defausse").style.setProperty("--pile", Math.min(1, T.defausse / total).toFixed(3));
   $("defausse").title = `${T.defausse} carte${T.defausse > 1 ? "s" : ""} dans la défausse`;
@@ -1178,11 +1196,19 @@ function demanderMonCompte(finSabot) {
       <div class="sceau revele"><span class="rond"></span>Sceau levé — ce sabot était fixé d'avance</div>
       <dt>Empreinte publiée avant la donne</dt><dd>${T.empreinte}</dd>
       <dt>Graine</dt><dd>${SH.hex(T.graine)}</dd></div>` : "";
+  // 🚨 PAS DE NOMBRE DANS LE PLACEHOLDER DE « Jeux restants ». Il portait « 4,5 » : ce
+  // n'était pas un exemple, c'était 312 × 0,75 / 52 — la réponse EXACTE à la carte de coupe
+  // sous l'ANCIEN sens de `penetration`. Depuis le 06/09 le sabot part au remélange vers
+  // 78 cartes, soit 1,5 jeu : la suggestion était fausse d'un facteur trois. Et aucun autre
+  // nombre ne peut la remplacer, car la bonne valeur dépend de la table (≈1,5 au Boulevard,
+  // ≈0,9 au Salon privé, ≈0,5 au Néon qui n'a qu'un jeu). Souffler une réponse dans la case
+  // même qui NOTE l'estimation retire à l'exercice tout ce qu'il apporte : on écrit « ? »,
+  // et le format se lit dans step="0.5".
   ouvrirModale(`<h2>${finSabot ? "Carte de coupe — ton compte ?" : "Ton compte"}</h2>
     ${finSabot ? '<p class="muet">Le sabot est fini. Dis ton compte avant que tout reparte à zéro.</p>' : ""}
     <div class="demande" style="flex-direction:column;align-items:center">
       <label class="ch" style="align-items:center"><span class="grave">Compte courant</span><input type="number" id="mcRC" placeholder="0"></label>
-      <label class="ch" style="align-items:center"><span class="grave">Jeux restants, au jugé</span><input type="number" id="mcJeux" step="0.5" placeholder="4,5"></label>
+      <label class="ch" style="align-items:center"><span class="grave">Jeux restants, au jugé</span><input type="number" id="mcJeux" step="0.5" placeholder="?"></label>
       <button class="btn" id="mcOk">Vérifier</button>
     </div><p id="mcRes" class="muet" style="margin-top:12px"></p>` + sceau);
   const verifier = () => {

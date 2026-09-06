@@ -16,15 +16,27 @@ function rendreProgres() {
   const rts = S.filter(s => s.reaction); const rt = rts.length ? rts.reduce((a, s) => a + s.reaction, 0) / rts.length : null;
   const chr = S.filter(s => s.genre === "chrono" && s.exact && s.secondes);
   const best = chr.length ? Math.min(...chr.map(s => s.secondes / s.n * 52)) : null;
+  // L'estimation du sabot, moyennée sur les CINQ dernières : une session ne fait que dix
+  // manches — trop court pour un niveau — et dix sessions d'estimation peuvent remonter
+  // à des semaines. Les sessions d'avant le 6 septembre n'ont pas de `pct` : elles sont
+  // simplement ignorées, plutôt que comptées pour zéro.
+  const est = S.filter(s => s.genre === "estimation" && typeof s.pct === "number").slice(-5);
+  const estPct = est.length ? Math.round(est.reduce((a, s) => a + s.pct, 0) / est.length) : null;
   let serie = 0; for (let i = S.length - 1; i >= 0 && S[i].exact; i--) serie++;
   const d10 = S.slice(-10), ex10 = d10.filter(s => s.exact).length;
+  // Les trois mesures qui SE SITUENT portent leur palier, en pastille, sous le chiffre.
+  // Le barème vit dans REPERES (exercices.js, concaténé avant ce fichier) : la même
+  // table que les bilans, pour que le bureau ne puisse pas contredire l'exercice qu'on
+  // vient de finir. Elles sont voisines à l'écran, c'est la lecture de niveau d'un coup.
   $("progPave").innerHTML = [
     [S.length, "Sessions"], [Math.round(100 * ex / S.length) + " %", "Comptes exacts"],
     [Math.round(100 * ex10 / d10.length) + " %", "Sur les 10 dernières"], [serie, "Série en cours"],
-    [rt !== null ? fr1(rt) + " s" : "—", "Réaction moyenne"], [best !== null ? fr1(best) + " s" : "—", "Meilleur jeu de 52"],
+    [rt !== null ? fr1(rt) + " s" : "—", "Réaction moyenne", badgeRepere("reaction", rt)],
+    [best !== null ? fr1(best) + " s" : "—", "Meilleur jeu de 52", badgeRepere("jeu52", best)],
+    [estPct !== null ? estPct + " %" : "—", "Estimation", badgeRepere("estimation", estPct)],
     [pctDe(DB.strat.base), "Stratégie de base"], [pctDe(DB.strat.ecarts), "Écarts au compte"], [pctDe(DB.strat.assurance), "Assurance"],
     [DB.rachats || 0, "Rachats de tapis"]
-  ].map(([b, l]) => `<div class="laque t"><b>${b}</b><span class="grave">${l}</span></div>`).join("");
+  ].map(([b, l, r]) => `<div class="laque t"><b>${b}</b><span class="grave">${l}</span>${r || ""}</div>`).join("");
   const lignes = S.slice(-45).reverse().map(s => { const d = new Date(s.t);
     return `<tr><td>${d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })} ${d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</td>
       <td>${GENRE[s.genre] || s.genre}</td><td>${echap(s.sys || "")}</td><td class="n">${s.n}</td>

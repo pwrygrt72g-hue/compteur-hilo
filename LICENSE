@@ -1,0 +1,113 @@
+Le Sabot — licence
+==================
+
+Ce dépôt contient DEUX choses qui n'ont pas la même licence : du code, écrit
+ici, sous MIT ; et dix-sept photographies, prises par d'autres, chacune sous la
+licence que son auteur a choisie. Les confondre serait une faute dans les deux
+sens — appliquer le MIT à une photo qui ne l'autorise pas, ou croire qu'une
+photo en partage à l'identique contamine le code qui l'affiche. D'où deux
+sections séparées.
+
+Le détail photo par photo — titre, auteur, licence exacte, lien vers la source,
+modifications apportées — est dans `static/photos/CREDITS.md`. C'est ce fichier
+qui fait foi ; celui-ci n'en donne que la règle.
+
+
+1. LE CODE — MIT
+----------------
+
+Tout ce dépôt SAUF le dossier `static/photos/`. Cela comprend `index.html` et
+`artefact.html`, qui sont construits à partir de ce code : les photos qu'ils
+embarquent, elles, restent sous leur propre licence (section 2).
+
+Le texte ci-dessous est la licence MIT dans sa forme canonique, en anglais. La
+traduire en ferait une autre licence, sans la jurisprudence de celle-ci — c'est
+la seule page de ce dépôt qui n'est pas en français, et c'est volontaire.
+
+MIT License
+
+Copyright (c) 2026 Léo Lejeau
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+2. LES PHOTOGRAPHIES — chacune la sienne
+----------------------------------------
+
+`static/photos/` N'EST PAS couvert par le MIT ci-dessus. Dix-sept photographies
+y vivent, sous quatre régimes :
+
+  6  licence Unsplash
+  5  Creative Commons Attribution (CC BY 2.0, 3.0 et 4.0)
+  5  Creative Commons Attribution — Partage dans les Mêmes Conditions
+     (CC BY-SA 2.0, 3.0 et 4.0)
+  1  domaine public
+
+Aucune n'est en NC (usage non commercial) ni en ND (pas de modification) :
+toutes autorisent l'usage commercial et la transformation. C'était la condition
+pour entrer ici, et elle est vérifiable sur les liens de `CREDITS.md`.
+
+Chaque photo a été recadrée, redimensionnée et réencodée en WebP. Ces versions
+modifiées sont distribuées SOUS LA LICENCE DE LEUR ORIGINAL — les CC BY-SA sont
+donc partagées à l'identique, et quiconque reprend l'une d'elles reprend cette
+obligation avec.
+
+Reprendre une photo, c'est reprendre sa ligne de `CREDITS.md` : auteur, licence,
+lien vers la source, mention des modifications. Une CC BY sans crédit est une
+violation, pas une négligence.
+
+Attribution DÉSIGNÉE. Un auteur peut exiger une formulation précise, et la
+CC BY-SA 3.0 §4c oblige à la respecter telle quelle. C'est le cas de la photo
+`salonprive` (Baden-Baden), dont la page Commons impose la chaîne exacte
+« A.Savin, Wikipedia ». Ne pas la raccourcir en « A.Savin ».
+
+LA CLAUSE DE PARTAGE À L'IDENTIQUE NE S'ÉTEND PAS AU CODE. C'est le point qui
+se comprend mal, donc il est écrit en toutes lettres : une application qui
+affiche des photos ne DÉRIVE pas d'elles, elle les RASSEMBLE. Les CC BY-SA
+appellent ça une collection (« collective work » / « adaptation » sont deux
+notions distinctes chez Creative Commons), et une collection peut être publiée
+sous une autre licence tant que chaque élément garde la sienne. Recadrer une
+photo produit bien une œuvre dérivée DE CETTE PHOTO — elle reste donc en
+BY-SA — mais pas du reste. Le code du Sabot reste sous MIT.
+
+
+3. LES POLICES DE CARACTÈRES
+----------------------------
+
+Archivo, Instrument Serif et Martian Mono sont sous SIL Open Font License 1.1.
+Elles sont CHARGÉES depuis Google Fonts par un `<link>`, pas embarquées dans le
+dépôt : aucune notice n'est à joindre, l'OFL n'oblige que celui qui DISTRIBUE
+les fichiers de fonte.
+
+Si un jour on les embarque (data: URI, `static/fonts/`, n'importe quoi qui
+mette les octets ici), l'OFL §1 et §2 exigent alors de joindre son texte
+intégral, de nommer les fontes et de conserver leurs notices de copyright — et
+§3 interdit de leur garder leur nom réservé si on les modifie.
+
+
+4. LE RESTE
+-----------
+
+Le Sabot n'est affilié à aucun casino, à aucun opérateur de jeu, à aucune
+marque. Les noms des neuf tables sont inventés ; leurs règlements sont des
+règlements de blackjack réels, qui n'appartiennent à personne. Les photos
+montrent des lieux qui existent, sous licence libre — c'est une citation, pas
+un partenariat.
+
+C'est un outil d'entraînement. Il ne fait pas jouer d'argent et n'en promet pas.

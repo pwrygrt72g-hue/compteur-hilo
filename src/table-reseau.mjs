@@ -57,7 +57,13 @@ export function creerPartie(o) {
     if (P.empreinte) { const d = P.sabots.find(x => x.empreinte === P.empreinte); if (d && P.graine) d.graine = P.graine; }
     P.cartes = s.cartes.slice(); P.empreinte = s.empreinte; P.graine = s.graine || null;
     P.sabots.push({ empreinte: s.empreinte, graine: null, manche: P.manche + 1 }); if (P.sabots.length > 12) P.sabots.shift();
-    P.coupe = P.csm ? Math.floor(P.cartes.length * .02) : Math.floor(P.cartes.length * (o.penetration || regles.penetration || .75));
+    // La carte de coupe = les cartes LAISSÉES derrière (le remélange se déclenche sur
+    // `P.cartes.length <= P.coupe`), alors que la pénétration est la fraction JOUÉE.
+    // Corrigé le 6 septembre 2026 : on écrivait `length * penetration`, soit l'inverse —
+    // 78 cartes jouées au Boulevard au lieu de 234. Explication complète dans
+    // src/app/table.js, au même endroit. La branche mélangeuse (`* .02`) est inerte :
+    // `P.csm ||` court-circuite le test de remélange plus bas.
+    P.coupe = P.csm ? Math.floor(P.cartes.length * .02) : Math.floor(P.cartes.length * (1 - (o.penetration || regles.penetration || .75)));
     P.cartes.pop(); P.defausse = 1;               // la carte brûlée
     P.rc = rcInitial(P.jeux); P.vues = 0; P.besoinRemelange = false; P.pendantDonne = !!pendant;
     P.evenement = { t: "remelange", pendantDonne: !!pendant };

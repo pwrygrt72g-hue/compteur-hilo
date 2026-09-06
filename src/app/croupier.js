@@ -90,6 +90,11 @@ const CR_BRAS = cote => `<g transform="translate(${CR_EPAULE[cote][0]},${CR_EPAU
   ${CR_MAIN(cote)}
  </g></g>
 </g></g>`;
+// 🚨 CR_RIG est un LITTÉRAL GABARIT : pas un seul accent grave à l'intérieur, pas même dans
+// un commentaire SVG. Un « ` » y ferme la chaîne au milieu du dessin et tout le fichier cesse
+// de parser — donc plus de croupier du tout. Et rien ne le dit : build.mjs concatène sans
+// analyser, la page se construit, elle est juste morte. Vécu le 06/09 en écrivant le
+// commentaire des coiffes juste en dessous. Écrire « sourcils », jamais `sourcils`.
 const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="xMidYMax meet" overflow="visible" aria-hidden="true" focusable="false">
 <defs>
 <pattern id="@crT" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(40)"><line x1="0" y1="0" x2="0" y2="4" stroke="#000" stroke-width="1.3"/></pattern>
@@ -104,17 +109,45 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
 <g id="@a-rien"/>
 <g id="@a-chaine" fill="none" stroke="var(--cr-or,#D9B45B)" stroke-width="1.8"><path d="M262 178c10 6 22 8 34 4" stroke-dasharray="2.5 2"/><circle cx="296" cy="184" r="4.5" fill="var(--cr-or,#D9B45B)" stroke="none"/></g>
 <g id="@a-epingle"><rect x="254" y="158" width="12" height="2.6" rx="1.3" fill="var(--cr-or,#D9B45B)" stroke="none"/></g>
-<path id="@c-courts" d="M260 13C228 13 210 36 210 62C216 50 224 44 236 44L284 44C296 44 304 50 310 62C310 36 292 13 260 13Z"/>
-<path id="@c-plaque" d="M260 13C228 13 210 36 210 64C213 52 220 45 228 43C244 49 262 47 282 39C296 45 306 52 310 64C310 36 292 13 260 13Z"/>
+<!-- Les COIFFES. Règle dure : entre x = 224 et x = 296 le bord BAS de la coiffe reste à
+     y = 32 ou PLUS HAUT, jamais plus bas. Sous cette ligne il n'y a plus de front, et un
+     sourcil qui MONTE finit sous les cheveux. Avant le 06/09 la ligne était à 40-46 pour
+     un sourcil dont le haut est à 37-39 : mesuré sur les 5 croupiers × 7 émotions, le
+     sourcil mordait dans la coiffe dans 28 cases sur 35, et le sourcil LEVÉ de
+     « moqueur » était caché à 100 % chez Vince, Ada et le Chef — c'est-à-dire exactement
+     la moquerie qu'on voulait montrer. Les TEMPES ne bougent pas (210 / 310 à y = 62-68) :
+     c'est elles qui donnent la forme du crâne, et c'est pour ça que la silhouette est la
+     même. Le sourcil fait 11 à 23 unités de haut selon le croupier (champ « sourcils »), d'où la
+     règle. Une coiffe ajoutée ici se vérifie de la même façon : le bord bas à x = 241 et
+     x = 279 au moins 4 unités au-dessus du haut du sourcil sur la MÊME verticale, dans
+     les 8 émotions. (c-degarni n'a rien au-dessus du front : elle était déjà bonne.) -->
+<path id="@c-courts" d="M260 13C228 13 210 36 210 62C213 47 217 35 224 32L296 32C303 35 307 47 310 62C310 36 292 13 260 13Z"/>
+<path id="@c-plaque" d="M260 13C228 13 210 36 210 64C213 50 218 35 225 32C241 33 262 31 284 26C296 34 305 50 310 64C310 36 292 13 260 13Z"/>
 <path id="@c-degarni" d="M210 68C209 52 215 40 226 32C231 41 232 53 226 63C222 69 214 71 210 68ZM310 68C311 52 305 40 294 32C289 41 288 53 294 63C298 69 306 71 310 68ZM244 24c6-5 14-8 22-8-1 3-2 5-3 7-6 0-13 1-19 1zM266 16c8 0 15 3 20 8-6 0-12 0-18-1 0-2-1-4-2-7z"/>
-<path id="@c-chignon" d="M260 13C228 13 210 36 210 64C213 50 222 42 236 40C250 44 270 44 284 40C298 42 307 50 310 64C310 36 292 13 260 13ZM290 3c10-1 18 6 18 14 0 7-6 12-13 12-2-8-6-14-12-18 2-4 4-7 7-8z"/>
-<path id="@c-carre" d="M260 12C224 12 206 36 206 66L206 98C206 104 212 106 216 104L216 66C216 50 222 44 228 44L294 44C300 44 306 50 306 66L304 104C308 106 314 104 314 98L314 66C314 36 296 12 260 12Z"/>
+<path id="@c-chignon" d="M260 13C228 13 210 36 210 64C213 49 217 35 224 32C240 31 280 31 296 32C303 35 307 49 310 64C310 36 292 13 260 13ZM290 3c10-1 18 6 18 14 0 7-6 12-13 12-2-8-6-14-12-18 2-4 4-7 7-8z"/>
+<path id="@c-carre" d="M260 12C224 12 206 36 206 66L206 98C206 104 212 106 216 104L216 66C216 48 220 35 226 32L294 32C300 35 306 48 306 66L304 104C308 106 314 104 314 98L314 66C314 36 296 12 260 12Z"/>
 <g id="@l-rien"/>
-<g id="@l-rondes" fill="none" stroke="var(--cr-monture,#3A2A1C)" stroke-width="2.6"><circle cx="241" cy="62" r="13.5"/><circle cx="279" cy="62" r="13.5"/><path d="M254.5 61h11M227.5 59l-13-4M292.5 59l13-4"/></g>
-<g id="@l-carrees" fill="none" stroke="var(--cr-monture,#3A2A1C)" stroke-width="2.6"><rect x="226" y="52" width="30" height="21" rx="4"/><rect x="264" y="52" width="30" height="21" rx="4"/><path d="M256 61h8M226 58l-12-3M294 58l12-3"/></g>
+<!-- Les LUNETTES. Règle dure : le bord HAUT de la monture reste SOUS le sourcil, jamais
+     dessus. Les sourcils sont peints APRÈS elles (l'ordre du rig), donc un sourcil qui
+     descend sur la monture est peint PAR-DESSUS LE VERRE — un sourcil à l'intérieur d'un
+     verre de lunettes n'existe pas, et c'était l'anomalie la plus immédiatement « fausse »
+     d'Ada : au repos ses sourcils s'appuyaient déjà sur le rebord (haut à y = 52, bas du
+     sourcil à 52,2), et sur « hilare » ils passaient franchement dedans. La monture
+     descend de 3 unités et se resserre de 2 : elle entoure toujours l'œil (54 → 70) et
+     dégage la bande de front. L'écart se mesure sur la page rendue, pas à l'œil. -->
+<g id="@l-rondes" fill="none" stroke="var(--cr-monture,#3A2A1C)" stroke-width="2.6"><circle cx="241" cy="65" r="12"/><circle cx="279" cy="65" r="12"/><path d="M253 64h14M229 61l-14-4M291 61l14-4"/></g>
+<g id="@l-carrees" fill="none" stroke="var(--cr-monture,#3A2A1C)" stroke-width="2.6"><rect x="226" y="55" width="30" height="19" rx="4"/><rect x="264" y="55" width="30" height="19" rx="4"/><path d="M256 64h8M226 61l-12-3M294 61l12-3"/></g>
 <g id="@m-rien"/>
-<path id="@m-brosse" d="M242 88c6-7 12-8 18-5 6-3 12-2 18 5-2 9-10 11-18 9-8 2-16 0-18-9z"/>
-<path id="@m-fine" d="M245 89c5-3 10-3 15-1 5-2 10-2 15 1-2 3-8 4-15 3-7 1-13 0-15-3z"/>
+<!-- Les MOUSTACHES. Règle dure : leur bord BAS reste au-dessus de y = 91 — le haut de la
+     bouche la plus haute (« grand », le rire, dont le trait de 3,4 remonte à 91,3). Avant
+     le 06/09 la brosse descendait à 97,6 : elle RECOUVRAIT entièrement la bouche « ferme »
+     (concentré) et la bouche « boude » (agacé), si bien que Marcel n'avait plus, sur ces
+     deux visages, qu'une paire d'ergots aux commissures. La brosse s'élargit (38 unités
+     au lieu de 36) et s'amincit (9,8 au lieu de 17) : c'est sa LARGEUR et ses bouts carrés
+     qui font la brosse, pas son épaisseur. La fine remonte de 4 : sur « hilare » elle
+     tranchait les dents en diagonale, ce qui se lisait comme un défaut de rendu. -->
+<path id="@m-brosse" d="M241 86c5-6 12-7 19-4 7-3 14-2 19 4-1 4-9 5-19 4-10 1-18 0-19-4z"/>
+<path id="@m-fine" d="M245 85c5-3 10-3 15-1 5-2 10-2 15 1-2 3-8 4-15 3-7 1-13 0-15-3z"/>
 </defs>
 <g id="@crCorps" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".5" stroke-width="2" stroke-linejoin="round">
 <g id="@crBuste">
@@ -139,24 +172,61 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
  <use id="@crAcc" href="#@a-rien"/>
  <use id="@crOrne" href="#@o-noeud" fill="var(--cr-orne,#8E2018)"/>
 </g>
-<!-- ── TÊTE : g(pivot au cou) > g(animé) > g(retour au repère) ────────── -->
+<!-- ── TÊTE : g(pivot au cou) > g(animé) > g(retour au repère) ──────────
+     Le contour n'est plus un ŒUF : il casse à (222,98) et (298,98) — l'angle de la
+     mâchoire — puis file au menton en (260,114). La largeur ne bouge pas (l'ancienne
+     courbe passait déjà par x = 222,7 à y = 98) : ce qui change, c'est qu'il y a
+     maintenant un ANGLE là où l'os en fait un, donc un bas de visage. ⚠️ Le tracé
+     existe en DEUX exemplaires — le fond peau et le calque de lumière url(#@peauL) —
+     et ils doivent rester identiques, sinon le modelé déborde du visage. -->
 <g transform="translate(260,112)"><g id="@crTete"><g transform="translate(-260,-112)">
- <path d="M260 14C228 14 210 36 210 64C210 82 218 98 232 106C241 111 251 114 260 114C269 114 279 111 288 106C302 98 310 82 310 64C310 36 292 14 260 14Z" fill="var(--cr-peau,#D6A579)"/>
- <path d="M260 14C228 14 210 36 210 64C210 82 218 98 232 106C241 111 251 114 260 114C269 114 279 111 288 106C302 98 310 82 310 64C310 36 292 14 260 14Z" fill="url(#@peauL)" stroke="none"/>
+ <path d="M260 14C228 14 210 36 210 64C210 78 214 90 222 98C230 108 244 114 260 114C276 114 290 108 298 98C306 90 310 78 310 64C310 36 292 14 260 14Z" fill="var(--cr-peau,#D6A579)"/>
+ <path d="M260 14C228 14 210 36 210 64C210 78 214 90 222 98C230 108 244 114 260 114C276 114 290 108 298 98C306 90 310 78 310 64C310 36 292 14 260 14Z" fill="url(#@peauL)" stroke="none"/>
  <path d="M212 58c-7-2-12 3-11 10 1 7 6 10 11 8zM308 58c7-2 12 3 11 10-1 7-6 10-11 8z" fill="var(--cr-peau,#D6A579)"/>
  <path d="M206 66c0-2 2-4 4-3M314 66c0-2-2-4-4-3" stroke-opacity=".3"/>
+ <path d="M218 70C217 82 221 93 229 101C224 101 220 93 217 83C216 77 216 73 218 70ZM302 70C303 82 299 93 291 101C296 101 300 93 303 83C304 77 304 73 302 70Z" fill="#3A1A0C" opacity=".1" stroke="none"/>
  <use id="@crCoiffe" href="#@c-courts" fill="var(--cr-cheveux,#191411)"/>
  <ellipse class="cr-joue" id="@crJoueG" cx="232" cy="82" rx="9" ry="5.2" fill="#D9584F" stroke="none" opacity="0"/>
  <ellipse class="cr-joue" id="@crJoueD" cx="288" cy="82" rx="9" ry="5.2" fill="#D9584F" stroke="none" opacity="0"/>
  <!-- les yeux : pivot au centre, l'iris glisse, la paupière descend depuis le haut -->
- <g transform="translate(241,62)" stroke="none"><g id="@crOeilG" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisG"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupG" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g>
- <g transform="translate(279,62)" stroke="none"><g id="@crOeilD" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisD"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupD" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g>
+ <g transform="translate(241,62)" stroke="none"><g id="@crOeilG" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisG"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle id="@crPupG" cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupG" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g>
+ <g transform="translate(279,62)" stroke="none"><g id="@crOeilD" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisD"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle id="@crPupD" cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupD" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g>
+ <!-- sourcils DISSYMÉTRIQUES : deux miroirs exacts font « vecteur généré ».
+      ⚠️ Le sourcil se TAILLE VERS LA TEMPE (extrémité extérieure fine, 3 unités ; racine
+      épaisse, 6). Ce n'est pas de la coquetterie anatomique, c'est la règle qui l'empêche
+      d'entrer dans l'ŒIL. Le pivot des rotations est le centre du sourcil : lever une
+      extrémité PLONGE l'autre, et le bras de levier étant de 13 unités, 22° suffisent à
+      faire descendre la pointe de 5. Avant le 06/09 cette pointe descendait jusqu'à y = 9
+      (× l'épaisseur du croupier, 1,45 chez le Chef) : sur « hilare » et « moqueur » elle
+      atterrissait SUR le blanc de l'œil — pas un froncement, une collision de formes. La
+      pointe s'arrête maintenant à 5. Le bord HAUT n'a pas bougé d'une unité : la règle des
+      4 unités de front libre sous la coiffe, gagnée juste avant, est intacte.
+      ⚠️ La couleur passe par --cr-sourcil, qui retombe sur --cr-cheveux quand on ne dit
+      rien : chez Marcel les deux sont le même gris, et un sourcil gris sur des touffes
+      grises n'a plus d'angle — donc plus d'expression. -->
+ <g transform="translate(241,45)"><path id="@crSourcilG" d="M-13 1C-7-4 4-6 13-1L12 5C4 2-4 2-12 4Z" fill="var(--cr-sourcil,var(--cr-cheveux,#191411))" stroke="none"/></g>
+ <g transform="translate(279,45)"><path id="@crSourcilD" d="M13 2C7-4-4-6-13-2L-12 4C-4 2 4 2 12 5Z" fill="var(--cr-sourcil,var(--cr-cheveux,#191411))" stroke="none"/></g>
+ <!-- 🚨 LES LUNETTES SE PEIGNENT APRÈS LES SOURCILS, et c'est de la physique, pas du goût :
+      une monture est POSÉE SUR le visage, donc devant tout ce qu'elle croise. Elles étaient
+      peintes avant, si bien qu'Ada portait ses sourcils PAR-DESSUS ses verres — mesuré sur
+      la page rendue, jusqu'à 11,6 unités à l'intérieur du verre sur « furieux ». Dans cet
+      ordre-ci, un sourcil qui fronce passe DERRIÈRE le rebord haut, exactement comme sur un
+      vrai visage, et il reste entièrement lisible : le verre n'a pas de fond (fill:none),
+      seule la barre de la monture le coupe. -->
  <use id="@crLunettes" href="#@l-rien" fill="none"/>
- <!-- sourcils DISSYMÉTRIQUES : deux miroirs exacts font « vecteur généré » -->
- <g transform="translate(241,45)"><path id="@crSourcilG" d="M-13 3C-7-4 4-6 13-1L12 5C4 2-4 3-12 8Z" fill="var(--cr-cheveux,#191411)" stroke="none"/></g>
- <g transform="translate(279,45)"><path id="@crSourcilD" d="M13 4C7-4-4-6-13-2L-12 4C-4 2 4 3 12 9Z" fill="var(--cr-cheveux,#191411)" stroke="none"/></g>
  <path d="M263 68c3 8 6 13 4 17-1 3-5 3-8 1" stroke-opacity=".34" stroke-width="2.4" stroke-linecap="round"/>
- <g transform="translate(260,96)"><path id="@crBouche" d="M-13 0C-6 4 6 4 13 0" stroke="var(--cr-levres,#3A1A14)" stroke-opacity=".7" stroke-width="2.8" stroke-linecap="round"/><path id="@crDents" d="M-11-2h22l-2 4h-18z" fill="#F6F1E4" stroke="none" opacity="0"/></g>
+ <path d="M257.6 85c-.5 2.6-.4 4.6 0 6.4M262.4 85c.5 2.6.4 4.6 0 6.4" stroke-opacity=".2" stroke-width="1.6" stroke-linecap="round"/>
+ <!-- La BOUCHE. L'ombre de la lèvre inférieure et les deux COINS sont dessinés AVANT
+      le trait : ils ne changent pas avec la forme, et c'est justement ça qui la tient.
+      Une bouche qui n'est qu'un trait se déforme dans le vide ; deux commissures fixes
+      lui donnent un point d'attache, quelle que soit la forme qu'on y claque — et la
+      bouche ouverte (« grand », « serre ») les recouvre, donc elles ne gênent jamais. -->
+ <g transform="translate(260,96)">
+  <path d="M-9 5C-4 8 4 8 9 5" stroke="#3A1A0C" stroke-opacity=".13" stroke-width="3" stroke-linecap="round"/>
+  <path d="M-12.6-.6c-.8 1.4-1 2.6-.8 3.6M12.6-.6c.8 1.4 1 2.6.8 3.6" stroke="var(--cr-levres,#3A1A14)" stroke-opacity=".3" stroke-width="2" stroke-linecap="round"/>
+  <path id="@crBouche" d="M-13 0C-6 4 6 4 13 0" stroke="var(--cr-levres,#3A1A14)" stroke-opacity=".85" stroke-width="3.4" stroke-linecap="round"/>
+  <path id="@crDents" d="M-11-2h22l-2 4h-18z" fill="#F6F1E4" stroke="none" opacity="0"/>
+ </g>
  <path d="M250 106c4 3 16 3 20 0" stroke-opacity=".18" stroke-width="1.8" stroke-linecap="round"/>
  <use id="@crMoustache" href="#@m-rien" fill="var(--cr-cheveux,#191411)" stroke="none"/>
 </g></g></g>
@@ -166,13 +236,38 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
 ${CR_BRAS("G")}
 ${CR_BRAS("D")}
 </g>
+<!-- ── TÊTES DE MANCHE : la seule pièce de la veste dessinée APRÈS les bras ──────
+     Sans elles le bras est un tube posé sur le buste : sa calotte arrondie et sa couture
+     restaient visibles, et le pivot (166/354, 146) tombe 16 unités SOUS le coin de veste
+     qui tenait lieu de ligne d'épaule — il n'y avait donc pas d'épaule du tout, juste un
+     manche accroché au flanc. Une tête de manche est cousue PAR-DESSUS le corps de la
+     veste : c'est pour ça qu'elle vient en dernier, après les deux bras.
+     Elle est STATIQUE — elle ne suit pas le bras, elle le cache à la racine. Chacune
+     couvre un disque de rayon ≥ 21 autour de son pivot : c'est ce que balaie la calotte
+     du bras (ses coins sont à hypot(18,4) = 18,4 du pivot) quand il tourne, donc le tube
+     ne peut jamais sortir par le haut ni ouvrir un trou sur le fond, quelle que soit la
+     pose. Même couleur que le corps de la veste (les cinq croupiers ont --cr-veste
+     == --cr-manche), donc la jonction ne se voit pas : ce qui donne le volume, c'est le
+     dégradé @lum et le pli d'emmanchure. -->
+<g id="@crEpaules" stroke="none">
+ <path d="M192 120C170 117 150 123 144 141C140 152 143 166 150 178C160 188 178 188 188 178C190 160 191 138 192 120Z" fill="var(--cr-veste,#171C21)"/>
+ <path d="M328 120C350 117 370 123 376 141C380 152 377 166 370 178C360 188 342 188 332 178C330 160 329 138 328 120Z" fill="var(--cr-veste,#171C21)"/>
+ <path d="M192 120C170 117 150 123 144 141C140 152 143 166 150 178C160 188 178 188 188 178C190 160 191 138 192 120Z" fill="url(#@lum)"/>
+ <path d="M328 120C350 117 370 123 376 141C380 152 377 166 370 178C360 188 342 188 332 178C330 160 329 138 328 120Z" fill="url(#@lum)"/>
+ <path d="M188 128C186 144 186 162 189 175M332 128C334 144 334 162 331 175" fill="none" stroke="#000" stroke-opacity=".3" stroke-width="2" stroke-linecap="round"/>
+ <path d="M153 128C147 137 143 149 143 161M367 128C373 137 377 149 377 161" fill="none" stroke="#FFE9C8" stroke-opacity=".1" stroke-width="2.4" stroke-linecap="round"/>
+</g>
 </g></svg>`;
 const crSvg = prefixe => CR_RIG.replaceAll("@", prefixe);
 
 /* ── Les cinq. Un croupier = un nom, un look (variables + créneaux <use>), un
    tempérament : quelles répliques, à quelle intensité, et ce qu'il surveille.
    `piquant` = probabilité de se moquer d'une perte, `colere` = de râler d'un
-   gain, `vigilance` 0-3 = réaction à une mise qui bouge avec le compte. ──── */
+   gain, `vigilance` 0-3 = réaction à une mise qui bouge avec le compte.
+   ⚠️ `bust` n'est PAS `moqueur`. Perdre contre la main du croupier, c'est le sabot ;
+   sauter, c'est un choix qu'on a fait tout seul — et le croupier n'a même pas eu à
+   jouer. Ses répliques doivent donc être plus dures, et pointer la DÉCISION. Une
+   banque `bust` vide retombe sur `moqueur` : rien ne casse si on n'en écrit pas. ──── */
 const CROUPIERS = {
   vince: { nom: "Vince", lieu: "Las Vegas Strip", trait: "Gominé, gouailleur. Parle beaucoup, pardonne peu.",
     coiffe: "c-plaque", orne: "o-noeud", lunettes: "l-rien", moustache: "m-rien", acc: "a-rien", sourcils: 1,
@@ -182,6 +277,8 @@ const CROUPIERS = {
     dit: {
       accueil: ["Bienvenue au Boulevard. Asseyez-vous, on va bien s'entendre.", "Salut. Vegas, baby."],
       assurance: ["Un as. Assurance ? {cout}, la moitié de votre mise.", "Je montre un as. Assurance ? {cout}."],
+      bust: ["Vingt-deux !", "Vous vous êtes fait ça tout seul.", "Il fallait rester.", "Ha ! Magnifique.", "Personne ne vous a poussé.", "Brûlé. Au suivant.",
+        "Une de plus pour la maison.", "C'était écrit, ça."],
       moqueur: ["Ça pique.", "La maison vous remercie.", "On remet ça ?", "Dommage. Sincèrement.", "Vegas, baby.", "Les cartes ne vous aiment pas ce soir.",
         "Vous reviendrez. Ils reviennent tous.", "Aïe.", "Je compatis. Un peu.", "Le sabot avait ses raisons.", "Et voilà le travail.", "Tirer là-dessus… audacieux."],
       agace: ["Coup de chance.", "Profitez-en.", "Le chef de table regarde.", "Mouais.", "Ça n'arrivera pas deux fois.", "Encore vous ?",
@@ -192,14 +289,25 @@ const CROUPIERS = {
       abandon: ["Vous abandonnez ? Déjà ?", "Moitié perdue, moitié gardée. Petit joueur.", "Sage. Ou peureux."],
       egalite: ["Égalité. Personne ne bouge.", "Push. On respire."],
     } },
+  // 🚨 MARCEL EST LE SEUL À PORTER --cr-sourcil, et c'est ce qui lui rend son visage. Ses
+  // cheveux sont gris (#A9A196) sur une peau claire (#E2B896) : le sourcil, peint dans la
+  // couleur des cheveux comme chez tout le monde, ne se détachait ni de la peau ni des
+  // touffes des tempes, dont il n'est séparé que de 2 à 5 unités. Les deux lisaient comme
+  // UN SEUL anneau gris autour des yeux — on ne voyait plus l'angle du sourcil, donc plus
+  // rien de ce qu'il exprime. Avec sa moustache en brosse qui recouvrait la bouche,
+  // « neutre », « concentré », « soupçon » et « agacé » étaient LE MÊME visage à la couleur
+  // des joues près : quatre émotions sur huit perdues. Le brun sombre ci-dessous garde son
+  // âge (il reste plus clair que le noir des autres) sans se confondre avec sa chevelure.
   marcel: { nom: "Marcel", lieu: "Vieux Reno", trait: "Vieux briscard, moustache en brosse. Lent, exact, et il a tout vu.",
     coiffe: "c-degarni", orne: "o-noeud", lunettes: "l-rien", moustache: "m-brosse", acc: "a-chaine", sourcils: 1.35,
-    p: { "--cr-peau": "#E2B896", "--cr-cheveux": "#A9A196", "--cr-veste": "#3A2E26", "--cr-manche": "#3A2E26", "--cr-gilet": "#6B5A44",
+    p: { "--cr-peau": "#E2B896", "--cr-cheveux": "#A9A196", "--cr-sourcil": "#5A4C3E", "--cr-veste": "#3A2E26", "--cr-manche": "#3A2E26", "--cr-gilet": "#6B5A44",
       "--cr-chemise": "#F3EEE2", "--cr-poignet": "#F3EEE2", "--cr-orne": "#6E4A22", "--cr-iris": "#4A6070", "--cr-pochette": "#D9B45B" },
     piquant: .85, colere: .9, vigilance: 2,
     dit: {
       accueil: ["Assieds-toi, fiston. Ici c'est Reno.", "Prenez votre temps. Moi j'en ai."],
       assurance: ["J'ai un as, fiston. Assurance ? {cout}.", "Un as. Vous vous assurez ? {cout}."],
+      bust: ["Vingt-deux, fiston !", "Tu t'es fait ça tout seul.", "Fallait rester.", "Ha ! Trente ans que je vois ça.", "Brûlé.", "Personne t'a poussé, hein.",
+        "Le seize, ça se garde.", "Et voilà le travail."],
       moqueur: ["Dommage, fiston.", "La maison vous remercie.", "J'ai vu pire. Rarement.", "Ça pique, hein ?", "Le sabot a parlé.", "On remet ça ?",
         "C'est Reno, ici.", "Ça arrive aux meilleurs. Et aux autres.", "Un de plus pour la maison.", "Ravalez-moi cette grimace.", "Tirer sur seize, hein…", "Dommage."],
       agace: ["Coup de chance.", "Profitez-en, ça ne dure pas.", "Ho.", "Bon.", "Chance de débutant.", "Le chef regarde.",
@@ -218,6 +326,8 @@ const CROUPIERS = {
     dit: {
       accueil: ["Bonsoir.", "Prenez place. La machine ne dort jamais."],
       assurance: ["As. Assurance ? {cout}."],
+      bust: ["Sauté.", "Vous vous êtes fait ça seule.", "Il fallait rester.", "Vingt-deux.", "C'était votre main. Pas la mienne.", "Brûlée.",
+        "Personne ne vous a forcée.", "Voilà."],
       moqueur: ["Dommage.", "C'était prévisible.", "La table encaisse.", "Encore ?", "Vous comptiez sur quoi ?", "Le hasard a tranché.",
         "Perdu.", "La mélangeuse s'en souvient.", "Rien à dire.", "Prochaine main.", "Ça ira mieux. Peut-être.", "…"],
       agace: ["Bien.", "Hm.", "Une fois.", "Payé.", "Le hasard, seulement le hasard.", "N'y prenez pas goût.",
@@ -236,6 +346,8 @@ const CROUPIERS = {
     dit: {
       accueil: ["Les jeux sont faits.", "Bonsoir. Le règlement est affiché."],
       assurance: ["Assurance. {cout}.", "Un as. Assurance ? {cout}."],
+      bust: ["Vingt-deux. Sauté.", "Vous vous êtes fait ça tout seul.", "Il fallait rester.", "La table n'y est pour rien.", "Brûlé.", "Une décision. Une conséquence.",
+        "Personne ne vous a poussé.", "Noté."],
       moqueur: ["Dommage.", "La maison vous remercie.", "Ce n'était pas une décision.", "Perdu.", "Pas de commentaire.", "Vous reviendrez, ils reviennent tous.",
         "Une main de moins.", "C'est fini.", "Sans surprise.", "Voilà.", "La table encaisse.", "Prochaine."],
       agace: ["Coup de chance.", "Soit.", "Le chef de table regarde.", "Profitez-en.", "Payé.", "Ne vous méprenez pas.",
@@ -246,14 +358,21 @@ const CROUPIERS = {
       abandon: ["Abandon. Noté.", "La moitié vous reste. Pour l'instant.", "Prudent. Ou lucide."],
       egalite: ["Égalité.", "Personne ne gagne. Surtout pas vous."],
     } },
+  // ⚠️ `sourcils` du Chef est passé de 1,6 à 1,45 le 06/09. Ce n'est pas un caprice : à 1,6
+  // ses sourcils faisaient 24 à 27 unités de haut sur un visage de 100, et ils sortaient du
+  // front dès qu'ils se LEVAIENT, quelle que soit la hauteur de la ligne de cheveux — il
+  // était le seul des cinq à ne pas tenir la règle des 4 unités. À 1,45 il reste, avec
+  // Marcel, le sourcil le plus épais de la table, et ses huit émotions passent.
   chef: { nom: "Le Chef", lieu: "Salon privé", trait: "Chef de table, détecteur de triche. Il ne regarde pas vos cartes : il regarde vos mises.",
-    coiffe: "c-courts", orne: "o-cravate", lunettes: "l-rien", moustache: "m-fine", acc: "a-epingle", sourcils: 1.6,
+    coiffe: "c-courts", orne: "o-cravate", lunettes: "l-rien", moustache: "m-fine", acc: "a-epingle", sourcils: 1.45,
     p: { "--cr-peau": "#CFA07A", "--cr-cheveux": "#26221F", "--cr-veste": "#0F1418", "--cr-manche": "#0F1418", "--cr-gilet": "#1C242B",
       "--cr-chemise": "#FBF8F0", "--cr-poignet": "#FBF8F0", "--cr-orne": "#141A20", "--cr-iris": "#2A3A46", "--cr-pochette": "#C9A65A" },
     piquant: .8, colere: .9, vigilance: 3, repos: "concentre",
     dit: {
       accueil: ["Chef de table. Je surveille, vous jouez.", "Bonsoir. Vos mises m'intéressent plus que vos cartes."],
       assurance: ["Un as. Vous vous assurez ? {cout}.", "As. Assurance ? {cout}."],
+      bust: ["Vingt-deux. Sauté.", "Vous vous êtes fait ça tout seul.", "Il fallait rester.", "Le compte disait de rester.", "Brûlé.", "Même les compteurs sautent.",
+        "Personne ne vous a poussé.", "Et voilà."],
       moqueur: ["Dommage.", "Ça pique.", "La maison vous remercie.", "Perdu. Encore.", "On remet ça ?", "Le compte ne fait pas tout.",
         "Une main de compteur, ça.", "Rien ne vous sauvera.", "Je compte aussi, vous savez.", "Et hop.", "Vous pouvez partir.", "Merci pour votre contribution."],
       agace: ["Coup de chance.", "Je surveille.", "Profitez-en.", "Le chef de table, c'est moi.", "Ça se voit, vous savez.", "Encore un et je note.",
@@ -278,6 +397,12 @@ const crNom = () => (DB.croupier.noms[CR.id] || "").trim() || crPerso().nom;
 // le Chef ne se déride jamais. `CR.base` y retombe entre deux manches.
 const crRepos = () => crPerso().repos || "neutre";
 const crAuRepos = () => CR.emotion === "neutre" || CR.emotion === crRepos();
+// Rire au nez d'un joueur qui saute, ça se mérite — et ça ne va pas à tout le monde. Lin est
+// écrite « impassible », Ada « glaciale, jamais un mot de trop » : les faire glousser, ce
+// serait leur retirer leur seul trait. On réutilise le curseur qui existe déjà (`piquant`,
+// celui qui décide si elles ouvrent la bouche) au lieu d'en inventer un second : au-dessus de
+// .7 il rit (Vince .95, Marcel .85, le Chef .8), en dessous son mépris reste un sourire en coin.
+const crRire = () => (crPerso().piquant || 0) >= .7 ? "hilare" : "moqueur";
 
 /* ── L'état ──────────────────────────────────────────────────────────── */
 const CR = { id: "", el: null, scene: null, bulle: null, visible: false, salue: false, fixe: false,
@@ -295,7 +420,10 @@ const crQ = s => CR.el ? CR.el.querySelector(s) : null;
 const crMinuteur = (f, ms) => setTimeout(f, ms);
 
 /* ── Monter le croupier dans #croupierScene ─────────────────────────── */
-const CR_VARS = ["--cr-peau", "--cr-cheveux", "--cr-veste", "--cr-manche", "--cr-gilet", "--cr-chemise", "--cr-poignet", "--cr-orne", "--cr-iris", "--cr-monture", "--cr-pochette", "--cr-or"];
+// ⚠️ --cr-sourcil est OPTIONNELLE et le reste : `crLook` pose "" quand un croupier ne la
+// donne pas, ce qui RETIRE la propriété, et le fill retombe alors sur --cr-cheveux. Elle
+// n'existe que pour les têtes dont les cheveux ne contrastent plus avec la peau — Marcel.
+const CR_VARS = ["--cr-peau", "--cr-cheveux", "--cr-sourcil", "--cr-veste", "--cr-manche", "--cr-gilet", "--cr-chemise", "--cr-poignet", "--cr-orne", "--cr-iris", "--cr-monture", "--cr-pochette", "--cr-or"];
 function crLook(svg, c, prefixe) {
   for (const k of CR_VARS) svg.style.setProperty(k, c.p[k] || (k === "--cr-monture" ? "#3A2A1C" : k === "--cr-or" ? "#D9B45B" : ""));
   const u = (id, href) => { const e = svg.querySelector("#" + prefixe + id); if (e) e.setAttribute("href", "#" + prefixe + href); };
@@ -573,7 +701,13 @@ function crRegarde(x, y, ms) {
   let demi = 320; document.querySelectorAll("#sieges .siege").forEach(s => { const r = s.getBoundingClientRect(); demi = Math.max(demi, Math.abs(r.left + r.width / 2 - cx)); });
   const u = Math.max(-1, Math.min(1, (x - cx) / demi));
   const v = y === undefined ? .4 : Math.max(-1, Math.min(1, (y - rep.y0 - 100 * rep.s) / (420 * rep.s)));
-  CR.regard = u * 7; crTeteMaj(ms || 260);
+  // L'ŒIL D'ABORD, LA TÊTE APRÈS. Un vrai regard commence par une saccade — l'œil arrive en
+  // 30 ms — et la tête ne suit qu'ensuite. Ici la tête glissait sur 260-700 ms pendant que
+  // l'iris sautait AU MÊME INSTANT : les deux partaient ensemble et l'œil était déjà arrivé
+  // quand la tête entamait son virage. C'est le tell le plus fiable d'un pantin. On garde le
+  // saut de l'iris (une saccade EST instantanée) et on retarde la tête de 90 ms : fill:"both"
+  // lui fait tenir sa position de départ pendant l'attente.
+  CR.regard = u * 7; crTeteMaj(ms || 260, 90);
   const iris = `translate(${(u * 3.2).toFixed(2)}px,${(v * 2.2).toFixed(2)}px)`;
   ["crIrisG", "crIrisD"].forEach(k => { const e = crQ("#cr-" + k); if (e) e.style.transform = iris; });
 }
@@ -587,7 +721,9 @@ function crRegardeSiege(siege, ms) {
   crRegarde(r.left + r.width / 2, siege === "croupier" ? r.top + r.height : r.top, ms || 260);
 }
 // La tête va à (regard + penché) : un seul geste, quelle que soit la composante qui a changé.
-function crTeteMaj(ms) { crBouger("crTete", CR.regard + CR.penche, ms); }
+// `delai` n'est posé que par le REGARD (l'œil part devant) ; une émotion, elle, redresse la
+// tête tout de suite — il n'y a pas d'œil à attendre.
+function crTeteMaj(ms, delai) { crBouger("crTete", CR.regard + CR.penche, ms, delai ? { delai } : undefined); }
 
 /* ── Le visage. Sourcils = [descente px, rotation deg], jamais symétriques ;
    la bouche est ÉCHANGÉE, jamais interpolée — une bouche qui se déforme
@@ -598,21 +734,71 @@ const BOUCHES = {
   calme: ["M-13 0C-6 4 6 4 13 0"], sourire: ["M-15-3C-8 8 8 8 15-3"], grand: ["M-16-3C-8 12 8 12 16-3Z", "#4A1A16", 1],
   encoin: ["M-12 1C-4 4 6 3 15-5"], ferme: ["M-13 0h26"], boude: ["M-12 3C-5-3 5-3 12 3"],
   serre: ["M-14-2C-6-5 6-5 14-2C12 8-12 8-14-2z", "#4A1A16", 1], ouverte: ["M-9-3C-4-8 4-8 9-3C9 8-9 8-9-3z", "#4A1A16"],
+  // La PINCÉE : courte, et surtout DE TRAVERS. Elle existe pour que le soupçon ne partage
+  // pas sa bouche avec la concentration — deux émotions qui portent la même bouche ET les
+  // mêmes sourcils baissés ne sont pas deux émotions.
+  // ⚠️ Elle était « plate, un coin plus haut que l'autre » : 1 unité de dénivelé sur 18 de
+  // long, c'est-à-dire, à 86 px de tête, exactement le même petit trait sombre que la
+  // « ferme » de la concentration (26 unités, parfaitement horizontale). Deux longueurs
+  // qu'on ne compare pas côte à côte ne sont PAS un signal. Le dénivelé passe à 5 sur 16 :
+  // une bouche visiblement de travers ne se confond avec aucune autre — et une pente, ce
+  // n'est pas une moue (« boude » est un arc SYMÉTRIQUE qui descend des deux côtés).
+  pincee: ["M-8-2C-3 0 2 1 8 3"],
   // La mi-ouverte : entre « ouverte » et « calme ». Trois formes, c'est le minimum pour que la
   // bouche ait l'air de FORMER des sons plutôt que de battre.
   mi: ["M-11-1C-5-4 5-4 11-1C10 5-10 5-11-1z", "#4A1A16"],
 };
+/* Huit émotions, et la règle qui les sépare : chacune porte AU MOINS DEUX signaux que
+   personne d'autre ne porte de la même façon. Sur une tête de 69 px, une seule courbe de
+   bouche ne suffit pas — c'est ce qui rendait « neutre » et « content » jumeaux, et
+   « concentré » et « soupçon » interchangeables.
+   Les six leviers : sourcils [descente px, rotation deg] (jamais symétriques) · bouche
+   (ÉCHANGÉE, jamais interpolée) · joues · paupières · penché de tête · `iris`.
+   · `penche` est non nul PARTOUT sauf « neutre » : une tête parfaitement droite est un
+     visage de notice. Le signe compte : on se penche EN AVANT quand on veut (content,
+     moqueur, hilare), EN ARRIÈRE quand on juge (concentré, agacé, soupçon).
+   · `iris` multiplie le rayon de la PUPILLE (2,6 au repos). Elle se contracte sous la
+     colère et se dilate sous le plaisir — trois lignes de code, et ça sépare à soi seul
+     « furieux » (0,7) de « hilare » (1,18) même figés côte à côte. Elle CLAQUE avec la
+     bouche, sans transition : c'est la doctrine du fichier, le visage se pose, il ne fond pas. */
 const EMOTIONS = {
-  neutre: { sg: [0, 0], sd: [0, 0], bouche: "calme", joues: 0, plisse: [0, 0] },
-  concentre: { sg: [1.8, 4], sd: [1.8, -4], bouche: "ferme", joues: 0, plisse: [.22, .22] },
-  content: { sg: [-1.5, -3], sd: [-1.5, 3], bouche: "sourire", joues: .08, plisse: [0, 0] },
+  neutre: { sg: [0, 0], sd: [0, 0], bouche: "calme", joues: 0, plisse: [0, 0], iris: 1 },
+  // Concentré : symétrique, léger, il se penche EN AVANT sur le sabot et la pupille se
+  // resserre. C'est le visage de la donne — il ne doit accuser personne.
+  concentre: { sg: [2.2, 6], sd: [2.2, -6], bouche: "ferme", joues: 0, plisse: [.26, .26], iris: .85, penche: -3, avance: 1.5 },
+  // Content : sourcils qui S'ARQUENT (7°) plus qu'ils ne montent, joues, et les yeux qui se
+  // plissent un peu — un sourire qui ne monte pas aux yeux ne se lit pas comme un sourire.
+  content: { sg: [-1.5, -7], sd: [-1.5, 7], bouche: "sourire", joues: .16, plisse: [.12, .12], iris: 1.12, penche: 4 },
   // Moqueur : sourcil gauche haut, le droit bas, l'œil droit à demi fermé, sourire en coin,
   // et la tête PENCHE (crEmotion). À 1280 px, c'est le penché qui se lit de loin.
-  moqueur: { sg: [-7, -18], sd: [3.5, 9], bouche: "encoin", joues: .06, plisse: [.06, .5], penche: 9 },
+  // Le levé est passé de [-7, -18] à [-2.8, -30] : un sourcil qui monte S'ARQUE plus qu'il ne
+  // se TRANSLATE. Translaté, il sortait par le haut et se perdait dans les cheveux ; arqué,
+  // il reste sur le front, où on le voit — et il se lit mieux, parce qu'un sourcil levé, ce
+  // qu'on en voit, c'est l'angle. Les deux chiffres ont été RÉGLÉS À LA MESURE, pas choisis :
+  // ce sont les plus généreux qui gardent 4 unités de front libre chez les cinq croupiers.
+  moqueur: { sg: [-2.8, -30], sd: [3.5, 9], bouche: "encoin", joues: .06, plisse: [.06, .5], iris: 1.05, penche: 9 },
+  // Hilare : le RIRE, pas le cri. Les deux se dessinent avec la même bouche ouverte ; ce qui
+  // les sépare, ce sont les paupières HAUTES (.55) SOUS des sourcils LEVÉS — le plissement du
+  // rire. Des paupières ouvertes sous des sourcils levés, ce serait la peur. C'est la seule
+  // émotion qui se sert de BOUCHES.grand, la seule bouche ouverte SOURIANTE du jeu : elle
+  // était écrite depuis le début et aucune émotion ne l'appelait, donc personne ne l'a
+  // jamais vue. Même règle de front que « moqueur » : levé mesuré, pas choisi.
+  hilare: { sg: [-2.4, -25], sd: [-2, 20], bouche: "grand", joues: .28, plisse: [.55, .55], iris: 1.18, penche: 12 },
   // Agacé : sourcils en V, joues, et le menton qui vient (avance) — la mâchoire.
-  agace: { sg: [4.5, 15], sd: [4.5, -15], bouche: "boude", joues: .3, plisse: [.35, .35], avance: 3 },
-  furieux: { sg: [7, 24], sd: [7, -24], bouche: "serre", joues: .55, plisse: [.45, .45], secoue: true, avance: 4 },
-  soupcon: { sg: [3.5, 8], sd: [4, -5], bouche: "ferme", joues: 0, plisse: [.55, .55], fixe: true, penche: -4 },
+  agace: { sg: [4.5, 15], sd: [4.5, -15], bouche: "boude", joues: .3, plisse: [.35, .35], iris: .9, penche: -6, avance: 3 },
+  furieux: { sg: [7, 26], sd: [7, -26], bouche: "serre", joues: .55, plisse: [.5, .5], iris: .7, secoue: true, avance: 4, penche: -3 },
+  // Soupçon : ce qui le distingue de « concentré », c'est l'ASYMÉTRIE, la bouche pincée de
+  // travers, et le penché en ARRIÈRE le plus fort de la table — il te regarde de haut, et
+  // il te regarde TOI (fixe).
+  // ⚠️ L'asymétrie était trop timide pour SE VOIR : deux sourcils baissés tous les deux
+  // (10° et −3°, soit 1,5 px d'écart sur la page rendue) au-dessus d'une bouche qui, à la
+  // taille de jeu, ressemblait à celle de la concentration. Il ne restait donc qu'UN signal
+  // réel, les paupières, là où la règle du fichier en exige deux. Un sourcil MONTE
+  // maintenant pendant que l'autre descend : c'est le visage du doute, et rien d'autre ne
+  // le porte à cette table. ⚠️ « moqueur » lève aussi un sourcil, mais trois fois plus fort
+  // (−30°), penche EN AVANT au lieu d'en arrière, et ferme l'œil DROIT quand celui-ci ferme
+  // le GAUCHE : les deux ne se confondent pas.
+  soupcon: { sg: [1, -11], sd: [5.5, -2], bouche: "pincee", joues: 0, plisse: [.58, .42], iris: .8, fixe: true, penche: -7 },
 };
 function crVisage(o) {
   if (!CR.el) return;
@@ -625,6 +811,10 @@ function crVisage(o) {
   ["crJoueG", "crJoueD"].forEach(k => { const e = crQ("#cr-" + k); if (e) e.setAttribute("opacity", o.joues || 0); });
   const pl = o.plisse || [0, 0];
   ["crPaupG", "crPaupD"].forEach((k, i) => { const e = crQ("#cr-" + k); if (e) e.style.transform = `scaleY(${pl[i]})`; });
+  // La pupille. On touche `r` et pas le transform : celui de #crIris* porte le REGARD, posé
+  // par crRegarde — un scale écrit au même endroit serait effacé au premier coup d'œil.
+  const ir = o.iris || 1;
+  ["crPupG", "crPupD"].forEach(k => { const e = crQ("#cr-" + k); if (e) e.setAttribute("r", (2.6 * ir).toFixed(2)); });
   CR.fixe = !!o.fixe;
 }
 /* La bouche articule TANT QUE la bulle est ouverte. Mesuré le 06/09 en rAF : l'ancienne
@@ -970,13 +1160,22 @@ document.addEventListener("sabot:main-fin", e => {
   // Le geste de règlement, au tempo de jetons.js (son J.attente vient d'être incrémenté de
   // 140 ms pour CE siège : le retard du geste est celui de ses jetons).
   if (typeof d.siege === "number") crPaie(d.siege, d.issue, typeof J === "object" && J && typeof J.attente === "number" ? Math.max(0, J.attente - 140) : 0);
-  if (!d.toi) { // un voisin qui saute : un sourire en coin, sans un mot
-    if (d.issue === "bust" && CR.emotion === CR.base) { crVisage(EMOTIONS.moqueur); crMinuteur(() => { if (CR.emotion === CR.base) crVisage(EMOTIONS[CR.base]); }, 900); }
+  if (!d.toi) { // un voisin qui saute : le croupier en rit, sans un mot
+    if (d.issue === "bust" && CR.emotion === CR.base) { crVisage(EMOTIONS[crRire()]); crMinuteur(() => { if (CR.emotion === CR.base) crVisage(EMOTIONS[CR.base]); }, 900); }
     return;
   }
   // La réaction se LIT : 2,6 s de bulle et 3 s de visage. À 1,8 s (mesuré le 05/09) la
   // bulle partait pile quand on regardait ses cartes filer à la défausse.
-  if (d.issue === "bust" || d.issue === "perd") {
+  if (d.issue === "bust") {
+    // SAUTER n'est pas PERDRE. C'était la même branche que « perd » : même visage, mêmes
+    // répliques, alors que le croupier n'a pas eu à jouer — on s'est fait ça tout seul, et
+    // c'est le seul moment où il a vraiment de quoi rire. Il rit donc (bouche « grand »,
+    // la seule bouche ouverte souriante du jeu, qui ne servait à AUCUNE émotion) et il a
+    // ses propres répliques, plus dures.
+    CR.pertes++; CR.gains = 0;
+    const piquant = CR.id === "lin" ? Math.min(.95, .3 + .3 * CR.pertes) : c.piquant;
+    crEmotion(crRire(), { texte: Math.random() < piquant ? (crReplique("bust") || crReplique("moqueur")) : "", ms: 2800, tenue: 3200, apres: crApresAnnonce() });
+  } else if (d.issue === "perd") {
     CR.pertes++; CR.gains = 0;
     const piquant = CR.id === "lin" ? Math.min(.95, .3 + .3 * CR.pertes) : c.piquant;
     crEmotion("moqueur", { texte: Math.random() < piquant ? crReplique("moqueur") : "", ms: 2600, tenue: 3000, apres: crApresAnnonce() });

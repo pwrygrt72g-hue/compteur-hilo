@@ -13,7 +13,7 @@ Les licences Creative Commons **exigent** ce crédit : nom de l'auteur, licence,
 | `cotai` | Le Venetian Macao sur le Cotai Strip, la nuit | soeperbaby | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:The_Venetian_Macao_Night_View_201104.jpg) |
 | `cercle` | La façade du Casino de Monte-Carlo, la nuit | sam garza from Los Angeles, USA | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Real_Monte_Carlo_Casino.jpg) |
 | `mainchaude` | Une table de blackjack sur la moquette d'un casino | DanielPenfield | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:DelLagoCasinoBlackjackTable.jpg) |
-| `salonprive` | Le salon rouge du Casino de Baden-Baden : lustres, dorures, tables | A.Savin | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Baden-Baden_10-2015_img63_Casino.jpg) |
+| `salonprive` | Le salon rouge du Casino de Baden-Baden : lustres, dorures, tables | A.Savin, Wikipedia | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Baden-Baden_10-2015_img63_Casino.jpg) |
 | `reno` | L'arche de Reno, « The Biggest Little City in the World », la nuit | Bohao Zhao | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Reno,_Big,_Little_-_panoramio.jpg) |
 | `aquarium` | Un sol de machines à sous sous les lustres, Las Vegas | Kvnga | [Unsplash](https://unsplash.com/license) | [Unsplash](https://unsplash.com/photos/slot-machines-in-a-casino-vBWsG91aR_U) |
 | `macao` | Wynn Macau et Grand Lisboa, Macao, la nuit | Philip Nalangan | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Macau_Night_2.jpg) |
@@ -25,6 +25,8 @@ Les licences Creative Commons **exigent** ce crédit : nom de l'auteur, licence,
 | `cartes` | Le valet de pique, en gros plan | Tom M | [Unsplash](https://unsplash.com/license) | [Unsplash](https://unsplash.com/photos/a-close-up-of-a-playing-card-on-a-table-UWh8vs4ZMMM) |
 
 Modifications sur toutes : recadrage (16:9 pour les lieux, 4:3 pour les vignettes), redimensionnement à 1 600 px et 640 px de large, encodage WebP.
+
+Chaque photo modifiée reste sous la licence de son original — les CC BY-SA sont donc partagées à l'identique. Le reste de l'application ne l'est pas : elle les rassemble, elle n'en dérive pas.
 
 Les photos Unsplash sont sous la [licence Unsplash](https://unsplash.com/license) ; l'attribution n'y est pas obligatoire mais elle est faite, par égard pour les photographes.
 
