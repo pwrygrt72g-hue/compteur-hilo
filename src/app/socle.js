@@ -256,8 +256,14 @@ document.addEventListener("sabot:main-fin", e => {
   else if (d.issue === "blackjack") son("blackjack", { apres: attente + .12 });
   else if (d.issue === "gagne") son("gain", { apres: attente + .1 });
 });
+// 🚨 CE BANDEAU EST LE SEUL CANAL DE CERTAINES PANNES (un micro refusé, un casque
+// débranché) : sans `role="status"` ni `aria-live`, il n'existait pas du tout pour un
+// lecteur d'écran — le message apparaissait, disparaissait, et rien n'avait été dit.
+// `polite` et pas `assertive` : on ne coupe pas la parole à qui est en train de lire sa
+// main, on l'annonce à la première pause.
 function bandeau(msg, ms) {
   const d = document.createElement("div"); d.className = "bandeau-bas"; d.textContent = msg;
+  d.setAttribute("role", "status"); d.setAttribute("aria-live", "polite");
   document.body.appendChild(d); setTimeout(() => d.remove(), ms || 2600);
 }
 
@@ -304,6 +310,10 @@ function aller(v) {
   if (v === "strategie") { if (!STR.main && !STR.ecart) nouveauCoup(); rendreGrille(); }
   if (v !== "concentration" && CO.encours) finConcentration(false);
   rendreFil();
+  // Changer d'écran est un événement comme un autre : la voix (visio.js) en a besoin —
+  // la barre de la table emporte le bouton « Micro » avec elle, et un micro ouvert doit
+  // pouvoir se montrer ailleurs.
+  emettre("vue", { vue: v });
   window.scrollTo({ top: 0 });
 }
 // Le hall, ouvert sur une de ses salles (#lesTables, #entrainement, #prive, #bureau).

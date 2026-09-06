@@ -5,10 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Banc visio — Le Sabot</title>
 <!--
-  Page de banc pour prouver-visio.mjs : ?salon=CODE&moi=A[&courtier=wss://…][&eviter=nom][&sanstestament=1]
+  Page de banc pour prouver-visio.mjs :
+  ?salon=CODE&moi=A[&courtier=wss://…][&eviter=nom][&sanstestament=1][&micro=1]
+
   Elle se relie au VRAI courtier public, prend la caméra, et expose `window.__etat`
-  toutes les 500 ms — framesDecoded vient de pc.getStats() (inbound-rtp vidéo),
-  jamais d'un compteur maison : c'est le décodeur qui témoigne que des images passent.
+  toutes les 500 ms.
+
+  🚨 LES CHIFFRES VIENNENT DE pc.getStats(), JAMAIS D'UN COMPTEUR MAISON.
+  `framesDecoded` (inbound-rtp vidéo) dit que des IMAGES passent ; pour la voix,
+  `packetsReceived` seul ne prouve QUE des paquets — une piste en sourdine continue
+  d'en envoyer, remplis de silence. C'est `totalAudioEnergy` (et `audioLevel`) qui
+  distingue « on m'entend » de « on reçoit mon silence ». Le banc exige les deux.
+
+  🚨 LA VOIX SUIT LE CHEMIN DE L'APPLICATION, pas un raccourci de banc :
+  micro.mjs → visio.attacherMicro → onAudio → creerSortieAudio().poser → <audio>
+  → creerVumetre. Brancher l'analyseur sur la piste distante nue prouverait quelque
+  chose que l'application ne fait pas — et sur Chrome ne mesurerait que du silence
+  (un flux distant ne s'analyse que s'il est aussi en cours de LECTURE).
+
+  Les publications vers le courtier sont comptées PAR TYPE (salut / description /
+  candidats / adieu). C'est ce qui permet de prouver qu'une sourdine ne renégocie
+  rien : `description` ne doit pas bouger d'un cran quand on coupe le micro.
+
+  Le pilote appelle : __ouvrirMicro() · __couperMicro(v) · __rendreMicro() · __zero()
 -->
 <style>
   body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #0d1a14; color: #e8e2d0; padding: 12px; }
@@ -25,10 +44,12 @@
   <figure><video id="local" autoplay playsinline muted></video><figcaption>moi</figcaption></figure>
   <div id="distants" class="vignettes"></div>
 </div>
+<div id="sons"></div>
 <pre id="journal"></pre>
 <script type="module">
 import { connecter, connecterAvecRepli, nomCourtier, COURTIERS } from "../src/net.mjs";
 import { cameraPartagee } from "../src/camera.mjs";
+import { microPartage, creerSortieAudio, creerVumetre } from "../src/micro.mjs";
 import { creerVisio, testamentVisio, expliquerEchec } from "../src/visio.mjs";
 
 const q = new URLSearchParams(location.search);
@@ -39,9 +60,19 @@ $("titre").textContent = `Banc visio — salon ${salon}, je suis ${moi}`;
 const lignes = [];
 const journal = s => { lignes.push(new Date().toISOString().slice(11, 23) + " " + s); if (lignes.length > 200) lignes.shift(); $("journal").textContent = lignes.slice(-40).join("\n"); };
 const videos = new Map(), departs = [];
-window.__etat = { courtier: "", connecte: false, moi, salon, camera: "eteinte", pairs: [], departs, journal: lignes, erreur: "" };
+// Compté PAR TYPE : une sourdine ne doit publier ni « description » ni « candidats ».
+const pub = { salut: 0, description: 0, candidats: 0, adieu: 0, total: 0 };
+window.__etat = { courtier: "", connecte: false, moi, salon, camera: "eteinte",
+  micro: { etat: "eteinte", raison: "", tenu: false, coupe: true, niveau: 0, nom: "" },
+  pairs: [], departs, journal: lignes, erreur: "", pub, audios: 0, sonBloque: false };
 addEventListener("error", e => { window.__etat.erreur = String(e.message || e); journal("ERREUR " + e.message); });
 addEventListener("unhandledrejection", e => { journal("REJET " + ((e.reason && e.reason.message) || e.reason)); });
+
+// Un seul AudioContext, comme socle.js dans l'application : deux contextes coûtent
+// une demi-seconde de gel et peuvent être refusés net hors geste utilisateur.
+let ac = null;
+try { ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended" && ac.resume) ac.resume().catch(() => {}); }
+catch (e) { journal("pas d'AudioContext : " + e.message); }
 
 let visio = null;
 const opts = {
@@ -64,12 +95,86 @@ function relier() {
   return connecterAvecRepli(opts);
 }
 
+// Le nombre de sections m= d'un SDP : deux (image + voix) et pas une de plus.
+const sdpSections = sdp => sdp ? sdp.split(/\r?\nm=/).length - 1 : 0;
+
+// Le SDP en une ligne : par section m=, le média, le port (0 = désactivée) et la
+// direction. C'est là que se lit une renégociation qui coupe l'image sans le dire.
+function resumeSdp(sdp) {
+  if (!sdp) return "—";
+  return sdp.split(/\r?\nm=/).slice(1).map(bloc => {
+    const [tete, ...reste] = bloc.split(/\r?\n/);
+    const [media, port] = tete.split(" ");
+    const dir = (reste.find(l => /^a=(sendrecv|sendonly|recvonly|inactive)/.test(l)) || "a=?").slice(2);
+    const ssrc = (reste.find(l => /^a=ssrc:/.test(l)) || "").split(":")[1] || "";
+    return media + ":" + port + ":" + dir + (ssrc ? ":" + ssrc.split(" ")[0] : "");
+  }).join(" | ");
+}
+
+// ── La voix ────────────────────────────────────────────────────────────────
+// Exactement le montage de src/app/visio.js : une sortie audio créée AVANT le
+// maillage (onAudio peut arriver dès la première réponse), un <audio> par pair,
+// et un vumètre branché sur l'élément — pas sur la piste nue.
+const sortie = creerSortieAudio({ conteneur: $("sons"), volume: 1 });
+sortie.onBloque(b => { window.__etat.sonBloque = b; journal("son des autres " + (b ? "BLOQUÉ (lecture refusée)" : "débloqué")); });
+const mic = microPartage();
+const vumPairs = new Map();   // id → { vum, max } — max depuis le dernier __zero()
+function poserVumetrePair(id, el) {
+  fermerVumetrePair(id);
+  if (!ac || !el || !el.srcObject) return;
+  vumPairs.set(id, { vum: creerVumetre({ ac, flux: el.srcObject }), max: 0 });
+}
+function fermerVumetrePair(id) {
+  const v = vumPairs.get(id); if (!v) return;
+  try { v.vum.fermer(); } catch (e) {}
+  vumPairs.delete(id);
+}
+// Le maximum entendu depuis le dernier __zero() : un relevé instantané toutes les
+// 500 ms raterait un creux entre deux syllabes et se lirait « personne ne parle ».
+setInterval(() => { vumPairs.forEach(v => { const n = v.vum.niveau(); if (n > v.max) v.max = n; }); }, 50);
+window.__zero = () => { vumPairs.forEach(v => { v.max = 0; }); return true; };
+
+// Le geste « parler » de l'application : ouvrir() = prendre + sortir de sourdine.
+window.__ouvrirMicro = async () => {
+  const r = await mic.ouvrir();
+  if (r.flux && visio) visio.attacherMicro(r.flux);
+  try { mic.mesurer(ac); } catch (e) {}
+  journal("micro ouvert : " + r.etat + (r.raison ? " — " + r.raison : ""));
+  return { etat: r.etat, raison: r.raison, coupe: mic.estCoupe(), flux: !!r.flux };
+};
+window.__couperMicro = v => { const c = mic.couper(v); journal("sourdine " + c); return c; };
+// Une mesure FRAÎCHE de l'énergie reçue, à la demande. `window.__etat` ne se rafraîchit
+// qu'à 2 Hz : parfait pour un écran, beaucoup trop lâche pour dater à la centaine de
+// millisecondes le moment où une sourdine prend effet.
+window.__energie = async id => {
+  const p = visio && [...visio.pairs.values()].find(x => x.id === id);
+  if (!p) return null;
+  let energie = 0, paquets = 0;
+  try {
+    (await p.pc.getStats()).forEach(r => {
+      if (r.type === "inbound-rtp" && r.kind === "audio") { energie += r.totalAudioEnergy || 0; paquets += r.packetsReceived || 0; }
+    });
+  } catch (e) {}
+  return { energie, paquets };
+};
+window.__rendreMicro = () => { mic.rendre(); if (visio) visio.attacherMicro(null); journal("micro rendu"); return true; };
+
 (async () => {
   let api, url;
   try { ({ api, url } = await relier()); }
   catch (e) { $("statut").textContent = expliquerEchec(e); journal("échec courtier : " + (e && e.message)); return; }
   window.__etat.courtier = nomCourtier(url); window.__etat.connecte = true;
   journal("relié à " + nomCourtier(url));
+
+  // On compte ce qui part vraiment sur le courtier, par type de message. C'est la
+  // preuve extérieure qu'une sourdine ne signale rien : `description` figé.
+  const publierVrai = api.publier.bind(api);
+  api.publier = (sujet, message) => {
+    pub.total++;
+    let t = ""; try { t = (JSON.parse(message) || {}).t || ""; } catch (e) {}
+    if (pub[t] !== undefined) pub[t]++;
+    return publierVrai(sujet, message);
+  };
 
   const cam = cameraPartagee();
   let { flux, etat, raison } = await cam.prendre();
@@ -90,7 +195,9 @@ function relier() {
   // &turn=url&user=u&pass=p : un relais à essayer (sinon STUN seul, comme l'application sans ⚙).
   const turn = q.get("turn") ? { url: q.get("turn"), user: q.get("user") || "", pass: q.get("pass") || "" } : null;
   visio = creerVisio({
-    reseau: api, salon, moi, flux, nom: moi, turn,
+    // ⚠️ `micro: null` est explicite, comme dans l'application : on n'arrive JAMAIS
+    // à une table en émettant. La voix se pose ensuite, par attacherMicro.
+    reseau: api, salon, moi, flux, micro: null, nom: moi, turn,
     onJournal: journal,
     onEtat: (id, e) => journal(`${id} → ${e}`),
     onFlux: (id, s) => {
@@ -103,13 +210,19 @@ function relier() {
       }
       v.srcObject = s; v.play().catch(() => {});
     },
+    // 🚨 Deux rappels, jamais un seul : `onFlux` ne voit que la VIDÉO, `onAudio` que
+    // la VOIX. Pousser un flux sans image dans le <video> ferait de la tête de l'ami
+    // un rectangle noir le jour où il ouvre son micro.
+    onAudio: (id, s) => { journal("voix reçue de " + id); poserVumetrePair(id, sortie.poser(id, s)); },
     onDepart: id => {
       departs.push({ id, t: Date.now() });
       const v = videos.get(id); if (v) { v.parentElement.remove(); videos.delete(id); }
+      fermerVumetrePair(id); sortie.retirer(id);
     },
   });
   visio.demarrer();
   $("statut").textContent = `Relié par ${nomCourtier(url)} · caméra ${etat}`;
+  if (q.get("micro")) await window.__ouvrirMicro();
 
   // La sonde : toutes les 500 ms, l'état vrai de chaque paire, lu dans le pc.
   let occupe = false;
@@ -118,24 +231,90 @@ function relier() {
     try {
       const pairs = [];
       for (const p of visio.pairs.values()) {
-        let framesDecoded = 0, bytesReceived = 0, candidatLocal = "";
+        // Instrumentation du banc, posée sur la paire elle-même : elle meurt avec
+        // elle, donc un pair qui revient repart de zéro (pas de compteur fantôme).
+        if (!p.__banc) {
+          p.__banc = { negociations: 0, sdp: 0, ice: [], cumul: new Map() };
+          p.pc.addEventListener("negotiationneeded", () => { p.__banc.negociations++; journal("[banc] négociation demandée pour " + p.id); });
+          p.pc.addEventListener("signalingstatechange", () => {
+            if (p.pc.signalingState !== "stable") p.__banc.sdp++;
+            else journal("[sdp " + p.id + "] local  " + resumeSdp(p.pc.localDescription && p.pc.localDescription.sdp)
+              + "\n            distant " + resumeSdp(p.pc.remoteDescription && p.pc.remoteDescription.sdp));
+          });
+          p.pc.addEventListener("iceconnectionstatechange", () => p.__banc.ice.push(p.pc.iceConnectionState));
+        }
+        // 🚨 LES COMPTEURS DE getStats() REPARTENT DE ZÉRO À CHAQUE NOUVEAU FLUX.
+        // Une renégociation (quelqu'un ouvre son micro) peut donner un nouveau SSRC :
+        // le rapport inbound-rtp qui suit recommence à 0 pendant que l'ancien traîne
+        // encore une seconde. Lu naïvement, « images décodées » DIMINUE — vu au banc,
+        // −91 images en une seconde et demie, et une preuve vidéo qui échoue alors que
+        // l'image passe très bien. On garde donc, par SSRC, la plus grande valeur vue,
+        // et on somme : le total est monotone par construction, même quand un flux
+        // disparaît des statistiques.
+        const cumuler = (cle, v) => { if (!(p.__banc.cumul.get(cle) >= v)) p.__banc.cumul.set(cle, v); };
+        const somme = pre => { let t = 0; p.__banc.cumul.forEach((v, k) => { if (k.startsWith(pre)) t += v; }); return t; };
+        let candidatLocal = "";
+        // L'audio REÇU : paquets, mais surtout énergie — c'est elle qui dit qu'il y a
+        // du son dedans. `null` en niveau veut dire « Chrome ne l'expose pas ici ».
+        const audio = { paquets: 0, octets: 0, niveau: null, energie: 0, duree: 0, ecoute: 0, ecouteMax: 0, recu: false };
+        const sortant = { paquets: 0, octets: 0, actif: false };
+        // Le détail de l'image, pour distinguer « l'émetteur s'est tu » de « le
+        // décodeur cale » : des paquets qui continuent sans images décodées, c'est un
+        // décodeur qui attend une image-clé ; des paquets qui cessent, c'est l'autre
+        // bout. Sans ces deux chiffres, un gel n'a aucune cause lisible.
+        const vid = { paquets: 0, recues: 0, cles: 0, pli: 0, envoyees: 0, encodees: 0, limite: "" };
         try {
           const st = await p.pc.getStats();
           st.forEach(r => {
-            if (r.type === "inbound-rtp" && r.kind === "video") { framesDecoded = r.framesDecoded || 0; bytesReceived = r.bytesReceived || 0; }
+            if (r.type === "inbound-rtp" && r.kind === "video") {
+              cumuler("img:" + r.ssrc, r.framesDecoded || 0); cumuler("voct:" + r.ssrc, r.bytesReceived || 0);
+              cumuler("vpkt:" + r.ssrc, r.packetsReceived || 0); cumuler("vrec:" + r.ssrc, r.framesReceived || 0);
+              cumuler("vcle:" + r.ssrc, r.keyFramesDecoded || 0); cumuler("vpli:" + r.ssrc, r.pliCount || 0);
+            }
+            if (r.type === "outbound-rtp" && r.kind === "video") {
+              cumuler("venv:" + r.ssrc, r.framesSent || 0); cumuler("venc:" + r.ssrc, r.framesEncoded || 0);
+              if (r.qualityLimitationReason) vid.limite = r.qualityLimitationReason;
+            }
+            if (r.type === "inbound-rtp" && r.kind === "audio") {
+              audio.recu = true;
+              cumuler("apkt:" + r.ssrc, r.packetsReceived || 0);
+              cumuler("aoct:" + r.ssrc, r.bytesReceived || 0);
+              cumuler("aeng:" + r.ssrc, r.totalAudioEnergy || 0);
+              // Le NIVEAU est instantané, pas cumulatif : on prend le plus fort du relevé.
+              if (typeof r.audioLevel === "number" && (audio.niveau === null || r.audioLevel > audio.niveau)) audio.niveau = r.audioLevel;
+              audio.duree = Math.max(audio.duree, r.totalSamplesDuration || 0);
+            }
+            if (r.type === "outbound-rtp" && r.kind === "audio") { sortant.actif = true; cumuler("opkt:" + r.ssrc, r.packetsSent || 0); cumuler("ooct:" + r.ssrc, r.bytesSent || 0); }
             if (r.type === "candidate-pair" && r.state === "succeeded" && r.nominated) {
               const l = st.get(r.localCandidateId); if (l) candidatLocal = l.candidateType || "";
             }
           });
         } catch (e) {}
-        const v = videos.get(p.id);
+        const framesDecoded = somme("img:"), bytesReceived = somme("voct:");
+        vid.paquets = somme("vpkt:"); vid.recues = somme("vrec:"); vid.cles = somme("vcle:"); vid.pli = somme("vpli:");
+        vid.envoyees = somme("venv:"); vid.encodees = somme("venc:");
+        audio.paquets = somme("apkt:"); audio.octets = somme("aoct:"); audio.energie = somme("aeng:");
+        sortant.paquets = somme("opkt:"); sortant.octets = somme("ooct:");
+        const v = videos.get(p.id), vp = vumPairs.get(p.id);
+        if (vp) { audio.ecoute = vp.vum.niveau(); audio.ecouteMax = vp.max; }
         pairs.push({ id: p.id, ice: p.pc.iceConnectionState, signal: p.pc.signalingState, connexion: p.pc.connectionState,
           videoWidth: v ? v.videoWidth : 0, framesDecoded, bytesReceived, candidatLocal,
+          audio, sortant, vid, audioEl: !!sortie.element(p.id),
+          // Le NOMBRE de sections m= négociées. Deux, et deux seulement : une image,
+          // une voix. Quatre veut dire que quelqu'un a recréé ses transcepteurs au
+          // lieu d'adopter ceux de l'offre — le défaut du 6 septembre 2026.
+          sections: sdpSections(p.pc.localDescription && p.pc.localDescription.sdp),
+          negociations: p.__banc.negociations, sdp: p.__banc.sdp, ice_histo: p.__banc.ice.length,
           // La collecte ICE : son état vrai (dans le pc) et sa durée (posée par visio.mjs à « complete »).
           // Avec le TURN mort d'Open Relay elle restait « gathering » pour toujours.
           collecte: p.pc.iceGatheringState, collecteMs: p.collecteMs });
       }
       window.__etat.pairs = pairs;
+      window.__etat.audios = sortie.pairs.length;
+      window.__etat.sonBloque = sortie.bloque;
+      const pm = mic.flux && mic.flux.getAudioTracks()[0];
+      window.__etat.micro = { etat: mic.etat, raison: mic.raison, tenu: mic.references > 0,
+        coupe: mic.estCoupe(), niveau: mic.niveau(), nom: pm ? pm.label : "", enabled: pm ? pm.enabled : null };
       window.__etat.connecte = !!api.vivant;
     } finally { occupe = false; }
   }, 500);

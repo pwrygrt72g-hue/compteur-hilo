@@ -45,6 +45,23 @@
       <p class="muet relais-etat" id="turnEtat" aria-live="polite"></p>
       <p class="muet relais-ou">O&#249; en obtenir un gratuitement, en trois minutes : <a href="https://www.metered.ca/stun-turn" target="_blank" rel="noopener">metered.ca</a>, formule gratuite &#8212; elle donne une adresse, un utilisateur et un mot de passe, avec un quota mensuel de quelques centaines de Mo : de l'ordre de deux heures de table &#224; deux quand TOUT passe par le relais. Il n'est consomm&#233; que si la connexion directe &#233;choue. Le relais ne voit que des paquets chiffr&#233;s.</p>
     </details>
+    <!-- La voix autour de la table (visio.js). Le bouton « Micro » de la barre fait le geste
+         courant ; ici vivent les réglages qu'on pose une fois. Le relais vidéo au-dessus sert
+         aussi à la voix : c'est la MÊME connexion qui porte les deux. -->
+    <details class="relais" id="voixBloc">
+      <summary id="voixOuvrir"><span class="grave">Voix autour de la table</span><span class="muet">Micro coupé à l'arrivée &#8212; on l'ouvre quand on veut parler</span></summary>
+      <p class="muet relais-quoi">Depuis le 6 septembre 2026, on peut se parler autour de la table. Le silence reste ce qu'on trouve en arrivant : rien n'est diffusé tant que personne n'a cliqué. La voix voyage par la même connexion que la vidéo, directement d'un navigateur à l'autre.</p>
+      <div class="rang-btn" style="justify-content:flex-start;margin-top:10px"><button class="btn creux" id="voixBascule">Ouvrir mon micro</button></div>
+      <!-- Le bouton est FERMÉ hors d'une table : il prenait le micro depuis le hall, la page
+           n'offrait plus aucun contrôle pour le rendre (celui de la table reste caché en solo)
+           et ⚙ affirmait pendant ce temps « la table t'entend ». -->
+      <p class="muet relais-quoi" id="voixHorsTable" hidden>Tu n'es à aucune table : il n'y a personne &#224; qui parler. Ouvre ou rejoins une table &#224; plusieurs, le bouton &#171;&#160;Micro&#160;&#187; y attend dans la barre du bas.</p>
+      <p class="muet relais-etat" id="voixEtat" aria-live="polite"></p>
+      <label class="ch"><span class="grave">Volume des voix <em id="voixVolL" class="cadran" style="font-style:normal;font-size:var(--t-petit);color:var(--os)">100 %</em></span>
+        <input type="range" id="voixVol" min="0" max="100" step="5" value="100" title="Volume des voix" aria-label="Volume des voix des autres joueurs"></label>
+      <label class="ch ligne"><input type="checkbox" id="voixPousser"> Appuyer sur <kbd>M</kbd> pour parler</label>
+      <p class="muet relais-ou">Sans cette option, le micro reste ouvert et le bouton « Micro » de la table sert à se couper. Avec, il reste muet et ne s'ouvre que tant que <kbd>M</kbd> est enfoncée &#8212; <kbd>M</kbd> est la seule lettre que le jeu n'utilise pas.</p>
+    </details>
   </div>
 </div></header>
 
@@ -229,6 +246,21 @@
        des coups (un croupier ne propose pas « Séparer » avant la donne) ; pendant la main,
        « Distribuer » disparaît. Le CSS suit #v-table[data-phase]. -->
   <div class="zone-actions">
+    <!-- Le navigateur peut REFUSER de jouer un son tant qu'on n'a pas touché la page
+         (micro.mjs, creerSortieAudio). Alors on le DIT, et ce bouton rejoue tous les flux
+         d'un coup : un silence sans explication ferait croire que la voix est cassée. Il
+         n'apparaît que si la lecture a vraiment été bloquée.
+         ⚠️ LA NOTE ♪, PAS LE HAUT-PARLEUR 🔊. Mesuré au rendu : l'émoji sort en GRIS et
+         perd ses ondes à 13 px — on y lit un haut-parleur BARRÉ, soit l'inverse exact de
+         ce que le bouton fait. La note est le signe que ⚙ emploie déjà pour les sons, et
+         elle se dessine à toutes les tailles.
+         🚨 IL NE PARTAGE PLUS LA RANGÉE DES ACTIONS. Mesuré à 1280 × 800 : il la faisait
+         passer sur DEUX lignes (72 → 124 px) et retirait 52 px de feutre — au moment
+         précis où quelqu'un se met à parler —, puis les rendait d'un coup au premier
+         clic : la table se rétractait puis se redéployait sous le doigt, en pleine main.
+         Posé au-dessus de la rangée et HORS DU FLUX (le patron de .zone-actions .bulle),
+         il ne déplace plus rien du tout. -->
+    <button class="btn verre mini son-amis" id="bSonAmis" hidden title="Le navigateur a bloqué le son des autres : clique pour entendre la table">&#9834; Activer le son</button>
     <!-- Le rack du joueur (lot Jetons) : tes jetons, sur le rail devant toi. Visible pendant
          la phase de mise seulement ; il cède la place aux coups dès que la donne commence.
          Sur ordinateur il ne porte que les jetons : le tapis, la mise et les limites sont
@@ -263,9 +295,16 @@
       <!-- L'aide à la décision (« Stratégie : Tirer ») : allumée d'office les vingt premières mains (table.js,
            aideActive). Elle vivait au fond du menu « Plus » — la seule chose dont un débutant a besoin. -->
       <button class="btn verre mini" id="bAide" aria-pressed="false" title="Afficher la stratégie de base pendant ton tour">Aide à la décision</button>
-      <!-- Ta caméra (visio.js) : tes amis te voient sur ton siège. Vidéo seule, JAMAIS de micro —
-           on compte en silence. Mémorisé (DB.camera). Caché en solo. -->
-      <button class="btn verre mini" id="bCamera" hidden aria-pressed="false" title="Ta caméra, pour que tes amis te voient sur ton siège — vidéo seule, jamais de micro">Caméra</button>
+      <!-- Ta caméra (visio.js) : tes amis te voient sur ton siège. Mémorisé (DB.camera). Caché en solo. -->
+      <button class="btn verre mini" id="bCamera" hidden aria-pressed="false" title="Ta caméra, pour que tes amis te voient sur ton siège">Caméra</button>
+      <!-- Ta voix (visio.js, micro.mjs). Trois états lisibles d'un coup d'œil, et le libellé
+           CHANGE avec eux — un point de couleur seul ne se lit pas en jouant :
+             « Micro »       éteint  · rien n'est demandé, le voyant du navigateur est noir
+             « Je parle »    ouvert  · point jade, et la barre de niveau bat sous le bouton
+             « Micro coupé » coupé   · point cinabre, le micro est tenu mais muet
+           MUET À L'ARRIVÉE, TOUJOURS : personne n'est diffusé sans avoir cliqué. Mémorisé
+           (DB.micro) — et même mémorisé, on revient en sourdine. Caché en solo. -->
+      <button class="btn verre mini" id="bMicro" hidden aria-pressed="false" data-etat="eteint" title="Ta voix, pour parler à la table — muet tant que tu ne l'ouvres pas"><span class="voix-txt">Micro</span></button>
       <div class="plus" id="plusTable">
         <button class="btn verre mini plus-btn" id="bPlus" aria-expanded="false" aria-controls="plusMenu" title="Plus d'options">Plus <span class="chevron" aria-hidden="true"></span></button>
         <div class="plus-menu" id="plusMenu">
@@ -596,5 +635,13 @@
 </section>
 
 </main>
+
+<!-- Le témoin de micro (visio.js). #bMicro vit dans la barre de la table, que aller()
+     cache en bloc dès qu'on va sur « Progrès », « Exercices » ou le hall : on continuait
+     de parler à la table sans qu'un seul pixel de la page ne le dise. Il n'apparaît QUE
+     quand le micro est tenu ET que le bouton de la table n'est pas à l'écran, et il
+     rend le micro d'un clic — un signal sans bouton pour l'éteindre serait une alarme
+     sans issue. -->
+<button class="voix-temoin" id="voixTemoin" hidden data-etat="ouvert"><span class="voix-txt">Micro ouvert</span></button>
 
 <div class="modale" id="modale" hidden><div class="laque boite" id="modaleBoite"></div></div>

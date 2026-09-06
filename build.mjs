@@ -60,8 +60,9 @@ if (!donnees) {
 // ---- 2. mini-empaqueteur : des modules ES vers une seule portée ----
 // table-reseau (la table à plusieurs, hôte autoritaire) dépend d'engine : il vient après.
 // visio (le maillage WebRTC autour de la table) dépend de net : il vient après lui ;
-// camera (une seule caméra, comptée par références) ne dépend de rien.
-const ORDRE = ["engine", "solver", "shuffle", "counting", "net", "table-reseau", "camera", "visio"];
+// camera (une seule caméra, comptée par références) et micro (une seule voix, jumeau
+// de camera depuis le 6 septembre 2026) ne dépendent de rien.
+const ORDRE = ["engine", "solver", "shuffle", "counting", "net", "table-reseau", "camera", "micro", "visio"];
 const exportsDe = src => {
   const n = new Set();
   for (const m of src.matchAll(/^export\s+(?:async\s+)?(?:const|let|function)\s+([A-Za-z_$][\w$]*)/gm)) n.add(m[1]);

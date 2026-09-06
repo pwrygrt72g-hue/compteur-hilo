@@ -680,7 +680,23 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 #v-table[data-sieges="3"] .tapis{ width:min(100%, max(1100px, 66vw)) }
 #v-table[data-sieges="4"] .tapis{ width:min(100%, max(1320px, 78vw)) }
 .feutre{
-  position:relative; height:100%; min-height:0; overflow:hidden; border-radius:inherit; z-index:2;
+  position:relative; height:100%; min-height:0; border-radius:inherit; z-index:2;
+  /* 🚨 LE FEUTRE CLIPPE UN PEU AU-DELÀ DE SON ARC — sinon les sièges des DEUX BOUTS
+     perdent leur nom. Mesuré au pixel à 1280 × 800, table à cinq : le mot « JOUEUR » (le
+     siège de gauche, LE TIEN par défaut) et « KARIM » (celui de droite) étaient peints
+     ENTIÈREMENT hors de l'arc, donc effacés par le clip — pas atténués, absents ; leur
+     mise « 1 000 » aussi, et leur vignette était coupée en biais (on lisait « OUPÉE »
+     pour « COUPÉE »). Or la feuille désigne le NOM comme le signal principal de « qui
+     parle » (cf. plus bas) : la voix posait ses deux signes sur la seule partie du siège
+     qui n'existait pas. Le fond de l'arc, lui, ne bouge pas : à 1920 la table est déjà
+     comme ça et les noms débordent proprement sur le rail — c'est le rail qui les porte,
+     comme une plaque de nom sur une vraie table.
+     ⚠️ `overflow:hidden` reste écrit AVANT : un navigateur qui ne connaît pas `clip`
+     ignore les deux lignes suivantes et retrouve exactement le comportement d'hier.
+     ⚠️ La marge ne dispense pas `placerSieges` (cartes.js) de remonter les sièges : elle
+     rattrape les 35 à 45 px que la butée du haut (les cartes du croupier) lui interdit,
+     rien de plus. */
+  overflow:hidden; overflow:clip; overflow-clip-margin:46px;
   background-color:var(--feutre);
   /* Sous la lampe : le milieu du feutre, devant le croupier, reçoit plus de lumière que les
      bords ; le poil du feutre est BROSSÉ en diagonale (deux trames à 112°, à peine visibles —
@@ -697,7 +713,13 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 /* Le grain est une TUILE de 180 px rendue une fois par l'SVG en ligne — jamais
    un filtre vivant plein écran (mesuré : 0,7 ms contre 20 ms), et jamais un
    data: URI, qu'une CSP peut avaler en silence. */
-.feutre>svg.grain, .feutre>svg.motif, .feutre>svg.lettrage{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none }
+/* ⚠️ CES TROIS CALQUES SE CLIPPENT EUX-MÊMES. Ils couvrent le RECTANGLE entier du feutre
+   et ne devaient leur découpe en demi-lune qu'au `overflow:hidden` du parent : dès qu'on
+   a élargi ce clip pour les noms des sièges (ci-dessus), le grain et le motif ont débordé
+   sur le rail en coins carrés — un feutre en escalier. Leur propre arrondi les remet dans
+   la demi-lune, et les sièges seuls profitent de la marge. */
+.feutre>svg.grain, .feutre>svg.motif, .feutre>svg.lettrage{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
+  border-radius:inherit; overflow:hidden }
 .feutre>svg.grain{ mix-blend-mode:overlay; opacity:.55 }
 .feutre>svg.lettrage{ z-index:1 }
 /* Mesuré le 06/09 : avec fill:var(--or) — l'or MÉLANGÉ À 12 % DE FEUTRE — la grande ligne
@@ -1945,11 +1967,141 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .visage[data-etat="demande"] .silhouette, .visage[data-etat="connexion"] .silhouette{ animation:respire 1.6s ease-in-out infinite }
 @keyframes respire{ 0%,100%{ opacity:.5 } 50%{ opacity:1 } }
 .siege.absent .visage{ filter:grayscale(1); opacity:.6 }
-/* Le bouton Caméra allumé : un point jade, comme un voyant — et le liseré or des boutons pressés. */
+/* Le bouton Caméra allumé : un point OR, comme le liseré or des boutons pressés.
+   🚨 IL ÉTAIT JADE, et il l'était depuis avant la voix — mais depuis que la voix existe,
+   « l'or est au jeu, le jade est à la voix » est une règle de cette feuille (cf. la
+   section suivante), et deux boutons VOISINS disaient « c'est allumé » en deux langages :
+   Caméra = liseré or + point jade, Micro = liseré jade + point jade. Le point de la
+   caméra rejoint l'or de son propre liseré ; le jade ne dit plus qu'une chose. */
 #bCamera[aria-pressed="true"]::before{ content:""; display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; vertical-align:1px;
-  background:var(--jade); box-shadow:0 0 6px var(--jade) }
+  background:var(--or); box-shadow:0 0 6px var(--or) }
 @media (max-width:999.98px){ .visage{ width:64px } .visage .visage-etat{ font-size:8px; letter-spacing:.06em; padding-top:8px } .siege .rangee-bas{ gap:5px } }
 @media (max-height:520px){ .visage{ width:64px } }
+
+/* ── La voix (visio.js, micro.mjs) — le bouton, le niveau, qui parle ──────
+   🔄 Cette section n'existe que depuis le 6 septembre 2026 : la table était MUETTE par
+   décision, Léo l'a levée (cf. l'en-tête de src/app/visio.js). Le silence est devenu un
+   choix, il fallait donc lui donner des signes.
+
+   🚨 DEUX COULEURS, DEUX LANGAGES, JAMAIS MÉLANGÉS. L'OR appartient au JEU : c'est ton
+   tour, ta mise, ta vidéo reliée. Le JADE appartient à la VOIX : ton micro est ouvert,
+   cet ami parle. Un anneau or qui voudrait dire « il parle » se lirait comme « c'est à
+   lui de jouer », et on jouerait de travers. Le CINABRE, lui, ne dit qu'une chose ici :
+   tu es en sourdine. */
+/* 🚨 UNE LARGEUR FIXE, PARCE QUE C'EST LE BOUTON QU'ON BASCULE LE PLUS SOUVENT. Mesuré
+   en cliquant pour de vrai : « Micro » 59,7 px, « Je parle » 87,7, « Micro coupé » 113,8
+   — +91 %. Le bouton, lui, ne bougeait pas ; tout ce qui le suit glissait, et « Plus »,
+   son voisin immédiat, se déplaçait de 26 px à chaque coupure. On visait « Plus » et on
+   ratait. La largeur est calée sur le plus long libellé (« Micro occupé »), une fois
+   pour toutes : les six états tiennent dedans et plus rien ne se déplace. */
+#bMicro{ position:relative; overflow:hidden; min-width:126px; justify-content:center }
+#bMicro .voix-txt{ position:relative; z-index:1; white-space:nowrap }
+/* Le point d'état, devant le mot : jade plein quand on t'entend, cinabre quand tu es
+   coupé, laiton qui respire pendant que le navigateur demande la permission. */
+#bMicro[data-etat="ouvert"] .voix-txt::before,
+#bMicro[data-etat="coupe"] .voix-txt::before,
+#bMicro[data-etat="arme"] .voix-txt::before,
+#bMicro[data-etat="panne"] .voix-txt::before,
+#bMicro[data-etat="demande"] .voix-txt::before{ content:""; display:inline-block; width:7px; height:7px; border-radius:50%;
+  margin-right:7px; vertical-align:1px }
+#bMicro[data-etat="ouvert"] .voix-txt::before{ background:var(--jade); box-shadow:0 0 6px var(--jade) }
+#bMicro[data-etat="coupe"] .voix-txt::before,
+#bMicro[data-etat="panne"] .voix-txt::before{ background:var(--cinabre); box-shadow:0 0 6px -1px var(--cinabre) }
+/* « Maintiens M » : le micro est TENU et ARMÉ, pas en panne. Le cinabre du bouton coupé se
+   lisait comme une erreur et poussait à cliquer — or ce clic RENDAIT le micro, l'inverse
+   de ce qu'on cherchait. Laiton : une chose à faire, pas une chose cassée. */
+#bMicro[data-etat="arme"] .voix-txt::before{ background:var(--laiton); box-shadow:0 0 6px -1px var(--laiton) }
+#bMicro[data-etat="demande"] .voix-txt::before{ background:var(--laiton); animation:respire 1.2s ease-in-out infinite }
+/* Les identifiants l'emportent sur `.rang-table .btn[aria-pressed="true"]`, qui passerait
+   le bouton en or — l'or du jeu, justement celui qu'on ne veut pas ici. */
+#bMicro[data-etat="ouvert"]{ color:var(--jade); border-color:color-mix(in oklab, var(--jade) 62%, transparent) }
+#bMicro[data-etat="coupe"], #bMicro[data-etat="panne"]{ color:color-mix(in oklab, var(--cinabre) 80%, var(--ivoire)); border-color:color-mix(in oklab, var(--cinabre) 42%, transparent) }
+#bMicro[data-etat="arme"]{ color:color-mix(in oklab, var(--laiton) 82%, var(--ivoire)); border-color:color-mix(in oklab, var(--laiton) 50%, transparent) }
+
+/* TON niveau de voix, sous le bouton. C'est la réponse à « est-ce que mon micro
+   marche ? » — la première question de tout le monde — et elle doit se répondre SANS
+   parler à personne. Elle bat MÊME EN SOURDINE (micro.mjs mesure une copie de la piste
+   exprès pour ça) : d'où sa couleur, qui suit l'état plutôt que le niveau. Jade = on
+   t'entend ; cinabre = ça capte, mais personne ne t'entend. Deux informations, deux
+   signes — sans quoi une barre qui bat ferait croire qu'on est diffusé. */
+#bMicro::after{ content:""; position:absolute; left:10px; right:10px; bottom:5px; height:3px; border-radius:2px; pointer-events:none;
+  transform:scaleX(var(--voix, 0)); transform-origin:left center; transition:transform .09s linear;
+  background:var(--jade); opacity:.92 }
+#bMicro[data-etat="coupe"]::after{ background:var(--cinabre) }
+#bMicro[data-etat="arme"]::after{ background:var(--laiton) }
+#bMicro[data-etat="eteint"]::after, #bMicro[data-etat="demande"]::after, #bMicro[data-etat="panne"]::after{ transform:scaleX(0) }
+/* Le rattrapage de lecture automatique : il n'apparaît que si le navigateur a vraiment
+   bloqué le son. En laiton — c'est une chose à faire, pas une erreur du joueur.
+   🚨 HORS DU FLUX, au-dessus de la rangée (le patron de .zone-actions .bulle) : dans la
+   rangée, son apparition la faisait passer sur deux lignes et retirait 52 px de feutre
+   en pleine main, puis les rendait d'un coup au premier clic. */
+#bSonAmis{ color:var(--laiton); border-color:color-mix(in oklab, var(--laiton) 60%, transparent) }
+#bSonAmis:hover{ color:var(--laiton); border-color:var(--laiton) }
+.zone-actions>#bSonAmis.son-amis{ position:absolute; left:50%; bottom:100%; transform:translateX(-50%);
+  margin-bottom:8px; z-index:6; min-height:40px; padding:6px 14px; font-size:13px; white-space:nowrap;
+  background:rgba(10,14,12,.82); backdrop-filter:blur(6px); box-shadow:0 8px 20px -10px rgba(0,0,0,.9) }
+.zone-actions>#bSonAmis.son-amis[hidden]{ display:none }
+
+/* QUI PARLE. Il faut que ça se voie SANS regarder la vignette : c'est l'information
+   qu'on cherche du coin de l'œil pendant qu'on compte. D'où le NOM du siège, qui est
+   grand, toujours là et lisible de loin — la vignette ne fait que confirmer. À
+   hystérésis (micro.mjs) : ça s'allume à la voix et ne s'éteint qu'après un silence
+   tenu, sinon ça clignoterait à chaque syllabe et on cesserait de le regarder. */
+/* 🚨 UN NOM QUI PARLE DOIT DEVENIR PLUS LISIBLE, PAS MOINS. Le jade pur est la seule
+   couleur du nuancier qui se rapproche du feutre : mesuré au pixel sur deux captures de
+   même géométrie, le nom passait de 4,19:1 au repos à 3,48:1 en parlant — −17 % de
+   contraste sur du 11 px en capitales espacées, au moment précis où il a quelque chose à
+   dire. On garde donc le JADE comme teinte (c'est la couleur de la voix) mais on
+   l'éclaircit vers le blanc : la lecture y gagne, la couleur reste reconnaissable, et le
+   point qui respire juste après plus l'anneau de la vignette portent l'identité jade. */
+.siege.parle .nom{ color:color-mix(in oklab, var(--jade) 34%, #FFFFFF);
+  text-shadow:0 0 10px color-mix(in oklab, var(--jade) 70%, transparent), 0 1px 2px rgba(0,0,0,.55) }
+.siege.parle .nom::after{ content:""; display:inline-block; width:6px; height:6px; margin-left:7px; border-radius:50%;
+  vertical-align:1px; background:var(--jade); box-shadow:0 0 8px var(--jade); animation:respire 1.1s ease-in-out infinite }
+.visage.parle{ box-shadow:0 0 0 2px var(--jade), 0 0 20px -3px color-mix(in oklab, var(--jade) 85%, transparent),
+  0 8px 16px -10px rgba(0,0,0,.9) }
+/* 🚨 UN AMI QUI PARLE SANS CAMÉRA RESTE UNE SILHOUETTE — QUI S'ÉCLAIRE. Jamais un
+   rectangle noir : c'est la règle de toute cette section depuis le début, et la voix ne
+   l'assouplit pas, elle lui donne une raison de plus. */
+.visage.parle .silhouette{ color:color-mix(in oklab, var(--jade) 74%, var(--ivoire)) }
+.visage.parle .visage-etat{ color:var(--jade) }
+
+/* LE MICRO DES AUTRES, sur leur vignette. Trois signes pour trois questions qui n'ont
+   rien à voir, et un quatrième cas — le plus fréquent — qui ne dit RIEN, pour qu'une
+   table qui compte en silence reste propre :
+     anneau jade (ci-dessus) · il parle EN CE MOMENT
+     point jade              · son micro est ouvert : il peut parler, et il t'entend
+     « muet » en cinabre     · il s'est mis en SOURDINE — le « tu es coupée » qui
+                               n'existait nulle part, et sans lequel un siège est
+                               strictement identique qu'on se taise, qu'on soit coupé
+                               ou qu'on n'ait jamais ouvert son micro
+     rien                    · pas de micro du tout */
+.visage[data-voix="ouvert"]::after{ content:""; position:absolute; top:5px; right:5px; width:7px; height:7px;
+  border-radius:50%; background:var(--jade); box-shadow:0 0 6px var(--jade), 0 0 0 1.5px rgba(0,0,0,.5); pointer-events:none; z-index:3 }
+.visage .voix-marque{ position:absolute; top:4px; right:4px; z-index:3; pointer-events:none;
+  font-family:"Martian Mono",monospace; font-size:8px; letter-spacing:.02em; line-height:1;
+  padding:2px 4px; border-radius:4px; background:rgba(8,10,9,.72);
+  color:color-mix(in oklab, var(--cinabre) 74%, var(--ivoire)); box-shadow:0 0 0 1px rgba(0,0,0,.4) }
+.visage .voix-marque::before{ content:"muet" }
+
+/* LE TÉMOIN HORS TABLE. #bMicro part avec la barre de la table dès qu'on change d'écran :
+   on continuait de parler à toute la table sans qu'un seul pixel ne le dise. Fixe, discret,
+   au-dessus de tout — et CLIQUABLE : un signal sans issue est une alarme, pas une information. */
+/* ⚠️ AU-DESSUS DE LA BANDE DES BANDEAUX, pas dedans : `.bandeau-bas` vit à 22 px du bas,
+   au centre, et sert à longueur de partie. Un témoin posé là se serait retrouvé PAR-DESSUS
+   le message qui explique justement pourquoi le micro vient de se fermer. */
+.voix-temoin{ position:fixed; z-index:80; left:50%; transform:translateX(-50%); bottom:calc(74px + var(--sb, 0px));
+  display:inline-flex; align-items:center; gap:0; min-height:40px; padding:8px 14px; border-radius:999px;
+  font-family:"Martian Mono",monospace; font-size:12px; letter-spacing:.02em; cursor:pointer;
+  background:rgba(8,12,10,.9); backdrop-filter:blur(8px); border:1px solid color-mix(in oklab, var(--jade) 55%, transparent);
+  color:var(--jade); box-shadow:0 10px 26px -12px rgba(0,0,0,.95) }
+.voix-temoin[hidden]{ display:none }
+.voix-temoin .voix-txt::before{ content:""; display:inline-block; width:8px; height:8px; border-radius:50%;
+  margin-right:8px; vertical-align:1px; background:var(--jade); box-shadow:0 0 7px var(--jade); animation:respire 1.6s ease-in-out infinite }
+.voix-temoin[data-etat="coupe"], .voix-temoin[data-etat="arme"]{ color:color-mix(in oklab, var(--laiton) 80%, var(--ivoire));
+  border-color:color-mix(in oklab, var(--laiton) 50%, transparent) }
+.voix-temoin[data-etat="coupe"] .voix-txt::before, .voix-temoin[data-etat="arme"] .voix-txt::before{ background:var(--laiton); box-shadow:0 0 7px -1px var(--laiton); animation:none }
+.voix-temoin:hover{ border-color:currentColor }
 
 /* ── Le relais vidéo, dans ⚙ ─────────────────────────────────────────────── */
 .relais{ margin-top:16px; padding-top:12px; border-top:1px solid var(--ardoise); text-align:left }
@@ -1966,3 +2118,9 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .relais .relais-etat{ font-size:var(--t-petit); min-height:20px; margin-top:8px }
 .relais .relais-etat[data-ok="1"]{ color:var(--jade) }
 .relais .relais-etat[data-ok="0"]{ color:var(--cinabre) }
+/* Une touche du clavier se DESSINE comme une touche : « Appuyer sur M » écrit à plat se
+   lit comme un mot de la phrase, et on cherche un bouton à l'écran. */
+.relais kbd{ font-family:"Martian Mono",monospace; font-size:11px; padding:1px 6px; border:1px solid var(--bord); border-radius:5px }
+/* Le curseur des voix suit la phrase d'état : sans cet air, les deux se collent. */
+#voixBloc label.ch{ margin-top:14px }
+#voixBloc label.ch.ligne{ margin-top:12px }

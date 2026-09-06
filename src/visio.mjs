@@ -79,20 +79,47 @@
 // en STUN seul, et on le DIT. Sur `failed` sans relais, l'appelant affiche
 // pourquoi (jamais un échec silencieux) — cf. `SANS_RELAIS_MESSAGE`.
 //
-// ⚠️ PAS DE MICRO. Vidéo seule, par décision (cf. camera.mjs) : on compte en
-// silence, la parole détruit la mémoire de travail.
+// ══ La PAROLE : ajoutée le 6 SEPTEMBRE 2026 ═══════════════════════════════
+// Jusqu'au 5 septembre 2026, ce fichier portait « ⚠️ PAS DE MICRO. Vidéo seule,
+// par décision : on compte en silence, la parole détruit la mémoire de travail ».
+// LÉO A TRANCHÉ L'INVERSE LE 6 SEPTEMBRE 2026 : on peut se parler autour de la
+// table. Le raisonnement n'était pas faux, il était trop large — parler pendant
+// qu'on compte coûte cher, mais entre deux mains ça ne coûte rien, et une table
+// muette n'est pas une table. Le silence devient donc un CHOIX DE CHACUN, pas une
+// impossibilité : on arrive MICRO COUPÉ, un bouton l'ouvre, un bouton le referme.
+// Qui veut compter en silence ne touche à rien et n'entend que ce qu'il a demandé
+// d'entendre.
+// ⚠️ Ne « répare » pas ça en retirant l'audio : la trace ci-dessus est là pour
+// qu'on sache que le silence a été voulu, puis levé, et par qui.
+//
+// Ce que ça change ici : un SECOND transcepteur par paire, audio, à côté du vidéo et
+// TOUJOURS DANS LE MÊME ORDRE (vidéo puis audio) — et la façon dont ces deux-là
+// naissent, qui a dû être corrigée (cf. garnir() et adopter() plus bas). Le reste —
+// négociation parfaite, file d'envoi à 130 ms, lots de candidats, ré-offre, testament,
+// présence — n'a pas bougé d'une ligne. La voix coûte 24 à 40 kbit/s par pair en
+// Opus : négligeable à côté de la vidéo, ce n'est pas elle qui limite à cinq.
 
 import { sujet } from "./net.mjs";
 
 export const PAIRS_MAX = 5;
+// Ce qu'un pair peut dire de son micro. « ferme » (pas de micro du tout) et « coupe »
+// (tenu, mais muet) se ressemblent pour l'oreille — jamais pour ce qu'on en fait : on
+// relance quelqu'un en sourdine, on n'attend rien de quelqu'un sans micro. Le SILENCE,
+// lui, ne s'en déduit pas : il se lit sur le son reçu (l'anneau de parole).
+export const ETATS_VOIX = ["ferme", "coupe", "ouvert"];
 export const LIEN_PAGES = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
 export const MESSAGE_ARTEFACT = "La visio ne peut pas marcher sur cette page publiée : sa politique de sécurité bloque les connexions vers le courtier. Ouvre le site pour voir tes amis : " + LIEN_PAGES;
 // STUN seul : deux serveurs de Google, gratuits, qui ne font qu'apprendre à chacun
 // son adresse publique. C'est ce qu'on a quand aucun relais n'est configuré.
 export const SERVEURS_STUN = ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"];
 // Ce que dit la vignette quand la connexion directe échoue et qu'aucun relais n'est là.
-export const SANS_RELAIS_MESSAGE = "La vidéo directe est bloquée par ta connexion : ajoute un relais dans ⚙";
-export const AVEC_RELAIS_MESSAGE = "La vidéo ne passe pas, même par le relais : teste-le dans ⚙";
+// 🚨 « VIDÉO », TOUT SEUL, ÉTAIT UN MENSONGE PAR OMISSION : l'image et la VOIX voyagent
+// dans la MÊME RTCPeerConnection (même BUNDLE, même ICE). Quand elle échoue, les deux
+// tombent ensemble — et celui qui gardait exprès sa caméra fermée pour ne faire que
+// parler lisait « la vidéo est bloquée », en concluait « tant mieux » et ne comprenait
+// jamais pourquoi personne ne lui répondait. Ces libellés dataient d'avant la voix.
+export const SANS_RELAIS_MESSAGE = "Ta connexion bloque le lien direct : ni image ni voix ne passent. Ajoute un relais dans ⚙";
+export const AVEC_RELAIS_MESSAGE = "Rien ne passe, même par le relais : ni image ni voix. Teste-le dans ⚙";
 // Les URL d'un relais, telles qu'on les tape dans ⚙ : une ou plusieurs, séparées par
 // des virgules, des espaces ou des retours à la ligne ; « host:port » sans schéma
 // devient « turn:host:port ». Une ligne vide ou illisible est ignorée.
@@ -190,27 +217,40 @@ const hex = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); retur
 //   salon    : le code du salon (le même que pour les cartes)
 //   moi      : mon identifiant dans le salon (celui des pairs de net.mjs)
 //   flux     : mon MediaStream local (camera.mjs), ou rien — je verrai sans être vu
+//   micro    : mon MediaStream de voix (micro.mjs), ou rien — j'entendrai sans parler
 //   turn     : { url, user, pass } du relais configuré dans ⚙, ou rien (STUN seul)
-//   onFlux(id, MediaStream)   un flux distant est arrivé (ou a changé)
+//   onFlux(id, MediaStream)   une VIDÉO distante est arrivée (ou a changé)
+//   onAudio(id, MediaStream)  une VOIX distante est arrivée (ou a changé)
 //   onDepart(id)              ce pair est parti, sa vignette doit disparaître
+//   onVoix(id, voix)          ce pair dit où en est SON micro : « ouvert », « coupe », « ferme »
 //   onEtat(id, etat)          ice : new·checking·connected·completed·disconnected·failed·closed
 //                             + refuse (sixième pair), + parti,
 //                             + bloque (ICE `failed` : la connexion directe ne passe pas —
 //                               `api.sansRelais` dit si un relais aurait pu aider)
-// Rend { demarrer(), recevoir(sujet, brut), attacherFlux(flux), arrivee(id), depart(id),
-//        fermer(), pairs (Map id → { id, pc, session, polite, ice, collecteMs }), sansRelais }.
+// 🚨 `onFlux` NE VOIT QUE LA VIDÉO, `onAudio` QUE LA VOIX — deux rappels, jamais un
+// seul avec un genre en troisième argument. Un écran écrit avant la parole ignorerait
+// ce troisième argument et poserait un flux SANS IMAGE dans son <video> : la tête de
+// l'ami deviendrait un rectangle noir le jour où il ouvre son micro. Deux rappels, rien
+// à casser, et l'écran d'aujourd'hui continue de marcher pendant qu'on branche le son.
+// Rend { demarrer(), recevoir(sujet, brut), attacherFlux(flux), attacherMicro(flux),
+//        couperMicro(bool), microCoupe(), arrivee(id), depart(id), fermer(),
+//        pairs (Map id → { id, pc, session, polite, ice, collecteMs, tr, trA }), sansRelais }.
 // `collecteMs` : durée de la collecte ICE (null tant qu'elle n'est pas finie) — avec un
 // TURN mort elle ne finissait jamais ; le banc l'exige sous 5 s.
 // ⚠️ L'appelant DOIT relayer chaque message reçu de net.mjs à `recevoir` : net.mjs
 // n'a qu'un seul onMessage, posé à la connexion. Les sujets étrangers sont ignorés.
-export function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, onFlux, onDepart, onEtat, onJournal } = {}) {
+export function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom = "", turn = null, onFlux, onAudio, onDepart, onEtat, onVoix, onJournal } = {}) {
   const iceServers = serveursIce(turn), sansRelais = iceServers.length < 2;
   const session = hex(6);            // change à chaque rechargement : un pair relancé est reconnu comme neuf
   const pairs = new Map();
   const base = `${sujet(salon)}/visio/`;
-  let local = flux, salutMinuteur = null, menageMinuteur = null, ferme = false;
+  let local = flux, localMicro = micro, salutMinuteur = null, menageMinuteur = null, ferme = false;
   const journal = (...a) => { if (onJournal) try { onJournal(a.join(" ")); } catch (_) {} };
   const etat = (id, e) => { if (onEtat) try { onEtat(id, e); } catch (_) {} };
+  // Ce qu'un pair dit de SON micro : « ouvert », « coupe », « ferme ». On ne le déduit
+  // jamais du son reçu — un silence n'est pas une sourdine, et c'est justement la
+  // confusion qu'on essaie de lever.
+  const voix = (id, v) => { if (onVoix && ETATS_VOIX.includes(v)) try { onVoix(id, v); } catch (_) {} };
   const publier = (a, o) => { try { reseau.publier(base + moi + "/" + a, JSON.stringify(Object.assign({ s: session }, o))); } catch (e) { journal("publication ratée", e.message); } };
 
   // ── La file d'envoi cadencée ─────────────────────────────────────────────
@@ -228,7 +268,12 @@ export function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = n
     }, Math.max(0, ENVOI_ECART_MS - (Date.now() - dernierEnvoi)));
   };
   const pousser = (a, o, p) => { file.push({ a, o, p }); pomper(); };
-  const salut = a => pousser(a || "tous", { t: "salut", n: nom });
+  // ⚠️ L'ÉTAT DE MA VOIX VOYAGE AVEC LE SALUT, en plus d'être publié quand il change.
+  // Le salut est déjà périodique : un pair qui arrive en retard, ou un message perdu
+  // sous le quota du courtier, se rattrapent tout seuls à la prochaine ronde — sans
+  // quoi un badge « en sourdine » pourrait rester faux jusqu'à la fin de la partie.
+  let maVoix = "ferme";
+  const salut = a => pousser(a || "tous", { t: "salut", n: nom, v: maVoix });
 
   const disponible = () => typeof RTCPeerConnection === "function";
   // Une offre ou une réponse emporte les candidats déjà connus : si elle doit être
@@ -245,11 +290,80 @@ export function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = n
     const c = p.lot; p.lot = [];
     pousser(p.id, { t: "candidats", c }, p);
   };
+  // ── Les deux transcepteurs d'une paire ───────────────────────────────────
+  // Un pour l'image, un pour la voix, posés une fois pour toutes : ensuite on allume,
+  // on coupe et on rallume en REMPLAÇANT la piste, sans jamais ajouter de section m=.
+  // Ils existent même sans caméra ni micro, pour qu'on puisse VOIR sans être vu et
+  // ENTENDRE sans parler, et pour que la négociation parte tout de suite.
+  //
+  // 🚨 CELUI QUI RÉPOND NE LES CRÉE PAS. C'est contre-intuitif, et ça a coûté cher :
+  // setRemoteDescription n'associe PAS un transcepteur né d'addTransceiver à une
+  // section m= offerte — il en fabrique un neuf à côté. Les nôtres restaient donc sans
+  // mid et repartaient dans une SECONDE offre. Mesuré au banc, deux navigateurs, sans
+  // la moindre collision d'offres : celui qui répond se retrouvait avec QUATRE sections
+  // (vidéo, audio, vidéo, audio), sa réponse annonçait « recvonly » alors qu'il avait
+  // sa caméra, et il lui fallait une ronde de plus — celle que tout ce fichier
+  // s'applique à éviter — pour se montrer. Ça marchait quand même, donc personne ne le
+  // voyait. Jusqu'à ce qu'un micro s'ouvre plus tard : les sections en trop tombent
+  // hors du groupe BUNDLE, et l'image GELAIT SEPT SECONDES DES DEUX CÔTÉS pendant que
+  // le son, lui, continuait de passer. C'est ce gel qui a fini par trahir la
+  // duplication, des mois après qu'elle a commencé.
+  //
+  // Donc : l'offreur CRÉE (garnir), celui qui répond ADOPTE (adopter) ce que la
+  // description distante vient de faire naître. Une paire, deux sections m=, une ronde.
+  //
+  // 🚨 L'ORDRE RESTE UN CONTRAT : VIDÉO PUIS AUDIO. C'est garnir() qui le fixe ; comme
+  // l'offreur est toujours l'un de nous deux, celui qui répond en hérite. Ne pas
+  // séparer ni inverser ces deux lignes.
+  //
+  // `seulement` vaut "image", "voix", ou rien du tout pour les deux. Attacher la
+  // caméra ne doit pas venir remuer le transcepteur de la voix, ni l'inverse : ce sont
+  // deux gestes indépendants et un `replaceTrack` de trop est un risque pour rien.
+  function brancher(p, seulement) {
+    const v = local && local.getVideoTracks()[0];
+    const a = localMicro && localMicro.getAudioTracks()[0];
+    for (const [tr, piste, quoi] of [[p.tr, v, "image"], [p.trA, a, "voix"]]) {
+      if (!tr || (seulement && seulement !== quoi)) continue;   // je réponds et l'offre n'est pas encore là : adopter() s'en chargera
+      try { tr.sender.replaceTrack(piste || null); tr.direction = piste ? "sendrecv" : "recvonly"; }
+      catch (e) { journal(quoi + " non branchée", p.id, e.message); }
+    }
+  }
+  function garnir(p) {
+    if (p.tr) return;
+    const v = local && local.getVideoTracks()[0];
+    p.tr = p.pc.addTransceiver(v || "video", { direction: v ? "sendrecv" : "recvonly" });
+    const a = localMicro && localMicro.getAudioTracks()[0];
+    p.trA = p.pc.addTransceiver(a || "audio", { direction: a ? "sendrecv" : "recvonly" });
+  }
+  // Après une offre distante : les transcepteurs qui portent un mid sont ceux qui
+  // comptent, on prend ceux-là. Et on ferme les nôtres restés SANS mid : deux offres
+  // croisées peuvent nous en avoir laissé un, et un orphelin ajouterait une section m=
+  // à la prochaine offre — c'est-à-dire qu'il rejouerait le défaut ci-dessus.
+  function adopter(p) {
+    const pris = { video: null, audio: null };
+    for (const t of ((p.pc.getTransceivers && p.pc.getTransceivers()) || [])) {
+      const k = (t.receiver && t.receiver.track && t.receiver.track.kind) || "";
+      if ((k === "video" || k === "audio") && t.mid !== null && !pris[k]) pris[k] = t;
+    }
+    for (const [k, mien] of [["video", p.tr], ["audio", p.trA]]) {
+      if (pris[k] && mien && mien !== pris[k] && mien.mid === null) {
+        try { mien.stop(); journal("transcepteur orphelin fermé", p.id, k); }
+        catch (e) { journal("orphelin non fermé", p.id, e.message); }
+      }
+    }
+    p.tr = pris.video || p.tr;
+    p.trA = pris.audio || p.trA;
+    brancher(p);   // ma caméra et ma voix partent DANS LA RÉPONSE, pas dans une ronde de plus
+  }
   async function offrir(p, pourquoi) {
     const pc = p.pc;
-    if (pc.signalingState !== "stable") return;
+    // makingOffer en plus de l'état : garnir() déclenche negotiationneeded, qui rappelle
+    // offrir() avant que setLocalDescription ait eu le temps de quitter « stable » —
+    // sans ce garde, deux offres partiraient pour une seule paire.
+    if (p.makingOffer || pc.signalingState !== "stable") return;
     try {
       p.makingOffer = true;
+      garnir(p);
       await pc.setLocalDescription();
       journal("offre", p.id, pourquoi);
       envoyerDescription(p);
@@ -264,15 +378,21 @@ export function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = n
     const polite = moi < id;
     const p = { id, session: sess, polite, ice: "new", vu: Date.now(), ne: Date.now(), pc: null,
       makingOffer: false, ignoreOffer: false, answerPending: false, attente: [], redemarrages: 0,
-      candidats: [], lot: [], lotMinuteur: null, dernierEnvoiOffre: 0, attentePolie: null, collecteMs: null };
+      candidats: [], lot: [], lotMinuteur: null, dernierEnvoiOffre: 0, attentePolie: null, collecteMs: null,
+      tr: null, trA: null };   // posés par garnir() si j'offre, par adopter() si je réponds
     const pc = new RTCPeerConnection({ iceServers });
     p.pc = pc;
     pairs.set(id, p);
-    // Un seul émetteur/récepteur vidéo par paire, créé tout de suite pour que la
-    // négociation parte même sans caméra locale (on veut VOIR sans être vu).
-    const piste = local && local.getVideoTracks()[0];
-    p.tr = pc.addTransceiver(piste || "video", { direction: piste ? "sendrecv" : "recvonly" });
+    // Les deux transcepteurs (un vidéo, un audio) sont posés plus bas : par garnir()
+    // si c'est nous qui offrons, par adopter() si c'est nous qui répondons. Voir le
+    // gros avertissement devant ces deux fonctions — les créer ICI, des deux côtés,
+    // était le défaut qui doublait les sections m= et gelait l'image sept secondes.
+    //
+    // Ce rappel-ci ne sert qu'aux renégociations d'APRÈS : on allume sa caméra, on
+    // ouvre son micro. La PREMIÈRE négociation, elle, est lancée en toutes lettres au
+    // bas de cette fonction.
     pc.onnegotiationneeded = () => {
+      if (p.makingOffer) return;   // c'est garnir() qui vient de poser les transcepteurs
       // Première négociation : l'impoli offre, le poli attend qu'on lui offre.
       // Deux offres croisées se règlent (négociation parfaite), mais coûtent une
       // ronde de plus — et sous le quota du courtier, une ronde de plus se perd.
@@ -301,10 +421,27 @@ export function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = n
       }
     };
     pc.ontrack = ({ track, streams }) => {
+      // Les pistes arrivent chacune dans son flux : on les ajoute par `addTransceiver`
+      // sans les associer à un MediaStream, donc `streams` est vide et on en fabrique
+      // un par piste. L'image et la voix ne se mélangent jamais, ni ici ni à l'écran.
       const s = streams[0] || new MediaStream([track]);
-      if (onFlux) try { onFlux(id, s); } catch (_) {}
+      const rappel = track.kind === "audio" ? onAudio : onFlux;
+      if (rappel) try { rappel(id, s); } catch (_) {}
     };
     journal("pair ajouté", id, polite ? "(je suis poli)" : "(je suis impoli)");
+    // 🚨 C'EST ICI QUE LA NÉGOCIATION PART, ET IL FAUT LE DIRE EN TOUTES LETTRES.
+    // Elle partait toute seule tant que les transcepteurs naissaient avec la paire :
+    // addTransceiver lève `negotiationneeded`. Maintenant qu'ils ne naissent qu'au
+    // moment d'offrir, plus RIEN ne la déclenche — et le filet de menage() ne la
+    // rattrapait qu'après REOFFRE_MS, soit QUATRE SECONDES d'écran noir. Mesuré au
+    // banc : la collecte ICE passait de 0,3 s à 4,8 s, jusqu'à dépasser son plafond.
+    // L'impoli offre tout de suite, le poli laisse passer ATTENTE_POLIE_MS — mot pour
+    // mot ce que faisait onnegotiationneeded, mais déclenché explicitement.
+    if (polite) p.attentePolie = setTimeout(() => {
+      p.attentePolie = null;
+      if (pairs.get(id) === p && !pc.remoteDescription) offrir(p, "(le poli n'a rien reçu)");
+    }, ATTENTE_POLIE_MS);
+    else offrir(p, "");
     return p;
   }
   function retirer(id, pourquoi) {
@@ -326,7 +463,7 @@ export function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = n
     p.answerPending = d.type === "answer";
     await pc.setRemoteDescription(d);   // le côté poli annule sa propre offre ici s'il le faut
     p.answerPending = false;
-    if (d.type === "offer") { await pc.setLocalDescription(); envoyerDescription(p); }
+    if (d.type === "offer") { adopter(p); await pc.setLocalDescription(); envoyerDescription(p); }
     // Les candidats portés par la description, puis ceux arrivés avant elle.
     const q = [...(cands || []), ...p.attente]; p.attente = [];
     for (const c of q) await candidat(p, c);
@@ -389,23 +526,55 @@ export function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = n
       // L'adieu du TESTAMENT est écrit par le courtier, sans session : on le prend avant tout.
       if (m && m.t === "adieu") { retirer(de, "adieu"); return true; }
       if (!m || !m.s) return true;
-      if (m.t === "salut") { accueillir(de, m.s); return true; }
+      if (m.t === "salut") { accueillir(de, m.s); if (m.v) voix(de, m.v); return true; }
       const p = accueillir(de, m.s);   // une description d'un inconnu vaut un salut
       if (!p) return true;
       if (m.t === "description" && m.d) description(p, m.d, m.c).catch(e => journal("description ratée", de, e.message));
       else if (m.t === "candidats" && Array.isArray(m.c)) (async () => { for (const c of m.c) await candidat(p, c); })();
+      else if (m.t === "voix" && m.v) voix(de, m.v);
       return true;
     },
     // Pose (ou remplace) mon flux local : chaque paire passe en sendrecv, la
     // renégociation part toute seule. Null pour cesser d'être vu.
     attacherFlux(f) {
       local = f;
-      const piste = f && f.getVideoTracks()[0];
-      for (const p of pairs.values()) {
-        try { p.tr.sender.replaceTrack(piste || null); p.tr.direction = piste ? "sendrecv" : "recvonly"; }
-        catch (e) { journal("flux non attaché", p.id, e.message); }
-      }
+      for (const p of pairs.values()) brancher(p, "image");
     },
+    // Pose (ou remplace) ma voix : même geste que pour la caméra, dans le transcepteur
+    // audio qui existe depuis la création de la paire. Null pour cesser d'être entendu.
+    // ⚠️ Ceci sert à ALLUMER ou ÉTEINDRE le micro, pas à se taire une seconde : pour la
+    // sourdine, c'est `couperMicro` — retirer la piste renégocie, `enabled` non.
+    attacherMicro(f) {
+      localMicro = f;
+      for (const p of pairs.values()) brancher(p, "voix");
+    },
+    // La sourdine : `enabled = false` sur la piste locale, RIEN D'AUTRE. Aucune
+    // renégociation, aucun message sur le courtier, aucun vacillement chez le pair
+    // d'en face — juste des paquets vides jusqu'au prochain clic.
+    // ⚠️ C'est LA MÊME piste que celle de micro.mjs : `visio.couperMicro(true)` et
+    // `microPartage().couper(true)` ont exactement le même effet, il n'y a pas deux
+    // vérités. L'application passe par micro.mjs (qui prévient l'écran) ; celui-ci
+    // existe pour les bancs, qui n'ont pas de micro partagé.
+    couperMicro(v) {
+      const pistes = localMicro ? localMicro.getAudioTracks() : [];
+      const n = v === undefined ? !(pistes.length && !pistes[0].enabled) : !!v;
+      pistes.forEach(t => { try { t.enabled = !n; } catch (e) {} });
+      return n;
+    },
+    microCoupe() {
+      const t = localMicro && localMicro.getAudioTracks()[0];
+      return !t || !t.enabled;
+    },
+    // Dit à toute la table où en est MON micro. Un message par CHANGEMENT, jamais un par
+    // syllabe : l'appelant coalesce (visio.js, rvAnnoncerVoix), et le salut périodique le
+    // répète pour ceux qui l'auraient manqué. Rend l'état retenu.
+    annoncerVoix(v) {
+      if (!ETATS_VOIX.includes(v) || v === maVoix) return maVoix;
+      maVoix = v;
+      pousser("tous", { t: "voix", v });
+      return maVoix;
+    },
+    get voixAnnoncee() { return maVoix; },
     // Pour l'app qui tient déjà sa présence (salut/adieu des cartes) : un coup de coude.
     arrivee(id) { if (id && id !== moi) salut(id); },
     depart(id) { retirer(id, "départ annoncé"); },

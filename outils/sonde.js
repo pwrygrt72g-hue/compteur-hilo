@@ -106,7 +106,17 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   clic("#bRetirer"); await dodo(500);
   ok("jetons : retirer reprend le jeton", q("#bDonne").disabled || +txt("#rjMise").replace(/\D/g, "") < +(q("#rackJetons").dataset.min), "mise " + txt("#rjMise"));
   const trace = [];
-  for (let k = 0; k < 10; k++) { await jouerUneMain(true);
+  // 🚨 DIX MAINS NE SUFFISENT PLUS. Depuis que `penetration` porte la fraction RESTANTE
+  // (06/09), un sabot de six jeux se joue jusqu'à ~78 cartes de la fin : il faut une
+  // quinzaine de mains pour franchir la carte de coupe, plus UNE de plus pour voir le
+  // compteur REMONTER — la seule preuve observable du remélange, le compteur de mains
+  // ayant quitté le feutre. À 10, la trace descendait à 151 et s'arrêtait là : quatre
+  // assertions d'affilée (carte de coupe, raclement du mélange, session de table,
+  // journal) tombaient ensemble, non parce que l'application était cassée mais parce
+  // qu'on ne jouait pas assez longtemps pour les atteindre. Mesuré : 14-15 franchissent
+  // sans voir la remontée, 16 passe mais à la limite, 18 laisse la marge.
+  // Ne pas redescendre ce nombre sans l'avoir remesuré.
+  for (let k = 0; k < 18; k++) { await jouerUneMain(true);
     trace.push("m" + k + "[sabot=" + txt("#sabot") +
       " donne=" + (q("#bDonne").disabled ? "off" : "on") + " ann=" + txt("#annonce").slice(0, 28) + "]"); }
   ok("table : la fin de sabot demande le compte", window.__modales >= 2, "modales ouvertes : " + window.__modales);
@@ -122,7 +132,7 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   ok("issues affichées pendant le règlement", ISSUES_VUES >= 3, ISSUES_VUES + " issues au mieux");
   // Le défaut du 06/09 : « Pose ta mise · minimum 10 » s'affichait au-dessus de cinq
   // pastilles « PERDU » et des cartes de la manche finie, sans limite de durée.
-  ok("table : les mises rouvrent sur un feutre VIDE", FEUTRE_PROPRE >= 8, FEUTRE_PROPRE + " manches sur 10 rangées");
+  ok("table : les mises rouvrent sur un feutre VIDE", FEUTRE_PROPRE >= 8, FEUTRE_PROPRE + " manches propres sur 18 rangées");
   ok("défausse alimentée", +txt("#defausseN") > 5, txt("#defausseN"));
   ok("jetons : tapis chiffré après dix mains", /^\d[\d\u202f ]*(,\d+)?$/.test(txt("#tTapis")), txt("#tTapis"));
   ok("jetons : le rack est rouvert entre deux mains", phase() === "mise" && q("#rackJetons").classList.contains("ouvert"), "phase " + phase());
@@ -223,7 +233,10 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
 
   // ── Progression
   clic('nav [data-vue="progres"]'); await dodo(500);
-  ok("progression : 10 tuiles (rachats compris)", qa("#progPave .t").length === 10 && /Rachats/.test(q("#progPave").textContent), qa("#progPave .t").length + " tuiles");
+  // Le compte EXACT était un piège : la tuile « Estimation », ajoutée au bureau le 06/09,
+  // a fait tomber cette ligne alors qu'aucune régression n'existait. On exige un PLANCHER —
+  // une tuile ajoutée est un ajout, pas une panne ; une tuile DISPARUE, elle, se voit encore.
+  ok("progression : au moins 10 tuiles (rachats compris)", qa("#progPave .t").length >= 10 && /Rachats/.test(q("#progPave").textContent), qa("#progPave .t").length + " tuiles");
   { let m=""; try{m=(JSON.parse(localStorage.getItem("sabot")||"{}").sessions||[]).map(x=>x.genre+":"+x.ecart).join(",")}catch(e){m="illisible"}
     ok("mémoire : session de table écrite", /table/.test(m), "sessions = " + m); }
   ok("progression : journal (table incluse)", qa("#progJournal tr").length >= 6 && /Table/.test(q("#progJournal").textContent), qa("#progJournal tr").length + " lignes : " + qa("#progJournal tr").slice(1).map(r => r.children[1].textContent).join(","));
@@ -275,19 +288,66 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   ok("visio : la vignette partage la rangée du cercle de mise", !!q("#sieges .siege.toi .rangee-bas .cercle") && !!q("#sieges .siege.toi .rangee-bas .visage"), "rangée absente");
   ok("visio : pas de vignette sur un siège libre", qa("#sieges .siege.vide .visage").length === 0, qa("#sieges .siege.vide .visage").length + " vignettes sur des sièges libres");
   ok("visio : le bouton Caméra est là, éteint (rien n'est demandé sans un clic)", !q("#bCamera").hidden && q("#bCamera").getAttribute("aria-pressed") === "false", "hidden=" + q("#bCamera").hidden + " pressed=" + q("#bCamera").getAttribute("aria-pressed"));
+  // La voix (visio.js + micro.mjs, 6 septembre 2026) : le bouton existe, il est ÉTEINT, et
+  // surtout il n'est pas « pressé » — tenir le micro n'est pas parler, et rien n'a été
+  // demandé au navigateur. C'est la promesse « muet à l'arrivée », vérifiée à l'écran.
+  ok("voix : le bouton Micro est là, éteint (rien n'est capté sans un clic)", !q("#bMicro").hidden && q("#bMicro").dataset.etat === "eteint" && q("#bMicro").getAttribute("aria-pressed") === "false", "hidden=" + q("#bMicro").hidden + " état=" + q("#bMicro").dataset.etat + " pressed=" + q("#bMicro").getAttribute("aria-pressed"));
+  ok("voix : aucun <video> ne porte le son, et rien ne joue encore", qa("#sieges .visage video:not([muted])").length === 0 && qa("audio[data-pair]").length === 0, qa("#sieges .visage video:not([muted])").length + " vidéos sonores · " + qa("audio[data-pair]").length + " audios");
   // Un ami fictif salue et s'assoit par le transport muet : sa vignette attend, sans une erreur.
   if (window.__reseauEntrant) { __reseauEntrant({ t: "salut", id: "jSonde", nom: "Sonia", couleur: "#c0392b" }); __reseauEntrant({ t: "action", id: "jSonde", a: "asseoir", v: 3, nom: "Sonia", couleur: "#c0392b" }); await dodo(700); }
   ok("visio : l'amie assise a sa vignette en attente, la mienne reste en miroir", qa("#sieges .visage").length === 2 && /attente/i.test(txt("#sieges .visage:not(.moi) .visage-etat")) && qa("#sieges .visage.moi").length === 1, qa("#sieges .visage").length + " vignettes · " + txt("#sieges .visage:not(.moi) .visage-etat"));
+  // 🚨 LE NOM D'UN SIÈGE EXISTE SUR TOUS LES SIÈGES, y compris ceux des DEUX BOUTS. Mesuré
+  // à 1280 × 800 : « JOUEUR » (le siège de gauche, LE TIEN par défaut) et « KARIM » (celui
+  // de droite) étaient peints ENTIÈREMENT hors de l'arc du feutre, donc effacés par son
+  // clip — pas atténués, absents. Or la voix pose là son signal principal (« qui parle »
+  // = le nom en jade). On vérifie par le POINT : le nom doit être ce qu'on touche.
+  // ⚠️ On ne juge que les sièges RÉELLEMENT dans la fenêtre : sous 1000 px la rangée des
+  // sièges devient une pellicule qui défile (style.css), et un siège hors défilement
+  // n'est pas « effacé par l'arc », il est simplement plus loin.
+  { const rates = qa("#sieges .siege").filter(d => { const n = d.querySelector(".nom"); if (!n) return false;
+      const r = n.getBoundingClientRect(); if (!r.width) return false;
+      const x = Math.round(r.left + r.width / 2), y = Math.round(r.top + r.height / 2);
+      if (x < 4 || y < 4 || x > innerWidth - 4 || y > innerHeight - 4) return false;
+      // `elementsFromPoint` (au pluriel) : un bandeau qui passe par-dessus ne compte pas —
+      // ce qu'on cherche, c'est un nom RETIRÉ de la pile par le clip du feutre.
+      return !document.elementsFromPoint(x, y).some(e => d.contains(e)); })
+      .map(d => (d.querySelector(".nom") || {}).textContent);
+    ok("sièges : le nom de CHAQUE siège est à l'écran, les deux bouts compris", rates.length === 0, "effacés par l'arc : " + rates.join(", ")); }
+  // Le rattrapage du son ne partage plus la rangée des actions : il la faisait passer sur
+  // deux lignes (72 → 124 px) et retirait 52 px de feutre au moment précis où quelqu'un
+  // se met à parler, puis les rendait d'un coup au premier clic.
+  { const ra = q("#rangTable").getBoundingClientRect().height, za = q(".zone-actions").getBoundingClientRect().height;
+    const sa = q("#bSonAmis"); sa.hidden = false; await dodo(120);
+    const ra2 = q("#rangTable").getBoundingClientRect().height, za2 = q(".zone-actions").getBoundingClientRect().height;
+    sa.hidden = true;
+    ok("voix : « Activer le son » ne déplace plus rien quand il apparaît", sa.parentElement.id !== "rangTable" && ra2 === ra && za2 === za, "parent=" + sa.parentElement.className + " rangée " + ra + "→" + ra2 + " · actions " + za + "→" + za2); }
   // Une caméra qui MANQUE (getUserMedia bouchonné : dans ce Chrome sans faux périphérique la
   // vraie demande ne répond jamais sous le temps virtuel) : l'allumer doit le DIRE, se
   // rééteindre, et l'oublier — sans une erreur.
+  // Le bouchon RETIENT ce qu'on lui a demandé : c'est la seule façon de prouver que les
+  // deux capteurs sont bien deux permissions distinctes, et pas un `audio: true` glissé
+  // dans les contraintes de la caméra (le détecteur du mode Concentration allumerait
+  // alors un micro que personne n'a demandé).
+  const demandes = [];
   { const md = navigator.mediaDevices, gumOrig = md && md.getUserMedia;
-    if (md) md.getUserMedia = () => Promise.reject(Object.assign(new Error("sonde"), { name: "NotFoundError" }));
+    if (md) md.getUserMedia = c => { demandes.push(c); return Promise.reject(Object.assign(new Error("sonde"), { name: "NotFoundError" })); };
     clic("#bCamera"); await dodo(800);
+    clic("#bMicro"); await dodo(800);
     if (md) md.getUserMedia = gumOrig; }
+  ok("voix : deux permissions, jamais une — la caméra ne demande PAS d'audio", demandes.length === 2 && demandes[0].audio === false && !!demandes[0].video && demandes[1].video === false && !!demandes[1].audio, demandes.length + " demandes : " + JSON.stringify(demandes.map(d => [!!d.video, !!d.audio])));
+  ok("voix : le micro exige l'annulation d'écho (sans elle, cinq personnes = un larsen)", !!demandes[1] && demandes[1].audio && demandes[1].audio.echoCancellation === true && demandes[1].audio.noiseSuppression === true, JSON.stringify(demandes[1] && demandes[1].audio));
   ok("visio : sans caméra, le bouton se rééteint et ma vignette dit pourquoi", q("#bCamera").getAttribute("aria-pressed") === "false" && /caméra|refus|indispo|occup|coup/i.test(txt("#sieges .siege.toi .visage .visage-etat")), "pressed=" + q("#bCamera").getAttribute("aria-pressed") + " état=" + txt("#sieges .siege.toi .visage .visage-etat"));
+  // 🚨 UNE PANNE DE MICRO LAISSE UNE TRACE. Cette ligne exigeait l'inverse (« le bouton se
+  // rééteint ») : c'était le défaut, pas la règle. Un bandeau de 4,2 s puis un bouton
+  // rigoureusement identique à ce qu'il était avant le clic, et celui qui regardait ses
+  // cartes recliquait sans fin en croyant le bouton mort. On exige maintenant l'état
+  // « panne », un libellé QUI A CHANGÉ, et une sortie dans l'infobulle — la caméra garde
+  // bien son « pas de caméra » en rouge sur la vignette, indéfiniment.
+  ok("voix : sans micro, la panne RESTE écrite sur le bouton et dans ⚙", q("#bMicro").dataset.etat === "panne" && q("#bMicro").getAttribute("aria-pressed") === "false" && /micro/i.test(txt("#voixEtat")), "état=" + q("#bMicro").dataset.etat + " ⚙=" + txt("#voixEtat"));
+  ok("voix : la panne se LIT (le libellé change) et dit quoi faire ensuite", /pas de micro/i.test(txt("#bMicro .voix-txt")) && /branche/i.test(q("#bMicro").title) && /branche/i.test(txt("#voixEtat")), "mot=" + txt("#bMicro .voix-txt") + " · titre=" + q("#bMicro").title);
   { let m = {}; try { m = JSON.parse(localStorage.getItem("sabot") || "{}"); } catch (e) {}
-    ok("mémoire : DB.camera repasse à faux quand la caméra manque", m.camera === false, "camera=" + m.camera); }
+    ok("mémoire : DB.camera repasse à faux quand la caméra manque", m.camera === false, "camera=" + m.camera);
+    ok("mémoire : DB.micro repasse à faux quand le micro manque", m.micro === false, "micro=" + m.micro); }
   await miser(); await dodo(500);
   ok("table réseau : ma mise est dans mon cercle, l'hôte peut distribuer", qa("#sieges .siege.toi .jt").length >= 1 && !q("#bDonne").disabled, "jt=" + qa("#sieges .siege.toi .jt").length + " donne=" + q("#bDonne").disabled);
   clic("#bDonne"); await dodo(400);
@@ -306,11 +366,35 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   clic("#rsQuitter"); await dodo(1500);
   ok("table réseau : quitter rend la table solo", !q("#v-table").dataset.reseau && q("#bReseau").hidden && txt("#bNouveauSabot") === "Nouveau sabot" && phase() === "mise", "reseau=" + q("#v-table").dataset.reseau + " phase=" + phase());
   ok("visio : en solo, ni bouton Caméra ni vignette", q("#bCamera").hidden && qa("#sieges .visage").length === 0, "hidden=" + q("#bCamera").hidden + " vignettes=" + qa("#sieges .visage").length);
+  ok("voix : en solo, ni bouton Micro ni rattrapage du son, et plus un seul <audio> de pair", q("#bMicro").hidden && q("#bSonAmis").hidden && qa("audio[data-pair]").length === 0, "micro=" + q("#bMicro").hidden + " son=" + q("#bSonAmis").hidden + " audios=" + qa("audio[data-pair]").length);
 
   // ── Le relais vidéo dans ⚙ : mémorisé (DB.turn), testable ; sans identifiants, on le dit.
   clic("#bReglages"); await dodo(200);
   ok("relais : la section vit dans ⚙, avec ses trois champs et son bouton", !q("#modale").hidden && !!q("#modaleBoite #turnUrl") && !!q("#modaleBoite #turnUser") && !!q("#modaleBoite #turnPass") && !!q("#modaleBoite #turnTester"), "champs absents de la modale");
   ok("relais : sans identifiants, ⚙ dit « STUN seul »", /STUN seul/.test(txt("#turnEtat")), txt("#turnEtat").slice(0, 60));
+  // La voix dans ⚙ : ouvrir/fermer, le volume des autres, et l'appui pour parler — qui
+  // doit être DÉCOCHÉ par défaut (le micro reste ouvert, avec un bouton pour se couper).
+  ok("voix : la section vit dans ⚙, avec son bouton, son volume et l'appui pour parler", !q("#modale").hidden && !!q("#modaleBoite #voixBascule") && !!q("#modaleBoite #voixVol") && !!q("#modaleBoite #voixPousser"), "champs absents de la modale");
+  ok("voix : « appuyer pour parler » est décoché par défaut, volume des voix à 100 %", q("#voixPousser").checked === false && q("#voixVol").value === "100" && txt("#voixVolL") === "100 %", "poussé=" + (q("#voixPousser") || {}).checked + " volume=" + (q("#voixVol") || {}).value);
+  // 🚨 HORS D'UNE TABLE, ⚙ NE PREND PAS LE MICRO. Il le prenait depuis le hall : la piste
+  // passait en `live`, le voyant d'enregistrement du navigateur s'allumait, et #bMicro
+  // restant caché en solo il n'existait plus AUCUN contrôle à l'écran pour le rendre —
+  // pendant que ⚙ affirmait « la table t'entend » alors qu'il n'y avait pas de table.
+  { let pris = 0; const md = navigator.mediaDevices, gumOrig = md && md.getUserMedia;
+    if (md) md.getUserMedia = c => { pris++; return Promise.reject(Object.assign(new Error("sonde"), { name: "NotFoundError" })); };
+    ok("voix : hors d'une table, « Ouvrir mon micro » est fermé et dit pourquoi", q("#voixBascule").disabled === true && /table/i.test(q("#voixBascule").title) && !q("#voixHorsTable").hidden, "désactivé=" + q("#voixBascule").disabled + " note=" + (q("#voixHorsTable") || {}).hidden);
+    clic("#voixBascule"); await dodo(400);
+    ok("voix : et un clic dessus ne demande RIEN au navigateur", pris === 0, pris + " getUserMedia");
+    if (md) md.getUserMedia = gumOrig; }
+  // Le témoin de micro : il existe, et il se tait tant qu'il n'y a rien à dire.
+  ok("voix : le témoin hors table existe, caché tant que le micro est fermé", !!q("#voixTemoin") && q("#voixTemoin").hidden, "témoin=" + !!q("#voixTemoin") + " caché=" + (q("#voixTemoin") || {}).hidden);
+  // Le bouton Micro ne doit plus POUSSER SES VOISINS en changeant d'état : il en a six, et
+  // le plus long (« Micro occupé ») fixe la largeur pour tous. Mesuré en écrivant les six.
+  { const b = q("#bMicro"), t = b.querySelector(".voix-txt"), avant = t.textContent, cache = b.hidden;
+    b.hidden = false;
+    const l = ["Micro", "Je parle", "Micro coupé", "Maintiens M", "Micro occupé", "Micro…"].map(m => { t.textContent = m; return Math.round(b.getBoundingClientRect().width); });
+    t.textContent = avant; b.hidden = cache;
+    ok("voix : le bouton garde la MÊME largeur dans ses six états", new Set(l).size === 1, "largeurs " + l.join(" · ")); }
   // ── Le volume des sons (socle.js, DB.volume) : un curseur dans ⚙, à 60 par défaut, mémorisé.
   ok("volume : le curseur vit dans ⚙, à 60 % par défaut", !!q("#modaleBoite #volume") && q("#volume").value === "60" && txt("#volumeL") === "60 %", "volume=" + (q("#volume") || {}).value + " label=" + txt("#volumeL"));
   if (q("#volume")) { q("#volume").value = "30"; q("#volume").dispatchEvent(new Event("input")); await dodo(120); }

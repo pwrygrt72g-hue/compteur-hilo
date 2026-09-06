@@ -7,9 +7,21 @@
 // tient déjà le capteur. Ici, on ne demande qu'une fois ; chacun prend une
 // référence, la rend quand il a fini, et la caméra s'éteint au dernier rendu.
 //
-// ⚠️ VIDÉO SEULE, JAMAIS DE MICRO. Décision : on ne demande jamais l'audio.
-// La parole détruit la mémoire de travail du comptage — on compte en silence —
-// et un seul voyant allumé vaut mieux que deux demandes de permission.
+// ⚠️ VIDÉO SEULE — et depuis le 6 SEPTEMBRE 2026 ce n'est plus une interdiction,
+// c'est un PARTAGE DU TRAVAIL. Ce fichier portait jusque-là « JAMAIS DE MICRO.
+// Décision : on ne demande jamais l'audio. La parole détruit la mémoire de travail
+// du comptage — on compte en silence ». LÉO A LEVÉ CETTE DÉCISION LE 6 SEPTEMBRE
+// 2026 : on peut se parler autour de la table. Le silence n'est plus une
+// impossibilité, c'est le CHOIX DE CHACUN — on arrive micro coupé, un bouton
+// l'ouvre, un bouton le referme. Qui veut compter en silence ne touche à rien.
+//
+// 🚨 MAIS L'AUDIO NE REVIENT PAS ICI : il vit dans micro.mjs, un module jumeau avec
+// sa propre permission et son propre compteur de références. Ajouter `audio: true`
+// aux contraintes ci-dessous serait plus court et faux trois fois : quelqu'un sans
+// webcam ne pourrait plus parler ; un refus de caméra emporterait la voix ; et le
+// détecteur de visage du mode Concentration, qui prend la caméra pour surveiller ton
+// attention, allumerait un micro que personne n'a demandé. `audio: false` reste donc
+// écrit noir sur blanc, et c'est délibéré — ce n'est pas un oubli à combler.
 //
 // Rien ici ne lève : un refus, une caméra absente ou occupée se lit dans
 // `etat` et `raison`. L'appelant affiche une phrase, il ne rattrape pas une

@@ -697,7 +697,23 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 #v-table[data-sieges="3"] .tapis{ width:min(100%, max(1100px, 66vw)) }
 #v-table[data-sieges="4"] .tapis{ width:min(100%, max(1320px, 78vw)) }
 .feutre{
-  position:relative; height:100%; min-height:0; overflow:hidden; border-radius:inherit; z-index:2;
+  position:relative; height:100%; min-height:0; border-radius:inherit; z-index:2;
+  /* 🚨 LE FEUTRE CLIPPE UN PEU AU-DELÀ DE SON ARC — sinon les sièges des DEUX BOUTS
+     perdent leur nom. Mesuré au pixel à 1280 × 800, table à cinq : le mot « JOUEUR » (le
+     siège de gauche, LE TIEN par défaut) et « KARIM » (celui de droite) étaient peints
+     ENTIÈREMENT hors de l'arc, donc effacés par le clip — pas atténués, absents ; leur
+     mise « 1 000 » aussi, et leur vignette était coupée en biais (on lisait « OUPÉE »
+     pour « COUPÉE »). Or la feuille désigne le NOM comme le signal principal de « qui
+     parle » (cf. plus bas) : la voix posait ses deux signes sur la seule partie du siège
+     qui n'existait pas. Le fond de l'arc, lui, ne bouge pas : à 1920 la table est déjà
+     comme ça et les noms débordent proprement sur le rail — c'est le rail qui les porte,
+     comme une plaque de nom sur une vraie table.
+     ⚠️ `overflow:hidden` reste écrit AVANT : un navigateur qui ne connaît pas `clip`
+     ignore les deux lignes suivantes et retrouve exactement le comportement d'hier.
+     ⚠️ La marge ne dispense pas `placerSieges` (cartes.js) de remonter les sièges : elle
+     rattrape les 35 à 45 px que la butée du haut (les cartes du croupier) lui interdit,
+     rien de plus. */
+  overflow:hidden; overflow:clip; overflow-clip-margin:46px;
   background-color:var(--feutre);
   /* Sous la lampe : le milieu du feutre, devant le croupier, reçoit plus de lumière que les
      bords ; le poil du feutre est BROSSÉ en diagonale (deux trames à 112°, à peine visibles —
@@ -714,7 +730,13 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 /* Le grain est une TUILE de 180 px rendue une fois par l'SVG en ligne — jamais
    un filtre vivant plein écran (mesuré : 0,7 ms contre 20 ms), et jamais un
    data: URI, qu'une CSP peut avaler en silence. */
-.feutre>svg.grain, .feutre>svg.motif, .feutre>svg.lettrage{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none }
+/* ⚠️ CES TROIS CALQUES SE CLIPPENT EUX-MÊMES. Ils couvrent le RECTANGLE entier du feutre
+   et ne devaient leur découpe en demi-lune qu'au `overflow:hidden` du parent : dès qu'on
+   a élargi ce clip pour les noms des sièges (ci-dessus), le grain et le motif ont débordé
+   sur le rail en coins carrés — un feutre en escalier. Leur propre arrondi les remet dans
+   la demi-lune, et les sièges seuls profitent de la marge. */
+.feutre>svg.grain, .feutre>svg.motif, .feutre>svg.lettrage{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
+  border-radius:inherit; overflow:hidden }
 .feutre>svg.grain{ mix-blend-mode:overlay; opacity:.55 }
 .feutre>svg.lettrage{ z-index:1 }
 /* Mesuré le 06/09 : avec fill:var(--or) — l'or MÉLANGÉ À 12 % DE FEUTRE — la grande ligne
@@ -1962,11 +1984,141 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .visage[data-etat="demande"] .silhouette, .visage[data-etat="connexion"] .silhouette{ animation:respire 1.6s ease-in-out infinite }
 @keyframes respire{ 0%,100%{ opacity:.5 } 50%{ opacity:1 } }
 .siege.absent .visage{ filter:grayscale(1); opacity:.6 }
-/* Le bouton Caméra allumé : un point jade, comme un voyant — et le liseré or des boutons pressés. */
+/* Le bouton Caméra allumé : un point OR, comme le liseré or des boutons pressés.
+   🚨 IL ÉTAIT JADE, et il l'était depuis avant la voix — mais depuis que la voix existe,
+   « l'or est au jeu, le jade est à la voix » est une règle de cette feuille (cf. la
+   section suivante), et deux boutons VOISINS disaient « c'est allumé » en deux langages :
+   Caméra = liseré or + point jade, Micro = liseré jade + point jade. Le point de la
+   caméra rejoint l'or de son propre liseré ; le jade ne dit plus qu'une chose. */
 #bCamera[aria-pressed="true"]::before{ content:""; display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; vertical-align:1px;
-  background:var(--jade); box-shadow:0 0 6px var(--jade) }
+  background:var(--or); box-shadow:0 0 6px var(--or) }
 @media (max-width:999.98px){ .visage{ width:64px } .visage .visage-etat{ font-size:8px; letter-spacing:.06em; padding-top:8px } .siege .rangee-bas{ gap:5px } }
 @media (max-height:520px){ .visage{ width:64px } }
+
+/* ── La voix (visio.js, micro.mjs) — le bouton, le niveau, qui parle ──────
+   🔄 Cette section n'existe que depuis le 6 septembre 2026 : la table était MUETTE par
+   décision, Léo l'a levée (cf. l'en-tête de src/app/visio.js). Le silence est devenu un
+   choix, il fallait donc lui donner des signes.
+
+   🚨 DEUX COULEURS, DEUX LANGAGES, JAMAIS MÉLANGÉS. L'OR appartient au JEU : c'est ton
+   tour, ta mise, ta vidéo reliée. Le JADE appartient à la VOIX : ton micro est ouvert,
+   cet ami parle. Un anneau or qui voudrait dire « il parle » se lirait comme « c'est à
+   lui de jouer », et on jouerait de travers. Le CINABRE, lui, ne dit qu'une chose ici :
+   tu es en sourdine. */
+/* 🚨 UNE LARGEUR FIXE, PARCE QUE C'EST LE BOUTON QU'ON BASCULE LE PLUS SOUVENT. Mesuré
+   en cliquant pour de vrai : « Micro » 59,7 px, « Je parle » 87,7, « Micro coupé » 113,8
+   — +91 %. Le bouton, lui, ne bougeait pas ; tout ce qui le suit glissait, et « Plus »,
+   son voisin immédiat, se déplaçait de 26 px à chaque coupure. On visait « Plus » et on
+   ratait. La largeur est calée sur le plus long libellé (« Micro occupé »), une fois
+   pour toutes : les six états tiennent dedans et plus rien ne se déplace. */
+#bMicro{ position:relative; overflow:hidden; min-width:126px; justify-content:center }
+#bMicro .voix-txt{ position:relative; z-index:1; white-space:nowrap }
+/* Le point d'état, devant le mot : jade plein quand on t'entend, cinabre quand tu es
+   coupé, laiton qui respire pendant que le navigateur demande la permission. */
+#bMicro[data-etat="ouvert"] .voix-txt::before,
+#bMicro[data-etat="coupe"] .voix-txt::before,
+#bMicro[data-etat="arme"] .voix-txt::before,
+#bMicro[data-etat="panne"] .voix-txt::before,
+#bMicro[data-etat="demande"] .voix-txt::before{ content:""; display:inline-block; width:7px; height:7px; border-radius:50%;
+  margin-right:7px; vertical-align:1px }
+#bMicro[data-etat="ouvert"] .voix-txt::before{ background:var(--jade); box-shadow:0 0 6px var(--jade) }
+#bMicro[data-etat="coupe"] .voix-txt::before,
+#bMicro[data-etat="panne"] .voix-txt::before{ background:var(--cinabre); box-shadow:0 0 6px -1px var(--cinabre) }
+/* « Maintiens M » : le micro est TENU et ARMÉ, pas en panne. Le cinabre du bouton coupé se
+   lisait comme une erreur et poussait à cliquer — or ce clic RENDAIT le micro, l'inverse
+   de ce qu'on cherchait. Laiton : une chose à faire, pas une chose cassée. */
+#bMicro[data-etat="arme"] .voix-txt::before{ background:var(--laiton); box-shadow:0 0 6px -1px var(--laiton) }
+#bMicro[data-etat="demande"] .voix-txt::before{ background:var(--laiton); animation:respire 1.2s ease-in-out infinite }
+/* Les identifiants l'emportent sur `.rang-table .btn[aria-pressed="true"]`, qui passerait
+   le bouton en or — l'or du jeu, justement celui qu'on ne veut pas ici. */
+#bMicro[data-etat="ouvert"]{ color:var(--jade); border-color:color-mix(in oklab, var(--jade) 62%, transparent) }
+#bMicro[data-etat="coupe"], #bMicro[data-etat="panne"]{ color:color-mix(in oklab, var(--cinabre) 80%, var(--ivoire)); border-color:color-mix(in oklab, var(--cinabre) 42%, transparent) }
+#bMicro[data-etat="arme"]{ color:color-mix(in oklab, var(--laiton) 82%, var(--ivoire)); border-color:color-mix(in oklab, var(--laiton) 50%, transparent) }
+
+/* TON niveau de voix, sous le bouton. C'est la réponse à « est-ce que mon micro
+   marche ? » — la première question de tout le monde — et elle doit se répondre SANS
+   parler à personne. Elle bat MÊME EN SOURDINE (micro.mjs mesure une copie de la piste
+   exprès pour ça) : d'où sa couleur, qui suit l'état plutôt que le niveau. Jade = on
+   t'entend ; cinabre = ça capte, mais personne ne t'entend. Deux informations, deux
+   signes — sans quoi une barre qui bat ferait croire qu'on est diffusé. */
+#bMicro::after{ content:""; position:absolute; left:10px; right:10px; bottom:5px; height:3px; border-radius:2px; pointer-events:none;
+  transform:scaleX(var(--voix, 0)); transform-origin:left center; transition:transform .09s linear;
+  background:var(--jade); opacity:.92 }
+#bMicro[data-etat="coupe"]::after{ background:var(--cinabre) }
+#bMicro[data-etat="arme"]::after{ background:var(--laiton) }
+#bMicro[data-etat="eteint"]::after, #bMicro[data-etat="demande"]::after, #bMicro[data-etat="panne"]::after{ transform:scaleX(0) }
+/* Le rattrapage de lecture automatique : il n'apparaît que si le navigateur a vraiment
+   bloqué le son. En laiton — c'est une chose à faire, pas une erreur du joueur.
+   🚨 HORS DU FLUX, au-dessus de la rangée (le patron de .zone-actions .bulle) : dans la
+   rangée, son apparition la faisait passer sur deux lignes et retirait 52 px de feutre
+   en pleine main, puis les rendait d'un coup au premier clic. */
+#bSonAmis{ color:var(--laiton); border-color:color-mix(in oklab, var(--laiton) 60%, transparent) }
+#bSonAmis:hover{ color:var(--laiton); border-color:var(--laiton) }
+.zone-actions>#bSonAmis.son-amis{ position:absolute; left:50%; bottom:100%; transform:translateX(-50%);
+  margin-bottom:8px; z-index:6; min-height:40px; padding:6px 14px; font-size:13px; white-space:nowrap;
+  background:rgba(10,14,12,.82); backdrop-filter:blur(6px); box-shadow:0 8px 20px -10px rgba(0,0,0,.9) }
+.zone-actions>#bSonAmis.son-amis[hidden]{ display:none }
+
+/* QUI PARLE. Il faut que ça se voie SANS regarder la vignette : c'est l'information
+   qu'on cherche du coin de l'œil pendant qu'on compte. D'où le NOM du siège, qui est
+   grand, toujours là et lisible de loin — la vignette ne fait que confirmer. À
+   hystérésis (micro.mjs) : ça s'allume à la voix et ne s'éteint qu'après un silence
+   tenu, sinon ça clignoterait à chaque syllabe et on cesserait de le regarder. */
+/* 🚨 UN NOM QUI PARLE DOIT DEVENIR PLUS LISIBLE, PAS MOINS. Le jade pur est la seule
+   couleur du nuancier qui se rapproche du feutre : mesuré au pixel sur deux captures de
+   même géométrie, le nom passait de 4,19:1 au repos à 3,48:1 en parlant — −17 % de
+   contraste sur du 11 px en capitales espacées, au moment précis où il a quelque chose à
+   dire. On garde donc le JADE comme teinte (c'est la couleur de la voix) mais on
+   l'éclaircit vers le blanc : la lecture y gagne, la couleur reste reconnaissable, et le
+   point qui respire juste après plus l'anneau de la vignette portent l'identité jade. */
+.siege.parle .nom{ color:color-mix(in oklab, var(--jade) 34%, #FFFFFF);
+  text-shadow:0 0 10px color-mix(in oklab, var(--jade) 70%, transparent), 0 1px 2px rgba(0,0,0,.55) }
+.siege.parle .nom::after{ content:""; display:inline-block; width:6px; height:6px; margin-left:7px; border-radius:50%;
+  vertical-align:1px; background:var(--jade); box-shadow:0 0 8px var(--jade); animation:respire 1.1s ease-in-out infinite }
+.visage.parle{ box-shadow:0 0 0 2px var(--jade), 0 0 20px -3px color-mix(in oklab, var(--jade) 85%, transparent),
+  0 8px 16px -10px rgba(0,0,0,.9) }
+/* 🚨 UN AMI QUI PARLE SANS CAMÉRA RESTE UNE SILHOUETTE — QUI S'ÉCLAIRE. Jamais un
+   rectangle noir : c'est la règle de toute cette section depuis le début, et la voix ne
+   l'assouplit pas, elle lui donne une raison de plus. */
+.visage.parle .silhouette{ color:color-mix(in oklab, var(--jade) 74%, var(--ivoire)) }
+.visage.parle .visage-etat{ color:var(--jade) }
+
+/* LE MICRO DES AUTRES, sur leur vignette. Trois signes pour trois questions qui n'ont
+   rien à voir, et un quatrième cas — le plus fréquent — qui ne dit RIEN, pour qu'une
+   table qui compte en silence reste propre :
+     anneau jade (ci-dessus) · il parle EN CE MOMENT
+     point jade              · son micro est ouvert : il peut parler, et il t'entend
+     « muet » en cinabre     · il s'est mis en SOURDINE — le « tu es coupée » qui
+                               n'existait nulle part, et sans lequel un siège est
+                               strictement identique qu'on se taise, qu'on soit coupé
+                               ou qu'on n'ait jamais ouvert son micro
+     rien                    · pas de micro du tout */
+.visage[data-voix="ouvert"]::after{ content:""; position:absolute; top:5px; right:5px; width:7px; height:7px;
+  border-radius:50%; background:var(--jade); box-shadow:0 0 6px var(--jade), 0 0 0 1.5px rgba(0,0,0,.5); pointer-events:none; z-index:3 }
+.visage .voix-marque{ position:absolute; top:4px; right:4px; z-index:3; pointer-events:none;
+  font-family:"Martian Mono",monospace; font-size:8px; letter-spacing:.02em; line-height:1;
+  padding:2px 4px; border-radius:4px; background:rgba(8,10,9,.72);
+  color:color-mix(in oklab, var(--cinabre) 74%, var(--ivoire)); box-shadow:0 0 0 1px rgba(0,0,0,.4) }
+.visage .voix-marque::before{ content:"muet" }
+
+/* LE TÉMOIN HORS TABLE. #bMicro part avec la barre de la table dès qu'on change d'écran :
+   on continuait de parler à toute la table sans qu'un seul pixel ne le dise. Fixe, discret,
+   au-dessus de tout — et CLIQUABLE : un signal sans issue est une alarme, pas une information. */
+/* ⚠️ AU-DESSUS DE LA BANDE DES BANDEAUX, pas dedans : `.bandeau-bas` vit à 22 px du bas,
+   au centre, et sert à longueur de partie. Un témoin posé là se serait retrouvé PAR-DESSUS
+   le message qui explique justement pourquoi le micro vient de se fermer. */
+.voix-temoin{ position:fixed; z-index:80; left:50%; transform:translateX(-50%); bottom:calc(74px + var(--sb, 0px));
+  display:inline-flex; align-items:center; gap:0; min-height:40px; padding:8px 14px; border-radius:999px;
+  font-family:"Martian Mono",monospace; font-size:12px; letter-spacing:.02em; cursor:pointer;
+  background:rgba(8,12,10,.9); backdrop-filter:blur(8px); border:1px solid color-mix(in oklab, var(--jade) 55%, transparent);
+  color:var(--jade); box-shadow:0 10px 26px -12px rgba(0,0,0,.95) }
+.voix-temoin[hidden]{ display:none }
+.voix-temoin .voix-txt::before{ content:""; display:inline-block; width:8px; height:8px; border-radius:50%;
+  margin-right:8px; vertical-align:1px; background:var(--jade); box-shadow:0 0 7px var(--jade); animation:respire 1.6s ease-in-out infinite }
+.voix-temoin[data-etat="coupe"], .voix-temoin[data-etat="arme"]{ color:color-mix(in oklab, var(--laiton) 80%, var(--ivoire));
+  border-color:color-mix(in oklab, var(--laiton) 50%, transparent) }
+.voix-temoin[data-etat="coupe"] .voix-txt::before, .voix-temoin[data-etat="arme"] .voix-txt::before{ background:var(--laiton); box-shadow:0 0 7px -1px var(--laiton); animation:none }
+.voix-temoin:hover{ border-color:currentColor }
 
 /* ── Le relais vidéo, dans ⚙ ─────────────────────────────────────────────── */
 .relais{ margin-top:16px; padding-top:12px; border-top:1px solid var(--ardoise); text-align:left }
@@ -1983,6 +2135,12 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .relais .relais-etat{ font-size:var(--t-petit); min-height:20px; margin-top:8px }
 .relais .relais-etat[data-ok="1"]{ color:var(--jade) }
 .relais .relais-etat[data-ok="0"]{ color:var(--cinabre) }
+/* Une touche du clavier se DESSINE comme une touche : « Appuyer sur M » écrit à plat se
+   lit comme un mot de la phrase, et on cherche un bouton à l'écran. */
+.relais kbd{ font-family:"Martian Mono",monospace; font-size:11px; padding:1px 6px; border:1px solid var(--bord); border-radius:5px }
+/* Le curseur des voix suit la phrase d'état : sans cet air, les deux se collent. */
+#voixBloc label.ch{ margin-top:14px }
+#voixBloc label.ch.ligne{ margin-top:12px }
 
 </style>
 <header><div class="tete">
@@ -2031,6 +2189,23 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
       <div class="rang-btn" style="justify-content:flex-start;margin-top:10px"><button class="btn creux" id="turnTester">Tester le relais</button></div>
       <p class="muet relais-etat" id="turnEtat" aria-live="polite"></p>
       <p class="muet relais-ou">O&#249; en obtenir un gratuitement, en trois minutes : <a href="https://www.metered.ca/stun-turn" target="_blank" rel="noopener">metered.ca</a>, formule gratuite &#8212; elle donne une adresse, un utilisateur et un mot de passe, avec un quota mensuel de quelques centaines de Mo : de l'ordre de deux heures de table &#224; deux quand TOUT passe par le relais. Il n'est consomm&#233; que si la connexion directe &#233;choue. Le relais ne voit que des paquets chiffr&#233;s.</p>
+    </details>
+    <!-- La voix autour de la table (visio.js). Le bouton « Micro » de la barre fait le geste
+         courant ; ici vivent les réglages qu'on pose une fois. Le relais vidéo au-dessus sert
+         aussi à la voix : c'est la MÊME connexion qui porte les deux. -->
+    <details class="relais" id="voixBloc">
+      <summary id="voixOuvrir"><span class="grave">Voix autour de la table</span><span class="muet">Micro coupé à l'arrivée &#8212; on l'ouvre quand on veut parler</span></summary>
+      <p class="muet relais-quoi">Depuis le 6 septembre 2026, on peut se parler autour de la table. Le silence reste ce qu'on trouve en arrivant : rien n'est diffusé tant que personne n'a cliqué. La voix voyage par la même connexion que la vidéo, directement d'un navigateur à l'autre.</p>
+      <div class="rang-btn" style="justify-content:flex-start;margin-top:10px"><button class="btn creux" id="voixBascule">Ouvrir mon micro</button></div>
+      <!-- Le bouton est FERMÉ hors d'une table : il prenait le micro depuis le hall, la page
+           n'offrait plus aucun contrôle pour le rendre (celui de la table reste caché en solo)
+           et ⚙ affirmait pendant ce temps « la table t'entend ». -->
+      <p class="muet relais-quoi" id="voixHorsTable" hidden>Tu n'es à aucune table : il n'y a personne &#224; qui parler. Ouvre ou rejoins une table &#224; plusieurs, le bouton &#171;&#160;Micro&#160;&#187; y attend dans la barre du bas.</p>
+      <p class="muet relais-etat" id="voixEtat" aria-live="polite"></p>
+      <label class="ch"><span class="grave">Volume des voix <em id="voixVolL" class="cadran" style="font-style:normal;font-size:var(--t-petit);color:var(--os)">100 %</em></span>
+        <input type="range" id="voixVol" min="0" max="100" step="5" value="100" title="Volume des voix" aria-label="Volume des voix des autres joueurs"></label>
+      <label class="ch ligne"><input type="checkbox" id="voixPousser"> Appuyer sur <kbd>M</kbd> pour parler</label>
+      <p class="muet relais-ou">Sans cette option, le micro reste ouvert et le bouton « Micro » de la table sert à se couper. Avec, il reste muet et ne s'ouvre que tant que <kbd>M</kbd> est enfoncée &#8212; <kbd>M</kbd> est la seule lettre que le jeu n'utilise pas.</p>
     </details>
   </div>
 </div></header>
@@ -2216,6 +2391,21 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
        des coups (un croupier ne propose pas « Séparer » avant la donne) ; pendant la main,
        « Distribuer » disparaît. Le CSS suit #v-table[data-phase]. -->
   <div class="zone-actions">
+    <!-- Le navigateur peut REFUSER de jouer un son tant qu'on n'a pas touché la page
+         (micro.mjs, creerSortieAudio). Alors on le DIT, et ce bouton rejoue tous les flux
+         d'un coup : un silence sans explication ferait croire que la voix est cassée. Il
+         n'apparaît que si la lecture a vraiment été bloquée.
+         ⚠️ LA NOTE ♪, PAS LE HAUT-PARLEUR 🔊. Mesuré au rendu : l'émoji sort en GRIS et
+         perd ses ondes à 13 px — on y lit un haut-parleur BARRÉ, soit l'inverse exact de
+         ce que le bouton fait. La note est le signe que ⚙ emploie déjà pour les sons, et
+         elle se dessine à toutes les tailles.
+         🚨 IL NE PARTAGE PLUS LA RANGÉE DES ACTIONS. Mesuré à 1280 × 800 : il la faisait
+         passer sur DEUX lignes (72 → 124 px) et retirait 52 px de feutre — au moment
+         précis où quelqu'un se met à parler —, puis les rendait d'un coup au premier
+         clic : la table se rétractait puis se redéployait sous le doigt, en pleine main.
+         Posé au-dessus de la rangée et HORS DU FLUX (le patron de .zone-actions .bulle),
+         il ne déplace plus rien du tout. -->
+    <button class="btn verre mini son-amis" id="bSonAmis" hidden title="Le navigateur a bloqué le son des autres : clique pour entendre la table">&#9834; Activer le son</button>
     <!-- Le rack du joueur (lot Jetons) : tes jetons, sur le rail devant toi. Visible pendant
          la phase de mise seulement ; il cède la place aux coups dès que la donne commence.
          Sur ordinateur il ne porte que les jetons : le tapis, la mise et les limites sont
@@ -2250,9 +2440,16 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
       <!-- L'aide à la décision (« Stratégie : Tirer ») : allumée d'office les vingt premières mains (table.js,
            aideActive). Elle vivait au fond du menu « Plus » — la seule chose dont un débutant a besoin. -->
       <button class="btn verre mini" id="bAide" aria-pressed="false" title="Afficher la stratégie de base pendant ton tour">Aide à la décision</button>
-      <!-- Ta caméra (visio.js) : tes amis te voient sur ton siège. Vidéo seule, JAMAIS de micro —
-           on compte en silence. Mémorisé (DB.camera). Caché en solo. -->
-      <button class="btn verre mini" id="bCamera" hidden aria-pressed="false" title="Ta caméra, pour que tes amis te voient sur ton siège — vidéo seule, jamais de micro">Caméra</button>
+      <!-- Ta caméra (visio.js) : tes amis te voient sur ton siège. Mémorisé (DB.camera). Caché en solo. -->
+      <button class="btn verre mini" id="bCamera" hidden aria-pressed="false" title="Ta caméra, pour que tes amis te voient sur ton siège">Caméra</button>
+      <!-- Ta voix (visio.js, micro.mjs). Trois états lisibles d'un coup d'œil, et le libellé
+           CHANGE avec eux — un point de couleur seul ne se lit pas en jouant :
+             « Micro »       éteint  · rien n'est demandé, le voyant du navigateur est noir
+             « Je parle »    ouvert  · point jade, et la barre de niveau bat sous le bouton
+             « Micro coupé » coupé   · point cinabre, le micro est tenu mais muet
+           MUET À L'ARRIVÉE, TOUJOURS : personne n'est diffusé sans avoir cliqué. Mémorisé
+           (DB.micro) — et même mémorisé, on revient en sourdine. Caché en solo. -->
+      <button class="btn verre mini" id="bMicro" hidden aria-pressed="false" data-etat="eteint" title="Ta voix, pour parler à la table — muet tant que tu ne l'ouvres pas"><span class="voix-txt">Micro</span></button>
       <div class="plus" id="plusTable">
         <button class="btn verre mini plus-btn" id="bPlus" aria-expanded="false" aria-controls="plusMenu" title="Plus d'options">Plus <span class="chevron" aria-hidden="true"></span></button>
         <div class="plus-menu" id="plusMenu">
@@ -2583,6 +2780,14 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 </section>
 
 </main>
+
+<!-- Le témoin de micro (visio.js). #bMicro vit dans la barre de la table, que aller()
+     cache en bloc dès qu'on va sur « Progrès », « Exercices » ou le hall : on continuait
+     de parler à la table sans qu'un seul pixel de la page ne le dise. Il n'apparaît QUE
+     quand le micro est tenu ET que le bouton de la table n'est pas à l'écran, et il
+     rend le micro d'un clic — un signal sans bouton pour l'éteindre serait une alarme
+     sans issue. -->
+<button class="voix-temoin" id="voixTemoin" hidden data-etat="ouvert"><span class="voix-txt">Micro ouvert</span></button>
 
 <div class="modale" id="modale" hidden><div class="laque boite" id="modaleBoite"></div></div>
 
@@ -3667,9 +3872,21 @@ M["camera"] = (function(){
 // tient déjà le capteur. Ici, on ne demande qu'une fois ; chacun prend une
 // référence, la rend quand il a fini, et la caméra s'éteint au dernier rendu.
 //
-// ⚠️ VIDÉO SEULE, JAMAIS DE MICRO. Décision : on ne demande jamais l'audio.
-// La parole détruit la mémoire de travail du comptage — on compte en silence —
-// et un seul voyant allumé vaut mieux que deux demandes de permission.
+// ⚠️ VIDÉO SEULE — et depuis le 6 SEPTEMBRE 2026 ce n'est plus une interdiction,
+// c'est un PARTAGE DU TRAVAIL. Ce fichier portait jusque-là « JAMAIS DE MICRO.
+// Décision : on ne demande jamais l'audio. La parole détruit la mémoire de travail
+// du comptage — on compte en silence ». LÉO A LEVÉ CETTE DÉCISION LE 6 SEPTEMBRE
+// 2026 : on peut se parler autour de la table. Le silence n'est plus une
+// impossibilité, c'est le CHOIX DE CHACUN — on arrive micro coupé, un bouton
+// l'ouvre, un bouton le referme. Qui veut compter en silence ne touche à rien.
+//
+// 🚨 MAIS L'AUDIO NE REVIENT PAS ICI : il vit dans micro.mjs, un module jumeau avec
+// sa propre permission et son propre compteur de références. Ajouter `audio: true`
+// aux contraintes ci-dessous serait plus court et faux trois fois : quelqu'un sans
+// webcam ne pourrait plus parler ; un refus de caméra emporterait la voix ; et le
+// détecteur de visage du mode Concentration, qui prend la caméra pour surveiller ton
+// attention, allumerait un micro que personne n'a demandé. `audio: false` reste donc
+// écrit noir sur blanc, et c'est délibéré — ce n'est pas un oubli à combler.
 //
 // Rien ici ne lève : un refus, une caméra absente ou occupée se lit dans
 // `etat` et `raison`. L'appelant affiche une phrase, il ne rattrape pas une
@@ -3764,6 +3981,362 @@ function cameraPartagee() {
 
 return {CONTRAINTES,ETATS_CAMERA,cameraPartagee};
 })();
+M["micro"] = (function(){
+// Un seul micro pour toute l'application, compté par références. Jumeau de camera.mjs.
+//
+// ⚠️ LE MICRO EST UNE PERMISSION SÉPARÉE DE LA CAMÉRA, et ce fichier existe pour ça.
+// Ajouter `audio: true` aux contraintes de camera.mjs aurait été deux lignes de moins
+// et faux trois fois : quelqu'un sans webcam ne pourrait plus parler ; un refus de
+// caméra emporterait la voix ; et le détecteur de visage du mode Concentration, qui
+// prend la caméra pour surveiller ton attention, allumerait un micro que personne n'a
+// demandé. Deux capteurs, deux permissions, deux voyants, deux modules.
+//
+// ⚠️ COUPÉ À L'ARRIVÉE, TOUJOURS. `prendre()` rend une piste EN SOURDINE : on tient le
+// capteur, on n'émet rien. Personne n'est diffusé sans avoir cliqué — c'est ce qui
+// permet de garder l'esprit d'origine (« on compte en silence ») tout en donnant la
+// parole à qui la veut. Le bouton « parler » de l'écran appelle `ouvrir()`, qui est
+// `prendre()` suivi de `couper(false)` ; s'il appelait `prendre()` seul, il tiendrait
+// un micro muet et personne ne comprendrait pourquoi. Au dernier `rendre()`, la
+// sourdine se remet toute seule : la fois d'après on arrive muet à nouveau.
+//
+// ⚠️ NE PAS CONFONDRE `coupee` ET `estCoupe()`. L'ÉTAT `coupee` veut dire « le micro
+// s'est arrêté TOUT SEUL » (permission retirée dans la barre d'adresse, casque
+// débranché) : il faut une phrase à l'écran. `estCoupe()` veut dire « TU t'es mis en
+// sourdine » : la piste est vivante, il faut un bouton. Les deux mots se ressemblent,
+// les deux situations n'ont rien à voir. Les noms d'états sont ceux de camera.mjs, au
+// féminin comme là-bas, parce que ce sont des IDENTIFIANTS de contrat — l'écran peut
+// traiter les deux capteurs avec le même aiguillage. La prose, elle, est dans `raison`
+// et parle bien du micro.
+//
+// Rien ici ne lève : un refus, un micro absent ou occupé se lit dans `etat` et
+// `raison`. L'appelant affiche une phrase, il ne rattrape pas une exception.
+
+// ⚠️ LES TROIS TRAITEMENTS SONT OBLIGATOIRES, l'annulation d'écho en premier : cinq
+// personnes dans la même pièce virtuelle, sans elle, produisent un larsen en trois
+// secondes — chacun renvoie dans son micro ce qui sort de ses haut-parleurs. Le bruit
+// et le gain automatique, eux, rendent audible un portable posé sur une table.
+// `video: false` est explicite, pas implicite : c'est la moitié du sujet de ce fichier.
+const CONTRAINTES_MICRO = {
+  audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+  video: false,
+};
+
+// Les mêmes états que la caméra, mot pour mot (cf. l'en-tête) :
+//   eteinte        personne ne le tient
+//   demande        getUserMedia est en cours
+//   active         une piste tourne, `flux` est posé (en sourdine tant qu'on n'a pas ouvert)
+//   refusee        tu as dit non (ou la page publiée n'y a pas droit)
+//   absente        aucun micro sur cet appareil
+//   occupee        une autre application tient le capteur
+//   indisponible   pas de navigator.mediaDevices : contexte non sécurisé, ou
+//                  page enveloppée sans droit micro (l'artefact)
+//   coupee         la piste s'est arrêtée toute seule (débranchée, permission retirée)
+const ETATS_MICRO = ["eteinte", "demande", "active", "refusee", "absente", "occupee", "indisponible", "coupee"];
+
+// Les seuils du vumètre, à HYSTÉRÉSIS : on s'allume à `OUVRE`, on ne s'éteint qu'en
+// dessous de `FERME` et seulement après `MAINTIEN_MS` de calme. Avec un seuil unique,
+// l'anneau du siège clignote à chaque syllabe — entre deux mots, la voix passe sous
+// n'importe quel seuil. Mesuré à l'oreille : 0,02 en RMS, c'est une voix normale à
+// trente centimètres ; 0,012, c'est le souffle de la pièce.
+const SEUIL_OUVRE = 0.02;
+const SEUIL_FERME = 0.012;
+const MAINTIEN_MS = 400;
+
+function classerErreur(e) {
+  const n = (e && e.name) || "";
+  if (n === "NotAllowedError" || n === "PermissionDeniedError" || n === "SecurityError") return ["refusee", "Tu as refusé le micro, ou cette page n'y a pas droit."];
+  if (n === "NotFoundError" || n === "DevicesNotFoundError" || n === "OverconstrainedError") return ["absente", "Aucun micro sur cet appareil."];
+  if (n === "NotReadableError" || n === "TrackStartError" || n === "AbortError") return ["occupee", "Une autre application tient déjà le micro."];
+  return ["indisponible", "Micro indisponible ici (" + (n || "erreur inconnue") + ")."];
+}
+
+// ── Le vumètre ─────────────────────────────────────────────────────────────
+// Rend { niveau(), parle(), fermer() }. Ne lève jamais : sans contexte audio, sans
+// flux ou sans AnalyserNode, il rend un vumètre MORT (niveau 0, parle false) plutôt
+// qu'une exception — un indicateur de volume ne doit jamais casser une conversation.
+//
+// ⚠️ ON NE CRÉE PAS D'AudioContext ICI. L'appelant passe le sien (socle.js en fabrique
+// un au chargement, `creerAC()`). Un second contexte coûte plus d'une demi-seconde de
+// gel à l'ouverture et peut être refusé net par le navigateur hors geste utilisateur.
+//
+// ⚠️ SUR CHROME, UN FLUX DISTANT NE S'ANALYSE QUE S'IL EST AUSSI EN TRAIN D'ÊTRE LU.
+// Un AnalyserNode branché sur un MediaStream venu d'une RTCPeerConnection rend du
+// silence tant que ce flux n'est pas attaché à un élément média en cours de lecture.
+// Garde donc l'élément <audio> dans le document et joue-le (cf. creerSortieAudio) :
+// sans ça le vumètre des autres reste plat et on croit que personne ne parle.
+//
+// La lecture est « tirée », pas « poussée » : rien ne tourne en boucle ici, c'est
+// l'appel à niveau() ou parle() qui échantillonne. L'écran décide de sa cadence — et
+// un écran qui cesse de demander ne consomme plus rien.
+function creerVumetre({ ac, flux, ouvre = SEUIL_OUVRE, ferme = SEUIL_FERME, maintien = MAINTIEN_MS } = {}) {
+  let source = null, an = null, tampon = null, actif = false, depuis = 0, dernier = 0, mort = false;
+  try {
+    if (ac && flux && typeof ac.createMediaStreamSource === "function" && flux.getAudioTracks && flux.getAudioTracks().length) {
+      // Le contexte peut dormir (aucun geste depuis le chargement) : un contexte
+      // suspendu rend des zéros, ce qui se lit comme « il ne parle pas ».
+      if (ac.state === "suspended" && ac.resume) ac.resume().catch(() => {});
+      source = ac.createMediaStreamSource(flux);
+      an = ac.createAnalyser();
+      an.fftSize = 512; an.smoothingTimeConstant = 0.2;
+      source.connect(an);
+      // ⚠️ L'analyseur est un CUL-DE-SAC : on ne le connecte JAMAIS à ac.destination.
+      // Le faire rejouerait ta propre voix dans tes haut-parleurs, avec le retard du
+      // traitement — c'est-à-dire le larsen que l'annulation d'écho essaie d'éviter.
+      tampon = new Float32Array(an.fftSize);
+    }
+  } catch (e) { source = null; an = null; }
+  const lire = () => {
+    if (!an || mort) return 0;
+    try { an.getFloatTimeDomainData(tampon); } catch (e) { return dernier; }
+    let s = 0; for (let i = 0; i < tampon.length; i++) s += tampon[i] * tampon[i];
+    const n = Math.sqrt(s / tampon.length);
+    dernier = n;
+    const t = Date.now();
+    if (n >= ouvre) { actif = true; depuis = t; }
+    else if (n >= ferme) { depuis = t; }                       // encore au-dessus du seuil bas : on tient
+    else if (actif && t - depuis > maintien) actif = false;    // vraiment silencieux, et depuis assez longtemps
+    return n;
+  };
+  return {
+    // Le volume instantané, de 0 à 1 (RMS). 0 si le vumètre est mort.
+    niveau() { return lire(); },
+    // Vrai tant que ça parle, hystérésis comprise. Échantillonne au passage.
+    parle() { lire(); return actif; },
+    // Vrai si ce vumètre ne mesurera jamais rien (pas de contexte, pas de piste).
+    get vivant() { return !!an; },
+    fermer() {
+      mort = true; actif = false; dernier = 0;
+      try { if (source) source.disconnect(); } catch (e) {}
+      try { if (an) an.disconnect(); } catch (e) {}
+      source = null; an = null;
+    },
+  };
+}
+
+// ── Le son des autres ──────────────────────────────────────────────────────
+// Un élément <audio> DÉDIÉ par pair, jamais le <video> de sa vignette.
+//
+// 🚨 UN <video> RESTE `muted`, TOUJOURS. Si le son distant sortait du <video> de la
+// vignette, un ami qui coupe sa caméra deviendrait MUET du même coup — la vignette
+// n'a plus d'élément vidéo, donc plus de son, et personne ne comprendrait pourquoi.
+// L'image et la voix arrivent par deux pistes indépendantes : elles sortent par deux
+// éléments indépendants. Et ton propre flux ne se rejoue JAMAIS chez toi.
+//
+// 🚨 LA LECTURE AUTOMATIQUE PEUT ÊTRE REFUSÉE. `play()` rend une promesse qui peut
+// être rejetée par la politique du navigateur (aucun geste sur la page). On l'attrape,
+// on le DIT (`onBloque`) et `rejouer()` relance tout d'un coup — c'est ce que fait le
+// bouton « 🔊 Activer le son ». Un silence sans explication fait croire que la
+// fonction ne marche pas ; ici on a une phrase et un bouton.
+function creerSortieAudio({ conteneur = null, volume = 1 } = {}) {
+  const elements = new Map();   // ⚠️ pas de `this` dans ce qui suit : l'appelant déstructure
+  const abonnes = new Set();
+  let bloque = false, vol = Math.max(0, Math.min(1, volume));
+  const hote = () => conteneur || (typeof document !== "undefined" ? document.body : null);
+  const dire = () => abonnes.forEach(f => { try { f(bloque); } catch (e) {} });
+  const jouer = a => {
+    const p = a.play();
+    if (p && p.catch) p.catch(() => { if (!bloque) { bloque = true; dire(); } });
+  };
+  const sortie = {
+    // Pose (ou remplace) le flux audio d'un pair. Rend l'élément, pour qu'un vumètre
+    // puisse s'y brancher en sachant qu'il est bien en train d'être lu (cf. Chrome).
+    poser(id, flux) {
+      const h = hote(); if (!h) return null;
+      let a = elements.get(id);
+      if (!a) {
+        a = document.createElement("audio");
+        a.autoplay = true; a.playsInline = true; a.setAttribute("playsinline", "");
+        a.dataset.pair = id;
+        // Hors de l'écran mais DANS le document : un élément détaché ne joue pas, et
+        // un flux qui ne joue pas ne s'analyse pas.
+        a.style.cssText = "position:absolute;width:0;height:0;opacity:0;pointer-events:none";
+        elements.set(id, a); h.appendChild(a);
+      }
+      if (a.srcObject !== flux) a.srcObject = flux;
+      a.volume = vol; a.muted = false;
+      jouer(a);
+      return a;
+    },
+    retirer(id) {
+      const a = elements.get(id); if (!a) return;
+      elements.delete(id);
+      try { a.pause(); a.srcObject = null; a.remove(); } catch (e) {}
+    },
+    element(id) { return elements.get(id) || null; },
+    // Le volume des autres, de 0 à 1 (le réglage de ⚙).
+    volume(v) {
+      if (v !== undefined) { vol = Math.max(0, Math.min(1, Number(v) || 0)); elements.forEach(a => { a.volume = vol; }); }
+      return vol;
+    },
+    // Le bouton « 🔊 Activer le son » : dans un geste utilisateur, tout repart.
+    rejouer() { bloque = false; elements.forEach(jouer); dire(); return !bloque; },
+    get bloque() { return bloque; },
+    onBloque(f) { abonnes.add(f); return () => abonnes.delete(f); },
+    get pairs() { return [...elements.keys()]; },
+    fermer() { for (const id of [...elements.keys()]) sortie.retirer(id); abonnes.clear(); },
+  };
+  return sortie;
+}
+
+// ── Le micro partagé ───────────────────────────────────────────────────────
+// L'usine. Dans l'APPLICATION on passe toujours par `microPartage()` : deux micros
+// créés à la main, ce sont deux getUserMedia, deux voyants, et sur certains appareils
+// le second échoue parce que le premier tient le capteur. `creerMicro()` est là pour
+// les tests, qui ont besoin d'une machine à états neuve à chaque fois.
+function creerMicro() {
+  let refs = 0, flux = null, etat = "eteinte", raison = "", detail = "", enCours = null;
+  let coupe = true;                       // en sourdine à l'arrivée, toujours
+  let vumetre = null, pisteMesure = null;
+  const abonnes = new Set(), sourdineAbonnes = new Set();
+  const poser = (e, r, d) => { etat = e; raison = r || ""; detail = d || ""; abonnes.forEach(f => { try { f(etat, raison, flux); } catch (_) {} }); };
+  const direSourdine = () => sourdineAbonnes.forEach(f => { try { f(coupe); } catch (_) {} });
+  const appliquer = () => { if (flux) flux.getAudioTracks().forEach(t => { try { t.enabled = !coupe; } catch (_) {} }); };
+  const fermerMesure = () => {
+    if (vumetre) { try { vumetre.fermer(); } catch (_) {} vumetre = null; }
+    if (pisteMesure) { try { pisteMesure.stop(); } catch (_) {} pisteMesure = null; }
+  };
+  const eteindre = () => {
+    fermerMesure();
+    if (flux) flux.getTracks().forEach(t => { try { t.stop(); } catch (_) {} });
+    flux = null;
+  };
+  const demander = async () => {
+    if (!navigator || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      poser("indisponible", "Pas de micro dans ce contexte : ouvre le site (GitHub Pages) plutôt que la page publiée.", "navigator.mediaDevices absent");
+      return null;
+    }
+    poser("demande", "");
+    try {
+      const f = await navigator.mediaDevices.getUserMedia(CONTRAINTES_MICRO);
+      // La piste peut mourir sans nous : casque débranché, permission retirée dans la
+      // barre d'adresse. On le DIT, au lieu de laisser quelqu'un parler dans le vide.
+      f.getAudioTracks().forEach(t => t.addEventListener("ended", () => {
+        if (flux !== f) return;
+        eteindre(); poser("coupee", "Le micro s'est arrêté.");
+      }));
+      // Quelqu'un a tout rendu pendant la demande : on n'allume pas un voyant que
+      // personne ne regarde.
+      if (refs <= 0) { f.getTracks().forEach(t => t.stop()); poser("eteinte", ""); return null; }
+      flux = f; appliquer(); poser("active", ""); return f;
+    } catch (e) {
+      const [ee, rr] = classerErreur(e);
+      // `detail` garde le nom et le message techniques : la phrase est pour l'écran, le détail pour le journal.
+      poser(ee, rr, ((e && e.name) || "") + (e && e.message ? " : " + e.message : "")); return null;
+    }
+  };
+  // Compte les CHANGEMENTS de sourdine. Sert à `ouvrir()` : cf. l'avertissement là-bas.
+  let versionSourdine = 0;
+  const api = {
+    // Prend une référence. Rend TOUJOURS { flux, etat, raison, coupe } — jamais une
+    // exception. La piste rendue est EN SOURDINE : tenir le micro n'est pas parler.
+    async prendre() {
+      refs++;
+      if (flux) return { flux, etat, raison, coupe };
+      if (!enCours) enCours = demander().finally(() => { enCours = null; });
+      const f = await enCours;
+      return { flux: f, etat, raison, coupe };
+    },
+    // Prendre ET ouvrir, en un geste : c'est ce que fait le bouton « parler ». Séparé
+    // de `prendre()` pour qu'on ne puisse pas se retrouver, sans le vouloir, avec un
+    // micro tenu et muet que l'écran croit ouvert.
+    //
+    // 🚨 SI QUELQU'UN A TOUCHÉ À LA SOURDINE PENDANT LA DEMANDE, SON GESTE GAGNE. Cet
+    // `await` dure le temps que le navigateur affiche son invite de permission, c'est-à-dire
+    // aussi longtemps qu'on veut : pendant ce temps un clic sur le bouton, la touche M ou ⚙
+    // peuvent demander la sourdine. Un `couper(false)` inconditionnel à l'arrivée écrasait
+    // ces gestes — mesuré : TROIS clics « me couper » pendant l'invite finissaient en micro
+    // OUVERT, c'est-à-dire l'exact contraire de ce qu'on venait de demander trois fois. On
+    // n'ouvre donc que si personne n'a rien dit entre-temps.
+    async ouvrir() {
+      const v = versionSourdine;
+      const r = await api.prendre();
+      if (r.flux && versionSourdine === v) api.couper(false);
+      return { flux: r.flux, etat, raison, coupe };
+    },
+    // Rend une référence. Au dernier rendu, le capteur s'éteint ET la sourdine
+    // revient : la prochaine arrivée est muette, comme la première.
+    rendre() {
+      refs = Math.max(0, refs - 1);
+      if (refs > 0) return;
+      const tenait = !!flux || !!vumetre;
+      eteindre();
+      if (!coupe) { coupe = true; direSourdine(); }
+      // Un refus ou un appareil absent GARDE son état : l'écran doit pouvoir dire
+      // pourquoi ça n'a pas marché même après avoir tout rendu. On ne repasse à
+      // « eteinte » que si on tenait vraiment quelque chose.
+      if (tenait) poser("eteinte", "");
+    },
+    // La sourdine. `couper(true)` met en sourdine, `couper(false)` ouvre.
+    //
+    // 🚨 ON BASCULE `enabled`, ON NE RETIRE PAS LA PISTE. C'est instantané, ça ne
+    // renégocie rien, et le pair d'en face ne voit pas sa connexion vaciller — alors
+    // qu'un replaceTrack(null) déclenche une ronde de négociation à chaque clic, et
+    // sous le quota du courtier MQTT une ronde de plus, c'est une ronde qui se perd.
+    // Conséquence à connaître : une piste coupée n'émet PLUS RIEN, donc un vumètre
+    // branché dessus lirait zéro — c'est pour ça que `mesurer()` écoute une copie.
+    couper(v) {
+      // ⚠️ La version bouge à chaque APPEL, pas à chaque changement : `couper(true)` sur
+      // un micro déjà muet ne change rien, mais c'est bien quelqu'un qui vient de dire
+      // « tais-moi » — et c'est exactement ce que `ouvrir()` ne doit pas écraser (le
+      // micro arrive muet, donc pendant l'invite l'annulation est toujours un no-op).
+      versionSourdine++;
+      const n = v === undefined ? !coupe : !!v;
+      if (n === coupe) return coupe;
+      coupe = n; appliquer(); direSourdine();
+      return coupe;
+    },
+    estCoupe() { return coupe; },
+    // S'abonner à la sourdine : f(coupe). Renvoie le désabonnement.
+    onSourdine(f) { sourdineAbonnes.add(f); return () => sourdineAbonnes.delete(f); },
+    // S'abonner aux changements d'état : f(etat, raison, flux). Renvoie le désabonnement.
+    onEtat(f) { abonnes.add(f); return () => abonnes.delete(f); },
+    // Branche le vumètre sur TA voix, avec l'AudioContext de l'appelant (socle.js).
+    //
+    // ⚠️ IL MESURE UNE COPIE DE LA PISTE, et c'est tout l'intérêt : la piste envoyée
+    // est mise en sourdine par `enabled = false`, ce qui la rend SILENCIEUSE pour
+    // n'importe quel analyseur. Sans copie, « est-ce que mon micro marche ? » — la
+    // première question de tout le monde — ne se répondrait qu'en parlant à quelqu'un.
+    // La copie est un clone du même capteur : ni permission ni voyant de plus, et elle
+    // ne part nulle part (l'analyseur ne sort sur rien).
+    // ⚠️ `niveau()` dit donc « mon micro capte », JAMAIS « on m'entend ». C'est
+    // `estCoupe()` qui dit si on t'entend, et l'écran doit distinguer les deux.
+    mesurer(ac) {
+      if (vumetre) return vumetre;
+      if (!flux || !ac) return null;
+      let source = flux;
+      try {
+        const p = flux.getAudioTracks()[0];
+        if (p && typeof p.clone === "function" && typeof MediaStream === "function") {
+          pisteMesure = p.clone(); pisteMesure.enabled = true;
+          source = new MediaStream([pisteMesure]);
+        }
+      } catch (e) { source = flux; }        // pas de clone : on mesure la piste réelle, donc zéro en sourdine
+      vumetre = creerVumetre({ ac, flux: source });
+      return vumetre;
+    },
+    // 0 à 1 : ce que le micro capte, en sourdine comme ouvert. 0 sans `mesurer()`.
+    niveau() { return vumetre ? vumetre.niveau() : 0; },
+    // Vrai tant que ça parle (hystérésis). Faux sans `mesurer()`.
+    parle() { return vumetre ? vumetre.parle() : false; },
+    get vumetre() { return vumetre; },
+    get flux() { return flux; },
+    get etat() { return etat; },
+    get raison() { return raison; },
+    get detail() { return detail; },
+    get references() { return refs; },
+    get coupe() { return coupe; },
+  };
+  return api;
+}
+
+let INSTANCE = null;
+function microPartage() {
+  if (!INSTANCE) INSTANCE = creerMicro();
+  return INSTANCE;
+}
+
+return {CONTRAINTES_MICRO,ETATS_MICRO,SEUIL_OUVRE,SEUIL_FERME,MAINTIEN_MS,creerVumetre,creerSortieAudio,creerMicro,microPartage};
+})();
 M["visio"] = (function(){
 // La visio autour de la table : chacun voit les vignettes des autres sièges.
 //
@@ -3846,19 +4419,46 @@ M["visio"] = (function(){
 // en STUN seul, et on le DIT. Sur `failed` sans relais, l'appelant affiche
 // pourquoi (jamais un échec silencieux) — cf. `SANS_RELAIS_MESSAGE`.
 //
-// ⚠️ PAS DE MICRO. Vidéo seule, par décision (cf. camera.mjs) : on compte en
-// silence, la parole détruit la mémoire de travail.
+// ══ La PAROLE : ajoutée le 6 SEPTEMBRE 2026 ═══════════════════════════════
+// Jusqu'au 5 septembre 2026, ce fichier portait « ⚠️ PAS DE MICRO. Vidéo seule,
+// par décision : on compte en silence, la parole détruit la mémoire de travail ».
+// LÉO A TRANCHÉ L'INVERSE LE 6 SEPTEMBRE 2026 : on peut se parler autour de la
+// table. Le raisonnement n'était pas faux, il était trop large — parler pendant
+// qu'on compte coûte cher, mais entre deux mains ça ne coûte rien, et une table
+// muette n'est pas une table. Le silence devient donc un CHOIX DE CHACUN, pas une
+// impossibilité : on arrive MICRO COUPÉ, un bouton l'ouvre, un bouton le referme.
+// Qui veut compter en silence ne touche à rien et n'entend que ce qu'il a demandé
+// d'entendre.
+// ⚠️ Ne « répare » pas ça en retirant l'audio : la trace ci-dessus est là pour
+// qu'on sache que le silence a été voulu, puis levé, et par qui.
+//
+// Ce que ça change ici : un SECOND transcepteur par paire, audio, à côté du vidéo et
+// TOUJOURS DANS LE MÊME ORDRE (vidéo puis audio) — et la façon dont ces deux-là
+// naissent, qui a dû être corrigée (cf. garnir() et adopter() plus bas). Le reste —
+// négociation parfaite, file d'envoi à 130 ms, lots de candidats, ré-offre, testament,
+// présence — n'a pas bougé d'une ligne. La voix coûte 24 à 40 kbit/s par pair en
+// Opus : négligeable à côté de la vidéo, ce n'est pas elle qui limite à cinq.
 
 const { sujet } = M["net"];
 const PAIRS_MAX = 5;
+// Ce qu'un pair peut dire de son micro. « ferme » (pas de micro du tout) et « coupe »
+// (tenu, mais muet) se ressemblent pour l'oreille — jamais pour ce qu'on en fait : on
+// relance quelqu'un en sourdine, on n'attend rien de quelqu'un sans micro. Le SILENCE,
+// lui, ne s'en déduit pas : il se lit sur le son reçu (l'anneau de parole).
+const ETATS_VOIX = ["ferme", "coupe", "ouvert"];
 const LIEN_PAGES = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
 const MESSAGE_ARTEFACT = "La visio ne peut pas marcher sur cette page publiée : sa politique de sécurité bloque les connexions vers le courtier. Ouvre le site pour voir tes amis : " + LIEN_PAGES;
 // STUN seul : deux serveurs de Google, gratuits, qui ne font qu'apprendre à chacun
 // son adresse publique. C'est ce qu'on a quand aucun relais n'est configuré.
 const SERVEURS_STUN = ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"];
 // Ce que dit la vignette quand la connexion directe échoue et qu'aucun relais n'est là.
-const SANS_RELAIS_MESSAGE = "La vidéo directe est bloquée par ta connexion : ajoute un relais dans ⚙";
-const AVEC_RELAIS_MESSAGE = "La vidéo ne passe pas, même par le relais : teste-le dans ⚙";
+// 🚨 « VIDÉO », TOUT SEUL, ÉTAIT UN MENSONGE PAR OMISSION : l'image et la VOIX voyagent
+// dans la MÊME RTCPeerConnection (même BUNDLE, même ICE). Quand elle échoue, les deux
+// tombent ensemble — et celui qui gardait exprès sa caméra fermée pour ne faire que
+// parler lisait « la vidéo est bloquée », en concluait « tant mieux » et ne comprenait
+// jamais pourquoi personne ne lui répondait. Ces libellés dataient d'avant la voix.
+const SANS_RELAIS_MESSAGE = "Ta connexion bloque le lien direct : ni image ni voix ne passent. Ajoute un relais dans ⚙";
+const AVEC_RELAIS_MESSAGE = "Rien ne passe, même par le relais : ni image ni voix. Teste-le dans ⚙";
 // Les URL d'un relais, telles qu'on les tape dans ⚙ : une ou plusieurs, séparées par
 // des virgules, des espaces ou des retours à la ligne ; « host:port » sans schéma
 // devient « turn:host:port ». Une ligne vide ou illisible est ignorée.
@@ -3956,27 +4556,40 @@ const hex = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); retur
 //   salon    : le code du salon (le même que pour les cartes)
 //   moi      : mon identifiant dans le salon (celui des pairs de net.mjs)
 //   flux     : mon MediaStream local (camera.mjs), ou rien — je verrai sans être vu
+//   micro    : mon MediaStream de voix (micro.mjs), ou rien — j'entendrai sans parler
 //   turn     : { url, user, pass } du relais configuré dans ⚙, ou rien (STUN seul)
-//   onFlux(id, MediaStream)   un flux distant est arrivé (ou a changé)
+//   onFlux(id, MediaStream)   une VIDÉO distante est arrivée (ou a changé)
+//   onAudio(id, MediaStream)  une VOIX distante est arrivée (ou a changé)
 //   onDepart(id)              ce pair est parti, sa vignette doit disparaître
+//   onVoix(id, voix)          ce pair dit où en est SON micro : « ouvert », « coupe », « ferme »
 //   onEtat(id, etat)          ice : new·checking·connected·completed·disconnected·failed·closed
 //                             + refuse (sixième pair), + parti,
 //                             + bloque (ICE `failed` : la connexion directe ne passe pas —
 //                               `api.sansRelais` dit si un relais aurait pu aider)
-// Rend { demarrer(), recevoir(sujet, brut), attacherFlux(flux), arrivee(id), depart(id),
-//        fermer(), pairs (Map id → { id, pc, session, polite, ice, collecteMs }), sansRelais }.
+// 🚨 `onFlux` NE VOIT QUE LA VIDÉO, `onAudio` QUE LA VOIX — deux rappels, jamais un
+// seul avec un genre en troisième argument. Un écran écrit avant la parole ignorerait
+// ce troisième argument et poserait un flux SANS IMAGE dans son <video> : la tête de
+// l'ami deviendrait un rectangle noir le jour où il ouvre son micro. Deux rappels, rien
+// à casser, et l'écran d'aujourd'hui continue de marcher pendant qu'on branche le son.
+// Rend { demarrer(), recevoir(sujet, brut), attacherFlux(flux), attacherMicro(flux),
+//        couperMicro(bool), microCoupe(), arrivee(id), depart(id), fermer(),
+//        pairs (Map id → { id, pc, session, polite, ice, collecteMs, tr, trA }), sansRelais }.
 // `collecteMs` : durée de la collecte ICE (null tant qu'elle n'est pas finie) — avec un
 // TURN mort elle ne finissait jamais ; le banc l'exige sous 5 s.
 // ⚠️ L'appelant DOIT relayer chaque message reçu de net.mjs à `recevoir` : net.mjs
 // n'a qu'un seul onMessage, posé à la connexion. Les sujets étrangers sont ignorés.
-function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, onFlux, onDepart, onEtat, onJournal } = {}) {
+function creerVisio({ reseau, salon, moi, flux = null, micro = null, nom = "", turn = null, onFlux, onAudio, onDepart, onEtat, onVoix, onJournal } = {}) {
   const iceServers = serveursIce(turn), sansRelais = iceServers.length < 2;
   const session = hex(6);            // change à chaque rechargement : un pair relancé est reconnu comme neuf
   const pairs = new Map();
   const base = `${sujet(salon)}/visio/`;
-  let local = flux, salutMinuteur = null, menageMinuteur = null, ferme = false;
+  let local = flux, localMicro = micro, salutMinuteur = null, menageMinuteur = null, ferme = false;
   const journal = (...a) => { if (onJournal) try { onJournal(a.join(" ")); } catch (_) {} };
   const etat = (id, e) => { if (onEtat) try { onEtat(id, e); } catch (_) {} };
+  // Ce qu'un pair dit de SON micro : « ouvert », « coupe », « ferme ». On ne le déduit
+  // jamais du son reçu — un silence n'est pas une sourdine, et c'est justement la
+  // confusion qu'on essaie de lever.
+  const voix = (id, v) => { if (onVoix && ETATS_VOIX.includes(v)) try { onVoix(id, v); } catch (_) {} };
   const publier = (a, o) => { try { reseau.publier(base + moi + "/" + a, JSON.stringify(Object.assign({ s: session }, o))); } catch (e) { journal("publication ratée", e.message); } };
 
   // ── La file d'envoi cadencée ─────────────────────────────────────────────
@@ -3994,7 +4607,12 @@ function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, on
     }, Math.max(0, ENVOI_ECART_MS - (Date.now() - dernierEnvoi)));
   };
   const pousser = (a, o, p) => { file.push({ a, o, p }); pomper(); };
-  const salut = a => pousser(a || "tous", { t: "salut", n: nom });
+  // ⚠️ L'ÉTAT DE MA VOIX VOYAGE AVEC LE SALUT, en plus d'être publié quand il change.
+  // Le salut est déjà périodique : un pair qui arrive en retard, ou un message perdu
+  // sous le quota du courtier, se rattrapent tout seuls à la prochaine ronde — sans
+  // quoi un badge « en sourdine » pourrait rester faux jusqu'à la fin de la partie.
+  let maVoix = "ferme";
+  const salut = a => pousser(a || "tous", { t: "salut", n: nom, v: maVoix });
 
   const disponible = () => typeof RTCPeerConnection === "function";
   // Une offre ou une réponse emporte les candidats déjà connus : si elle doit être
@@ -4011,11 +4629,80 @@ function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, on
     const c = p.lot; p.lot = [];
     pousser(p.id, { t: "candidats", c }, p);
   };
+  // ── Les deux transcepteurs d'une paire ───────────────────────────────────
+  // Un pour l'image, un pour la voix, posés une fois pour toutes : ensuite on allume,
+  // on coupe et on rallume en REMPLAÇANT la piste, sans jamais ajouter de section m=.
+  // Ils existent même sans caméra ni micro, pour qu'on puisse VOIR sans être vu et
+  // ENTENDRE sans parler, et pour que la négociation parte tout de suite.
+  //
+  // 🚨 CELUI QUI RÉPOND NE LES CRÉE PAS. C'est contre-intuitif, et ça a coûté cher :
+  // setRemoteDescription n'associe PAS un transcepteur né d'addTransceiver à une
+  // section m= offerte — il en fabrique un neuf à côté. Les nôtres restaient donc sans
+  // mid et repartaient dans une SECONDE offre. Mesuré au banc, deux navigateurs, sans
+  // la moindre collision d'offres : celui qui répond se retrouvait avec QUATRE sections
+  // (vidéo, audio, vidéo, audio), sa réponse annonçait « recvonly » alors qu'il avait
+  // sa caméra, et il lui fallait une ronde de plus — celle que tout ce fichier
+  // s'applique à éviter — pour se montrer. Ça marchait quand même, donc personne ne le
+  // voyait. Jusqu'à ce qu'un micro s'ouvre plus tard : les sections en trop tombent
+  // hors du groupe BUNDLE, et l'image GELAIT SEPT SECONDES DES DEUX CÔTÉS pendant que
+  // le son, lui, continuait de passer. C'est ce gel qui a fini par trahir la
+  // duplication, des mois après qu'elle a commencé.
+  //
+  // Donc : l'offreur CRÉE (garnir), celui qui répond ADOPTE (adopter) ce que la
+  // description distante vient de faire naître. Une paire, deux sections m=, une ronde.
+  //
+  // 🚨 L'ORDRE RESTE UN CONTRAT : VIDÉO PUIS AUDIO. C'est garnir() qui le fixe ; comme
+  // l'offreur est toujours l'un de nous deux, celui qui répond en hérite. Ne pas
+  // séparer ni inverser ces deux lignes.
+  //
+  // `seulement` vaut "image", "voix", ou rien du tout pour les deux. Attacher la
+  // caméra ne doit pas venir remuer le transcepteur de la voix, ni l'inverse : ce sont
+  // deux gestes indépendants et un `replaceTrack` de trop est un risque pour rien.
+  function brancher(p, seulement) {
+    const v = local && local.getVideoTracks()[0];
+    const a = localMicro && localMicro.getAudioTracks()[0];
+    for (const [tr, piste, quoi] of [[p.tr, v, "image"], [p.trA, a, "voix"]]) {
+      if (!tr || (seulement && seulement !== quoi)) continue;   // je réponds et l'offre n'est pas encore là : adopter() s'en chargera
+      try { tr.sender.replaceTrack(piste || null); tr.direction = piste ? "sendrecv" : "recvonly"; }
+      catch (e) { journal(quoi + " non branchée", p.id, e.message); }
+    }
+  }
+  function garnir(p) {
+    if (p.tr) return;
+    const v = local && local.getVideoTracks()[0];
+    p.tr = p.pc.addTransceiver(v || "video", { direction: v ? "sendrecv" : "recvonly" });
+    const a = localMicro && localMicro.getAudioTracks()[0];
+    p.trA = p.pc.addTransceiver(a || "audio", { direction: a ? "sendrecv" : "recvonly" });
+  }
+  // Après une offre distante : les transcepteurs qui portent un mid sont ceux qui
+  // comptent, on prend ceux-là. Et on ferme les nôtres restés SANS mid : deux offres
+  // croisées peuvent nous en avoir laissé un, et un orphelin ajouterait une section m=
+  // à la prochaine offre — c'est-à-dire qu'il rejouerait le défaut ci-dessus.
+  function adopter(p) {
+    const pris = { video: null, audio: null };
+    for (const t of ((p.pc.getTransceivers && p.pc.getTransceivers()) || [])) {
+      const k = (t.receiver && t.receiver.track && t.receiver.track.kind) || "";
+      if ((k === "video" || k === "audio") && t.mid !== null && !pris[k]) pris[k] = t;
+    }
+    for (const [k, mien] of [["video", p.tr], ["audio", p.trA]]) {
+      if (pris[k] && mien && mien !== pris[k] && mien.mid === null) {
+        try { mien.stop(); journal("transcepteur orphelin fermé", p.id, k); }
+        catch (e) { journal("orphelin non fermé", p.id, e.message); }
+      }
+    }
+    p.tr = pris.video || p.tr;
+    p.trA = pris.audio || p.trA;
+    brancher(p);   // ma caméra et ma voix partent DANS LA RÉPONSE, pas dans une ronde de plus
+  }
   async function offrir(p, pourquoi) {
     const pc = p.pc;
-    if (pc.signalingState !== "stable") return;
+    // makingOffer en plus de l'état : garnir() déclenche negotiationneeded, qui rappelle
+    // offrir() avant que setLocalDescription ait eu le temps de quitter « stable » —
+    // sans ce garde, deux offres partiraient pour une seule paire.
+    if (p.makingOffer || pc.signalingState !== "stable") return;
     try {
       p.makingOffer = true;
+      garnir(p);
       await pc.setLocalDescription();
       journal("offre", p.id, pourquoi);
       envoyerDescription(p);
@@ -4030,15 +4717,21 @@ function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, on
     const polite = moi < id;
     const p = { id, session: sess, polite, ice: "new", vu: Date.now(), ne: Date.now(), pc: null,
       makingOffer: false, ignoreOffer: false, answerPending: false, attente: [], redemarrages: 0,
-      candidats: [], lot: [], lotMinuteur: null, dernierEnvoiOffre: 0, attentePolie: null, collecteMs: null };
+      candidats: [], lot: [], lotMinuteur: null, dernierEnvoiOffre: 0, attentePolie: null, collecteMs: null,
+      tr: null, trA: null };   // posés par garnir() si j'offre, par adopter() si je réponds
     const pc = new RTCPeerConnection({ iceServers });
     p.pc = pc;
     pairs.set(id, p);
-    // Un seul émetteur/récepteur vidéo par paire, créé tout de suite pour que la
-    // négociation parte même sans caméra locale (on veut VOIR sans être vu).
-    const piste = local && local.getVideoTracks()[0];
-    p.tr = pc.addTransceiver(piste || "video", { direction: piste ? "sendrecv" : "recvonly" });
+    // Les deux transcepteurs (un vidéo, un audio) sont posés plus bas : par garnir()
+    // si c'est nous qui offrons, par adopter() si c'est nous qui répondons. Voir le
+    // gros avertissement devant ces deux fonctions — les créer ICI, des deux côtés,
+    // était le défaut qui doublait les sections m= et gelait l'image sept secondes.
+    //
+    // Ce rappel-ci ne sert qu'aux renégociations d'APRÈS : on allume sa caméra, on
+    // ouvre son micro. La PREMIÈRE négociation, elle, est lancée en toutes lettres au
+    // bas de cette fonction.
     pc.onnegotiationneeded = () => {
+      if (p.makingOffer) return;   // c'est garnir() qui vient de poser les transcepteurs
       // Première négociation : l'impoli offre, le poli attend qu'on lui offre.
       // Deux offres croisées se règlent (négociation parfaite), mais coûtent une
       // ronde de plus — et sous le quota du courtier, une ronde de plus se perd.
@@ -4067,10 +4760,27 @@ function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, on
       }
     };
     pc.ontrack = ({ track, streams }) => {
+      // Les pistes arrivent chacune dans son flux : on les ajoute par `addTransceiver`
+      // sans les associer à un MediaStream, donc `streams` est vide et on en fabrique
+      // un par piste. L'image et la voix ne se mélangent jamais, ni ici ni à l'écran.
       const s = streams[0] || new MediaStream([track]);
-      if (onFlux) try { onFlux(id, s); } catch (_) {}
+      const rappel = track.kind === "audio" ? onAudio : onFlux;
+      if (rappel) try { rappel(id, s); } catch (_) {}
     };
     journal("pair ajouté", id, polite ? "(je suis poli)" : "(je suis impoli)");
+    // 🚨 C'EST ICI QUE LA NÉGOCIATION PART, ET IL FAUT LE DIRE EN TOUTES LETTRES.
+    // Elle partait toute seule tant que les transcepteurs naissaient avec la paire :
+    // addTransceiver lève `negotiationneeded`. Maintenant qu'ils ne naissent qu'au
+    // moment d'offrir, plus RIEN ne la déclenche — et le filet de menage() ne la
+    // rattrapait qu'après REOFFRE_MS, soit QUATRE SECONDES d'écran noir. Mesuré au
+    // banc : la collecte ICE passait de 0,3 s à 4,8 s, jusqu'à dépasser son plafond.
+    // L'impoli offre tout de suite, le poli laisse passer ATTENTE_POLIE_MS — mot pour
+    // mot ce que faisait onnegotiationneeded, mais déclenché explicitement.
+    if (polite) p.attentePolie = setTimeout(() => {
+      p.attentePolie = null;
+      if (pairs.get(id) === p && !pc.remoteDescription) offrir(p, "(le poli n'a rien reçu)");
+    }, ATTENTE_POLIE_MS);
+    else offrir(p, "");
     return p;
   }
   function retirer(id, pourquoi) {
@@ -4092,7 +4802,7 @@ function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, on
     p.answerPending = d.type === "answer";
     await pc.setRemoteDescription(d);   // le côté poli annule sa propre offre ici s'il le faut
     p.answerPending = false;
-    if (d.type === "offer") { await pc.setLocalDescription(); envoyerDescription(p); }
+    if (d.type === "offer") { adopter(p); await pc.setLocalDescription(); envoyerDescription(p); }
     // Les candidats portés par la description, puis ceux arrivés avant elle.
     const q = [...(cands || []), ...p.attente]; p.attente = [];
     for (const c of q) await candidat(p, c);
@@ -4155,23 +4865,55 @@ function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, on
       // L'adieu du TESTAMENT est écrit par le courtier, sans session : on le prend avant tout.
       if (m && m.t === "adieu") { retirer(de, "adieu"); return true; }
       if (!m || !m.s) return true;
-      if (m.t === "salut") { accueillir(de, m.s); return true; }
+      if (m.t === "salut") { accueillir(de, m.s); if (m.v) voix(de, m.v); return true; }
       const p = accueillir(de, m.s);   // une description d'un inconnu vaut un salut
       if (!p) return true;
       if (m.t === "description" && m.d) description(p, m.d, m.c).catch(e => journal("description ratée", de, e.message));
       else if (m.t === "candidats" && Array.isArray(m.c)) (async () => { for (const c of m.c) await candidat(p, c); })();
+      else if (m.t === "voix" && m.v) voix(de, m.v);
       return true;
     },
     // Pose (ou remplace) mon flux local : chaque paire passe en sendrecv, la
     // renégociation part toute seule. Null pour cesser d'être vu.
     attacherFlux(f) {
       local = f;
-      const piste = f && f.getVideoTracks()[0];
-      for (const p of pairs.values()) {
-        try { p.tr.sender.replaceTrack(piste || null); p.tr.direction = piste ? "sendrecv" : "recvonly"; }
-        catch (e) { journal("flux non attaché", p.id, e.message); }
-      }
+      for (const p of pairs.values()) brancher(p, "image");
     },
+    // Pose (ou remplace) ma voix : même geste que pour la caméra, dans le transcepteur
+    // audio qui existe depuis la création de la paire. Null pour cesser d'être entendu.
+    // ⚠️ Ceci sert à ALLUMER ou ÉTEINDRE le micro, pas à se taire une seconde : pour la
+    // sourdine, c'est `couperMicro` — retirer la piste renégocie, `enabled` non.
+    attacherMicro(f) {
+      localMicro = f;
+      for (const p of pairs.values()) brancher(p, "voix");
+    },
+    // La sourdine : `enabled = false` sur la piste locale, RIEN D'AUTRE. Aucune
+    // renégociation, aucun message sur le courtier, aucun vacillement chez le pair
+    // d'en face — juste des paquets vides jusqu'au prochain clic.
+    // ⚠️ C'est LA MÊME piste que celle de micro.mjs : `visio.couperMicro(true)` et
+    // `microPartage().couper(true)` ont exactement le même effet, il n'y a pas deux
+    // vérités. L'application passe par micro.mjs (qui prévient l'écran) ; celui-ci
+    // existe pour les bancs, qui n'ont pas de micro partagé.
+    couperMicro(v) {
+      const pistes = localMicro ? localMicro.getAudioTracks() : [];
+      const n = v === undefined ? !(pistes.length && !pistes[0].enabled) : !!v;
+      pistes.forEach(t => { try { t.enabled = !n; } catch (e) {} });
+      return n;
+    },
+    microCoupe() {
+      const t = localMicro && localMicro.getAudioTracks()[0];
+      return !t || !t.enabled;
+    },
+    // Dit à toute la table où en est MON micro. Un message par CHANGEMENT, jamais un par
+    // syllabe : l'appelant coalesce (visio.js, rvAnnoncerVoix), et le salut périodique le
+    // répète pour ceux qui l'auraient manqué. Rend l'état retenu.
+    annoncerVoix(v) {
+      if (!ETATS_VOIX.includes(v) || v === maVoix) return maVoix;
+      maVoix = v;
+      pousser("tous", { t: "voix", v });
+      return maVoix;
+    },
+    get voixAnnoncee() { return maVoix; },
     // Pour l'app qui tient déjà sa présence (salut/adieu des cartes) : un coup de coude.
     arrivee(id) { if (id && id !== moi) salut(id); },
     depart(id) { retirer(id, "départ annoncé"); },
@@ -4185,7 +4927,7 @@ function creerVisio({ reseau, salon, moi, flux = null, nom = "", turn = null, on
   return api;
 }
 
-return {PAIRS_MAX,LIEN_PAGES,MESSAGE_ARTEFACT,SERVEURS_STUN,SANS_RELAIS_MESSAGE,AVEC_RELAIS_MESSAGE,urlsRelais,serveursIce,relaisConfigure,SERVEURS_ICE,SALUT_INTERVALLE_MS,SILENCE_MAX_MS,SILENCE_ICE_MS,ENVOI_ECART_MS,LOT_CANDIDATS_MS,ATTENTE_POLIE_MS,REOFFRE_MS,sujetVisio,testamentVisio,sonderReseau,testerRelais,expliquerEchec,creerVisio};
+return {PAIRS_MAX,ETATS_VOIX,LIEN_PAGES,MESSAGE_ARTEFACT,SERVEURS_STUN,SANS_RELAIS_MESSAGE,AVEC_RELAIS_MESSAGE,urlsRelais,serveursIce,relaisConfigure,SERVEURS_ICE,SALUT_INTERVALLE_MS,SILENCE_MAX_MS,SILENCE_ICE_MS,ENVOI_ECART_MS,LOT_CANDIDATS_MS,ATTENTE_POLIE_MS,REOFFRE_MS,sujetVisio,testamentVisio,sonderReseau,testerRelais,expliquerEchec,creerVisio};
 })();
 
 
@@ -4448,8 +5190,14 @@ document.addEventListener("sabot:main-fin", e => {
   else if (d.issue === "blackjack") son("blackjack", { apres: attente + .12 });
   else if (d.issue === "gagne") son("gain", { apres: attente + .1 });
 });
+// 🚨 CE BANDEAU EST LE SEUL CANAL DE CERTAINES PANNES (un micro refusé, un casque
+// débranché) : sans `role="status"` ni `aria-live`, il n'existait pas du tout pour un
+// lecteur d'écran — le message apparaissait, disparaissait, et rien n'avait été dit.
+// `polite` et pas `assertive` : on ne coupe pas la parole à qui est en train de lire sa
+// main, on l'annonce à la première pause.
 function bandeau(msg, ms) {
   const d = document.createElement("div"); d.className = "bandeau-bas"; d.textContent = msg;
+  d.setAttribute("role", "status"); d.setAttribute("aria-live", "polite");
   document.body.appendChild(d); setTimeout(() => d.remove(), ms || 2600);
 }
 
@@ -4496,6 +5244,10 @@ function aller(v) {
   if (v === "strategie") { if (!STR.main && !STR.ecart) nouveauCoup(); rendreGrille(); }
   if (v !== "concentration" && CO.encours) finConcentration(false);
   rendreFil();
+  // Changer d'écran est un événement comme un autre : la voix (visio.js) en a besoin —
+  // la barre de la table emporte le bouton « Micro » avec elle, et un micro ouvert doit
+  // pouvoir se montrer ailleurs.
+  emettre("vue", { vue: v });
   window.scrollTo({ top: 0 });
 }
 // Le hall, ouvert sur une de ses salles (#lesTables, #entrainement, #prive, #bureau).
@@ -9664,7 +10416,24 @@ if (/^#table=/.test(location.hash)) {
    mise : les flux distants viennent de creerVisio (src/visio.mjs, maillage WebRTC
    signalé par le même courtier MQTT que la table), le tien de cameraPartagee
    (src/camera.mjs — la même caméra que le détecteur du mode Concentration, comptée par
-   références). JAMAIS de micro : on compte en silence.
+   références).
+
+   🔄 CE FICHIER A LONGTEMPS DIT « JAMAIS de micro : on compte en silence ». C'ÉTAIT UNE
+   RÈGLE, ELLE EST LEVÉE — Léo, le 6 septembre 2026 : « c'est possible de rajouter la
+   possibilité de parler entre nous sur la table ? » Le raisonnement d'origine (la parole
+   détruit la mémoire de travail du comptage) n'était pas faux ; il concluait mal. On en
+   tire maintenant la conclusion inverse et plus juste : LE SILENCE DEVIENT UN CHOIX, pas
+   une impossibilité. Le micro arrive COUPÉ, toujours ; un bouton l'ouvre, un bouton le
+   referme ; celui qui veut compter en silence ne clique pas et ne perd rien de ce qu'il
+   avait avant. La trace reste ici pour qu'on ne « répare » pas cette page en y remettant
+   le silence forcé : ce ne serait pas une correction, ce serait annuler une décision.
+   Ce qui a été construit avec, et qu'il ne faut pas défaire :
+   · le micro est une permission SÉPARÉE de la caméra (src/micro.mjs) — quelqu'un sans
+     webcam doit pouvoir parler, et un refus de caméra ne doit pas emporter la voix ;
+   · tout <video> reste `muted` et la voix des autres sort d'un <audio> DÉDIÉ par pair,
+     sinon un ami qui coupe sa caméra deviendrait muet du même coup ;
+   · qui parle se voit sur le SIÈGE (le nom en jade), pas seulement dans la vignette :
+     c'est l'information qu'on cherche du coin de l'œil pendant qu'on compte.
 
    Comment on se greffe sans toucher au rendu de la scène :
    · reseau.js émet « sabot:reseau-entree » (le courtier est relié), « sabot:reseau-pairs »
@@ -9674,7 +10443,8 @@ if (/^#table=/.test(location.hash)) {
    · « sabot:sieges » (table.js) dit que les sièges viennent d'être redessinés : on y
      pose nos vignettes — dans une rangée `.rangee-bas` qui accueille aussi le cercle —
      puis on redemande à cartes.js de mesurer (la rangée compte dans la hauteur du siège).
-   · Une vignette SANS flux est une silhouette et un mot, jamais un rectangle noir muet.
+   · Une vignette SANS flux est une silhouette et un mot, jamais un rectangle noir —
+     et quand cet ami PARLE, la silhouette s'ÉCLAIRE au lieu de rester éteinte.
    · Sur « failed » sans relais, la vignette et un bandeau disent quoi faire (⚙) —
      un échec de connexion directe ne se répare pas tout seul.
    · Avec le transport muet de la sonde (api.brut absent), pas de visio : les vignettes
@@ -9697,27 +10467,66 @@ function rvDemarrer(d) {
   rvArreter();
   RV.code = d.code; RV.moi = d.moi; RV.pairs = new Set([d.moi]);
   $("bCamera").hidden = false; rvBoutonCamera();
+  $("bMicro").hidden = false; rvBoutonMicro();
+  // La sortie audio naît AVANT le maillage : `onAudio` peut arriver dès la première
+  // seconde, et un flux sans élément où le poser serait une voix perdue en silence.
+  RVX.sortie = MIC.creerSortieAudio({ volume: DB.voixVolume / 100 });
+  RVX.sortie.onBloque(b => { if ($("bSonAmis")) $("bSonAmis").hidden = !b; });
   const brut = d.api && d.api.brut;
   if (brut) {
     RV.visio = VI.creerVisio({
       reseau: brut, salon: d.code, moi: d.moi, nom: prenom() || "Joueur", turn: DB.turn,
+      // `micro: null` est explicite : rvArreter vient de rendre la référence, on n'arrive
+      // JAMAIS à une table en émettant. La voix se pose ensuite, par attacherMicro.
+      flux: null, micro: null,
       onFlux: (id, flux) => { RV.flux.set(id, flux); rvRendre(id); },
-      onDepart: id => { RV.flux.delete(id); RV.etats.delete(id); RV.bloques.delete(id); RV.videos.delete(id); rvRendre(id); },
+      // ⚠️ Deux rappels, jamais un seul : `onFlux` ne voit que la VIDÉO, `onAudio` que la
+      // VOIX. Pousser un flux sans image dans le <video> de la vignette ferait de la tête
+      // de l'ami un rectangle noir le jour où il ouvre son micro.
+      onAudio: (id, flux) => { if (!RVX.sortie) return; rvVumetrePair(id, RVX.sortie.poser(id, flux)); rvRendre(id); },
+      onDepart: id => { RV.flux.delete(id); RV.etats.delete(id); RV.bloques.delete(id); RV.videos.delete(id); RVX.voix.delete(id);
+        if (RVX.sortie) RVX.sortie.retirer(id); rvFermerVumetrePair(id); RVX.parlent.delete(id); rvRendre(id); },
       onEtat: rvEtat,
+      // 🚨 « TU ES COUPÉE » — l'information la plus utilisée de toute application de
+      // parole, et elle n'existait NULLE PART : le siège d'un ami était strictement
+      // identique qu'il se taise, qu'il soit en sourdine ou qu'il n'ait jamais ouvert son
+      // micro. Chacun annonce donc son état à la table (visio.mjs, `annoncerVoix`).
+      onVoix: (id, v) => { RVX.voix.set(id, v); rvRendre(id); },
       onJournal: t => { if (window.__visioJournal) window.__visioJournal.push(t); },
     });
     RS.onBrut = (s, brut) => !!RV.visio && RV.visio.recevoir(s, brut);
     RV.visio.demarrer();
   }
   if (DB.camera) rvAllumer();
+  // 🚨 ON NE PREND PLUS LE MICRO À L'ARRIVÉE, MÊME MÉMORISÉ. La version d'avant faisait
+  // `if (DB.micro) rvPrendreMicro(false)` : rien n'était diffusé (la piste revenait en
+  // sourdine), mais le CAPTEUR s'allumait — la pastille d'enregistrement de l'onglet et
+  // le point orange du système apparaissaient sans qu'on ait rien touché, alors que ⚙
+  // promet en toutes lettres « Micro fermé : rien n'est capté, et le voyant du navigateur
+  // reste éteint ». Et le seul bouton rouge de la barre était là dès l'arrivée : l'instinct
+  // est de cliquer dessus pour « réparer », ce qui mettait en diffusion. Ne rien reprendre
+  // coûte UN clic et lève les deux. `DB.micro` reste la mémoire de ton dernier choix : il
+  // sert à l'écran, plus à ouvrir le capteur tout seul.
+  rvBoutonMicro(); rvVoixReglages();
   rvPoserVignettes();
 }
 function rvArreter() {
   if (RV.visio) { try { RV.visio.fermer(); } catch (e) {} }
   RV.visio = null; RS.onBrut = null;
   RV.flux.clear(); RV.etats.clear(); RV.bloques.clear(); RV.bloqueDit.clear(); RV.videos.clear(); RV.pairs = new Set();
+  RVX.voix.clear(); RVX.annonce = "";
   rvEteindre();
+  // La voix se rend exactement comme la caméra : le voyant du navigateur doit s'éteindre
+  // en quittant la table, pas au prochain rechargement de la page.
+  rvRendreMicro();
+  for (const id of [...RVX.vumPairs.keys()]) rvFermerVumetrePair(id);
+  RVX.parlent.clear();
+  if (RVX.sortie) { try { RVX.sortie.fermer(); } catch (e) {} }
+  RVX.sortie = null;
+  if (RVX.boucle) { cancelAnimationFrame(RVX.boucle); RVX.boucle = 0; }
   $("bCamera").hidden = true;
+  $("bMicro").hidden = true;
+  $("bSonAmis").hidden = true;
 }
 // La salle (table-reseau.mjs) tient la présence par le testament du courtier : un pair
 // qui meurt y est vu en moins d'une seconde. On le répercute sur le maillage.
@@ -9818,14 +10627,23 @@ function rvEtatMoi() {
 function rvEtatPair(id, st) {
   if (st.absent) return ["parti", "parti", "Il a quitté la table."];
   const e = RV.etats.get(id);
+  // 🚨 « VIDÉO BLOQUÉE », « CINQ CAMÉRAS », « PAS DE VISIO » : trois libellés qui ne
+  // parlaient que de l'image, alors que la VOIX voyage sur la même connexion et tombe
+  // avec elle. Dans les trois cas on ne peut ni entendre ni être entendu — et pour la
+  // sixième personne d'une table, aucune RTCPeerConnection n'est même créée (visio.mjs,
+  // ajouter() rend null). Le dire « caméra » laissait croire qu'il restait la parole.
   if (RV.bloques.has(id) && e !== "connected" && e !== "completed")
-    return ["bloque", "vidéo bloquée", RV.visio && RV.visio.sansRelais ? VI.SANS_RELAIS_MESSAGE : VI.AVEC_RELAIS_MESSAGE];
-  if (!RV.visio) return ["attente", "en attente", "La visio n'est pas reliée."];
-  if (e === "refuse") return ["ko", "table pleine", "Cinq caméras au plus : la sixième n'est pas relayée."];
-  if (e === "indisponible") return ["ko", "pas de visio", "Ce navigateur n'a pas WebRTC."];
+    return ["bloque", "ni vu ni entendu", RV.visio && RV.visio.sansRelais ? VI.SANS_RELAIS_MESSAGE : VI.AVEC_RELAIS_MESSAGE];
+  if (!RV.visio) return ["attente", "en attente", "La visio n'est pas reliée : ni image ni voix."];
+  if (e === "refuse") return ["ko", "table pleine", "Cinq liens au plus : la sixième personne n'est ni vue ni entendue."];
+  if (e === "indisponible") return ["ko", "ni voix ni vidéo", "Ce navigateur n'a pas WebRTC : ni image ni voix."];
   if (e === "parti" || e === "closed") return ["parti", "parti", "Sa connexion est fermée."];
-  if (e === "disconnected") return ["connexion", "coupure…", "Sa connexion hoquette ; on réessaie."];
-  if (e === "connected" || e === "completed") return ["sanscam", "sans caméra", "Relié, mais sa caméra est coupée."];
+  if (e === "disconnected") return ["connexion", "coupure…", "Sa connexion hoquette ; on réessaie. Ni image ni voix en attendant."];
+  // Relié sans image : la silhouette reste, mais si sa VOIX arrive elle s'éclaire et le
+  // dit — « sans caméra » sur quelqu'un qu'on est en train d'entendre serait faux.
+  if (e === "connected" || e === "completed") return RVX.parlent.has(id)
+    ? ["sanscam", "parle", "Il parle — sa caméra est coupée."]
+    : ["sanscam", "sans caméra", "Relié, mais sa caméra est coupée."];
   return ["connexion", "connexion…", "La visio se négocie avec " + (st.nom || "ce joueur") + "."];
 }
 function rvRendreVignette(t, st) {
@@ -9834,7 +10652,9 @@ function rvRendreVignette(t, st) {
   let etat = "ok", texte = "", titre = moi ? "Toi — en miroir" : (st.nom || "");
   if (!flux) [etat, texte, titre] = moi ? rvEtatMoi() : rvEtatPair(id, st);
   t.dataset.etat = etat;
-  if (titre) t.title = titre; else t.removeAttribute("title");
+  const vx = rvVoixTitre(st);
+  const titreComplet = [titre, vx].filter(Boolean).join(" · ");
+  if (titreComplet) t.title = titreComplet; else t.removeAttribute("title");
   let v = t.querySelector("video");
   if (flux) {
     if (!v) {
@@ -9852,6 +10672,42 @@ function rvRendreVignette(t, st) {
   let e = t.querySelector(".visage-etat");
   if (!e) { e = document.createElement("span"); e.className = "visage-etat"; t.appendChild(e); }
   e.textContent = texte;
+  // L'anneau de parole se REPOSE ici, et pas seulement au moment où quelqu'un ouvre la
+  // bouche : table.js redessine les sièges à chaque carte, et une classe posée ailleurs
+  // disparaîtrait au premier coup — on croirait que le micro s'est coupé tout seul.
+  const parle = RVX.parlent.has(id);
+  t.classList.toggle("parle", parle);
+  const sg = t.closest(".siege"); if (sg) sg.classList.toggle("parle", parle);
+  rvVoixVignette(t, st);
+}
+// Le micro d'un ami, sur sa vignette. Trois signes, trois questions différentes :
+//   anneau jade + nom jade  · il parle EN CE MOMENT (le son reçu, hystérésis de micro.mjs)
+//   point jade discret      · son micro est ouvert : il peut parler, et il t'entend
+//   micro barré             · il s'est mis en SOURDINE — c'est le « tu es coupée » qu'on
+//                             ne pouvait dire à personne jusqu'ici
+//   rien                    · il n'a pas ouvert son micro (l'état par défaut, et le plus
+//                             fréquent : une table qui compte en silence reste propre)
+function rvVoixEtatDe(st) {
+  if (st.toi) return RVX.tenu && RVX.etat === "active" ? (DB.pousserPourParler || !RVX.coupe ? "ouvert" : "coupe") : "ferme";
+  return RVX.voix.get(st.id) || "";
+}
+function rvVoixVignette(t, st) {
+  const v = rvVoixEtatDe(st);
+  if (v === "ouvert" || v === "coupe") t.dataset.voix = v; else delete t.dataset.voix;
+  let m = t.querySelector(".voix-marque");
+  if (v !== "coupe") { if (m) m.remove(); return; }
+  // Le mot « muet » est posé par la feuille (::before) : le marqueur n'est qu'un support,
+  // et l'information part dans le `title` de la vignette — un `title` sur un enfant
+  // aria-hidden ne serait lu par personne.
+  if (!m) { m = document.createElement("span"); m.className = "voix-marque"; m.setAttribute("aria-hidden", "true"); t.appendChild(m); }
+}
+// La phrase du micro, ajoutée au titre de la vignette : c'est le seul endroit qu'un
+// lecteur d'écran lit.
+function rvVoixTitre(st) {
+  const v = rvVoixEtatDe(st);
+  if (v === "coupe") return st.toi ? "Tu es en sourdine." : (st.nom || "Ce joueur") + " s'est mis en sourdine : il ne t'entend pas parler pour rien.";
+  if (v === "ouvert") return st.toi ? "Ton micro est ouvert." : (st.nom || "Ce joueur") + " a son micro ouvert.";
+  return "";
 }
 
 /* ── Le relais, dans ⚙ ──────────────────────────────────────────────────── */
@@ -9884,6 +10740,423 @@ if ($("turnUrl")) {
   };
   // La feuille ⚙ emprunte le bloc #outils : à chaque ouverture, on relit ce qui est mémorisé.
   $("bReglages").addEventListener("click", () => setTimeout(() => rvRendreRelais(), 0));
+}
+
+/* ══════════════════════ LA VOIX ══════════════════════
+   Se parler autour de la table (Léo, 6 septembre 2026 — cf. l'en-tête : le « jamais de
+   micro » d'origine est levé, le silence est devenu un choix). Le transport est fait
+   ailleurs et ne se réécrit pas ici : micro.mjs tient le capteur (compté par références,
+   MUET tant qu'on n'a pas ouvert) et visio.mjs porte la piste dans le transcepteur audio
+   qui existe depuis la création de chaque paire. Il reste, ici, l'écran :
+
+   · UN BOUTON, SIX ÉTATS, et le libellé change avec eux — « Micro » / « Micro… » /
+     « Je parle » / « Micro coupé » / « Maintiens M » / la panne (« Micro refusé »,
+     « Pas de micro », « Micro occupé »…). Un point de couleur seul ne se lit pas quand
+     on est en train de compter des cartes. LARGEUR FIXE : c'est le bouton qu'on bascule
+     le plus souvent, il poussait « Plus » de 54 px à chaque coupure et on ratait sa
+     cible. La barre sous le bouton est TON niveau : c'est la réponse à « est-ce que mon
+     micro marche ? », la première question de tout le monde, et elle doit se répondre
+     SANS parler à personne. Elle bat même en sourdine, parce que micro.mjs mesure une
+     COPIE de la piste exprès pour ça — d'où sa couleur, qui suit l'état. ⚠️ Le niveau
+     dit « ça capte », JAMAIS « on m'entend » : c'est pourquoi le bouton, lui, compte les
+     paires réellement reliées avant d'affirmer que la table t'entend (rvQuiEntend).
+   · UNE PANNE RESTE ÉCRITE, et dit quoi faire ensuite. Un bandeau de quatre secondes
+     puis un bouton redevenu identique à ce qu'il était avant le clic, c'est un écran
+     qu'on croit mort : on reclique, on rerate le bandeau, on abandonne. La caméra garde
+     bien son « refusée » en rouge sur la vignette, indéfiniment.
+   · UN TÉMOIN HORS TABLE. #bMicro part avec la barre de la table dès qu'on change
+     d'écran ; sans lui, on continuait de parler à toute la table sans un signe nulle
+     part. Il ne coupe rien tout seul — être coupé sans l'avoir demandé serait pire — il
+     MONTRE, et il donne le bouton pour se taire.
+   · UN <audio> PAR PAIR, hors champ mais DANS le document, et tous les <video> restent
+     `muted`. Si la voix sortait du <video> de la vignette, un ami qui coupe sa caméra
+     deviendrait muet du même coup et personne ne comprendrait pourquoi. Et sur Chrome,
+     un flux distant qui n'est lu nulle part ne s'analyse pas : sans cet élément joué,
+     le vumètre des autres resterait plat et on croirait que personne ne parle.
+   · QUI PARLE se voit SUR LE SIÈGE (le nom qui s'éclaircit vers le jade, un anneau sur
+     la vignette), à hystérésis — l'anneau s'allume à la voix et ne s'éteint qu'après un
+     silence tenu, sinon il clignoterait à chaque syllabe et on cesserait de le regarder.
+     ⚠️ Le nom s'ÉCLAIRCIT : le jade pur, seule couleur du nuancier proche du feutre, lui
+     faisait PERDRE du contraste (4,19:1 → 3,48:1, mesuré au pixel) au moment précis où
+     il a quelque chose à dire.
+   · ET QUI EST EN SOURDINE. « Tu es coupée » est l'information la plus utilisée de toute
+     application de parole, et elle n'existait nulle part : trois situations sans rapport
+     — il se tait, il est coupé, il n'a jamais ouvert son micro — donnaient exactement le
+     même siège. Chacun ANNONCE donc son micro à la table (visio.mjs, `annoncerVoix`), et
+     la vignette porte un point jade (ouvert) ou un « muet » cinabre (en sourdine). Rien
+     du tout pour « pas de micro » : c'est le cas le plus fréquent, une table qui compte
+     en silence doit rester propre. ⚠️ En appui-pour-parler on annonce « ouvert » et non
+     la sourdine de chaque syllabe : deux messages par phrase noieraient le courtier.
+   · L'OR EST AU JEU, LE JADE EST À LA VOIX. L'or dit « c'est son tour », « c'est sa
+     mise », « sa vidéo est reliée » ; un anneau or qui voudrait dire « il parle » se
+     lirait comme « c'est à lui de jouer ». Deux langages, jamais mélangés.
+   · Là où la vidéo marche, la voix marche : GitHub Pages oui, artefact non (le
+     WebSocket y est bloqué et reseau.js le dit en moins de trois secondes — on n'arrive
+     jamais jusqu'ici, donc le micro n'est jamais demandé pour rien). Aucun chemin
+     d'échec de plus.
+   ═══════════════════════════════════════════════════════════════════ */
+const MIC = M.micro;
+const RVX = { sortie: null, tenu: false, etat: "eteinte", raison: "", coupe: true, abonne: false,
+  vum: null, vumPairs: new Map(), parlent: new Set(), boucle: 0, dernierTic: 0, pousse: false,
+  // La voix des AUTRES, telle qu'ils l'annoncent : « ouvert », « coupe », « ferme ».
+  voix: new Map(), annonce: "" };
+// 🚨 UNE PANNE DE MICRO LAISSE UNE TRACE, comme un refus de caméra en laisse une sur la
+// vignette du siège. Avant, un refus tenait 4,2 s de bandeau puis le bouton redevenait
+// EXACTEMENT ce qu'il était avant le clic : celui qui regardait ses cartes ratait le
+// bandeau, recliquait, reratait, et concluait que le bouton était mort. Ces états-là
+// SURVIVENT donc à la fermeture, et chacun dit ce qu'il faut faire ensuite — un message
+// qui nomme la panne sans nommer la sortie est un cul-de-sac.
+const RV_PANNES = {
+  refusee:      ["Micro refusé",  "Rouvre-le depuis le cadenas, à gauche de la barre d'adresse, puis reclique."],
+  absente:      ["Pas de micro",  "Branche un micro ou un casque, puis reclique."],
+  occupee:      ["Micro occupé",  "Ferme l'autre application qui l'utilise (visio, enregistreur), puis reclique."],
+  indisponible: ["Micro bloqué",  ""],
+  coupee:       ["Micro arrêté",  "Rebranche ton casque, ou rends l'autorisation dans la barre d'adresse, puis reclique."],
+};
+const rvPanne = () => RV_PANNES[RVX.etat] || null;
+if (DB.micro === undefined) DB.micro = false;
+if (typeof DB.voixVolume !== "number" || isNaN(DB.voixVolume)) DB.voixVolume = 100;
+if (DB.pousserPourParler === undefined) DB.pousserPourParler = false;
+
+/* ── Le bouton de la barre ──────────────────────────────────────────────── */
+function rvEtatBouton() {
+  if (RVX.tenu) {
+    if (RVX.etat === "demande") return "demande";
+    if (RVX.etat === "active") return RVX.coupe ? (DB.pousserPourParler ? "arme" : "coupe") : "ouvert";
+  }
+  // Tenu ou pas : une panne se dit. C'est la seule trace qui reste quand le bandeau est parti.
+  return rvPanne() ? "panne" : "eteint";
+}
+function rvBoutonMicro() {
+  const b = $("bMicro"); if (!b) return;
+  const e = rvEtatBouton();
+  b.dataset.etat = e;
+  // `aria-pressed` dit « on t'entend », rien d'autre : tenir le micro en sourdine n'est
+  // pas parler, et un lecteur d'écran qui annoncerait « activé » sur un micro muet
+  // ferait exactement le contresens qu'on essaie d'éviter.
+  b.setAttribute("aria-pressed", e === "ouvert" ? "true" : "false");
+  const pa = rvPanne();
+  // ⚠️ « Maintiens M », pas « Micro coupé », en appui-pour-parler : le rouge permanent se
+  // lisait comme une panne, et le geste évident — cliquer dessus — RENDAIT le micro,
+  // c'est-à-dire l'exact contraire de ce qu'on cherchait. Le mode se dit sur le bouton,
+  // pas seulement dans une infobulle qu'on ne survole pas en pleine main.
+  const mot = e === "ouvert" ? "Je parle" : e === "arme" ? "Maintiens M" : e === "coupe" ? "Micro coupé"
+    : e === "demande" ? "Micro…" : e === "panne" && pa ? pa[0] : "Micro";
+  const t = b.querySelector(".voix-txt");
+  if (t) t.textContent = mot;
+  b.title = e === "ouvert" ? rvQuiEntend()
+    : e === "arme" ? "Micro tenu, en sourdine — maintiens M pour parler (clique pour le rendre)"
+    : e === "coupe" ? "Tu es en sourdine — clique pour parler"
+    : e === "demande" ? "Le micro est demandé au navigateur… — clique pour annuler"
+    : e === "panne" && pa ? (RVX.raison || pa[0]) + (pa[1] ? " " + pa[1] : "")
+    : "Ta voix, pour parler à la table — muet tant que tu ne l'ouvres pas";
+  // Le libellé change, le mot lu par un lecteur d'écran aussi : sans ça, « Micro refusé »
+  // ne serait qu'une couleur pour qui ne voit pas l'écran.
+  b.setAttribute("aria-label", e === "panne" && pa ? pa[0] + " — " + (RVX.raison || "") : mot);
+  if (e !== "ouvert" && e !== "coupe" && e !== "arme") b.style.setProperty("--voix", "0");
+  rvVoixTemoin();
+}
+// La barre de niveau et les anneaux : une seule boucle, qui s'arrête d'elle-même quand
+// plus aucun vumètre ne vit. Elle échantillonne à ~20 Hz : l'œil ne voit pas la
+// différence avec 60, et on ne réveille pas le processeur pour rien pendant une partie.
+function rvBoucleVoix() {
+  if (RVX.boucle) return;
+  const pas = () => {
+    RVX.boucle = 0;
+    const t = (window.performance || Date).now();
+    if (t - RVX.dernierTic >= 45) { RVX.dernierTic = t; rvTicVoix(); }
+    if (RVX.vum || RVX.vumPairs.size) RVX.boucle = requestAnimationFrame(pas);
+  };
+  RVX.boucle = requestAnimationFrame(pas);
+}
+function rvTicVoix() {
+  const b = $("bMicro");
+  if (RVX.vum) {
+    // RMS 0,17 remplit la barre : une voix normale à trente centimètres tourne autour de
+    // 0,02 à 0,08 (micro.mjs). Sans ce facteur la barre ne quitterait jamais le premier
+    // dixième et ne prouverait rien.
+    if (b) b.style.setProperty("--voix", Math.min(1, RVX.vum.niveau() * 6).toFixed(3));
+    rvMarquerParle(RV.moi, !RVX.coupe && RVX.vum.parle());
+  }
+  for (const [id, v] of RVX.vumPairs) rvMarquerParle(id, v.parle());
+}
+// Un seul endroit qui décide « celui-là parle » : il ne touche au DOM qu'aux TRANSITIONS.
+// L'hystérésis de micro.mjs en fait quelques-unes par phrase, pas soixante par seconde.
+function rvMarquerParle(id, oui) {
+  if (!id || oui === RVX.parlent.has(id)) return;
+  if (oui) RVX.parlent.add(id); else RVX.parlent.delete(id);
+  rvRendre(id);
+}
+function rvVumetrePair(id, el) {
+  rvFermerVumetrePair(id);
+  const c = typeof ac === "function" ? ac() : null;
+  if (!c || !el || !el.srcObject) return;
+  // ⚠️ On mesure `el.srcObject`, c'est-à-dire le flux que cet <audio> EST EN TRAIN DE
+  // LIRE. Chrome ne rend que du silence sur un flux distant qui n'est joué nulle part.
+  const v = MIC.creerVumetre({ ac: c, flux: el.srcObject });
+  if (v && v.vivant) { RVX.vumPairs.set(id, v); rvBoucleVoix(); } else if (v) v.fermer();
+}
+function rvFermerVumetrePair(id) {
+  const v = RVX.vumPairs.get(id); if (!v) return;
+  RVX.vumPairs.delete(id); try { v.fermer(); } catch (e) {}
+}
+
+/* ── « On t'entend » ne s'affirme pas sans regarder ─────────────────────── */
+// 🚨 « La table t'entend » était dit SANS jamais regarder s'il y avait une table, ni si
+// elle recevait quoi que ce soit : seul à une table, connexions en échec, ou lecture du
+// son bloquée chez l'autre, l'écran affirmait exactement la même chose. Et la jauge jade
+// sous le bouton ne prouve rien de plus — micro.mjs mesure une COPIE de ta propre
+// capture, elle bat pareil quand aucun octet ne quitte la machine. On compte donc les
+// paires RÉELLEMENT reliées, et on le dit.
+function rvAudienceVoix() {
+  if (!RV.visio) return { autres: 0, relies: 0, relie: false };
+  let autres = 0, relies = 0;
+  for (const id of RV.pairs) {
+    if (id === RV.moi) continue;
+    autres++;
+    const e = RV.etats.get(id);
+    if (e === "connected" || e === "completed") relies++;
+  }
+  return { autres, relies, relie: true };
+}
+function rvQuiEntend() {
+  const { autres, relies, relie } = rvAudienceVoix();
+  if (!relie) return "Micro ouvert, mais la visio n'est pas reliée : personne ne t'entend.";
+  if (!autres) return "Micro ouvert — tu es seul à la table pour l'instant.";
+  if (!relies) return "Micro ouvert, mais aucune connexion n'aboutit : personne ne t'entend encore.";
+  if (relies < autres) return "Micro ouvert : " + relies + " joueur" + (relies > 1 ? "s" : "") + " sur " + autres + " t'entendent — clique pour te couper.";
+  return "Micro ouvert : " + (autres > 1 ? "les " + autres + " autres t'entendent" : "l'autre joueur t'entend") + " — clique pour te couper.";
+}
+// 🚨 HORS DE LA VUE « TABLE », #bMicro EST CACHÉ AVEC ELLE — et plus rien à l'écran ne
+// disait qu'on était en train de parler. On ouvrait son micro, on allait voir « Progrès »,
+// et on continuait de parler à la table sans un signe nulle part (le voyant du navigateur
+// restant le seul témoin). On ne coupe PAS pour autant — être coupé sans avoir rien
+// demandé serait pire — on le MONTRE, et on donne le bouton pour se taire.
+function rvVoixTemoin() {
+  const t = $("voixTemoin"); if (!t) return;
+  const e = rvEtatBouton();
+  const parle = e === "ouvert" || e === "arme" || e === "coupe";
+  const cache = !$("bMicro") || $("bMicro").hidden || !$("bMicro").offsetParent;
+  const on = parle && cache;
+  t.hidden = !on;
+  if (!on) return;
+  t.dataset.etat = e;
+  const m = t.querySelector(".voix-txt");
+  if (m) m.textContent = e === "ouvert" ? "Micro ouvert" : "Micro en sourdine";
+  t.title = e === "ouvert" ? "Tu parles toujours à la table — clique pour te couper"
+    : "Ton micro est tenu, en sourdine — clique pour le rendre";
+}
+
+/* ── Prendre, ouvrir, couper, rendre ────────────────────────────────────── */
+// `ouvrir` vrai = prendre ET ouvrir en un geste (micro.mjs le fait pour qu'on ne puisse
+// pas se retrouver, sans le vouloir, avec un micro tenu et muet que l'écran croit ouvert).
+async function rvPrendreMicro(ouvrir) {
+  const mic = MIC.microPartage();
+  if (RVX.tenu) { if (ouvrir) rvCouper(false); return; }
+  if (!RVX.abonne) {
+    RVX.abonne = true;
+    // Le micro peut mourir sans nous : casque débranché, permission retirée dans la barre
+    // d'adresse. On le DIT, au lieu de laisser quelqu'un parler dans le vide.
+    mic.onEtat((etat, raison) => {
+      if (!RVX.tenu) return;
+      RVX.etat = etat; RVX.raison = raison || "";
+      // 🚨 UN MICRO QUI S'ARRÊTE TOUT SEUL EST L'ÉVÉNEMENT LE PLUS ALARMANT DU LOT — il
+      // avait le bandeau le plus court (2,6 s contre 4,2 pour un refus) et, pire,
+      // rvRendreMicro effaçait l'état juste avant : trente secondes plus tard l'écran
+      // disait « Micro fermé : rien n'est capté », la phrase d'une fermeture VOULUE.
+      // On garde donc la panne, et on la dit aussi longtemps qu'un refus.
+      if (etat === "coupee") { rvRendreMicro(true); DB.micro = false; garder(); rvBandeauPanne(); return; }
+      rvBoutonMicro(); rvRendreMoi(); rvVoixReglages(); rvAnnoncerVoix();
+    });
+    // La sourdine peut aussi être posée depuis ⚙ ou par la touche M : une seule vérité.
+    mic.onSourdine(c => { RVX.coupe = c; if (c) rvMarquerParle(RV.moi, false); rvBoutonMicro(); rvRendreMoi(); rvVoixReglages(); rvAnnoncerVoix(); });
+  }
+  RVX.tenu = true; RVX.etat = "demande"; RVX.raison = ""; rvBoutonMicro(); rvVoixReglages();
+  const r = ouvrir ? await mic.ouvrir() : await mic.prendre();
+  if (!RVX.tenu) return;                     // rendu pendant la demande : la référence est déjà lâchée
+  RVX.etat = r.etat; RVX.raison = r.raison || ""; RVX.coupe = mic.estCoupe();
+  if (r.flux) {
+    if (RV.visio) RV.visio.attacherMicro(r.flux);
+    const c = typeof ac === "function" ? ac() : null;
+    if (c) { RVX.vum = mic.mesurer(c); rvBoucleVoix(); }
+  } else {
+    RVX.tenu = false; mic.rendre(); DB.micro = false; garder();
+    rvBandeauPanne();
+  }
+  rvBoutonMicro(); rvRendreMoi(); rvVoixReglages(); rvAnnoncerVoix();
+}
+// Le bandeau d'une panne : la phrase de micro.mjs (ce qui s'est passé) ET la sortie (quoi
+// faire ensuite). Sans la seconde, recliquer rejoue le même bandeau indéfiniment — après
+// un refus dur, Chrome ne redemande plus, et rien à l'écran ne dit qu'il faut passer par
+// le cadenas de la barre d'adresse.
+function rvBandeauPanne() {
+  const pa = rvPanne();
+  const phrase = RVX.raison || (pa ? pa[0] : "Micro indisponible ici.");
+  bandeau(phrase + (pa && pa[1] ? " " + pa[1] : ""), 5200);
+}
+// `garderPanne` : le micro s'est arrêté TOUT SEUL — l'état reste pour que l'écran puisse
+// encore le dire dans une minute. Une fermeture voulue, elle, efface tout.
+function rvRendreMicro(garderPanne) {
+  if (RVX.tenu) { RVX.tenu = false; MIC.microPartage().rendre(); }
+  RVX.vum = null;                             // micro.mjs ferme le vumètre au dernier rendu
+  if (RV.visio) RV.visio.attacherMicro(null);
+  if (!garderPanne) { RVX.etat = "eteinte"; RVX.raison = ""; }
+  RVX.coupe = true; RVX.pousse = false;
+  rvMarquerParle(RV.moi, false);
+  rvBoutonMicro(); rvRendreMoi(); rvVoixReglages(); rvAnnoncerVoix();
+}
+function rvCouper(v) {
+  if (!RVX.tenu) return;
+  MIC.microPartage().couper(v);               // onSourdine rafraîchit l'écran
+}
+// Ce que la table doit savoir de ma voix : « ouvert », « coupe » (tenu mais muet),
+// « ferme » (pas de micro du tout).
+// ⚠️ EN APPUI-POUR-PARLER, LA SOURDINE VA ET VIENT À CHAQUE SYLLABE : l'annoncer telle
+// quelle publierait deux messages par phrase sur un courtier qui en jette au-delà de
+// dix par seconde — et ferait clignoter un badge chez tout le monde. Dans ce mode, un
+// micro tenu est un micro ARMÉ : on annonce « ouvert », et c'est l'anneau de parole
+// (qui, lui, vient du son reçu) qui dit quand ça parle vraiment.
+function rvVoixAnnoncable() {
+  if (!RVX.tenu || RVX.etat !== "active") return "ferme";
+  if (DB.pousserPourParler) return "ouvert";
+  return RVX.coupe ? "coupe" : "ouvert";
+}
+function rvAnnoncerVoix() {
+  if (!RV.visio || !RV.visio.annoncerVoix) return;
+  const v = rvVoixAnnoncable();
+  if (v === RVX.annonce) return;              // rien de neuf : rien ne part
+  RVX.annonce = v; RV.visio.annoncerVoix(v);
+}
+$("bMicro").onclick = () => {
+  // 🚨 PENDANT L'INVITE DE PERMISSION, UN CLIC VEUT DIRE « ANNULE ». Il voulait dire
+  // « bascule la sourdine » — sur une sourdine pas encore établie, que le `couper(false)`
+  // de `ouvrir()` écrasait ensuite de toute façon : mesuré, TROIS clics « annuler »
+  // pendant une invite finissaient en « Je parle », micro diffusé. Le geste qui voulait
+  // arrêter était exactement celui qui garantissait d'être entendu. On rend donc la
+  // référence : micro.mjs voit qu'on a tout rendu pendant la demande et ARRÊTE la piste
+  // qu'il vient d'obtenir (rien ne s'allume). Un double-clic d'impatience annule aussi —
+  // c'est un clic à refaire, contre une diffusion qu'on n'a pas demandée.
+  if (RVX.tenu && RVX.etat === "demande") { DB.micro = false; garder(); rvRendreMicro(); return; }
+  if (!RVX.tenu) { DB.micro = true; garder(); rvPrendreMicro(!DB.pousserPourParler); }
+  // En « appuyer pour parler », le bouton n'a que deux positions : tenu, ou fermé. Le
+  // basculer en sourdine n'aurait aucun sens — c'est la touche qui commande la parole.
+  else if (DB.pousserPourParler) { DB.micro = false; garder(); rvRendreMicro(); }
+  else rvCouper(!RVX.coupe);
+};
+$("bSonAmis").onclick = () => { if (RVX.sortie) RVX.sortie.rejouer(); };
+// Le témoin hors table : le seul moyen de se taire quand la barre de la table n'est plus
+// là. Il ferme le micro plutôt que de le mettre en sourdine — on n'est plus à la table,
+// on n'y revient pas par ce bouton.
+if ($("voixTemoin")) $("voixTemoin").onclick = () => { DB.micro = false; garder(); rvRendreMicro(); };
+
+/* ── Appuyer pour parler : M, et rien d'autre ───────────────────────────── */
+// ⚠️ `m` est la SEULE lettre libre dans les quatre vues de clavier.js : t/r/d/s/a sont
+// les coups, 1-6 les jetons, Espace et Entrée distribuent, les flèches répondent aux
+// exercices, Retour arrière reprend un jeton. Une touche qui volerait un coup au
+// blackjack serait pire que pas de raccourci du tout. Les gardes sont les mêmes que
+// celles de clavier.js — champ de saisie, modale ouverte, vue courante.
+// 🚨 UN RELÂCHÉ FERME TOUJOURS. C'était le défaut le plus grave de tout ce chantier : les
+// trois gardes ci-dessous (champ de saisie, modale ouverte, vue courante) s'appliquaient
+// AUSSI au `keyup`, si bien qu'une modale ouverte entre l'appui et le relâché faisait
+// sortir la fonction avant la sourdine — et le micro restait OUVERT, indéfiniment, dans
+// le mode qu'on choisit précisément pour NE PAS l'être. L'application fournissait
+// elle-même le déclencheur : reseau.js ouvre « Plus un jeton » toute seule dès que le
+// tapis passe sous la mise minimum. Ces gardes existent pour ne pas VOLER un coup au
+// blackjack ; un relâché ne vole rien, aucune n'a de raison de s'y appliquer.
+function rvRelacher() {
+  if (!RVX.pousse) return;
+  RVX.pousse = false; rvCouper(true);
+}
+function rvTouchePousser(e, enfonce) {
+  if (!DB.pousserPourParler || !RVX.tenu) return;
+  if ((e.key || "").toLowerCase() !== "m") return;
+  if (!enfonce) { if (!RVX.pousse) return; e.preventDefault(); rvRelacher(); return; }
+  if (e.repeat) return;
+  if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target && e.target.tagName)) return;
+  if ($("modale") && !$("modale").hidden) return;
+  if (vue !== "table") return;        // socle.js (premier morceau) l'a posé bien avant
+  e.preventDefault();
+  RVX.pousse = true; rvCouper(false);
+}
+document.addEventListener("keydown", e => rvTouchePousser(e, true));
+document.addEventListener("keyup", e => rvTouchePousser(e, false));
+// Changer de fenêtre en pleine phrase ne doit pas laisser le micro ouvert : le `keyup`
+// n'arrive jamais si la page a perdu le focus, et on parlerait sans le savoir. Même
+// raison pour l'onglet qu'on quitte et pour la vue qu'on change — trois portes de sortie
+// pour un `keyup` qui peut ne jamais venir.
+window.addEventListener("blur", rvRelacher);
+document.addEventListener("visibilitychange", () => { if (document.hidden) rvRelacher(); });
+document.addEventListener("sabot:vue", () => { rvRelacher(); rvVoixTemoin(); });
+
+/* ── La voix, dans ⚙ ────────────────────────────────────────────────────── */
+// L'appareil réellement pris, tel que le navigateur le nomme : « est-ce le bon micro ? »
+// ne se répond pas autrement. Le CHOIX, lui, se fait dans le navigateur — micro.mjs prend
+// l'entrée par défaut du système, et lui passer un deviceId n'est pas de notre ressort.
+function rvNomMicro() {
+  const f = MIC.microPartage().flux, p = f && f.getAudioTracks && f.getAudioTracks()[0];
+  return (p && p.label) || "";
+}
+// À TABLE ou non : c'est la question que ⚙ ne se posait pas, et c'est ce qui rendait son
+// bouton dangereux (cf. plus bas).
+const rvALaTable = () => !!(typeof T === "object" && T && T.reseau);
+function rvVoixPhrase() {
+  const pa = rvPanne();
+  if (!RVX.tenu) {
+    // Une panne survit à la fermeture : dire « rien n'est capté » après un casque
+    // débranché, c'est décrire une fermeture volontaire qui n'a pas eu lieu.
+    if (pa) return (RVX.raison || pa[0]) + (pa[1] ? " " + pa[1] : "");
+    return "Micro fermé : rien n'est capté, et le voyant du navigateur reste éteint.";
+  }
+  if (RVX.etat === "demande") return "Le micro est demandé au navigateur…";
+  if (RVX.etat !== "active") return pa ? (RVX.raison || pa[0]) + (pa[1] ? " " + pa[1] : "") : (RVX.raison || "Micro indisponible ici.");
+  const nom = rvNomMicro();
+  return (RVX.coupe
+    ? (DB.pousserPourParler ? "Micro tenu, en sourdine : maintiens M pour parler." : "Micro tenu, en sourdine : personne ne t'entend.")
+    : rvQuiEntend().replace(/ — clique pour te couper\.$/, ".")) + (nom ? " Appareil : " + nom + "." : "");
+}
+function rvVoixReglages() {
+  if (!$("voixEtat")) return;
+  const e = $("voixEtat"); e.textContent = rvVoixPhrase();
+  // Vert = on t'entend. Rouge = ça a échoué. NEUTRE pour « tenu, en sourdine » : c'est
+  // un état voulu, pas une panne — le peindre en rouge ferait chercher un problème.
+  const ok = !RVX.tenu || RVX.etat === "demande" ? null : RVX.etat !== "active" ? "0" : RVX.coupe ? null : "1";
+  if (ok === null) delete e.dataset.ok; else e.dataset.ok = ok;
+  const b = $("voixBascule");
+  if (b) { b.textContent = RVX.tenu ? "Fermer mon micro" : "Ouvrir mon micro";
+    // 🚨 HORS D'UNE TABLE, CE BOUTON PRENAIT LE MICRO POUR RIEN — et il n'y avait plus
+    // AUCUN moyen de le rendre à l'écran : #bMicro n'est révélé qu'à l'arrivée à une
+    // table, donc il restait caché, pendant que ⚙ affirmait « la table t'entend » alors
+    // qu'il n'y avait pas de table. Le voyant d'enregistrement du navigateur s'allumait
+    // et y restait. Sans table, il n'y a personne à qui parler : le bouton se ferme.
+    b.disabled = !RVX.tenu && !rvALaTable();
+    b.title = RVX.tenu ? "Rend le micro : le voyant du navigateur s'éteint"
+      : b.disabled ? "Assieds-toi à une table à plusieurs : c'est là qu'on se parle"
+      : "Demande le micro et ouvre la parole"; }
+  const h = $("voixHorsTable"); if (h) h.hidden = RVX.tenu || rvALaTable();
+  if ($("voixVol") && document.activeElement !== $("voixVol")) $("voixVol").value = DB.voixVolume;
+  if ($("voixVolL")) $("voixVolL").textContent = DB.voixVolume + " %";
+  if ($("voixPousser")) $("voixPousser").checked = !!DB.pousserPourParler;
+}
+if ($("voixBascule")) {
+  rvVoixReglages();
+  $("voixBascule").onclick = () => {
+    if (RVX.tenu) { DB.micro = false; garder(); rvRendreMicro(); }
+    else if (!rvALaTable()) bandeau("Assieds-toi à une table à plusieurs : c'est là qu'on se parle.", 4200);
+    else { DB.micro = true; garder(); rvPrendreMicro(!DB.pousserPourParler); }
+  };
+  $("voixVol").addEventListener("input", () => {
+    DB.voixVolume = Math.max(0, Math.min(100, +$("voixVol").value || 0)); garder();
+    if (RVX.sortie) RVX.sortie.volume(DB.voixVolume / 100);
+    $("voixVolL").textContent = DB.voixVolume + " %";
+  });
+  $("voixPousser").addEventListener("change", () => {
+    DB.pousserPourParler = !!$("voixPousser").checked; garder();
+    // Passer en « appuyer pour parler » alors qu'on est OUVERT doit couper tout de suite :
+    // sinon on continue d'être diffusé en croyant le contraire.
+    if (DB.pousserPourParler && RVX.tenu && !RVX.coupe) rvCouper(true);
+    RVX.pousse = false; rvBoutonMicro(); rvVoixReglages();
+  });
+  $("bReglages").addEventListener("click", () => setTimeout(() => rvVoixReglages(), 0));
 }
 
 

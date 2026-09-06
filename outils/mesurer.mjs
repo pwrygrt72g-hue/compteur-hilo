@@ -18,7 +18,9 @@ import { readFileSync } from "node:fs";
 import { extname } from "node:path";
 
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const PORT = 8749, CDP = 9333;
+// Ports tirés au sort : deux agents doivent pouvoir mesurer en même temps (le port fixe
+// sérialisait tout le monde derrière un seul banc, cf. capturer.mjs qui tire déjà au sort).
+const PORT = 8950 + Math.floor(Math.random() * 200), CDP = 9650 + Math.floor(Math.random() * 200);
 const TAILLES = [
   ["téléphone étroit", 360, 640], ["iPhone SE", 375, 667], ["iPhone 14", 390, 844],
   ["TÉLÉPHONE COUCHÉ", 844, 390], ["tablette portrait", 768, 1024],
@@ -104,7 +106,20 @@ const SONDE = `(() => {
   // (table.js expose LETTRAGE) — sans elles, un feutre nu une fois sur trois ne s'explique pas.
   const L = window.__lettrage || {}, lettrageInfo = (L.cle || "").slice(0, 60) + " " + JSON.stringify(L.mesure || null);
   const wTable = q("#plateau") ? parseFloat(getComputedStyle(q("#plateau")).getPropertyValue("--w-table")) || null : null;
-  return { vw, vh, doc, defile: Math.max(0, doc - vh), ecrans: +(doc / vh).toFixed(2), ecartCroupier, wTable, lettrage: lettrage.replace(/\s+/g, " ").trim(), depasseBas, lettrageInfo,
+  // 🚨 LE NOM D'UN SIÈGE PEUT ÊTRE EFFACÉ PAR L'ARC DU FEUTRE. Mesuré au pixel à 1280 × 800,
+  // table à cinq : « JOUEUR » (le siège de gauche, LE TIEN par défaut) et « KARIM » (celui
+  // de droite) étaient peints ENTIÈREMENT hors de la demi-lune, donc retirés par son clip —
+  // pas atténués, absents, leur mise avec. Or c'est là que la voix pose son signal
+  // principal (« qui parle » = le nom en jade). elementsFromPoint au PLURIEL : un bandeau
+  // qui passe par-dessus ne compte pas, on cherche un nom RETIRÉ de la pile.
+  const nomsEffaces = [...document.querySelectorAll("#sieges .siege")].map(d => {
+    const n = d.querySelector(".nom"); if (!n) return null;
+    const r = n.getBoundingClientRect(); if (!r.width || !r.height) return null;
+    const x = Math.round(r.left + r.width / 2), y = Math.round(r.top + r.height / 2);
+    if (x < 2 || y < 2 || x > vw - 2 || y > vh - 2) return null;   // hors fenêtre : plus loin, pas effacé
+    return document.elementsFromPoint(x, y).some(e => d.contains(e)) ? null : ((n.textContent || "").trim() || "?");
+  }).filter(Boolean);
+  return { vw, vh, doc, defile: Math.max(0, doc - vh), ecrans: +(doc / vh).toFixed(2), ecartCroupier, wTable, nomsEffaces, lettrage: lettrage.replace(/\s+/g, " ").trim(), depasseBas, lettrageInfo,
     deborde: largeurDoc > vw + 1 ? dep : [], largeurDoc, hEntete: h("header"),
     yCoups: y("#coups"), hTapis: h("#plateau"), hSieges: h("#sieges"),
     bandes: { tete: h(".tete"), padHaut: q("header") ? parseFloat(getComputedStyle(q("header")).paddingTop) : null,
@@ -207,6 +222,7 @@ for (const r of rapport) {
     exiger(r.ecrans <= 1.03, `${ou} : la table demande ${r.ecrans} écran(s), elle doit tenir dans un — dépasse : ${(r.depasseBas || []).join(", ") || "?"}`);
     exiger(r.yCoups !== null && r.yCoups <= r.vh, `${ou} : les coups sont hors écran (bas à y=${r.yCoups}, fenêtre ${r.vh})`);
     exiger(r.hSieges >= 60, `${ou} : sièges écrasés à ${r.hSieges} px`);
+    exiger(!(r.nomsEffaces || []).length, `${ou} : l'arc du feutre efface le nom de ${(r.nomsEffaces || []).length} siège(s) — ${(r.nomsEffaces || []).join(", ")}`);
     // Les cartes du croupier ne touchent JAMAIS les tiennes : au moins 0,3 carte d'écart (25 px à 84).
     const mini = Math.round((r.wTable || 84) * .3);
     exiger(r.ecartCroupier === null || r.ecartCroupier >= mini, `${ou} : les cartes du croupier touchent les tiennes (écart ${r.ecartCroupier} px, minimum ${mini})`);
