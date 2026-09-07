@@ -9857,20 +9857,25 @@ function crLook(svg, c, prefixe) {
   // neutre, par le même chemin que les émotions (crVisage la conserve).
   ["crSourcilG", "crSourcilD"].forEach(k => { const e = svg.querySelector("#" + prefixe + k); if (e) e.style.transform = `scaleY(${c.sourcils || 1})`; });
 }
-/* ── LE CROUPIER 3D : le moteur par DÉFAUT depuis le 07/09/2026 ───────
-   Léo, après avoir vu la planche des rendus : « met les modèles 3D qu'on a pris
-   et customise les, on oublie toutes les distinctions qu'avait les anciens
-   croupiers ». C'est donc un arbitrage explicite, pas un glissement : on gagne
-   le volume, la respiration d'os et la tête qui tourne sur un cou ; on perd les
-   HUIT EXPRESSIONS (les modèles CC0 n'ont aucun morph target, le visage est
-   figé) et le détail des cinq têtes — la moustache en brosse de Marcel, le
-   chignon de Lin, les lunettes carrées d'Ada. Ce n'est pas une régression
-   involontaire, c'est ce qui a été demandé, et la case des réglages permet de
-   revenir au dessin en un clic.
+/* ── LE CROUPIER 3D : une OPTION, et le dessin reste le croupier ──────
+   🚨 ESSAYÉ EN DÉFAUT LE 07/09/2026, REFUSÉ LE JOUR MÊME. Léo l'avait demandé
+   deux fois, puis a vu le résultat en ligne : « remets les anciens, je n'aime
+   pas du tout ceux-là ». La 3D reste disponible derrière la case des réglages,
+   elle ne s'allume plus toute seule, et on ne réessaiera pas sans qu'il le
+   redemande.
 
-   ⚠️ LE SVG NE PART PAS, et ne doit pas partir : il porte la bulle, les gestes
-   de bras et tout le jeu, il est le repli quand la 3D échoue, et il est le SEUL
-   croupier de l'artefact publié. Le supprimer laisserait une table vide là-bas.
+   POURQUOI ça ne marche pas, pour que personne ne le retente à l'aveugle : les
+   modèles CC0 n'ont AUCUN morph target, donc le visage est FIGÉ — Vince annonce
+   « 14 contre un dix » avec exactement la tête qu'il aura quand tu sauteras. Et
+   ils ne portent aucun des cinq signes qui font les cinq croupiers : la
+   moustache en brosse de Marcel, son crâne dégarni, le chignon de Lin, les
+   lunettes carrées d'Ada. Le dessin fait les deux. Un vrai croupier 3D demande
+   des modèles sculptés avec des morphs faciaux — ça se paie, ça ne se télécharge
+   pas.
+
+   ⚠️ LE SVG NE PART PAS : il porte la bulle, les gestes de bras et tout le jeu,
+   il est le repli quand la 3D échoue, et il est le SEUL croupier de l'artefact
+   publié. Le supprimer laisserait une table vide là-bas.
 
    Deux modèles pour cinq croupiers (Lin et Ada sont des femmes) : ils viennent
    du MÊME lot, donc même squelette, mêmes clips, et l'un remplace l'autre sans
@@ -9886,10 +9891,11 @@ function crLook(svg, c, prefixe) {
    signal que le hall : window.PHOTOS_PETIT n'existe qu'en mode « pages ». */
 const CR3D = { api: null, etat: { regard: 0, penche: 0, clip: "repos" }, occupe: false, panne: "", modele: "" };
 const cr3dPossible = () => !!window.PHOTOS_PETIT;
-// 🚨 ALLUMÉE PAR DÉFAUT depuis le 07/09 (Léo : « met les modèles 3D qu'on a
-// pris »). `!== 0` et pas `=== 1` : une base d'avant ce jour n'a pas la clé,
-// et `=== 1` l'aurait laissée éteinte pour tous ceux qui jouaient déjà.
-const cr3dVoulu = () => DB.croupier.tri3d !== 0 && cr3dPossible();
+// 🚨 ÉTEINTE PAR DÉFAUT. Elle a été allumée par défaut pendant une heure le
+// 07/09, puis Léo a tranché en la voyant : « remets les anciens, je n'aime pas
+// du tout ceux-là ». `=== 1` et pas `!== 0` : il faut avoir coché SOI-MÊME.
+// Ne pas ré-inverser sans une demande explicite — ça a déjà été essayé.
+const cr3dVoulu = () => DB.croupier.tri3d === 1 && cr3dPossible();
 // Deux modèles seulement, et c'est assumé : les cinq croupiers ne se
 // distinguent plus que par le corps (homme/femme) et par la palette.
 const cr3dModele = c => "static/modeles/" + (c.modele3d || "croupier") + ".glb";
@@ -10746,7 +10752,7 @@ function rendreChoixCroupier() {
     <label class="ch"><span class="grave">Son nom à cette table</span><input type="text" id="crNomSaisie" maxlength="18" placeholder="${echap(crPerso().nom)}" value="${echap(DB.croupier.noms[crEffectif()] || "")}"></label>
     <label class="ch ligne"><input type="checkbox" id="cr3d"${cr3dVoulu() ? " checked" : ""}${cr3dPossible() ? "" : " disabled"}>
       <span>Croupier en 3D <i class="muet">${cr3dPossible()
-        ? "décoche pour revenir au croupier dessiné, qui lui a des expressions"
+        ? "un modèle animé, mais sans les expressions du croupier dessiné"
         : "indisponible ici : cette page publiée bloque le téléchargement du modèle"}</i></span></label>`;
   const fermer = $("modaleFermer"); const rang = fermer && fermer.parentNode;
   if (rang) boite.insertBefore(sec, rang); else boite.appendChild(sec);
