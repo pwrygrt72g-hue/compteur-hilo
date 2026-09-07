@@ -136,12 +136,92 @@ ${app}
 //    Artifact enveloppe le fichier lui-même et refuse ces balises.
 if (out.includes("__LIEN_SITE__")) out = out.split("__LIEN_SITE__").join(LIEN_SITE);
 writeFileSync("artefact.html", out);
+
+// ── Ce qui n'existe QUE dans index.html : l'en-tête public ────────────────────
+// 🚨 Ce bloc N'EST PAS dans src/app/tete.html, et c'est délibéré : tete.html est
+// partagé avec artefact.html, qui est publié sous un AUTRE domaine. Y mettre le
+// canonique et les balises Open Graph ferait déclarer à l'artefact qu'il est une
+// copie de wisehand21.com — vrai, mais ce n'est pas à lui de le dire, et un jour
+// on ne saurait plus laquelle des deux pages Google regarde.
+// L'adresse vient de LIEN_SITE, la constante unique déjà lue plus haut : rien
+// n'est écrit en dur ici, pas plus que dans le gabarit.
+//
+// L'IMAGE DE PARTAGE est en JPEG et non en WebP, alors que tout le reste du dépôt
+// est en WebP : le scraper de LinkedIn ne lit pas le WebP de façon fiable (vérifié
+// le 07/09/2026) et sort alors un aperçu SANS image, sans le signaler. Elle est
+// fabriquée par outils/og-image.sh — 1200x630, ~112 Ko.
+const SITE = LIEN_SITE.replace(/\/$/, "");
+const OG_IMAGE = SITE + "/static/og.jpg";
+const DESCRIPTION = (tete.match(/<meta name="description" content="([^"]+)"/) || [])[1];
+if (!DESCRIPTION) throw new Error("tete.html : <meta name=\"description\"> introuvable — l'en-tête public ne peut plus être construit");
+
+// SoftwareApplication décrit L'OUTIL (c'est une application, pas un article) ;
+// WebSite donne son nom au domaine. Aucun FAQPage ici : les questions vivent sur
+// /blackjack/, et baliser une question absente de la page est une violation.
+const JSONLD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": SITE + "/#app",
+      name: "WiseHand",
+      url: SITE + "/",
+      applicationCategory: "GameApplication",
+      applicationSubCategory: "Blackjack trainer",
+      operatingSystem: "Tout navigateur web",
+      inLanguage: "fr",
+      description: DESCRIPTION,
+      image: OG_IMAGE,
+      author: { "@type": "Person", name: "Léo Lejeau" },
+      license: "https://opensource.org/licenses/MIT",
+      isAccessibleForFree: true,
+      // 🚨 Un prix de 0 se déclare, sinon « gratuit » n'est qu'une affirmation
+      // dans une phrase. C'est la seule chose de cette page qu'un moteur peut
+      // vérifier mécaniquement.
+      offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+      featureList: [
+        "Dix tables de casino aux règles distinctes",
+        "Stratégie de base résolue pour chaque table",
+        "Écarts au compte vrai (Hi-Lo)",
+        "Avantage maison mesuré par simulation",
+        "Table à plusieurs, sans serveur",
+        "Fonctionne hors ligne",
+      ],
+    },
+    { "@type": "WebSite", "@id": SITE + "/#site", url: SITE + "/", name: "WiseHand", inLanguage: "fr" },
+  ],
+};
+
+const ENTETE = `<link rel="canonical" href="${SITE}/">
+<link rel="alternate" hreflang="fr" href="${SITE}/">
+<link rel="alternate" hreflang="x-default" href="${SITE}/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="WiseHand">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="${SITE}/">
+<meta property="og:title" content="WiseHand — compter les cartes au blackjack, pour de vrai">
+<meta property="og:description" content="${DESCRIPTION}">
+<meta property="og:image" content="${OG_IMAGE}">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="WiseHand — compter les cartes au blackjack, pour de vrai">
+<meta name="twitter:description" content="${DESCRIPTION}">
+<meta name="twitter:image" content="${OG_IMAGE}">
+<meta name="twitter:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="rating" content="adult">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<script type="application/ld+json">${JSON.stringify(JSONLD).replace(/<\//g, "<\\/")}</script>
+`;
+
 writeFileSync("index.html", `<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-${out.slice(0, out.indexOf("<style>"))}</head>
+${ENTETE}${out.slice(0, out.indexOf("<style>"))}</head>
 <body>
 ${out.slice(out.indexOf("<style>"))}</body>
 </html>

@@ -1,0 +1,40 @@
+# WiseHand — wisehand21.com
+# Tout est public : il n'y a ni compte, ni espace privé, ni page à protéger.
+# La seule chose que ce fichier fait vraiment, c'est déclarer le plan du site.
+
+User-agent: *
+Allow: /
+
+# Les robots des IA génératives sont ACCEPTÉS, délibérément.
+# Ce site n'a rien à vendre et rien à protéger : être cité dans une réponse
+# d'assistant est exactement le trafic qu'on cherche. Les bloquer (ce que font
+# par réflexe beaucoup de sites de casino) reviendrait à se retirer du seul
+# canal où une page honnête peut battre un site qui achète du lien.
+# Un robot ABSENT de cette liste passe de toute façon par « User-agent: * ».
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-SearchBot
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+User-agent: Bingbot
+Allow: /
+User-agent: CCBot
+Allow: /
+
+# artefact.html est la même application, publiée ailleurs comme artefact.
+# Elle n'est pas destinée à être indexée sous ce domaine : elle ferait doublon
+# avec « / » sans rien apporter, et elle pèse 2,2 Mo.
+Disallow: /artefact.html
+
+Sitemap: https://wisehand21.com/sitemap.xml

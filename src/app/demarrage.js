@@ -38,7 +38,10 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => navigato
       n'insiste pas. Quelqu'un qui a pris la peine de cocher cette case a répondu.
    ⚠️ Chargé APRÈS le premier rendu et en `async` : un compteur ne doit jamais retarder
    l'affichage de ce qu'il compte. */
-const SUIVI_CODE = "";   // ← le code du site chez GoatCounter, ex. "wisehand21"
+const SUIVI_CODE = "wisehand21";   // tableau de bord : https://wisehand21.goatcounter.com
+// ⚠️ Les sondes du dépôt servent la page depuis 127.0.0.1 : GoatCounter IGNORE lui-même
+// localhost et 127.0.0.1 (comportement documenté), donc ni le banc ni la sonde ne
+// gonflent les chiffres de Léo — c'est vérifié en lisant leur script, pas supposé.
 {
   const refuse = navigator.doNotTrack === "1" || window.doNotTrack === "1"
     || navigator.msDoNotTrack === "1" || navigator.globalPrivacyControl === true;

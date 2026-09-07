@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How to Play Blackjack: Rules, Basic Strategy Chart and House Edge</title>
+<meta name="description" content="Blackjack rules, the complete basic strategy chart, and what every house rule costs — with house edges measured by simulating 3,000,000 hands per rule set, not copied.">
+<link rel="canonical" href="https://wisehand21.com/en/blackjack/">
+<link rel="alternate" hreflang="fr" href="https://wisehand21.com/blackjack/">
+<link rel="alternate" hreflang="en" href="https://wisehand21.com/en/blackjack/">
+<link rel="alternate" hreflang="x-default" href="https://wisehand21.com/blackjack/">
+<meta name="theme-color" content="#070D0C">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to Play Blackjack: Rules, Basic Strategy and House Edge">
+<meta property="og:description" content="The complete basic strategy chart, and what every house rule costs — measured by simulation, not copied.">
+<meta property="og:url" content="https://wisehand21.com/en/blackjack/">
+<meta property="og:locale" content="en_GB">
+<meta property="og:site_name" content="WiseHand">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<style>
+/* ── Page « How to Play Blackjack » ────────────────────────────────────────
+   Autonome : ne dépend d'aucune règle de l'application. Les couleurs sont des
+   variables locales avec un repli, pour qu'un futur thème puisse les reprendre
+   sans que la page casse s'il n'existe pas. */
+.art{
+  --p-encre:#12100c; --p-fond:#faf8f3; --p-doux:#5c5850; --p-trait:#ded8cc;
+  --p-jade:#0f6b4f; --p-cinabre:#a8321f; --p-or:#6f5410; --p-lien:#0f6b4f; --p-bleu:#2f6296;
+  max-width:74ch; margin:0 auto; padding:2rem 1.25rem 5rem;
+  color:var(--p-encre); background:var(--p-fond);
+  font:400 1.0625rem/1.65 ui-serif,Georgia,"Times New Roman",serif;
+  -webkit-text-size-adjust:100%;
+}
+@media (prefers-color-scheme:dark){
+  .art{--p-encre:#ece7dc; --p-fond:#12140f; --p-doux:#9c968a; --p-trait:#2e332a;
+       --p-jade:#5fc79a; --p-cinabre:#e2705a; --p-or:#d6ac4a; --p-lien:#5fc79a; --p-bleu:#7fb3e8;}
+}
+.art .fil{font:400 .85rem/1.5 ui-sans-serif,system-ui,sans-serif; color:var(--p-doux);
+  margin:0 0 1.5rem; padding-bottom:.7rem; border-bottom:1px solid var(--p-trait);}
+.art .fil .langue{float:right;}
+.art h1{font-size:clamp(2rem,5vw,2.9rem); line-height:1.12; letter-spacing:-.02em; margin:0 0 1rem;}
+.art h2{font-size:clamp(1.4rem,3.2vw,1.85rem); line-height:1.2; margin:3rem 0 .75rem; letter-spacing:-.01em;}
+.art h3{font-size:1.15rem; margin:2rem 0 .5rem;}
+.art p,.art li{overflow-wrap:break-word;}
+.art .lede{font-size:1.2rem; line-height:1.55; color:var(--p-doux);}
+.art a{color:var(--p-lien); text-underline-offset:.15em;}
+.art dt{font-weight:700; margin-top:.9rem;}
+.art dd{margin:.15rem 0 0 1.1rem;}
+.art .note{border-left:3px solid var(--p-or); padding:.6rem 0 .6rem .9rem; margin:1.25rem 0;
+  font-size:.97rem; color:var(--p-doux); background:color-mix(in srgb,var(--p-or) 6%,transparent);}
+.art .math{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.95rem;
+  background:color-mix(in srgb,var(--p-encre) 5%,transparent); padding:.7rem .9rem; border-radius:.4rem;}
+.art .toc{border:1px solid var(--p-trait); border-radius:.5rem; padding:.5rem 1.25rem 1rem; margin:2rem 0;}
+.art .toc h2{font-size:.8rem; text-transform:uppercase; letter-spacing:.09em; margin:1rem 0 .4rem; color:var(--p-doux);}
+.art .toc ol{margin:0; padding-left:1.3rem; font-size:.97rem;}
+.art .toc li{margin:.2rem 0;}
+/* Défilement horizontal CONFINÉ au tableau : le corps de page ne défile jamais. */
+.art .scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:1rem 0;
+  border:1px solid var(--p-trait); border-radius:.5rem;}
+.art table{border-collapse:collapse; width:100%; font-size:.9rem;
+  font-family:ui-sans-serif,system-ui,sans-serif;}
+.art caption{caption-side:top; text-align:left; padding:.7rem .9rem; font-size:.85rem;
+  color:var(--p-doux); border-bottom:1px solid var(--p-trait);}
+.art th,.art td{padding:.4rem .3rem; text-align:center; border-bottom:1px solid var(--p-trait);}
+.art thead th{background:var(--p-fond); font-weight:700; position:sticky; top:0;
+  box-shadow:inset 0 0 0 99em color-mix(in srgb,var(--p-encre) 7%,transparent);}
+.art tbody th[scope=row]{text-align:left; padding-left:.8rem; white-space:nowrap; font-weight:600;}
+/* La colonne des mains reste visible quand on fait defiler le tableau vers la droite :
+   sans elle, sur un telephone, on lit « U » sans savoir si c'est la ligne 15 ou 16.
+   Fond OPAQUE obligatoire — une teinte translucide laisserait passer les cellules. */
+.art .chart tbody th[scope=row],
+.art .chart thead th:first-child{position:sticky; left:0; z-index:2; background:var(--p-fond);}
+.art .chart thead th:first-child{z-index:3;}
+.art .chart tbody th[scope=row]::after{content:""; position:absolute; inset:0 -1px 0 auto; width:1px;
+  background:var(--p-trait);}
+.art .chart td{font-weight:700; font-variant-numeric:tabular-nums; min-width:2.1rem;}
+.art .rules{font-size:.88rem;}
+.art .rules th[scope=row]{font-weight:400;}
+.art .rules td{text-align:center; font-variant-numeric:tabular-nums;}
+/* Le glyphe porte l'information ; la couleur ne fait que la doubler (daltonisme). */
+.art .a-H{background:color-mix(in srgb,var(--p-cinabre) 13%,transparent); color:var(--p-cinabre);}
+.art .a-S{background:color-mix(in srgb,var(--p-jade) 13%,transparent); color:var(--p-jade);}
+.art .a-D{background:color-mix(in srgb,var(--p-or) 15%,transparent); color:var(--p-or);}
+.art .a-P{background:color-mix(in srgb,var(--p-bleu) 16%,transparent); color:var(--p-bleu);}
+.art .a-U{background:color-mix(in srgb,var(--p-encre) 12%,transparent); color:var(--p-doux);}
+.art .legend{display:flex; flex-wrap:wrap; gap:.5rem 1rem; font-size:.85rem; margin:1rem 0;
+  font-family:ui-sans-serif,system-ui,sans-serif; color:var(--p-doux);}
+.art .legend b{display:inline-block; width:1.5rem; text-align:center; border-radius:.25rem; margin-right:.25rem;}
+.art td.ok{color:var(--p-jade); font-weight:700;}
+.art td.mid{color:var(--p-or); font-weight:700;}
+.art td.bad{color:var(--p-cinabre); font-weight:700;}
+.art .cta{margin:2rem 0; text-align:center;}
+.art .cta a{display:inline-block; background:var(--p-jade); color:#fff; text-decoration:none;
+  padding:.8rem 1.6rem; border-radius:.4rem; font-weight:700;
+  font-family:ui-sans-serif,system-ui,sans-serif;}
+@media (prefers-color-scheme:dark){.art .cta a{color:#0b1410;}}
+.art .help{font-size:.97rem;} .art .help li{margin:.55rem 0;}
+.art .age,.art .meta{font-size:.86rem; color:var(--p-doux);}
+.art hr{border:0; border-top:1px solid var(--p-trait); margin:2.5rem 0 1.5rem;}
+</style>
+
+<article class="art" lang="en">
+
+<nav class="fil" aria-label="Breadcrumb">
+  <span class="langue"><a href="/blackjack/" hreflang="fr" lang="fr">Français</a></span>
+  <a href="/">WiseHand</a> &rsaquo; Blackjack explained
+</nav>
+
+
+<h1>How to Play Blackjack</h1>
+
+<p class="lede">Blackjack is the only game on a casino floor where your decisions
+change the outcome. This page teaches the rules, gives you the complete basic
+strategy chart, and shows what each house rule actually costs — using numbers
+measured by simulation, not copied from another site.</p>
+
+<p><strong>The short version:</strong> beat the dealer's hand without going over
+21. You are not trying to hit 21. You are trying to make a better decision than
+the dealer is allowed to make — because the dealer is not allowed to make any.</p>
+
+<nav class="toc" aria-label="On this page">
+  <h2 id="contents">On this page</h2>
+  <ol>
+    <li><a href="#goal">The goal is not to get 21</a></li>
+    <li><a href="#deal">How a hand is dealt</a></li>
+    <li><a href="#vocabulary">Hard hands, soft hands, and pairs</a></li>
+    <li><a href="#options">Your five options</a></li>
+    <li><a href="#dealer">What the dealer does</a></li>
+    <li><a href="#chart">The basic strategy chart</a></li>
+    <li><a href="#insurance">Why insurance is always a bad bet</a></li>
+    <li><a href="#rules">What each house rule costs</a></li>
+    <li><a href="#counting">Card counting, honestly</a></li>
+    <li><a href="#faq">Common questions</a></li>
+    <li><a href="#practice">Practice</a></li>
+  </ol>
+</nav>
+
+<h2 id="goal">The goal is not to get 21</h2>
+
+<p>Almost every beginner gets this wrong, and it costs them money on the very
+first hand. The object of blackjack is <em>not</em> to reach 21. It is to finish
+with a total closer to 21 than the dealer, without exceeding 21.</p>
+
+<p>The difference matters because of one asymmetry: <strong>if you bust, you lose
+immediately — even if the dealer busts afterwards.</strong> Your money is already
+in the tray before the dealer turns a card. That single rule is where the entire
+house edge comes from. Everything else in this page is about managing it.</p>
+
+<p>Card values are simple:</p>
+
+<ul>
+  <li>Number cards are worth their face value: a 7 is 7.</li>
+  <li>Jack, Queen and King are worth <strong>10</strong>. There are sixteen
+      ten-valued cards per deck, which is why so much strategy revolves around them.</li>
+  <li>An Ace is worth <strong>11 or 1</strong>, whichever helps you. It changes
+      value automatically as you draw.</li>
+</ul>
+
+<p>A <strong>blackjack</strong> (also called a natural) is an Ace plus any
+ten-valued card on your first two cards. It beats any other 21 and normally pays
+<strong>3 to 2</strong> — bet $10, win $15. Note the word <em>normally</em>. We
+will come back to it, because it is the single most expensive thing on a
+casino floor.</p>
+
+<h2 id="deal">How a hand is dealt</h2>
+
+<ol>
+  <li>You place a bet inside the betting circle, before any cards appear.</li>
+  <li>The dealer gives every player two cards face up, and takes two: one face
+      up (the <strong>up-card</strong>) and one face down (the
+      <strong>hole card</strong>).</li>
+  <li>If the dealer's up-card is an Ace or a ten, they check the hole card for
+      blackjack. If they have it, the hand ends immediately.</li>
+  <li>Each player acts in turn, clockwise, choosing from the five options below.</li>
+  <li>The dealer reveals the hole card and plays out their hand by a fixed rule.</li>
+  <li>Bets are settled: closer to 21 wins, equal totals are a
+      <strong>push</strong> (your bet is returned).</li>
+</ol>
+
+<p>Cards are dealt from a <strong>shoe</strong> holding one to eight decks. A
+plastic <strong>cut card</strong> is inserted near the back; when it appears, the
+current hand finishes and the shoe is reshuffled. How deep that card sits is
+called <strong>penetration</strong>, and it is the most important number on the
+table that nobody advertises.</p>
+
+<h2 id="vocabulary">Hard hands, soft hands, and pairs</h2>
+
+<p>You cannot read a strategy chart without these three words. They are the only
+vocabulary you need.</p>
+
+<dl>
+  <dt>Soft hand</dt>
+  <dd>A hand containing an Ace that can still count as 11 without busting.
+    A,6 is a <em>soft 17</em>. You cannot bust it by taking one card — the worst
+    that happens is the Ace drops to 1. This is why soft hands are played far
+    more aggressively than they look.</dd>
+
+  <dt>Hard hand</dt>
+  <dd>Any hand with no Ace, or one where the Ace must count as 1. A 10,7 is a
+    <em>hard 17</em>. So is A,6,10 — the Ace was forced down to 1. Hard 17 and
+    soft 17 are the same number and completely different hands.</dd>
+
+  <dt>Pair</dt>
+  <dd>Two cards of the same rank, which you may split into two hands.</dd>
+</dl>
+
+<p>The classic mistake: holding A,7, calling it 18, and standing against a
+dealer 3. It is a soft 18, it cannot bust, and the chart below says to double it.</p>
+
+<h2 id="options">Your five options</h2>
+
+<h3>Hit</h3>
+<p>Take another card. You may keep hitting until you stand or bust.</p>
+
+<h3>Stand</h3>
+<p>Take no more cards and keep your total.</p>
+
+<h3>Double down</h3>
+<p>Double your original bet and receive <strong>exactly one</strong> more card,
+then you are done. You use it when you are likely to win but unlikely to improve
+much beyond one card — typically totals of 9, 10 and 11 against a weak dealer
+up-card. Some tables only allow doubling on certain totals; this costs you money.</p>
+
+<h3>Split</h3>
+<p>With two cards of the same rank, put up a second bet equal to the first and
+play two separate hands. Two rules to check at the table: whether you may
+<strong>double after splitting</strong> (DAS, good for you), and whether split
+Aces receive only one card each (almost always yes).</p>
+
+<h3>Surrender</h3>
+<p>Give up the hand and forfeit half your bet. It is offered at a minority of
+tables and it is the most misunderstood option in the game — most players never
+use it, and a few use it far too often. It is correct in exactly a handful of
+spots, all of them marked <strong>U</strong> in the chart below. If you are
+holding 16 against a dealer 10, hitting it loses <strong>73.8%</strong> of the
+time and wins 20.3% (measured over four million hands); paying half a bet to
+walk away is genuinely the cheapest exit.</p>
+
+<h2 id="dealer">What the dealer does (and why it is the whole game)</h2>
+
+<p>The dealer has no strategy. They follow one written rule, every hand, forever:
+<strong>draw to 16, stand on 17 or more.</strong> They cannot double, cannot
+split, cannot surrender, and cannot decide anything based on your hand.</p>
+
+<p>This is the entire reason basic strategy exists. Because the dealer's
+behaviour is fixed and public, the probability of every dealer outcome can be
+computed exactly from their up-card. Your correct play is simply whichever
+decision has the highest expected value against that distribution — a solvable
+arithmetic problem with one right answer per situation.</p>
+
+<p>The one variation you must check is what happens on <strong>soft 17</strong>
+(A,6). Two rules exist, usually printed on the felt:</p>
+
+<ul>
+  <li><strong>S17</strong> — the dealer <em>stands</em> on soft 17. Better for you.</li>
+  <li><strong>H17</strong> — the dealer <em>hits</em> soft 17. Worse for you, and
+      it also changes several of your own correct plays.</li>
+</ul>
+
+<p>H17 gives the dealer a free chance to improve a mediocre hand. Measured on the
+six-deck game below by changing that single rule and nothing else,
+<strong>H17 costs the player about 0.22 percentage points</strong> — the house
+edge went from 0.35% to 0.57%. It is the second most important rule on the table.</p>
+
+<h2 id="chart">The basic strategy chart</h2>
+
+<p>Basic strategy is the complete list of best decisions, assuming you know
+nothing about the undealt cards. It is not a system, not a betting pattern, and
+not an opinion — it is the solved answer. Played perfectly it reduces the house
+edge to a few tenths of one percent, which is the best deal in the building.</p>
+
+<p>The chart below is for the most common American game:
+<strong>6 decks, dealer hits soft 17, blackjack pays 3:2, double on any two
+cards, double after split allowed, late surrender allowed.</strong> This is the
+standard Las Vegas Strip rule set.</p>
+
+<p class="note">These decisions were <strong>computed, not copied.</strong> Every
+cell comes from an exact solver that takes the rules as input and returns the
+highest-expectation play, so the chart is guaranteed to match this exact rule
+set. Change any rule and the chart changes with it — which is why a single-deck
+chart and an eight-deck chart genuinely disagree in a few cells.</p>
+
+<div class="legend">
+  <span><b class="a-H">H</b> Hit</span>
+  <span><b class="a-S">S</b> Stand</span>
+  <span><b class="a-D">D</b> Double if allowed, otherwise hit</span>
+  <span><b class="a-P">P</b> Split</span>
+  <span><b class="a-U">U</b> Surrender if allowed, otherwise hit</span>
+</div>
+
+<h3>Hard totals</h3>
+<div class="scroll">
+<table class="chart">
+<caption>Hard totals — 6 decks, H17, DAS, late surrender. Columns are the dealer's up-card.</caption>
+<thead>
+<tr><th scope="col">Your hand</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th><th scope="col">A</th></tr>
+</thead>
+<tbody>
+  <tr><th scope="row">8 or less</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">9</th><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">10</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">11</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td></tr>
+  <tr><th scope="row">12</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">13</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">14</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">15</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-U">U</td><td class="a-U">U</td></tr>
+  <tr><th scope="row">16</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-U">U</td><td class="a-U">U</td><td class="a-U">U</td></tr>
+  <tr><th scope="row">17</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-U">U</td></tr>
+  <tr><th scope="row">18+</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Soft totals (hands with an Ace counting as 11)</h3>
+<div class="scroll">
+<table class="chart">
+<caption>Soft totals — 6 decks, H17, DAS, late surrender. Columns are the dealer's up-card.</caption>
+<thead>
+<tr><th scope="col">Your hand</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th><th scope="col">A</th></tr>
+</thead>
+<tbody>
+  <tr><th scope="row">A,9</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">A,8</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-D">D</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">A,7</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,6</th><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,5</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,4</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,3</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,2</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Pairs</h3>
+<div class="scroll">
+<table class="chart">
+<caption>Pair splitting — 6 decks, H17, DAS, late surrender. Columns are the dealer's up-card.</caption>
+<thead>
+<tr><th scope="col">Your hand</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th><th scope="col">A</th></tr>
+</thead>
+<tbody>
+  <tr><th scope="row">A,A</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td></tr>
+  <tr><th scope="row">10,10</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">9,9</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-S">S</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">8,8</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-U">U</td></tr>
+  <tr><th scope="row">7,7</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">6,6</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">5,5</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">4,4</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">3,3</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">2,2</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>How to learn it without memorising 290 cells</h3>
+
+<p>You do not memorise the grid. You memorise a handful of rules that generate
+most of it, then learn the exceptions:</p>
+
+<ul>
+  <li><strong>Always split Aces and 8s. Never split 10s or 5s.</strong> A pair of
+      10s is already a 20; splitting it turns a near-certain win into two average
+      hands. A pair of 5s is a hard 10 — double it.</li>
+  <li><strong>Dealer shows 2–6: they are weak.</strong> They must draw, and they
+      bust often. Stand on your stiff totals (12–16) and let them break.</li>
+  <li><strong>Dealer shows 7–A: they are strong.</strong> Assume a 10 in the
+      hole. Hit your stiff totals — yes, even 16, and yes, it feels terrible.</li>
+  <li><strong>Always double hard 11.</strong> In this rule set, against every
+      up-card including an Ace.</li>
+  <li><strong>Never take insurance.</strong> See below.</li>
+</ul>
+
+<p>The exceptions worth learning explicitly are the surrenders (hard 15 and 16
+against big cards, 8,8 against an Ace), soft 18 — which doubles against 2–6 and
+<em>hits</em> against 9, 10 and A — and 9,9, which splits against everything
+except 7, 10 and A.</p>
+
+<p>One warning about the total you will hear quoted everywhere: perfect basic
+strategy does not make blackjack a break-even game. It makes it a game you lose
+slowly. On the table above, the house keeps about half of one percent of every
+dollar you put in the circle, forever.</p>
+
+<h2 id="insurance">Why insurance is always a bad bet</h2>
+
+<p>When the dealer shows an Ace, they offer <strong>insurance</strong>: a side
+bet of up to half your original wager, paying 2:1 if the hole card is a
+ten-valued card. It is pitched as protection. It is a separate bet on a single
+proposition, and you can price it in one line of arithmetic.</p>
+
+<p>Insurance pays 2:1, so it breaks even when the hole card is a ten
+<strong>one time in three</strong> — 33.3%. In a fresh six-deck shoe there are
+96 ten-valued cards among 312. With the dealer's Ace and your own two cards
+visible, 309 cards are unknown and 96 of them are tens:</p>
+
+<p class="math">96 ÷ 309 = <strong>31.1%</strong>, against a break-even of 33.3%.
+Expected value: (2 × 0.311) − 0.689 = <strong>−0.068</strong>.</p>
+
+<p>You lose about <strong>6.8 cents on every dollar of insurance</strong> — worse
+than roulette. It is not protection; it is a second, much worse game offered at
+a moment of anxiety.</p>
+
+<p>The version that fools the most people is <strong>even money</strong>. You
+have a blackjack, the dealer shows an Ace, and they offer you a guaranteed 1:1
+payout instead of the 3:2 you might push. That is insurance under another name —
+and it is the <em>worst</em> possible moment to take it, because two of the tens
+you need are in your own hand. The same arithmetic gives 94 ÷ 309 = 30.4%, an
+expected loss of <strong>8.7%</strong>. Decline it. You will lose that hand
+sometimes. You will still be ahead over a year.</p>
+
+<p class="note">The one exception is a card counter who knows the remaining shoe
+is unusually rich in tens. That threshold is a specific number, and it appears
+below.</p>
+
+<h2 id="rules">What each house rule costs</h2>
+
+<p>Two tables can look identical and differ by a factor of four in what they take
+from you. These are the rules to read before you sit down, in order of how much
+they matter.</p>
+
+<h3>1. Blackjack pays 3:2 or 6:5 — check this first, always</h3>
+
+<p>A 3:2 blackjack pays $15 on a $10 bet. A 6:5 blackjack pays $12. It sounds
+like a small trim. It is not.</p>
+
+<p>Measured directly by taking one eight-deck game and changing
+<strong>only</strong> the payout — same decks, same H17, same doubling, same
+splitting — the house edge went from <strong>0.72% to 2.08%</strong>. The 6:5
+payout alone costs <strong>1.36 percentage points</strong>, roughly tripling the
+price of playing.</p>
+
+<p>No other rule on the felt comes close. A single-deck 6:5 game — advertised as
+a player's game because single deck sounds generous — is worse than an
+eight-deck 3:2 game by a wide margin. <strong>If the table says 6:5, walk
+away.</strong> This is the single most useful sentence on this page, and it takes
+two seconds to check.</p>
+
+<h3>2. Dealer hits or stands on soft 17</h3>
+<p>H17 costs about <strong>0.22 percentage points</strong> versus S17, measured
+on the same six-deck game with nothing else changed. Prefer S17.</p>
+
+<h3>3. Number of decks</h3>
+<p>Fewer decks is better for basic strategy, but the effect is small — a few
+tenths of a point at most — and it is routinely used as bait to sell 6:5 games.
+Deck count is a tie-breaker, never a reason to accept a worse payout.</p>
+
+<h3>4. Doubling, splitting and surrender</h3>
+<p>Double on any two cards, double after splitting (DAS), re-splitting, and late
+surrender each help you by roughly 0.1 to 0.2 points. Restrictions such as
+"double on 10 and 11 only" quietly remove a chunk of your edge.</p>
+
+<h3>5. No hole card (common outside North America)</h3>
+<p>In many European, British and Asian casinos the dealer takes only one card and
+draws the second after everyone has acted. If they then make blackjack, you lose
+not only your original bet but everything you doubled and split. Your correct
+strategy changes: you double and split far less against a 10 or an Ace.</p>
+
+<h3>6. Continuous shuffling machines</h3>
+<p>A CSM returns played cards to the shuffler after every hand. It very slightly
+<em>improves</em> the house edge for a basic strategy player, so a CSM table is
+not a bad table. But it deals many more hands per hour, so you lose faster in
+absolute terms — and it makes card counting structurally impossible, because the
+composition never drifts.</p>
+
+<h3>The ten rule sets, measured</h3>
+
+<p>Each figure below is the house edge against a player using perfect basic
+strategy for <em>that</em> table, measured by simulating <strong>3,000,000
+hands</strong> at flat stakes. Nothing here is quoted from another publication.</p>
+
+<div class="scroll">
+<table class="rules">
+<caption>House edge by rule set, measured by simulation. Lower is better.</caption>
+<thead>
+<tr>
+  <th scope="col">Rule set</th><th scope="col">Decks</th><th scope="col">Soft 17</th>
+  <th scope="col">Blackjack pays</th><th scope="col">House edge</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">Singapore-style, 6 decks, deep cut</th><td>6</td><td>S17</td><td>3:2</td><td class="ok">0.36%</td></tr>
+<tr><th scope="row">Atlantic City, 8 decks</th><td>8</td><td>S17</td><td>3:2</td><td class="ok">0.38%</td></tr>
+<tr><th scope="row">Double deck, Las Vegas</th><td>2</td><td>H17</td><td>3:2</td><td class="ok">0.38%</td></tr>
+<tr><th scope="row">High-limit room, 6 decks</th><td>6</td><td>S17</td><td>3:2</td><td class="ok">0.38%</td></tr>
+<tr><th scope="row">Macau, continuous shuffler</th><td>6</td><td>S17</td><td>3:2</td><td class="ok">0.46%</td></tr>
+<tr><th scope="row">Las Vegas Strip standard <em>(the chart above)</em></th><td>6</td><td>H17</td><td>3:2</td><td class="ok">0.58%</td></tr>
+<tr><th scope="row">European, no hole card</th><td>6</td><td>S17</td><td>3:2</td><td class="mid">0.60%</td></tr>
+<tr><th scope="row">Single deck, restricted doubling</th><td>1</td><td>H17</td><td>3:2</td><td class="mid">0.63%</td></tr>
+<tr><th scope="row">Single deck, 6:5 payout</th><td>1</td><td>H17</td><td class="bad">6:5</td><td class="bad">1.85%</td></tr>
+<tr><th scope="row">Tourist floor, 8 decks, 6:5</th><td>8</td><td>H17</td><td class="bad">6:5</td><td class="bad">2.07%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="note"><strong>How precise are these numbers?</strong> Re-running the
+same six-deck simulation with five different random seeds gave results between
+0.54% and 0.62% — a standard deviation of about <strong>0.03 points</strong>.
+So each figure above is reliable to roughly ±0.03, and the four tables between
+0.36% and 0.38% are <em>not</em> meaningfully different from one another. The gap
+that <em>is</em> real, and enormous, is the one between every 3:2 table and every
+6:5 table. We state the uncertainty because a number without an error bar is a
+number you cannot check.</p>
+
+<h2 id="counting">Card counting, honestly</h2>
+
+<p>Card counting is legal. You are doing arithmetic in your head, and no
+jurisdiction has ever made that a crime. Casinos are private businesses and may
+ask you to leave, which is a different matter.</p>
+
+<p>The idea is narrow and often overstated. You are not memorising cards or
+predicting the next one. You are tracking one thing: <strong>whether the
+remaining shoe holds more high cards than low cards.</strong> High cards help
+you — they make dealer stiff hands bust, they make your doubles land, and they
+make blackjacks, which pay you 3:2 and pay the dealer 1:1.</p>
+
+<h3>Hi-Lo, the standard system</h3>
+<p>Every card gets one of three values. Add them as they appear:</p>
+
+<div class="scroll">
+<table class="rules">
+<caption>Hi-Lo card values</caption>
+<thead><tr><th scope="col">Cards</th><th scope="col">Count</th><th scope="col">Meaning</th></tr></thead>
+<tbody>
+<tr><th scope="row">2, 3, 4, 5, 6</th><td>+1</td><td>Low cards gone — good for you</td></tr>
+<tr><th scope="row">7, 8, 9</th><td>0</td><td>Neutral</td></tr>
+<tr><th scope="row">10, J, Q, K, A</th><td>−1</td><td>High cards gone — bad for you</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A full deck contains equal numbers of each group, so a complete shoe counts to
+exactly zero. That is the check: if you count down a deck and do not land on
+zero, you made an error.</p>
+
+<h3>Running count to true count</h3>
+<p>A running count of +6 means something very different with one deck left than
+with six. Divide to normalise:</p>
+
+<p class="math"><strong>True count = running count ÷ decks remaining</strong></p>
+
+<p>Estimating the undealt decks by eye — from the discard tray — is the skill
+that separates people who can count from people who know the values. It is
+harder than the arithmetic and it is the part almost nobody practises.</p>
+
+<h3>The deviations, and insurance at +3</h3>
+
+<p>When the count is high, a few basic strategy decisions flip. The best known
+set is the <em>Illustrious 18</em>. Rather than reprint them, this application
+recomputes them from the rules — by distorting the shoe composition until it
+carries a given true count, then finding the crossover point by bisection.</p>
+
+<p>The published set is recovered <strong>17 out of 17, each to within one
+unit</strong>. A few of them:</p>
+
+<ul>
+  <li><strong>Insurance becomes profitable at true count +3</strong> (exact
+      crossover 3.34). This is the single most valuable deviation, and the only
+      time the answer to the insurance section above is yes.</li>
+  <li>Hard 16 against a 10: stand at true count 0 or higher, hit below.</li>
+  <li>Hard 15 against a 10: stand at +4.</li>
+  <li>Hard 12 against a 3: stand at +1.</li>
+  <li>Hard 10 against a 10: double at +3.</li>
+</ul>
+
+<p>Deviations are a small part of the edge. The large part is betting more when
+the count is high and the minimum when it is not — which is also the part that
+gets you noticed.</p>
+
+<h3>Penetration: the number nobody advertises</h3>
+
+<p>The cut card decides how much of the shoe is dealt before a reshuffle. Deal
+75% of six decks and you play about four and a half decks; deal 85% and you play
+just over five. Casinos do not post this figure, and it is the single most
+important table condition for a counter.</p>
+
+<p>Here is the distinction almost every page gets wrong: <strong>penetration
+barely changes the house edge for a basic strategy player.</strong> If you are
+not counting, a deep cut card is worth almost nothing to you. What it changes is
+how often the count reaches a level worth betting into. A shallow shoe is
+reshuffled just as the composition starts to drift — which is precisely why
+casinos that suspect counters move the cut card forward rather than change any
+posted rule.</p>
+
+<p>The same logic explains a result that surprises people: a two-deck game with
+mediocre rules is often more profitable to count than an eight-deck game with
+excellent ones. Fewer decks means the true count swings further and faster. For a
+counter, the geometry of the shoe outweighs a tenth of a point of house edge.</p>
+
+<h3>The honest ceiling</h3>
+
+<p>This is where most blackjack pages stop, and it is the part that matters.</p>
+
+<p>A card counter's edge is small. The simple reference ramp built into this
+application — betting two units for every point of true count above +1 — was
+measured at about <strong>+0.007 units per hand</strong> on the six-deck Strip
+game. That table deals roughly 70 hands an hour. Half a betting unit per hour,
+before the swings.</p>
+
+<p>The swings are the real story. Blackjack's per-hand standard deviation is
+more than a hundred times that hourly edge. Losing for weeks while playing
+flawlessly is not bad luck; it is the ordinary behaviour of the game. This is why
+serious players talk about bankroll before they talk about strategy, and why
+"having an edge" and "making money" are separated by months of variance and a
+great deal of capital.</p>
+
+<p>And it only works at all under conditions that are increasingly rare: 3:2
+payouts, no continuous shuffler, and a cut card placed deep enough to matter.
+Two of the ten rule sets above cannot be beaten by any counting system, at any
+skill level, ever.</p>
+
+<p><strong>Treat card counting as a difficult skill worth learning for its own
+sake — not as an income.</strong> Anyone selling it as an income is selling you
+something.</p>
+
+<h2 id="faq">Common questions</h2>
+
+<h3>Is counting cards illegal?</h3>
+<p>No. Keeping a mental tally of cards that have been dealt in front of you is
+not a crime anywhere. Casinos are private property and can refuse service, so
+counters get asked to leave or barred — but that is a business decision, not a
+legal one. Using a device or an accomplice to help you count <em>is</em> illegal
+in many jurisdictions, including Nevada.</p>
+
+<h3>Does another player's bad play cost me money?</h3>
+<p>No, and this is the most persistent myth at the table. When the player next to
+you hits a 15 and takes "the dealer's bust card", they were equally likely to
+have taken a card that would have saved you. Over any meaningful number of hands
+the effect is exactly zero. Their decisions change the order of the cards, not
+the odds. Play your own hand.</p>
+
+<h3>Why do I have to hit 16 against a 10? I always bust.</h3>
+<p>You do, 61.5% of the time. But if you stand you win only when the dealer
+busts, which they do about 23% of the time when showing a 10 (having already checked for blackjack). Hitting is not a
+good play — it is the <em>less bad</em> of two losing plays. If the table offers
+surrender, the chart says to take it, which is the cheapest of the three.</p>
+
+<h3>Should I always split 8s, even against a 10?</h3>
+<p>Yes — with one exception in this rule set. A hard 16 is the worst hand in
+blackjack; two hands starting with an 8 are both better than one hand of 16, even
+against a strong up-card. You are not splitting to win, you are splitting to lose
+less. The exception: against an Ace at an H17 table with surrender available, the
+chart says surrender instead.</p>
+
+<h3>Can you count cards against a continuous shuffling machine?</h3>
+<p>No. A CSM returns cards to the shuffler after every hand, so the composition
+never drifts away from a full shoe and the true count stays pinned near zero.
+There is nothing to track. No counting system defeats a CSM.</p>
+
+<h3>Does basic strategy mean I will win?</h3>
+<p>No. Basic strategy is the best available play, and the best available play
+still loses money slowly at every table listed above. It reduces the house edge
+from roughly 2% for an average player to a few tenths of a point. That is the
+whole benefit, and it is worth having — but it is a reduction in cost, not a
+profit.</p>
+
+<h3>What is the best blackjack table to look for?</h3>
+<p>In order: <strong>3:2 blackjack</strong> (non-negotiable), dealer
+<strong>stands</strong> on soft 17, double on any two cards, double after
+splitting, surrender available, and fewer decks. Check the payout first. It
+outweighs everything else combined.</p>
+
+<h3>Is there a betting system that beats blackjack?</h3>
+<p>No. Martingale, Paroli, D'Alembert and every other progression change the
+shape of your results — many small wins and rare catastrophic losses, or the
+reverse — without changing the expected value by a single cent. No sequence of
+bet sizes can turn a negative-expectation game positive. Only changing the
+<em>odds</em> does that, which is what counting attempts and why it is hard.</p>
+
+<h2 id="practice">Practice</h2>
+
+<p>Reading a chart is not the same as playing it. Under real conditions — a
+dealer waiting, chips on the felt, a hand you have not seen before — recall
+breaks down long before understanding does.</p>
+
+<p><strong>WiseHand</strong> is a free browser trainer built around exactly that
+gap. It has no accounts, no adverts, no real money and no server: chips only, and
+everyone sits down with the same stack.</p>
+
+<ul>
+  <li><strong>Ten rule sets</strong>, each with the house edge measured rather
+      than asserted — including two that cannot be beaten, which exist so you
+      learn to recognise and refuse them.</li>
+  <li><strong>Strategy drills</strong> that use the chart solved for the table
+      you are sitting at, with missed hands returning more often.</li>
+  <li><strong>Counting drills</strong>: card streams at a chosen speed, timed
+      deck run-downs, and discard-tray estimation — the skill most people skip.</li>
+  <li><strong>A full table</strong> with dealer, other players, burn card,
+      insurance, splitting and a cut card, with the count hidden so you have to
+      keep it yourself.</li>
+  <li><strong>Provable shuffles.</strong> Each shoe is drawn from a 32-byte seed;
+      the SHA-256 hash is published before the first card and the seed is revealed
+      at the cut card, so you can replay the shuffle and verify it yourself.</li>
+  <li><strong>Works offline</strong> and installs to a phone home screen.</li>
+</ul>
+
+<p class="cta"><a href="/">Open the trainer — free, no sign-up</a></p>
+
+<h2 id="responsible">Play responsibly</h2>
+
+<p>Everything on this page is about losing less, not winning. Blackjack has a
+built-in mathematical advantage for the house on every table described here.
+Played perfectly, over a long enough period, you lose. That is the design of the
+game and no strategy on this page changes it.</p>
+
+<p>Set a limit before you sit down, treat it as the price of an evening, and stop
+when it is gone. Never gamble money you need, and never gamble to recover
+losses — chasing is the single most reliable way to turn a bad night into a
+serious problem.</p>
+
+<p>If gambling has stopped being a game, free and confidential help is available:</p>
+
+<ul class="help">
+  <li><strong>United Kingdom</strong> — National Gambling Helpline, run by
+      GamCare: <strong>0808 8020 133</strong>. Free, 24 hours a day, every day.
+      Live chat at <a href="https://www.gamcare.org.uk/" rel="nofollow noopener">gamcare.org.uk</a>;
+      information and treatment services at
+      <a href="https://www.gambleaware.org/" rel="nofollow noopener">gambleaware.org</a>.</li>
+  <li><strong>United States</strong> — National Problem Gambling Helpline
+      (National Council on Problem Gambling):
+      <strong>1-800-MY-RESET</strong> (1-800-697-3738). Call or text, 24/7, free
+      and confidential, all 50 states. The former number, 1-800-522-4700, remains
+      active. More at
+      <a href="https://www.ncpgambling.org/" rel="nofollow noopener">ncpgambling.org</a>.</li>
+  <li><strong>France</strong> — Joueurs Info Service:
+      <strong>09 74 75 13 13</strong>. Anonymous, standard call rate, 8am to 2am daily.</li>
+  <li><strong>Elsewhere</strong> — Gamblers Anonymous maintains international
+      meeting listings at
+      <a href="https://www.gamblersanonymous.org/" rel="nofollow noopener">gamblersanonymous.org</a>,
+      and most national gambling regulators publish a local helpline.</li>
+</ul>
+
+<p class="age">This site is an educational trainer for people of legal gambling
+age. It offers no real-money play and no link to any gambling operator.</p>
+
+<hr>
+
+<p class="meta"><strong>About these numbers.</strong> Every house edge on this
+page was produced by simulating 3,000,000 hands per rule set with a player using
+the exact basic strategy solved for that rule set, and the isolated rule
+comparisons (6:5 versus 3:2, H17 versus S17) were averaged over five independent
+runs of 3,000,000 hands each. The strategy charts are computed by an exact
+solver, not transcribed. The counting indices are derived by bisection on shoe
+composition and match the published Illustrious 18 to within one unit on all 17
+comparable entries. The source code is open, and the figures can be regenerated
+from it.</p>
+<p class="meta"><a href="/blackjack/" hreflang="fr" lang="fr">Version française</a>
+&middot; <a href="/">WiseHand</a> &middot; Not for under-18s.</p>
+
+</article>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://wisehand21.com/en/blackjack/#article",
+      "headline": "How to Play Blackjack",
+      "description": "Blackjack rules, the complete basic strategy chart, and what every house rule costs — with house edges measured by simulating 3,000,000 hands per rule set.",
+      "inLanguage": "en",
+      "isFamilyFriendly": false,
+      "mainEntityOfPage": "https://wisehand21.com/en/blackjack/",
+      "about": [
+        {"@type": "Thing", "name": "Blackjack"},
+        {"@type": "Thing", "name": "Basic strategy"},
+        {"@type": "Thing", "name": "Card counting"}
+      ],
+      "publisher": {
+        "@type": "Organization",
+        "name": "WiseHand",
+        "url": "https://wisehand21.com/"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://wisehand21.com/en/blackjack/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is counting cards illegal?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Keeping a mental tally of cards already dealt is not a crime anywhere. Casinos are private property and may refuse service, so counters are sometimes asked to leave or barred, but that is a business decision rather than a legal one. Using a device or an accomplice to assist counting is illegal in many jurisdictions, including Nevada."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does another player's bad play cost me money at blackjack?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. When another player takes a card that would have busted the dealer, they were equally likely to have taken one that would have saved you. Over any meaningful number of hands the effect is exactly zero. Other players change the order of the cards, not the odds."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why do you hit 16 against a dealer 10?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Hitting 16 busts 61.5% of the time, but standing wins only when the dealer busts, which happens about 23% of the time with a 10 showing after checking for blackjack. Hitting is the less bad of two losing plays. Where late surrender is offered, surrendering 16 against a 10 is cheaper than either."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should you take insurance in blackjack?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Insurance pays 2 to 1, so it breaks even only if the hole card is a ten one time in three, or 33.3%. In a fresh six-deck shoe there are 96 ten-valued cards among the 309 unseen, which is 31.1%. The expected value is minus 6.8 cents per dollar wagered. Taking even money on a blackjack is the same bet at a worse moment, losing 8.7%. The only exception is a card counter at a true count of +3 or higher."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between 3:2 and 6:5 blackjack?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A 3:2 blackjack pays 15 dollars on a 10 dollar bet; a 6:5 blackjack pays 12. Measured by simulation on one eight-deck game with only the payout changed, the house edge rose from 0.72% to 2.08% — the 6:5 payout alone costs 1.36 percentage points, roughly tripling the cost of playing. No other rule comes close. Check the payout before sitting down."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does H17 mean in blackjack?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "H17 means the dealer hits a soft 17, such as Ace-6, instead of standing. S17 means they stand. H17 is worse for the player: measured on the same six-deck game with nothing else changed, it costs about 0.22 percentage points, raising the house edge from 0.35% to 0.57%. It also changes several correct player decisions."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you count cards against a continuous shuffling machine?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. A continuous shuffling machine returns played cards to the shuffler after every hand, so the composition of the remaining cards never drifts and the true count stays near zero. There is nothing to track, and no counting system defeats it."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does basic strategy guarantee you win at blackjack?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Basic strategy is the best available play and it still loses money slowly. It reduces the house edge from roughly 2% for an average player to a few tenths of one percent. That is a reduction in cost, not a profit."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a betting system that beats blackjack?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Martingale, Paroli, D'Alembert and every other progression change the distribution of results without changing the expected value. No sequence of bet sizes turns a negative-expectation game positive; only changing the odds does that."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</body>
+</html>

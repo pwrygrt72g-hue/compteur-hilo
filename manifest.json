@@ -1,7 +1,7 @@
 {
   "name": "WiseHand — compter les cartes, pour de vrai",
   "short_name": "WiseHand",
-  "description": "Entraînement au comptage de cartes au blackjack : neuf tables réelles, stratégie et écarts calculés, hasard prouvable.",
+  "description": "Entraînement au comptage de cartes au blackjack : dix tables réelles, stratégie et écarts calculés, hasard prouvable.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

@@ -3,10 +3,15 @@
 // Le nom du cache PORTE LA VERSION. Le monter est ce qui purge l'ancien (voir « activate ») :
 // une retouche de cette liste sans montée de version ne changerait rien chez ceux qui ont
 // déjà installé l'application, et personne ne le verrait.
-const C = "wisehand-v8";
+const C = "wisehand-v9";
 
 // La coquille : le document, le manifeste, les icônes.
-const COQUILLE = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
+// ⚠️ Les deux pages du guide (/blackjack/) sont DANS la coquille, et pas par confort :
+// le repli hors ligne de « fetch » rend ./index.html pour TOUTE navigation ratée. Sans
+// elles ici, ouvrir /blackjack/ dans l'avion afficherait l'APPLICATION à la place de
+// l'article, sans la moindre erreur. Précachées, la correspondance exacte gagne.
+const COQUILLE = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png",
+  "./blackjack/", "./en/blackjack/", "./static/og.jpg"];
 
 // Les photos du hall, en version RÉDUITE (640 px, 642 Ko en tout). Le hall en affiche
 // dix-huit — les dix tables, le héros, et les sept portes des salles (mesuré le 07/09 :
