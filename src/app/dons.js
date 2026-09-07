@@ -56,12 +56,26 @@ const DONS_LIEN = "https://www.paypal.com/paypalme/leolejeau";
 const QUETE_VERSION = 1;
 {
   const boite = $("quete");
-  const fermer = () => {
-    if (!boite || boite.hidden) return;
+  // Sortir la fenêtre de l'écran, sans rien DÉCIDER. Rend `true` si elle était ouverte.
+  const ranger = () => {
+    if (!boite || boite.hidden) return false;
     boite.hidden = true;
-    DB.quete = QUETE_VERSION; garder();
     document.removeEventListener("keydown", auClavier);
+    return true;
   };
+  // La ✕ et Échap sont des REFUS explicites : on retient la décision, on ne redemande plus.
+  const fermer = () => { if (ranger()) { DB.quete = QUETE_VERSION; garder(); } };
+  /* 🚨 QUITTER L'ACCUEIL N'EST PAS UN REFUS. Posé le 07/09 : `ouvrirQuete` ne teste
+     `vue !== "accueil"` qu'à l'OUVERTURE, et rien ne refermait ensuite. Un visiteur qui
+     entrait en salle dans les 900 ms suivant le chargement (demarrage.js) jouait donc
+     derrière un voile plein écran en `backdrop-filter:blur(3px)` — mesuré : #queteDon
+     repeint une fois par image pendant toute la donne. C'était l'exact contraire de
+     l'intention écrite deux lignes plus haut (« jamais par-dessus une partie »), et c'est
+     très probablement une part du « ça lag » de Léo.
+     On RANGE sans marquer la quête vue : quelqu'un qui n'a pas eu le temps de lire n'a rien
+     refusé, la fenêtre se représentera à sa prochaine visite. Idempotent — `aller()` appelle
+     à chaque changement d'écran, y compris quand la fenêtre n'a jamais été ouverte. */
+  window.fermerQuete = ranger;
   const auClavier = e => { if (e.key === "Escape") fermer(); };
 
   // ⚠️ La photo n'est PAS posée par rendreHall() : celle-ci ne parcourt les [data-photo]

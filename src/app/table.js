@@ -14,10 +14,16 @@ const vitesse = () => DB.cadence;
 // réfléchissait encore. Les tirages, où l'on compte carte par carte, gardent la
 // cadence pleine. T.rythme > 0 = on est dans la donne initiale.
 // Puis Léo, le 06/09 : « elles se distribuent trop vite ». Un croupier pose une carte
-// toutes les 0,45 à 0,55 s — 360 ms mesurés le 06/09, c'était une machine. 55 % de la
-// cadence, entre 260 et 620 ms : 495 ms au réglage par défaut, soit une donne de douze
-// cartes en 6,5 s battement compris. Le libellé du réglage se recalcule seul.
-const cadenceDonne = () => Math.max(260, Math.min(620, Math.round(vitesse() * .55)));
+// toutes les 0,45 à 0,55 s — 360 ms mesurés le 06/09, c'était une machine.
+// ── Puis Léo, le 07/09 : « le jeu lag, surtout quand le croupier distribue, c'est long »
+// ET « ralentis les animations ». Les deux sont vrais, et c'est le MÊME défaut : mesuré,
+// 51 % de la donne était du VIDE. Le créneau valait 495 ms quand le vol moyen durait
+// 244 ms — une carte se posait, puis plus rien ne bougeait pendant un quart de seconde,
+// douze fois de suite. On ne raccourcit donc pas le geste, on retire l'attente ENTRE les
+// gestes : 40 % de la cadence (360 ms au réglage par défaut), et le vol s'allonge d'autant
+// (voir dureeVol). La donne passe de 6,2 s à 4,8 s pendant que chaque carte vole PLUS
+// longtemps. Le libellé du réglage se recalcule seul.
+const cadenceDonne = () => Math.max(240, Math.min(470, Math.round(vitesse() * .40)));
 // Le temps de réflexion d'un VOISIN : réglé à part (« rythme des voisins »), parce
 // qu'il n'a rien à voir avec la cadence à laquelle on compte les cartes.
 if (DB.voisins === undefined) DB.voisins = 450;
@@ -750,14 +756,24 @@ function boutons(o) {
 // `|| 300` transformait le terme `don * 1.5` en une CONSTANTE de 450 ms — un plafond qui
 // n'avait jamais rien à voir avec la cadence qu'il prétendait suivre. --intervalle, lui, est
 // posé en ligne par poserIntervalle() : il se parse (900 ms sondés). Le plafond ne s'écrit
-// donc plus qu'en fonction de lui. .80 (et non .95) laisse une centaine de millisecondes de
-// repos entre la pose d'une carte et le départ de la suivante : c'est ce silence qui fait
-// entendre douze gestes au lieu d'un roulement.
+// donc plus qu'en fonction de lui.
+// ── 🚨 1,15 — le vol DÉBORDE du créneau, et c'est voulu (07/09). L'ancien .80 réservait
+// « une centaine de millisecondes de repos » entre la pose et le départ suivant, au motif
+// que ce silence faisait « entendre douze gestes au lieu d'un roulement ». Cet argument est
+// devenu FAUX le 06/09, quand la donne est passée à une cadence sur les ARRIVÉES : le son
+// « pose » est programmé à delai + duree (socle.js:428), donc les poses tombent sur `vise`
+// et restent espacées de la cadence — 360 ms, 2,8 par seconde — QUELLE QUE SOIT la durée du
+// vol. Le rythme entendu ne dépend plus de ce nombre ; seule la fluidité en dépend. À 1,15,
+// deux cartes sont en l'air à la fois sur les sièges lointains : c'est exactement ce que
+// fait un vrai croupier, et le pic de vitesse tombe de 3,67 à 2,77 px/ms — une carte de
+// 82 px ne franchit plus 61 px entre deux images, ce qui est la sensation de saut que Léo
+// appelle « lag ». Plancher à 280 (et non 190) : sous ~250 ms un déplacement de 25 px ne se
+// lit plus comme un mouvement, il clignote.
 // --don reste posé par .scene / .plateau (style.css) : les exercices s'en servent VRAIMENT,
 // par var() en CSS, où il est bien résolu. C'est le lire en JS qui ne marchait pas.
 function dureeVol(d) {
   const slot = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--intervalle")) || 450;
-  return Math.round(Math.max(190, Math.min(slot * .80, d / 1.55)));
+  return Math.round(Math.max(280, Math.min(slot * 1.15, d / 1.35)));
 }
 const DELAI_VOL = 40;   // ms : la main du croupier part en même temps que la carte (croupier.js)
 /* `viser` (facultatif) = l'instant où la carte doit se POSER. Sans lui (un tirage isolé, une
@@ -1063,12 +1079,15 @@ async function distribuer() {
   if (!matchMedia("(prefers-reduced-motion:reduce)").matches && matchMedia("(min-width:1000px)").matches) await pause(260);
   /* LA DONNE SE CADENCE SUR LES ARRIVÉES. `vise` est l'instant où la PROCHAINE carte doit se
      poser ; chaque vol retarde son départ d'autant qu'il faut pour tomber dessus. L'avance
-     initiale est le PLAFOND du vol (dureeVol ne dépasse jamais 80 % de l'intervalle) : plus
-     court, les cartes lointaines — les plus longues à voler — se feraient rattraper par le
-     plancher à zéro du retard, et on aurait remis la moitié de l'irrégularité qu'on retire.
-     C'est le seul écart au plan du 06/09, qui proposait une avance de 260 ms : sondé, elle
-     laisse tous les retards à 0 et ne cadence donc rien du tout. */
-  let vise = performance.now() + Math.max(190, Math.round(T.rythme * .80));
+     initiale est le PLAFOND du vol : plus courte, les cartes lointaines — les plus longues à
+     voler — se feraient rattraper par le plancher à zéro du retard, et on aurait remis la
+     moitié de l'irrégularité qu'on retire. C'est le seul écart au plan du 06/09, qui
+     proposait une avance de 260 ms : sondé, elle laisse tous les retards à 0 et ne cadence
+     donc rien du tout.
+     🚨 CES DEUX NOMBRES SONT LE MÊME. Le 1,15 ci-dessous est le plafond de dureeVol : les
+     changer séparément casse silencieusement la cadence sur arrivées — aucune erreur, juste
+     des poses irrégulières que personne ne rattache à ce commit. */
+  let vise = performance.now() + Math.max(280, Math.round(T.rythme * 1.15));
   for (let tour = 0; tour < 2; tour++) {
     for (let si = 0; si < T.sieges.length; si++) { await tirerSiege(si, 0, vise); vise += T.rythme; }
     // Sans carte cachée, le croupier ne prend qu'une carte : c'est toute la règle.

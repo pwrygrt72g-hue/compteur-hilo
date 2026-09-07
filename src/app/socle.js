@@ -473,6 +473,9 @@ function aller(v) {
   // y envoyait (Changer de table, le rachat, la nav cachée) arrive au bon endroit.
   if (v === "salon") return allerHall("lesTables");
   vue = v;
+  // La fenêtre de dons ne survit pas au départ de l'accueil (dons.js : elle est RANGÉE, pas
+  // refusée — elle reviendra). Sans ça elle reste par-dessus la table, plein écran et floutée.
+  if (v !== "accueil" && window.fermerQuete) window.fermerQuete();
   // La table est un POSTE, pas un document : on empêche la page de défiler
   // sous elle, ce qui est aussi ce qui rend `100svh` stable quand la barre
   // d'URL d'un téléphone se rétracte.
