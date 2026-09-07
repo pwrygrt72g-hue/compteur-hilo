@@ -211,7 +211,6 @@ const ENTETE = `<link rel="canonical" href="${SITE}/">
 <meta name="twitter:description" content="${DESCRIPTION}">
 <meta name="twitter:image" content="${OG_IMAGE}">
 <meta name="twitter:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
-<meta name="rating" content="adult">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <script type="application/ld+json">${JSON.stringify(JSONLD).replace(/<\//g, "<\\/")}</script>
 `;

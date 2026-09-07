@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Trois URL, et trois seulement : l'application, et le guide dans ses deux langues.
+  UNE seule URL pour l'instant : l'application. Le guide (FR et EN) en a été RETIRÉ le
+  07/09/2026, le temps qu'un humain relise ses chiffres — il porte un noindex assorti.
+  Le remettre ici et retirer le noindex vont ENSEMBLE, jamais l'un sans l'autre.
   Un plan de site n'est pas un inventaire de fichiers — y déclarer les .webp, le
   manifeste ou le service worker ne fait que diluer ce qu'on demande de lire.
   ⚠️ `lastmod` doit être la VRAIE date de dernière modification du contenu. Le
@@ -16,24 +18,6 @@
     <priority>1.0</priority>
   </url>
 
-  <url>
-    <loc>https://wisehand21.com/blackjack/</loc>
-    <lastmod>2026-09-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://wisehand21.com/blackjack/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://wisehand21.com/en/blackjack/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://wisehand21.com/blackjack/"/>
-  </url>
 
-  <url>
-    <loc>https://wisehand21.com/en/blackjack/</loc>
-    <lastmod>2026-09-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://wisehand21.com/blackjack/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://wisehand21.com/en/blackjack/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://wisehand21.com/blackjack/"/>
-  </url>
 
 </urlset>
