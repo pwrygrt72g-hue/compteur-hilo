@@ -35,15 +35,25 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
     // Hors du hall, le fil d'Ariane dit où l'on est et ramène au hall ; dans le hall, il se tait.
     ok("fil d'Ariane " + v, v === "accueil" ? q("#fil").hidden : /^Hall/.test(txt("#fil")) && !!q('#fil [data-vue="accueil"]'), "fil = " + txt("#fil"));
   }
-  // La caisse : elle est livrée SANS cagnotte (dons.js, DONS_LIEN vide) — c'est l'état
-  // normal, pas une panne. On vérifie qu'elle le DIT au lieu d'offrir un bouton mort,
-  // et qu'aucune ressource extérieure ne s'y est glissée (la CSP en avalerait l'échec).
+  // La caisse a DEUX états livrables, et les deux sont normaux : avec cagnotte
+  // (DONS_LIEN renseigné dans dons.js) ou sans. La sonde ne fige donc pas l'un des
+  // deux — elle vérifie le contrat commun : exactement UN bloc à l'écran, et jamais
+  // un bouton mort. Écrire ici l'état du jour obligerait à rouvrir ce fichier chaque
+  // fois que Léo ouvre ou ferme sa cagnotte, et le test dirait « cassé » pour un
+  // changement voulu. On vérifie aussi qu'aucune ressource extérieure ne s'y est
+  // glissée (la CSP de l'artefact en avalerait l'échec sans un mot).
   clic('nav [data-vue="dons"]'); await dodo(250);
-  // `#donsLien` n'est pas caché lui-même : c'est son bloc qui l'est. On lit donc l'état
-  // des deux blocs, et on vérifie que l'état livré ne contient AUCUN lien du tout.
-  ok("caisse : sans cagnotte, une phrase et pas un bouton mort",
-     !q("#donsSans").hidden && q("#donsAvec").hidden && !q("#donsSans a"),
-     "sans=" + q("#donsSans").hidden + " avec=" + q("#donsAvec").hidden);
+  // `#donsLien` n'est pas caché lui-même : c'est son bloc qui l'est.
+  {
+    const avec = !q("#donsAvec").hidden, sans = !q("#donsSans").hidden;
+    const href = q("#donsLien") ? q("#donsLien").getAttribute("href") : "";
+    ok("caisse : un seul des deux états à l'écran",
+       avec !== sans, "avec=" + avec + " sans=" + sans);
+    ok(avec ? "caisse : la cagnotte ouverte mène à une vraie adresse"
+            : "caisse : sans cagnotte, une phrase et pas un bouton mort",
+       avec ? /^https:\/\/\S+$/.test(href) : !q("#donsSans a"),
+       avec ? "href = " + href : "un lien traîne dans l'état sans cagnotte");
+  }
   ok("caisse : le numéro d'aide au jeu y est", /09 74 75 13 13/.test(txt("#v-dons")), "numéro absent");
   ok("caisse : rien ne vient de l'extérieur",
      qa("#v-dons img[src], #v-dons script, #v-dons iframe").filter(e => !/^data:|^static\//.test(e.getAttribute("src") || "")).length === 0,

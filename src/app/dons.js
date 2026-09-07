@@ -12,7 +12,12 @@
    dans ⚙ pour la raison exactement INVERSE : ce sont les identifiants du
    visiteur, ils n'ont rien à faire dans le fichier qu'on publie.
    Ouvrir une cagnotte = écrire son adresse ICI, et reconstruire. */
-const DONS_LIEN = "";
+// Vérifié le 07/09/2026 : le profil répond bien « Leo Lejeau » sur ordinateur
+// ET sur téléphone. ⚠️ Un QR code PayPal n'est PAS un lien : celui de Léo
+// (paypal.com/qrcodes/p2pqrc/…) redirige vers l'App Store, le Play Store ou une
+// page « téléchargez l'appli » selon la machine — jamais vers un paiement. Il
+// n'est lisible que par l'appareil photo de l'appli PayPal. Ne pas le remettre ici.
+const DONS_LIEN = "https://www.paypal.com/paypalme/leolejeau";
 
 // Deux états écrits en clair dans corps.html, on en cache un.
 // Sans cagnotte, la page ne montre PAS un bouton grisé (elle passerait pour
