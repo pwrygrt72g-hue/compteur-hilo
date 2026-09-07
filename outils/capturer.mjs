@@ -1,5 +1,6 @@
 // Capture d'écran d'une vue, à une taille, dans un thème — pour REGARDER son travail.
 //
+//   --db=croupier.tri3d=1 : pose un réglage dans la base locale avant le rendu.
 //   node outils/capturer.mjs <vue> [LxH] [sortie.png] [--donne] [--sombre|--clair] [--table=id] [--attendre=ms] [--puis=idBouton] [--attendre2=ms] [--mise] [--sansmise]
 //
 //   --mise      : pose une mise (un jeton qui couvre le minimum) sans distribuer — la phase de mise.
@@ -35,13 +36,18 @@ const sortie = pos[2] || `/tmp/capture-${vue}-${L}x${H}.png`;
 
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const PORT = 8750 + Math.floor(Math.random() * 200), CDP = 9400 + Math.floor(Math.random() * 200);
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".glb": "model/gltf-binary" };
 const serveur = createServer((q, r) => {
   const f = (q.url === "/" ? "/index.html" : q.url).split("?")[0].replace(/\.\./g, "");
   let corps; try { corps = readFileSync("." + f); } catch (e) { r.writeHead(404); return r.end("non"); }
   r.writeHead(200, { "content-type": TYPES[extname(f)] || "text/plain" }); r.end(corps);
 }).listen(PORT);
-const chrome = spawn(CHROME, ["--headless=new", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
+// 🚨 swiftshader, PAS --disable-gpu : celui-ci coupe WebGL, donc le croupier 3D ne
+// se monte JAMAIS sous l'outil de capture. Mesuré le 07/09 — la page marchait, la
+// capture rendait un canvas vide et l'application se rabattait sur le dessin, en
+// silence. Un harnais qui ne peut pas voir la fonctionnalité qu'on lui demande de
+// juger ment avant le code. Le rendu logiciel est lent mais fidèle.
+const chrome = spawn(CHROME, ["--headless=new", "--use-gl=swiftshader", "--enable-unsafe-swiftshader", "--no-sandbox", "--hide-scrollbars",
   "--remote-debugging-port=" + CDP, "--remote-allow-origins=*", "about:blank"], { stdio: "ignore" });
 const dodo = ms => new Promise(r => setTimeout(r, ms));
 const attendre = async (url, n = 60) => { for (let i = 0; i < n; i++) { try { return await (await fetch(url)).json(); } catch (e) { await dodo(250); } } throw new Error("Chrome muet"); };
@@ -58,8 +64,21 @@ await cdp("Emulation.setDeviceMetricsOverride", { width: L, height: H, deviceSca
 if (opt.sombre || opt.clair) await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: opt.sombre ? "dark" : "light" }] });
 await cdp("Page.navigate", { url: `http://127.0.0.1:${PORT}/index.html` });
 await dodo(1500);
-if (opt.table) await evaluer(`(() => { try { const d = JSON.parse(localStorage.getItem("sabot") || "{}"); d.table = ${JSON.stringify(opt.table)}; localStorage.setItem("sabot", JSON.stringify(d)); } catch (e) {} })()`);
-if (opt.table) { await cdp("Page.reload"); await dodo(1500); }
+// --db=chemin.cle=valeur : écrit dans la base locale AVANT le rendu, puis recharge.
+// Le chemin accepte un point (« croupier.tri3d ») ; la valeur est lue en JSON, sinon
+// prise telle quelle. C'est le seul moyen d'ouvrir une vue sur un réglage mémorisé.
+const reglages = [];
+if (opt.table) reglages.push(["table", JSON.stringify(opt.table)]);
+if (opt.db) String(opt.db).split(",").forEach(p => { const i = p.indexOf("="); if (i > 0) reglages.push([p.slice(0, i).trim(), p.slice(i + 1).trim()]); });
+if (reglages.length) {
+  await evaluer(`(() => { try { const d = JSON.parse(localStorage.getItem("sabot") || "{}");
+    ${reglages.map(([c, v]) => `(() => { const ch = ${JSON.stringify(c)}.split("."); let o = d;
+      for (let i = 0; i < ch.length - 1; i++) { if (typeof o[ch[i]] !== "object" || !o[ch[i]]) o[ch[i]] = {}; o = o[ch[i]]; }
+      let v; try { v = JSON.parse(${JSON.stringify(v)}); } catch (e) { v = ${JSON.stringify(v)}; }
+      o[ch[ch.length - 1]] = v; })();`).join("\n    ")}
+    localStorage.setItem("sabot", JSON.stringify(d)); } catch (e) {} })()`);
+  await cdp("Page.reload"); await dodo(1500);
+}
 await evaluer(`(document.querySelector('[data-vue="${vue}"]')||{click(){}}).click()`);
 await dodo(700);
 if (opt.reseau) {

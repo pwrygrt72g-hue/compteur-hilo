@@ -101,7 +101,25 @@ intégral, de nommer les fontes et de conserver leurs notices de copyright — e
 §3 interdit de leur garder leur nom réservé si on les modifie.
 
 
-4. LE RESTE
+4. LE CROUPIER EN 3D (facultatif, éteint par défaut)
+---------------------------------------------------
+
+static/modeles/croupier.glb — « Business Man », du pack « Ultimate Modular Men »
+de Quaternius (quaternius.com), sous CC0 1.0 (domaine public). Le CC0 n'exige
+aucune attribution ; on le crédite quand même, parce que c'est mérité et que ça
+dit d'où vient le fichier à celui qui reprendra ce dépôt.
+
+static/3d/ — three.js r160 (three.module.min.js, GLTFLoader.js,
+utils/BufferGeometryUtils.js), sous licence MIT, © 2010-2024 three.js authors.
+Le texte complet est joint : static/3d/LICENSE-three.txt.
+
+⚠️ Deux imports relatifs ont été RÉÉCRITS dans les fichiers de three.js pour
+qu'ils fonctionnent à plat dans static/3d/ (le paquet npm les range en
+examples/jsm/loaders/ et examples/jsm/utils/). La MIT autorise la modification ;
+c'est noté ici pour que personne ne croie à des fichiers d'origine intacts.
+
+
+5. LE RESTE
 -----------
 
 Acewise21 n'est affilié à aucun casino, à aucun opérateur de jeu, à aucune

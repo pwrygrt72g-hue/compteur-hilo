@@ -628,6 +628,12 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="reno"] .salle .decor{ filter:blur(3px) brightness(.46) saturate(.85) sepia(.25) }
 #croupierScene{ position:absolute; left:50%; top:0; transform:translateX(-50%); z-index:1;
   width:min(560px, 80%); height:var(--salle-haut); pointer-events:none; display:flex; justify-content:center; align-items:flex-end }
+/* Le croupier 3D remplit la MÊME boîte que le SVG, et le SVG reste monté dessous :
+   c'est lui le repli si le modèle ne charge pas, et c'est lui qui porte la bulle,
+   les bras et les gestes du jeu. On le CACHE, on ne le démonte pas — rebasculer
+   est alors instantané et rien ne s'interrompt. */
+#croupierScene .cr3d{ position:absolute; inset:0; width:100%; height:100%; display:block }
+#croupierScene.en3d>svg{ visibility:hidden }
 /* Le calque des jetons couvre la VUE entière — salle ET barre des coups — et vit hors de
    .salle (overflow:hidden) : mesuré le 05/09, le jeton décollait sous le bord de la salle,
    tranché ~100 ms, puis « sortait du sol » entre deux sièges. Il part du jeton cliqué. */
@@ -9858,6 +9864,50 @@ function crLook(svg, c, prefixe) {
   // neutre, par le même chemin que les émotions (crVisage la conserve).
   ["crSourcilG", "crSourcilD"].forEach(k => { const e = svg.querySelector("#" + prefixe + k); if (e) e.style.transform = `scaleY(${c.sourcils || 1})`; });
 }
+/* ── LE CROUPIER 3D : un moteur ALTERNATIF, jamais un remplaçant ───────
+   Le SVG reste le défaut et n'a rien perdu — cinq visages, cinq barbes, huit
+   émotions réglées à la mesure. La 3D apporte ce qu'un dessin plat ne peut pas
+   donner (un vrai volume, une respiration d'os, une tête qui tourne sur un cou)
+   et perd ce que le SVG a (les expressions : le modèle CC0 n'a AUCUN morph
+   target, son visage est figé). Aucun des deux ne gagne partout — d'où
+   l'interrupteur, et d'où le défaut sur le dessin, qui ne régresse sur rien.
+
+   ⚠️ Rien n'est téléchargé tant qu'il est éteint : 655 Ko de three.js et 1,5 Mo
+   de modèle vivent dans static/, hors du fichier unique, et n'arrivent qu'au
+   premier allumage. C'est la raison d'être du `import()` dynamique.
+   ⚠️ Indisponible dans l'ARTEFACT, et il faut le DIRE : sa politique de sécurité
+   bloque toute requête externe, donc le module et le modèle n'arriveraient
+   jamais — silencieusement, comme la visio. On détecte l'artefact au même
+   signal que le hall : window.PHOTOS_PETIT n'existe qu'en mode « pages ». */
+const CR3D = { api: null, etat: { regard: 0, penche: 0, clip: "repos" }, occupe: false, panne: "" };
+const cr3dPossible = () => !!window.PHOTOS_PETIT;
+const cr3dVoulu = () => DB.croupier.tri3d === 1 && cr3dPossible();
+// Même palette que le SVG : les cinq croupiers sont les mêmes gens des deux côtés.
+const cr3dPalette = c => { const p = c.p || {}, t = {};
+  for (const k of ["peau", "cheveux", "sourcil", "veste", "chemise", "orne"]) t[k] = p["--cr-" + k] || "";
+  t.sourcil = t.sourcil || t.cheveux; t.encre = "#141110"; return t; };
+async function cr3dMonter() {
+  const hote = $("croupierScene"); if (!hote || CR3D.occupe || CR3D.api) return;
+  CR3D.occupe = true; CR3D.panne = "";
+  try {
+    const m = await import("./static/3d/croupier3d.js");
+    if (!cr3dVoulu()) return;                       // éteint pendant le chargement
+    CR3D.api = await m.monter({ hote, modele: "static/modeles/croupier.glb", palette: cr3dPalette(crPerso()), etat: CR3D.etat });
+    hote.classList.add("en3d");
+  } catch (e) {
+    // Un échec doit se DIRE : un croupier absent sans un mot passe pour une panne
+    // de l'application entière. On repasse au dessin, qui lui marche toujours.
+    CR3D.panne = String(e && e.message || e); DB.croupier.tri3d = 0; garder();
+    log3d();
+  } finally { CR3D.occupe = false; }
+}
+function cr3dDemonter() {
+  const hote = $("croupierScene");
+  if (CR3D.api) { try { CR3D.api.demonter(); } catch (e) { console.debug("croupier 3D : démontage", e); } CR3D.api = null; }
+  if (hote) hote.classList.remove("en3d");
+}
+function log3d() { if (CR3D.panne) console.warn("croupier 3D indisponible : " + CR3D.panne); }
+
 function monterCroupier() {
   const scene = $("croupierScene"); if (!scene) return;
   const id = crEffectif(); if (id === CR.id && CR.el) return;
@@ -9869,6 +9919,10 @@ function monterCroupier() {
   CR.base = crRepos(); CR.emotion = CR.base; crVisage(EMOTIONS[CR.base]);
   crReposer(1);
   crLancerAmbiance();
+  // Le SVG est monté quoi qu'il arrive : c'est lui le repli si la 3D échoue,
+  // et c'est lui qui porte la bulle, les gestes de bras et le reste du jeu.
+  if (cr3dVoulu()) cr3dMonter(); else cr3dDemonter();
+  if (CR3D.api) CR3D.api.poser(cr3dPalette(c));
 }
 
 /* ── Écran → rig. Pas de getScreenCTM : la boîte de l'<svg> suffit, parce que
@@ -10038,6 +10092,7 @@ const CR_RETOUR = "cubic-bezier(.4,0,.2,1)";
    pas au sabot, il enchaîne — ce que fait un vrai croupier lancé. */
 function crFlick(vers, v, o) {
   if (!CR.el || !CR.visible) return;
+  if (CR3D.api) { CR3D.etat.clip = "geste"; crMinuteur(() => { CR3D.etat.clip = "repos"; }, 900); }
   const c = crCibleSabot(); if (!c) return;
   o = o || {};
   if (!CR.arme) crArmer(Math.min(200, v));
@@ -10157,6 +10212,9 @@ function crTeteMaj(ms, delai) {
   const o = delai ? { delai } : undefined;
   crBouger("crTete", CR.regard + CR.penche, ms, o);
   crBouger("crFace", CR.regard, ms, o);
+  // La 3D LIT cet état à chaque image : rien à faire circuler, et les deux
+  // moteurs regardent forcément au même endroit puisqu'ils lisent la même valeur.
+  CR3D.etat.regard = CR.regard; CR3D.etat.penche = CR.penche;
 }
 
 /* ── Le visage. Sourcils = [descente px, rotation deg], jamais symétriques ;
@@ -10406,6 +10464,11 @@ function crReplique(genre) {
 function crEmotion(nom, o) {
   o = o || {}; const e = EMOTIONS[nom] || EMOTIONS.neutre;
   CR.emotion = nom; const jeton = ++CR.jeton;
+  // 🚨 C'EST ICI QU'ON TRADUIT, et nulle part ailleurs : le lot CC0 n'a que
+  // trois animations qui aient un sens derrière une table (repos, salut, geste)
+  // et AUCUN morph target — les huit visages du SVG n'ont pas d'équivalent 3D.
+  // Plutôt que de faire semblant, on ne joue que ce qui existe vraiment.
+  CR3D.etat.clip = nom === "content" && !CR.salue ? "salut" : "repos";
   const apres = o.apres || 0, tenue = (o.tenue || 2400) + apres;
   crVisage(e);
   if (e.secoue) crSecoue();
@@ -10662,7 +10725,11 @@ function rendreChoixCroupier() {
       `<label class="cr-carte${(DB.croupier.id || "") === id ? " on" : ""}"><input type="radio" name="crChoix" value="${id}"${(DB.croupier.id || "") === id ? " checked" : ""}>
         <span class="cr-vignette">${id ? crSvg("v" + id + "-") : `<span class="cr-auto">⌂</span>`}</span><b>${echap(nom)}</b><i>${echap(sous)}</i></label>`).join("")}</div>
     <p class="muet cr-trait" id="crTrait"></p>
-    <label class="ch"><span class="grave">Son nom à cette table</span><input type="text" id="crNomSaisie" maxlength="18" placeholder="${echap(crPerso().nom)}" value="${echap(DB.croupier.noms[crEffectif()] || "")}"></label>`;
+    <label class="ch"><span class="grave">Son nom à cette table</span><input type="text" id="crNomSaisie" maxlength="18" placeholder="${echap(crPerso().nom)}" value="${echap(DB.croupier.noms[crEffectif()] || "")}"></label>
+    <label class="ch ligne"><input type="checkbox" id="cr3d"${DB.croupier.tri3d === 1 ? " checked" : ""}${cr3dPossible() ? "" : " disabled"}>
+      <span>Croupier en 3D <i class="muet">${cr3dPossible()
+        ? "un modèle animé, mais sans expressions"
+        : "indisponible ici : cette page publiée bloque le téléchargement du modèle"}</i></span></label>`;
   const fermer = $("modaleFermer"); const rang = fermer && fermer.parentNode;
   if (rang) boite.insertBefore(sec, rang); else boite.appendChild(sec);
   sec.querySelectorAll(".cr-carte").forEach(l => {
@@ -10677,6 +10744,13 @@ function rendreChoixCroupier() {
     trait(); CR.id = ""; monterCroupier(); CR.salue = true;
     if (CR.visible) crEmotion("content", { texte: crReplique("accueil"), tenue: 2000, ms: 2000 });
   }));
+  const c3 = $("cr3d");
+  if (c3) c3.addEventListener("change", () => {
+    DB.croupier.tri3d = c3.checked ? 1 : 0; garder();
+    // Le SVG n'est jamais démonté : on l'affiche ou on le cache, donc revenir en
+    // arrière est instantané et rien du jeu (bulle, bras, gestes) ne s'interrompt.
+    if (c3.checked) cr3dMonter(); else cr3dDemonter();
+  });
   $("crNomSaisie").addEventListener("input", () => {
     const v = $("crNomSaisie").value.trim().slice(0, 18);
     if (v) DB.croupier.noms[crEffectif()] = v; else delete DB.croupier.noms[crEffectif()];

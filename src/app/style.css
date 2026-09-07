@@ -608,6 +608,12 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="reno"] .salle .decor{ filter:blur(3px) brightness(.46) saturate(.85) sepia(.25) }
 #croupierScene{ position:absolute; left:50%; top:0; transform:translateX(-50%); z-index:1;
   width:min(560px, 80%); height:var(--salle-haut); pointer-events:none; display:flex; justify-content:center; align-items:flex-end }
+/* Le croupier 3D remplit la MÊME boîte que le SVG, et le SVG reste monté dessous :
+   c'est lui le repli si le modèle ne charge pas, et c'est lui qui porte la bulle,
+   les bras et les gestes du jeu. On le CACHE, on ne le démonte pas — rebasculer
+   est alors instantané et rien ne s'interrompt. */
+#croupierScene .cr3d{ position:absolute; inset:0; width:100%; height:100%; display:block }
+#croupierScene.en3d>svg{ visibility:hidden }
 /* Le calque des jetons couvre la VUE entière — salle ET barre des coups — et vit hors de
    .salle (overflow:hidden) : mesuré le 05/09, le jeton décollait sous le bord de la salle,
    tranché ~100 ms, puis « sortait du sol » entre deux sièges. Il part du jeton cliqué. */
