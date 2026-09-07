@@ -80,3 +80,75 @@ $("progEffacer").onclick = () => {
   garder(); rendreProgres(); bandeau("Historique effacé.");
 };
 window.addEventListener("resize", () => { if (vue === "progres") dessinerCourbe(DB.sessions.filter(x => x.genre !== "estimation").slice(-30)); });
+
+/* ══════════════════════ GARDER SA PROGRESSION ══════════════════════
+   Léo, 07/09/2026 : « garder sa progression […] mais tu précises que c'est pour garder
+   la progression, pas pour collecter des données ».
+
+   🚨 POURQUOI UN FICHIER, ET NI UNE ADRESSE IP NI UN COMPTE :
+   · L'ADRESSE IP est un faux ami. Elle n'identifie personne — quatre personnes derrière
+     la même box en partagent une, et la tienne change au redémarrage — donc elle rendrait
+     la progression d'un inconnu à l'un et perdrait la sienne à l'autre. Et il faudrait un
+     SERVEUR pour la retenir, c'est-à-dire précisément la collecte qu'on veut éviter.
+   · UN COMPTE (Google ou autre) suppose lui aussi un endroit où poser les données. La
+     seule variante honnête — les écrire dans le Drive de la personne, jamais chez nous —
+     demande à Google une vérification d'application. C'est possible, ce n'est pas gratuit
+     en temps, et ça ne change rien pour qui refuse de se connecter.
+   · Un FICHIER n'a besoin de rien : il part sur SA machine, il se relit sur n'importe
+     quelle autre, et il n'existe aucun endroit où il pourrait fuir. C'est la seule
+     solution qui tient la promesse écrite sur la page des dons.
+
+   ⚠️ On n'exporte QUE ce qui est à soi. `engage` (les jetons posés sur le feutre d'une
+   main interrompue) est délibérément EXCLU : réimporté, il rendrait une mise à quelqu'un
+   qui n'a pas la main correspondante, et le tapis se mettrait à mentir. */
+const SAUVE_VERSION = 1;
+{
+  const dire = (m, err) => { const e = $("progGarderEtat"); if (e) { e.textContent = m; e.style.color = err ? "var(--bad-txt, var(--red))" : ""; } };
+
+  $("progExporter") && ($("progExporter").onclick = () => {
+    const { engage, ...reste } = DB;
+    const paquet = { app: "wisehand", v: SAUVE_VERSION, le: new Date().toISOString().slice(0, 10), db: reste };
+    const nom = `wisehand-${paquet.le}.wisehand`;
+    try {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(paquet, null, 1)], { type: "application/json" }));
+      const a = document.createElement("a"); a.href = url; a.download = nom; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      dire(`Fichier « ${nom} » enregistré. Garde-le : c'est toute ta progression.`);
+    } catch (e) { dire("Ce navigateur a refusé le téléchargement.", true); }
+  });
+
+  $("progImporter") && ($("progImporter").onclick = () => $("progFichier").click());
+
+  $("progFichier") && ($("progFichier").onchange = e => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = "";                       // rejouer le MÊME fichier doit remarcher
+    if (!f) return;
+    if (f.size > 4e6) return dire("Ce fichier est trop gros pour être une sauvegarde WiseHand.", true);
+    const lect = new FileReader();
+    lect.onerror = () => dire("Fichier illisible.", true);
+    lect.onload = () => {
+      let p; try { p = JSON.parse(lect.result); } catch (err) { return dire("Ce fichier n'est pas une sauvegarde WiseHand.", true); }
+      // 🚨 On vérifie la SIGNATURE avant tout : un JSON quelconque déposé ici écraserait
+      // une vraie progression par du vide, sans retour possible.
+      if (!p || p.app !== "wisehand" || !p.db || typeof p.db !== "object") return dire("Ce fichier n'est pas une sauvegarde WiseHand.", true);
+      if (+p.v > SAUVE_VERSION) return dire("Cette sauvegarde vient d'une version plus récente de WiseHand.", true);
+      const n = Array.isArray(p.db.sessions) ? p.db.sessions.length : 0;
+      if (!confirm(`Relire cette sauvegarde du ${p.le || "?"} ?\n\n${n} session${n > 1 ? "s" : ""} y sont enregistrées. Ta progression actuelle sera remplacée.`)) return dire("");
+      // On ne prend QUE les clés qu'on connaît : un fichier bricolé ne doit pas pouvoir
+      // semer n'importe quoi dans DB, que le reste du code relit sans se méfier.
+      const permis = ["prenom", "son", "sys", "theme", "table", "sessions", "strat", "fautes", "tapis", "rachats", "volume", "couleur", "turn", "quete"];
+      for (const k of permis) if (p.db[k] !== undefined) DB[k] = p.db[k];
+      DB.sessions = Array.isArray(DB.sessions) ? DB.sessions : [];
+      DB.fautes = Array.isArray(DB.fautes) ? DB.fautes : [];
+      DB.strat = Object.assign({ base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }, DB.strat || {});
+      DB.engage = 0;
+      garder();
+      dire(`Progression restaurée : ${n} session${n > 1 ? "s" : ""}.`);
+      // ⚠️ On RECHARGE : le thème, le prénom, le système de comptage, la table et le tapis
+      // sont lus au démarrage par une dizaine d'endroits. Les rafraîchir un par un, c'est
+      // la garantie d'en oublier un et de laisser l'écran mentir sur ce qui est en base.
+      setTimeout(() => location.reload(), 900);
+    };
+    lect.readAsText(f);
+  });
+}

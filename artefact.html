@@ -1,4 +1,4 @@
-<title>WiseHand</title>
+<title>WiseHand — compter les cartes au blackjack, pour de vrai</title>
 <meta name="description" content="Entraînement au comptage de cartes au blackjack : dix tables réelles, stratégie et écarts calculés, hasard prouvable, multijoueur sans serveur.">
 <meta name="theme-color" content="#070D0C">
 <link rel="manifest" href="manifest.json">
@@ -3538,6 +3538,24 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
     <span class="grave">Journal</span>
     <table class="journal" id="progJournal"></table>
   </div>
+  <!-- ══ GARDER SA PROGRESSION ══
+       Tout vit dans le navigateur (localStorage) : c'est ce qui permet de n'avoir ni
+       compte, ni serveur, ni la moindre donnée chez qui que ce soit. Le revers, et il
+       est réel : vider son navigateur, changer de téléphone ou passer en navigation
+       privée efface tout, sans prévenir. Un fichier règle les deux à la fois — il part
+       chez TOI, pas chez nous, et se relit sur n'importe quelle machine.
+       ⚠️ Ce bloc n'est PAS un argumentaire : deux boutons et deux phrases. -->
+  <div class="laque pad" id="progGarder" style="margin-top:12px">
+    <h2>Garder ta progression</h2>
+    <p class="muet">Tes sessions, tes réglages et tes jetons vivent dans ce navigateur, et nulle part ailleurs &#8212; c&#039;est pour ça qu&#039;il n&#039;y a aucun compte à créer. Mais vider ton navigateur ou changer d&#039;appareil les efface. Le fichier ci-dessous te les rend, sur n&#039;importe quelle machine.</p>
+    <div class="rang-btn" style="margin-top:12px;justify-content:flex-start">
+      <button class="btn creux" id="progExporter">Enregistrer un fichier</button>
+      <button class="btn creux" id="progImporter">Relire un fichier</button>
+      <input type="file" id="progFichier" accept=".wisehand,application/json" hidden>
+    </div>
+    <p class="muet" id="progGarderEtat" style="margin-top:10px;min-height:1.2em"></p>
+  </div>
+
   <div class="rang-btn" id="progEffacerRang" style="margin-top:14px;justify-content:flex-start"><button class="btn creux" id="progEffacer">Effacer l'historique</button></div>
 </section>
 
@@ -3550,82 +3568,56 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 <section class="vue" id="v-dons" hidden>
   <div class="bandeau-salle" data-photo="macao">
     <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px">
-    <div class="bandeau-texte"><span class="grave">Le bureau</span><h2>La caisse</h2><p>WiseHand est gratuit. Voilà ce que ça coûte, et à quoi sert un don.</p></div>
+    <div class="bandeau-texte"><span class="grave">Le bureau</span><h2>La caisse</h2><p>WiseHand est gratuit. Voilà pourquoi, et à quoi sert un don.</p></div>
   </div>
 
+  <!-- ⚠️ SEPT blocs de texte vivaient ici (Léo 07/09 : « y a trop de trucs d&#039; écrits,
+       explique ça brièvement »). Tout y était vrai, et personne ne le lisait : une page
+       qui plaide trop finit par avoir l&#039; air de vendre quelque chose. Il reste TROIS
+       choses — ce que c&#039; est, la caisse, ce qu&#039; un don ne donne pas — et le mot sur
+       l&#039; aide au jeu, qui n&#039; est pas négociable. Les phrases retirées ne sont pas
+       perdues : elles étaient l&#039; argumentaire, pas l&#039; information. -->
   <div class="laque pad dons-bloc">
-    <h2>Tout est ouvert, et ça ne changera pas.</h2>
-    <p>Les dix tables, les trois exercices, la stratégie calculée pour chacune d'elles, le mode Concentration, la table entre amis : tout est là, tout de suite. Il n'y a pas de version complète ailleurs &#8212; celle que tu as sous les yeux <b>est</b> la version complète.</p>
-    <div class="dons-preuves">
-      <div class="laque"><span class="grave">Aucune publicité</span><p>Il n'y a pas un seul emplacement publicitaire dans ce fichier, et il n'y en aura pas.</p></div>
-      <div class="laque"><span class="grave">Aucune donnée revendue</span><p>Il n'y a rien à revendre : tes sessions et tes réglages ne quittent pas ton navigateur. Seuls ton prénom et ce que tu joues en sortent, et seulement à une table entre amis : ils passent par un courtier public pour arriver chez eux. Personne ne les garde, et je ne les vois pas non plus.</p></div>
-      <div class="laque"><span class="grave">Aucun compte</span><p>Tu n'as donné ni adresse ni mot de passe. L'application ne compte pas ses visiteurs : je ne sais pas que tu es là.</p></div>
-    </div>
-  </div>
-
-  <div class="laque pad dons-bloc">
-    <h2>Ce que ça coûte, honnêtement.</h2>
-    <div class="duo dons-duo">
-      <p><b>L'hébergement ne coûte rien.</b> WiseHand est un seul fichier posé sur un hébergement statique gratuit : pas de serveur à louer, pas de base de données, rien qui tourne quand tu ne joues pas. Quand tu joues à plusieurs, les messages passent par des courtiers publics gratuits et la vidéo va d'un navigateur à l'autre &#8212; rien ne transite par une machine que je paierais. Depuis le 7 septembre 2026 il y a une ligne de dépense, une seule : le nom de domaine <b>wisehand21.com</b>, 11,08&nbsp;$ par an, renouvellement compris. C&#039;est tout le budget du projet.</p>
-      <p><b>Ce que ça coûte, c'est du temps.</b> Lire neuf règlements de casino, un par table, et les transcrire sans en arrondir un seul. Écrire un solveur qui retrouve tout seul la stratégie de base au lieu de recopier une image. Jouer trois millions de mains par table avant chaque publication pour <em>mesurer</em> l'avantage de chacune plutôt que de l'annoncer. Et refaire la mise en page jusqu'à ce qu'une table de blackjack tienne dans un écran.</p>
-    </div>
-    <p class="muet dons-chute">Ton don ne paie donc pas un serveur : il paie la prochaine table, le prochain exercice, le prochain défaut corrigé. Dans un casino, ça porte un nom &#8212; c'est un pourboire, pas une facture.</p>
-  </div>
-
-  <div class="laque pad dons-bloc">
-    <h2>Pourquoi je le demande quand même.</h2>
-    <p>Tu es peut-être arrivé par une fenêtre où je réclame de quoi &#171;&nbsp;subvenir à mon train de vie&nbsp;&#187;. C&#039;était une blague. La voici sans la blague : WiseHand est écrit le soir et le week-end, par une seule personne, et rien dans l&#039;application ne rapporte quoi que ce soit &#8212; ni pub, ni données, ni version payante.</p>
-    <p class="muet">Un don ne répare donc rien et ne paie aucune facture. Il dit seulement que ça valait la peine, et c&#039;est ce qui fait écrire la table suivante. Si tu ne donnes rien, tu ne me dois rien : c&#039;est écrit plus bas, et c&#039;est vrai.</p>
+    <h2>Gratuit, sans pub, sans compte.</h2>
+    <p>Tout est ouvert : les dix tables, les exercices, la stratégie calculée pour chacune, la table entre amis. Il n&#039; y a pas de version complète ailleurs. Aucune publicité, aucune donnée revendue, rien à créer pour jouer.</p>
+    <p class="muet">Ça ne coûte presque rien à héberger &#8212; une seule ligne de dépense, le nom de domaine, 11,08&nbsp;$ par an. Ce que ça coûte, c&#039; est du temps : lire les règlements, écrire le solveur, mesurer chaque table sur des millions de mains. Un don ne paie donc pas un serveur, il paie la prochaine table.</p>
   </div>
 
   <div id="donsCaisse">
-    <!-- L'ÉTAT DE LIVRAISON : aucune cagnotte n'est ouverte. On le dit par une phrase
-         entière, jamais par un bouton grisé (la page passerait pour cassée) ni par un
-         « bientôt » (elle passerait pour une campagne qui attend son heure). -->
+    <!-- L&#039; ÉTAT DE LIVRAISON sans cagnotte : une phrase entière, jamais un bouton grisé
+         (la page passerait pour cassée) ni un « bientôt » (pour une campagne). -->
     <div class="laque pad dons-bloc dons-caisse dons-sans" id="donsSans">
       <div>
         <span class="grave">Si tu voulais laisser quelque chose</span>
-        <h2>Il n'y a pas encore où donner.</h2>
-        <p class="muet">Aucune cagnotte n'est ouverte pour le moment. Autrement dit, rien de ce qui est écrit sur cette page ne t'attend au tournant : elle est là pour expliquer pourquoi WiseHand est gratuit, pas pour te vendre quoi que ce soit.</p>
+        <h2>Il n&#039; y a pas encore où donner.</h2>
+        <p class="muet">Aucune cagnotte n&#039; est ouverte pour le moment. Rien sur cette page ne t&#039; attend au tournant.</p>
       </div>
       <div class="dons-geste">
-        <span class="muet dons-ou">Si une cagnotte s'ouvre un jour, elle apparaîtra exactement ici, et le reste de la page ne bougera pas d'une ligne. En attendant, la meilleure façon d'aider est juste en dessous : en parler, et jouer à plusieurs.</span>
+        <span class="muet dons-ou">Si une cagnotte s&#039; ouvre un jour, elle apparaîtra ici. En attendant, la meilleure façon d&#039; aider est d&#039; en parler, et de jouer à plusieurs.</span>
       </div>
     </div>
-    <!-- L'AUTRE ÉTAT : une cagnotte existe. Un simple lien, jamais un widget de
-         plateforme &#8212; la politique de sécurité de l'artefact bloque tout script et
-         toute image venus d'ailleurs SANS erreur visible : le bouton ne s'afficherait
-         pas, et personne ne verrait qu'il manque. -->
+    <!-- L&#039; AUTRE ÉTAT : un simple lien, jamais un widget de plateforme &#8212; la CSP de
+         l&#039; artefact bloque tout script venu d&#039; ailleurs SANS erreur visible. -->
     <div class="laque pad dons-bloc dons-caisse" id="donsAvec" hidden>
       <div>
         <span class="grave">Si tu veux laisser quelque chose</span>
         <h2>Le pourboire.</h2>
-        <p class="muet">Une fois, du montant que tu veux. Rien ne se renouvelle tout seul, et tu n'as pas de compte à créer.</p>
+        <p class="muet">Une fois, du montant que tu veux. Rien ne se renouvelle, aucun compte à créer.</p>
       </div>
       <div class="dons-geste" id="donsGeste">
         <a class="btn" id="donsLien" href="#" target="_blank" rel="noopener">Laisser un pourboire</a>
-        <span class="muet dons-ou">La page de don s'ouvre chez PayPal. WiseHand ne voit ni ton nom ni ton moyen de paiement.</span>
+        <span class="muet dons-ou">La page s&#039; ouvre chez PayPal. WiseHand ne voit ni ton nom ni ton moyen de paiement.</span>
       </div>
     </div>
   </div>
 
-  <div class="duo dons-paire">
-    <div class="laque pad dons-bloc">
-      <h2>Donner ne débloque rien.</h2>
-      <p>Pas de version « premium », pas de table réservée, pas de badge à côté de ton prénom, pas de publicité à retirer puisqu'il n'y en a pas. Celui qui donne et celui qui ne donne pas ouvrent exactement la même application.</p>
-      <p>Ce n'est pas de la générosité, c'est une nécessité : le jour où un don achète quelque chose, ce n'est plus un don, c'est un prix. Il faudrait tenir des comptes, vérifier qui a payé, donc savoir qui tu es &#8212; et tout ce que promet le haut de cette page tomberait avec.</p>
-    </div>
-    <div class="laque pad dons-bloc">
-      <h2>Et si tu ne donnes rien.</h2>
-      <p>C'est le cas le plus fréquent, et c'est très bien ainsi. WiseHand n'a pas été écrit pour les gens qui peuvent donner : il a été écrit pour qui veut apprendre à compter, et ça doit rester gratuit. Tu ne dois rien à personne en fermant cette page.</p>
-      <p class="muet">Si tu veux quand même rendre service, il y a de quoi faire sans sortir un centime : parle-en à quelqu'un que ça intéresserait, ouvre une table entre amis &#8212; c'est le mode qui a le plus besoin d'être joué à plusieurs &#8212; et dis-moi ce qui ne va pas quand quelque chose ne va pas.</p>
-      <div class="rang-btn dons-ailleurs"><button class="btn creux" id="donsAmis">Ouvrir une table entre amis</button></div>
-    </div>
+  <div class="laque pad dons-bloc">
+    <h2>Donner ne débloque rien.</h2>
+    <p>Pas de version premium, pas de table réservée, pas de badge. Celui qui donne et celui qui ne donne pas ouvrent la même application &#8212; le jour où un don achète quelque chose, ce n&#039; est plus un don, c&#039; est un prix.</p>
+    <p class="muet">Et si tu ne donnes rien, c&#039; est très bien : tu ne dois rien à personne. Pour aider sans sortir un centime, parles-en, et ouvre une table entre amis.</p>
+    <div class="rang-btn dons-ailleurs"><button class="btn creux" id="donsAmis">Ouvrir une table entre amis</button></div>
   </div>
 
-  <!-- Le seul endroit juste pour ce mot : c'est la page qui parle d'argent. Sur la
-       table ce serait du harcèlement en pleine main ; dans le hall, une bannière
-       légale. Il informe au lieu de faire la leçon. Numéro vérifié le 06/09/2026. -->
   <div class="dons-mot">
     <span class="grave">Un mot, une fois</span>
     <p>Ici, personne ne perd d'argent : les jetons ne valent rien et le tapis se rachète d'un clic. Dehors, c'est autre chose. Compter ne rend pas le blackjack gagnant &#8212; ça retire quelques dixièmes de pour cent à la maison, sur des milliers de mains, à condition de ne jamais se tromper. Sur quatre des dix tables de ce hall, compter ne change rien du tout &#8212; et trois d'entre elles le disent en toutes lettres.</p>
@@ -14363,6 +14355,78 @@ $("progEffacer").onclick = () => {
   garder(); rendreProgres(); bandeau("Historique effacé.");
 };
 window.addEventListener("resize", () => { if (vue === "progres") dessinerCourbe(DB.sessions.filter(x => x.genre !== "estimation").slice(-30)); });
+
+/* ══════════════════════ GARDER SA PROGRESSION ══════════════════════
+   Léo, 07/09/2026 : « garder sa progression […] mais tu précises que c'est pour garder
+   la progression, pas pour collecter des données ».
+
+   🚨 POURQUOI UN FICHIER, ET NI UNE ADRESSE IP NI UN COMPTE :
+   · L'ADRESSE IP est un faux ami. Elle n'identifie personne — quatre personnes derrière
+     la même box en partagent une, et la tienne change au redémarrage — donc elle rendrait
+     la progression d'un inconnu à l'un et perdrait la sienne à l'autre. Et il faudrait un
+     SERVEUR pour la retenir, c'est-à-dire précisément la collecte qu'on veut éviter.
+   · UN COMPTE (Google ou autre) suppose lui aussi un endroit où poser les données. La
+     seule variante honnête — les écrire dans le Drive de la personne, jamais chez nous —
+     demande à Google une vérification d'application. C'est possible, ce n'est pas gratuit
+     en temps, et ça ne change rien pour qui refuse de se connecter.
+   · Un FICHIER n'a besoin de rien : il part sur SA machine, il se relit sur n'importe
+     quelle autre, et il n'existe aucun endroit où il pourrait fuir. C'est la seule
+     solution qui tient la promesse écrite sur la page des dons.
+
+   ⚠️ On n'exporte QUE ce qui est à soi. `engage` (les jetons posés sur le feutre d'une
+   main interrompue) est délibérément EXCLU : réimporté, il rendrait une mise à quelqu'un
+   qui n'a pas la main correspondante, et le tapis se mettrait à mentir. */
+const SAUVE_VERSION = 1;
+{
+  const dire = (m, err) => { const e = $("progGarderEtat"); if (e) { e.textContent = m; e.style.color = err ? "var(--bad-txt, var(--red))" : ""; } };
+
+  $("progExporter") && ($("progExporter").onclick = () => {
+    const { engage, ...reste } = DB;
+    const paquet = { app: "wisehand", v: SAUVE_VERSION, le: new Date().toISOString().slice(0, 10), db: reste };
+    const nom = `wisehand-${paquet.le}.wisehand`;
+    try {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(paquet, null, 1)], { type: "application/json" }));
+      const a = document.createElement("a"); a.href = url; a.download = nom; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      dire(`Fichier « ${nom} » enregistré. Garde-le : c'est toute ta progression.`);
+    } catch (e) { dire("Ce navigateur a refusé le téléchargement.", true); }
+  });
+
+  $("progImporter") && ($("progImporter").onclick = () => $("progFichier").click());
+
+  $("progFichier") && ($("progFichier").onchange = e => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = "";                       // rejouer le MÊME fichier doit remarcher
+    if (!f) return;
+    if (f.size > 4e6) return dire("Ce fichier est trop gros pour être une sauvegarde WiseHand.", true);
+    const lect = new FileReader();
+    lect.onerror = () => dire("Fichier illisible.", true);
+    lect.onload = () => {
+      let p; try { p = JSON.parse(lect.result); } catch (err) { return dire("Ce fichier n'est pas une sauvegarde WiseHand.", true); }
+      // 🚨 On vérifie la SIGNATURE avant tout : un JSON quelconque déposé ici écraserait
+      // une vraie progression par du vide, sans retour possible.
+      if (!p || p.app !== "wisehand" || !p.db || typeof p.db !== "object") return dire("Ce fichier n'est pas une sauvegarde WiseHand.", true);
+      if (+p.v > SAUVE_VERSION) return dire("Cette sauvegarde vient d'une version plus récente de WiseHand.", true);
+      const n = Array.isArray(p.db.sessions) ? p.db.sessions.length : 0;
+      if (!confirm(`Relire cette sauvegarde du ${p.le || "?"} ?\n\n${n} session${n > 1 ? "s" : ""} y sont enregistrées. Ta progression actuelle sera remplacée.`)) return dire("");
+      // On ne prend QUE les clés qu'on connaît : un fichier bricolé ne doit pas pouvoir
+      // semer n'importe quoi dans DB, que le reste du code relit sans se méfier.
+      const permis = ["prenom", "son", "sys", "theme", "table", "sessions", "strat", "fautes", "tapis", "rachats", "volume", "couleur", "turn", "quete"];
+      for (const k of permis) if (p.db[k] !== undefined) DB[k] = p.db[k];
+      DB.sessions = Array.isArray(DB.sessions) ? DB.sessions : [];
+      DB.fautes = Array.isArray(DB.fautes) ? DB.fautes : [];
+      DB.strat = Object.assign({ base: [0, 0], ecarts: [0, 0], assurance: [0, 0] }, DB.strat || {});
+      DB.engage = 0;
+      garder();
+      dire(`Progression restaurée : ${n} session${n > 1 ? "s" : ""}.`);
+      // ⚠️ On RECHARGE : le thème, le prénom, le système de comptage, la table et le tapis
+      // sont lus au démarrage par une dizaine d'endroits. Les rafraîchir un par un, c'est
+      // la garantie d'en oublier un et de laisser l'écran mentir sur ce qui est en base.
+      setTimeout(() => location.reload(), 900);
+    };
+    lect.readAsText(f);
+  });
+}
 
 
 /* ═══ clavier.js ═══ */

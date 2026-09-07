@@ -56,6 +56,22 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   }
   ok("caisse : le numéro d'aide au jeu y est", /09 74 75 13 13/.test(txt("#v-dons")), "numéro absent");
 
+  // ── GARDER SA PROGRESSION : un fichier, pas un compte ni une adresse IP.
+  clic('nav [data-vue="progres"]'); await dodo(250);
+  {
+    const b = q("#progExporter"), i = q("#progImporter"), f = q("#progFichier");
+    ok("sauvegarde : les deux boutons et le champ de fichier", !!(b && i && f), "il en manque un");
+    // 🚨 LE COMPORTEMENT N'EST PAS TESTÉ ICI, et ce n'est pas un oubli : cette sonde
+    // tourne en TEMPS VIRTUEL (c'est ce qui lui permet de jouer des centaines de mains
+    // en quelques secondes). Un `FileReader` réel, lui, résout sur la vraie boucle
+    // d'événements : les `await dodo()` ne l'avancent pas, et les trois contrôles
+    // rendaient le message du fichier PRÉCÉDENT — un décalage d'un cran, mesuré, qui
+    // aurait fini par faire « corriger » du code parfaitement juste.
+    // Le chemin complet (refus d'un JSON quelconque, refus d'une version future,
+    // restauration réelle, `engage` non réimporté) est vérifié en temps RÉEL par
+    // `outils/capturer.mjs progres --sonde=…` — voir le commit qui ajoute ce bloc.
+  }
+
   // ── LA QUÊTE : la seule chose qui réclame quelque chose sans qu'on l'ait cherché.
   // On ne vérifie PAS qu'elle est ouverte à cet instant (la sonde a déjà cliqué partout,
   // et elle ne s'ouvre que sur l'accueil) : on vérifie son CONTRAT, celui qui la rend
