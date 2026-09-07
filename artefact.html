@@ -9575,6 +9575,15 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
  <path d="M206 66c0-2 2-4 4-3M314 66c0-2-2-4-4-3" stroke-opacity=".3"/>
  <path d="M218 70C217 82 221 93 229 101C224 101 220 93 217 83C216 77 216 73 218 70ZM302 70C303 82 299 93 291 101C296 101 300 93 303 83C304 77 304 73 302 70Z" fill="#3A1A0C" opacity=".1" stroke="none"/>
  <use id="@crCoiffe" href="#@c-courts" fill="var(--cr-cheveux,#191411)"/>
+ <!-- 🚨 LE GROUPE QUI FAIT LE TROIS-QUARTS. Avant, tourner la tête ne faisait que
+      l'INCLINER : le visage restait vissé au milieu du crâne, donc le croupier ne
+      regardait jamais personne, il penchait. Sur une planche de personnage, ce qui
+      distingue une vue de face d'une vue de trois-quarts, ce n'est pas l'angle du
+      crâne — c'est que les yeux, le nez et la bouche ont GLISSÉ sur lui pendant que
+      l'ovale bougeait à peine. Ce groupe porte ce glissement, et lui seul : la
+      coiffe est taillée sur ce crâne-là et les oreilles y sont vissées, les faire
+      glisser les décollerait. -->
+ <g id="@crFace">
  <ellipse class="cr-joue" id="@crJoueG" cx="232" cy="82" rx="9" ry="5.2" fill="#D9584F" stroke="none" opacity="0"/>
  <ellipse class="cr-joue" id="@crJoueD" cx="288" cy="82" rx="9" ry="5.2" fill="#D9584F" stroke="none" opacity="0"/>
  <!-- les yeux : pivot au centre, l'iris glisse, la paupière descend depuis le haut -->
@@ -9619,6 +9628,7 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
  <path d="M250 106c4 3 16 3 20 0" stroke-opacity=".18" stroke-width="1.8" stroke-linecap="round"/>
  <use id="@crBarbe" href="#@b-rien" fill="var(--cr-barbe,var(--cr-cheveux,#191411))" stroke="none"/>
  <use id="@crMoustache" href="#@m-rien" fill="var(--cr-cheveux,#191411)" stroke="none"/>
+ </g>
 </g></g></g>
 </g>
 <!-- ── BRAS : gauche-écran (côté défausse) puis droite-écran (celui qui distribue) ── -->
@@ -9881,6 +9891,10 @@ const crBordTable = rep => { const p = crRect("plateau"); return p ? p.top : rep
    progression), sinon le bras saute à la cible du geste précédent. ─────── */
 const FORME = (cle, v) => {
   if (cle === "crTete") return `translate(${(v * .55).toFixed(2)}px,${CR.avance.toFixed(1)}px) rotate(${v.toFixed(2)}deg)`;
+  // Le visage glisse de .8 unité par degré de regard, EN PLUS des .55 du crâne : c'est
+  // l'écart entre les deux qui se lit comme un trois-quarts, pas leur somme. Le penché
+  // (l'inclinaison d'une émotion) n'y entre pas — on penche la tête sans tourner le nez.
+  if (cle === "crFace") return `translateX(${(v * .8).toFixed(2)}px)`;
   if (cle.startsWith("crGaine")) return `scaleY(${v.toFixed(3)})`;
   if (cle.startsWith("crMain")) return `translateY(${v.toFixed(2)}px)`;
   return `rotate(${v.toFixed(2)}deg)`;
@@ -10132,7 +10146,11 @@ function crRegardeSiege(siege, ms) {
 // La tête va à (regard + penché) : un seul geste, quelle que soit la composante qui a changé.
 // `delai` n'est posé que par le REGARD (l'œil part devant) ; une émotion, elle, redresse la
 // tête tout de suite — il n'y a pas d'œil à attendre.
-function crTeteMaj(ms, delai) { crBouger("crTete", CR.regard + CR.penche, ms, delai ? { delai } : undefined); }
+function crTeteMaj(ms, delai) {
+  const o = delai ? { delai } : undefined;
+  crBouger("crTete", CR.regard + CR.penche, ms, o);
+  crBouger("crFace", CR.regard, ms, o);
+}
 
 /* ── Le visage. Sourcils = [descente px, rotation deg], jamais symétriques ;
    la bouche est ÉCHANGÉE, jamais interpolée — une bouche qui se déforme
