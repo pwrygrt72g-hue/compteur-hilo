@@ -470,7 +470,18 @@ function rsAnnonce(e) {
   else if (e.phase === "sabot") txt = e.message || "Le croupier mélange un sabot neuf…";
   else if (e.phase === "mise") txt = !moi ? "Choisis un siège libre pour jouer" : (moi.mise >= e.miseMin ? "Mise posée" : "Faites vos jeux") + ` — ${e.miseRestant} s` + (rsHote() ? " · « Distribuer » clôt les mises" : "");
   else if (e.phase === "assurance") txt = "Le croupier montre un as. Assurance ?";
-  else if (e.phase === "jeu") { const st = e.actif && e.sieges[e.actif.siege]; txt = st ? (st.id === RS.moi ? "À toi de jouer" : `À ${st.nom} de jouer`) + (e.tourRestant > 0 && e.tourRestant <= 10 ? ` — ${e.tourRestant} s` : "") : ""; }
+  else if (e.phase === "jeu") {
+    const st = e.actif && e.sieges[e.actif.siege];
+    const presse = e.tourRestant > 0 && e.tourRestant <= 10;
+    // 🚨 Quand c'est À TOI, la pastille ne répète RIEN : ton siège est cerclé d'or, ta main
+    // en cours est marquée, tes boutons sont allumés. Elle se posait dans le seul coin de
+    // feutre encore libre — c'est-à-dire juste à côté de tes propres cartes, à leur hauteur —
+    // et les serrait (Léo, 07/09/2026 : « ça occupe beaucoup l'écran et cache à moitié les
+    // cartes du joueur »). Ne reste que le compte à rebours, et seulement quand il presse.
+    // Pour les AUTRES joueurs elle est indispensable : leur siège est loin du regard.
+    txt = !st ? "" : st.id === RS.moi ? (presse ? `${e.tourRestant} s pour jouer` : "")
+      : `À ${st.nom} de jouer` + (presse ? ` — ${e.tourRestant} s` : "");
+  }
   else if (e.phase === "croupier") txt = "Le croupier joue.";
   else if (e.phase === "reglement") txt = (e.message || "") + (moi && moi.mains.length ? " Toi : " + moi.mains.map(h => h.result).join(" · ") + "." : "");
   if (e.message && e.phase !== "reglement" && e.phase !== "sabot") txt = e.message + (txt ? " " + txt : "");

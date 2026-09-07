@@ -621,6 +621,23 @@ function rendreSieges() {
       // La pastille bascule à sa PREMIÈRE apparition seulement : rendreSieges()
       // reconstruit tout, une pastille déjà vue ne doit pas resauter.
       if (h.result && !h.issueVue) { rs.classList.add("neuve"); h.issueVue = true; }
+      // Après une séparation, deux mains identiques se touchent et RIEN ne disait laquelle
+      // le croupier attend (Léo, 07/09/2026) : `.encours` était posée ici depuis toujours et
+      // AUCUNE règle ne la dessinait. Le numéro rend la main NOMMABLE — « la gauche » et
+      // « la droite » ne se disent plus dès que les deux se chevauchent — et il sert de cible
+      // de clic. Il n'existe que sur une séparation : à une seule main, rien ne change.
+      if (st.mains.length > 1) {
+        const nb = document.createElement("div"); nb.className = "mnum";
+        nb.textContent = "Main " + (hi + 1);
+        w.appendChild(nb);
+        if (st.toi) {
+          w.classList.add("choisissable");
+          w.tabIndex = 0; w.setAttribute("role", "button");
+          w.setAttribute("aria-label", `Jouer la main ${hi + 1} sur ${st.mains.length}`);
+          w.onclick = () => choisirMain(si, hi);
+          w.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); choisirMain(si, hi); } };
+        }
+      }
       w.append(md, sc, rs); hs.appendChild(w);
     });
     // Le cercle de mise, doré, devant chaque siège : vide pour l'instant, le lot
@@ -1216,11 +1233,31 @@ function tonTour() {
     document.querySelectorAll("#coups .btn").forEach(b => b.classList.toggle("conseille", b.id === id));
   } else { $("conseil").textContent = ""; document.querySelectorAll("#coups .btn.conseille").forEach(b => b.classList.remove("conseille")); }
 }
+// Cliquer une main pour la jouer — la gauche ou la droite, après une séparation (Léo,
+// 07/09/2026). On ne laisse choisir QUE parmi les mains encore à jouer : revenir sur une
+// main finie la ferait rejouer, et l'avancement reprendrait ensuite là où il en était.
+// L'ordre n'a aucune conséquence au blackjack — chaque main se joue seule contre la même
+// carte du croupier — donc laisser choisir ne fausse rien.
+function choisirMain(si, hi) {
+  if (T.occupe || !T.actif || T.actif.siege !== si) return;
+  const st = T.sieges[si]; if (!st || !st.toi) return;
+  const h = st.mains[hi];
+  if (!h || h.jouee || h.result || h.ramassee || T.actif.main === hi) return;
+  T.actif = { siege: si, main: hi }; marquerActif();
+  emettre("tour", { siege: si, main: hi, toi: true });
+  tonTour();
+}
 async function mainSuivante() {
   const si = T.sieges.indexOf(T.toi); boutons({}); $("conseil").textContent = "";
   document.querySelectorAll("#coups .btn.conseille").forEach(b => b.classList.remove("conseille"));
-  if (T.actif.main + 1 < T.toi.mains.length) { T.actif = { siege: si, main: T.actif.main + 1 }; marquerActif();
-    emettre("tour", { siege: si, main: T.actif.main, toi: true }); return tonTour(); }
+  // La main qu'on quitte est FINIE. Sans cette marque, un clic pour y revenir (choisirMain)
+  // la ferait rejouer — et l'ancien « main + 1 » la reprendrait une seconde fois juste après.
+  const cour = T.toi.mains[T.actif.main]; if (cour) cour.jouee = true;
+  // La suivante est la première ENCORE À JOUER, plus « celle d'après » : on a pu sauter
+  // d'une main à l'autre en cliquant, l'index n'est plus un compteur fiable.
+  const suiv = T.toi.mains.findIndex(h => !h.jouee && !h.result && !h.ramassee);
+  if (suiv >= 0) { T.actif = { siege: si, main: suiv }; marquerActif();
+    emettre("tour", { siege: si, main: suiv, toi: true }); return tonTour(); }
   T.occupe = true; await jouerSieges(si + 1);
 }
 const monAction = f => async () => { if (T.occupe || !T.actif) return; await f(); };

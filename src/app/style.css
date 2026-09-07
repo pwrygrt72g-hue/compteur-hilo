@@ -1050,6 +1050,28 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    ou cinq (mesuré le 05/09). La main prend la ligne, le score et la pastille se centrent dessous. */
 .siege .m{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:2px 6px }
 .siege .m .main{ flex:0 0 100%; justify-content:center }
+/* ── APRÈS UNE SÉPARATION : QUELLE MAIN LE CROUPIER ATTEND ────────────────────────
+   `.encours` était posée par table.js depuis toujours et AUCUNE règle ne la dessinait :
+   les deux mains se ressemblaient trait pour trait et rien ne disait laquelle jouait
+   (Léo, 07/09/2026). Tout est scopé à `:has(.m + .m)` — à une seule main, pas une seule
+   de ces déclarations ne s'applique, donc zéro régression sur le cas ordinaire. */
+.siege .mains:has(.m + .m) .m{ position:relative; border-radius:12px; padding:3px 6px 1px;
+  transition:opacity .22s ease, box-shadow .25s ease, background-color .25s ease }
+.siege .mains:has(.m + .m) .m:not(.encours){ opacity:.46 }
+.siege .mains:has(.m + .m) .m.encours{ background-color:color-mix(in oklab, var(--or) 9%, transparent);
+  box-shadow:0 0 0 2px color-mix(in oklab, var(--or) 62%, transparent) inset }
+/* Le numéro passe DEVANT les cartes (`order:-1`) : `.main` prend la ligne entière, il se
+   retrouve donc seul au-dessus. C'est lui qui rend la main nommable — « la gauche » et
+   « la droite » ne veulent plus rien dire dès que les deux éventails se chevauchent. */
+.mnum{ order:-1; font-family:"Martian Mono",monospace; font-size:var(--t-micro); letter-spacing:.08em;
+  text-transform:uppercase; color:rgba(246,241,228,.52); line-height:1.5 }
+.m.encours .mnum{ color:var(--or) }
+/* Cliquable : on choisit la main, puis on frappe le coup (demande de Léo). Le curseur et le
+   survol le disent — une cible de clic qui n'a pas l'air d'en être n'est jamais essayée. */
+.m.choisissable{ cursor:pointer }
+.m.choisissable:hover:not(.encours){ opacity:.78 }
+.m.choisissable:focus-visible{ outline:2px solid var(--or); outline-offset:3px }
+@media (prefers-reduced-motion:reduce){ .siege .mains:has(.m + .m) .m{ transition:none } }
 /* Valeur de repli avant que cartes.js n'ait mesuré (dimensionnerCartes pose --w et --pas en ligne sur chaque .main). */
 .siege .main{ --w:clamp(66px, 5vw, 84px) }
 /* La ligne du score est RÉSERVÉE à sa hauteur de ligne (1lh) : à 18 px de réserve pour une ligne de

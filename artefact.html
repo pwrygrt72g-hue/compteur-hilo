@@ -1063,6 +1063,28 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    ou cinq (mesuré le 05/09). La main prend la ligne, le score et la pastille se centrent dessous. */
 .siege .m{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:2px 6px }
 .siege .m .main{ flex:0 0 100%; justify-content:center }
+/* ── APRÈS UNE SÉPARATION : QUELLE MAIN LE CROUPIER ATTEND ────────────────────────
+   `.encours` était posée par table.js depuis toujours et AUCUNE règle ne la dessinait :
+   les deux mains se ressemblaient trait pour trait et rien ne disait laquelle jouait
+   (Léo, 07/09/2026). Tout est scopé à `:has(.m + .m)` — à une seule main, pas une seule
+   de ces déclarations ne s'applique, donc zéro régression sur le cas ordinaire. */
+.siege .mains:has(.m + .m) .m{ position:relative; border-radius:12px; padding:3px 6px 1px;
+  transition:opacity .22s ease, box-shadow .25s ease, background-color .25s ease }
+.siege .mains:has(.m + .m) .m:not(.encours){ opacity:.46 }
+.siege .mains:has(.m + .m) .m.encours{ background-color:color-mix(in oklab, var(--or) 9%, transparent);
+  box-shadow:0 0 0 2px color-mix(in oklab, var(--or) 62%, transparent) inset }
+/* Le numéro passe DEVANT les cartes (`order:-1`) : `.main` prend la ligne entière, il se
+   retrouve donc seul au-dessus. C'est lui qui rend la main nommable — « la gauche » et
+   « la droite » ne veulent plus rien dire dès que les deux éventails se chevauchent. */
+.mnum{ order:-1; font-family:"Martian Mono",monospace; font-size:var(--t-micro); letter-spacing:.08em;
+  text-transform:uppercase; color:rgba(246,241,228,.52); line-height:1.5 }
+.m.encours .mnum{ color:var(--or) }
+/* Cliquable : on choisit la main, puis on frappe le coup (demande de Léo). Le curseur et le
+   survol le disent — une cible de clic qui n'a pas l'air d'en être n'est jamais essayée. */
+.m.choisissable{ cursor:pointer }
+.m.choisissable:hover:not(.encours){ opacity:.78 }
+.m.choisissable:focus-visible{ outline:2px solid var(--or); outline-offset:3px }
+@media (prefers-reduced-motion:reduce){ .siege .mains:has(.m + .m) .m{ transition:none } }
 /* Valeur de repli avant que cartes.js n'ait mesuré (dimensionnerCartes pose --w et --pas en ligne sur chaque .main). */
 .siege .main{ --w:clamp(66px, 5vw, 84px) }
 /* La ligne du score est RÉSERVÉE à sa hauteur de ligne (1lh) : à 18 px de réserve pour une ligne de
@@ -7734,6 +7756,23 @@ function rendreSieges() {
       // La pastille bascule à sa PREMIÈRE apparition seulement : rendreSieges()
       // reconstruit tout, une pastille déjà vue ne doit pas resauter.
       if (h.result && !h.issueVue) { rs.classList.add("neuve"); h.issueVue = true; }
+      // Après une séparation, deux mains identiques se touchent et RIEN ne disait laquelle
+      // le croupier attend (Léo, 07/09/2026) : `.encours` était posée ici depuis toujours et
+      // AUCUNE règle ne la dessinait. Le numéro rend la main NOMMABLE — « la gauche » et
+      // « la droite » ne se disent plus dès que les deux se chevauchent — et il sert de cible
+      // de clic. Il n'existe que sur une séparation : à une seule main, rien ne change.
+      if (st.mains.length > 1) {
+        const nb = document.createElement("div"); nb.className = "mnum";
+        nb.textContent = "Main " + (hi + 1);
+        w.appendChild(nb);
+        if (st.toi) {
+          w.classList.add("choisissable");
+          w.tabIndex = 0; w.setAttribute("role", "button");
+          w.setAttribute("aria-label", `Jouer la main ${hi + 1} sur ${st.mains.length}`);
+          w.onclick = () => choisirMain(si, hi);
+          w.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); choisirMain(si, hi); } };
+        }
+      }
       w.append(md, sc, rs); hs.appendChild(w);
     });
     // Le cercle de mise, doré, devant chaque siège : vide pour l'instant, le lot
@@ -8329,11 +8368,31 @@ function tonTour() {
     document.querySelectorAll("#coups .btn").forEach(b => b.classList.toggle("conseille", b.id === id));
   } else { $("conseil").textContent = ""; document.querySelectorAll("#coups .btn.conseille").forEach(b => b.classList.remove("conseille")); }
 }
+// Cliquer une main pour la jouer — la gauche ou la droite, après une séparation (Léo,
+// 07/09/2026). On ne laisse choisir QUE parmi les mains encore à jouer : revenir sur une
+// main finie la ferait rejouer, et l'avancement reprendrait ensuite là où il en était.
+// L'ordre n'a aucune conséquence au blackjack — chaque main se joue seule contre la même
+// carte du croupier — donc laisser choisir ne fausse rien.
+function choisirMain(si, hi) {
+  if (T.occupe || !T.actif || T.actif.siege !== si) return;
+  const st = T.sieges[si]; if (!st || !st.toi) return;
+  const h = st.mains[hi];
+  if (!h || h.jouee || h.result || h.ramassee || T.actif.main === hi) return;
+  T.actif = { siege: si, main: hi }; marquerActif();
+  emettre("tour", { siege: si, main: hi, toi: true });
+  tonTour();
+}
 async function mainSuivante() {
   const si = T.sieges.indexOf(T.toi); boutons({}); $("conseil").textContent = "";
   document.querySelectorAll("#coups .btn.conseille").forEach(b => b.classList.remove("conseille"));
-  if (T.actif.main + 1 < T.toi.mains.length) { T.actif = { siege: si, main: T.actif.main + 1 }; marquerActif();
-    emettre("tour", { siege: si, main: T.actif.main, toi: true }); return tonTour(); }
+  // La main qu'on quitte est FINIE. Sans cette marque, un clic pour y revenir (choisirMain)
+  // la ferait rejouer — et l'ancien « main + 1 » la reprendrait une seconde fois juste après.
+  const cour = T.toi.mains[T.actif.main]; if (cour) cour.jouee = true;
+  // La suivante est la première ENCORE À JOUER, plus « celle d'après » : on a pu sauter
+  // d'une main à l'autre en cliquant, l'index n'est plus un compteur fiable.
+  const suiv = T.toi.mains.findIndex(h => !h.jouee && !h.result && !h.ramassee);
+  if (suiv >= 0) { T.actif = { siege: si, main: suiv }; marquerActif();
+    emettre("tour", { siege: si, main: suiv, toi: true }); return tonTour(); }
   T.occupe = true; await jouerSieges(si + 1);
 }
 const monAction = f => async () => { if (T.occupe || !T.actif) return; await f(); };
@@ -12098,7 +12157,18 @@ function rsAnnonce(e) {
   else if (e.phase === "sabot") txt = e.message || "Le croupier mélange un sabot neuf…";
   else if (e.phase === "mise") txt = !moi ? "Choisis un siège libre pour jouer" : (moi.mise >= e.miseMin ? "Mise posée" : "Faites vos jeux") + ` — ${e.miseRestant} s` + (rsHote() ? " · « Distribuer » clôt les mises" : "");
   else if (e.phase === "assurance") txt = "Le croupier montre un as. Assurance ?";
-  else if (e.phase === "jeu") { const st = e.actif && e.sieges[e.actif.siege]; txt = st ? (st.id === RS.moi ? "À toi de jouer" : `À ${st.nom} de jouer`) + (e.tourRestant > 0 && e.tourRestant <= 10 ? ` — ${e.tourRestant} s` : "") : ""; }
+  else if (e.phase === "jeu") {
+    const st = e.actif && e.sieges[e.actif.siege];
+    const presse = e.tourRestant > 0 && e.tourRestant <= 10;
+    // 🚨 Quand c'est À TOI, la pastille ne répète RIEN : ton siège est cerclé d'or, ta main
+    // en cours est marquée, tes boutons sont allumés. Elle se posait dans le seul coin de
+    // feutre encore libre — c'est-à-dire juste à côté de tes propres cartes, à leur hauteur —
+    // et les serrait (Léo, 07/09/2026 : « ça occupe beaucoup l'écran et cache à moitié les
+    // cartes du joueur »). Ne reste que le compte à rebours, et seulement quand il presse.
+    // Pour les AUTRES joueurs elle est indispensable : leur siège est loin du regard.
+    txt = !st ? "" : st.id === RS.moi ? (presse ? `${e.tourRestant} s pour jouer` : "")
+      : `À ${st.nom} de jouer` + (presse ? ` — ${e.tourRestant} s` : "");
+  }
   else if (e.phase === "croupier") txt = "Le croupier joue.";
   else if (e.phase === "reglement") txt = (e.message || "") + (moi && moi.mains.length ? " Toi : " + moi.mains.map(h => h.result).join(" · ") + "." : "");
   if (e.message && e.phase !== "reglement" && e.phase !== "sabot") txt = e.message + (txt ? " " + txt : "");
