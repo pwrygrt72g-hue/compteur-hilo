@@ -185,6 +185,36 @@ function salonTaire() {
 }
 
 /* ── Écouter (on regarde l'écran « Jouer à plusieurs ») ─────────────────── */
+// 🚨 LE COURTIER EST PUBLIC : n'importe qui peut publier ce qu'il veut sur ce sujet.
+// Le `{ ...m }` d'avant recopiait le message REÇU tel quel, et `salonRendre` interpolait
+// `${t.pris}` et `${t.places}` dans `innerHTML` SANS échappement (seuls le nom, l'hôte et
+// le code passaient par `echapper`). Une annonce forgée exécutait donc du code chez tous
+// ceux qui avaient l'écran « à plusieurs » ouvert — prouvé dans le navigateur le 07/09 :
+// `<img src=x onerror=…>` en guise de `pris`, et le gestionnaire part.
+//
+// On ne garde donc QUE les champs qu'on affiche, chacun ramené de force à son type. Un
+// nombre ne peut pas porter de balise : c'est le seul filtre qui ne dépend pas de se
+// souvenir d'appeler `echapper` au bon endroit dans un gabarit qui grandira.
+const salonEntier = (v, defaut, max) => {
+  const n = Math.trunc(Number(v));
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, max) : defaut;
+};
+function salonPropre(m) {
+  return {
+    t: "table", code: String(m.code),
+    // ⚠️ Ces deux-là RESTENT des chaînes — donc `echapper` reste obligatoire au rendu.
+    // On les borne pour qu'une annonce ne puisse pas pousser la liste hors de l'écran.
+    hote: String(m.hote == null ? "" : m.hote).slice(0, 18),
+    nom: String(m.nom == null ? "" : m.nom).slice(0, 40),
+    pris: salonEntier(m.pris, 1, 99),
+    places: salonEntier(m.places, TR.NB_SIEGES, 99),
+    miseMin: salonEntier(m.miseMin, 10, 1e9),
+    // -1 = « recaves illimitées » (Infinity ne survit pas à JSON). C'est la seule
+    // valeur négative admise : tout le reste retombe dessus.
+    rachats: Number(m.rachats) === -1 ? -1 : salonEntier(m.rachats, -1, 99),
+    vu: Date.now(),
+  };
+}
 async function salonEcouter() {
   if (SALON.api || SALON.essai || window.__reseauTransport) return salonRendre();
   SALON.essai = true; salonRendre();
@@ -198,7 +228,7 @@ async function salonEcouter() {
         // rouvrirait la connexion sur laquelle on est déjà assis.
         if (RS.code && m.code === RS.code) return;
         if (m.t === "ferme") SALON.vues.delete(m.code);
-        else if (m.t === "table") SALON.vues.set(m.code, { ...m, vu: Date.now() });
+        else if (m.t === "table") SALON.vues.set(m.code, salonPropre(m));
         salonRendre();
       },
       onClose: () => { SALON.api = null; salonRendre(); },
@@ -321,6 +351,7 @@ function rsOptionsPartie() {
     // dix mises — et leur rendait le rachat illimité : les deux réglages qui la définissent
     // étaient perdus entre le catalogue et la machine. Absents = le comportement d'avant.
     tapis: t.tapis_depart || TAPIS_DEPART, rachatsMax: t.rachats_max,
+    publique: SALON.publique || !!RS.publiqueVue,
     sys: DB.sys, valeur: valeurCompte, rcInitial: jeux => CT.compteInitial(DB.sys, jeux), strategie: rsStrategie };
 }
 async function rsCartesNeuves() {
@@ -337,6 +368,11 @@ async function ouvrirTable(code, createur, publique) {
   // entrée de salon qui mène à une table dont plus personne ne tient le sabot.
   SALON.publique = !!(createur && publique);
   RS.moi = rsIdentite(); RS.code = code; RS.abandon = false; RS.api = null;
+  // ⚠️ Ce que la table a dit d'elle-même, retenu pour le cas « tout le monde est parti,
+  // je reste seul » : là, la machine repart d'une partie NEUVE (pas d'état à reprendre),
+  // donc `publique` ne peut venir que de ma mémoire. Sinon une table publique dont il ne
+  // reste qu'un joueur sortirait du salon — au moment précis où elle a besoin de monde.
+  RS.publiqueVue = false;
   $("mpCreer").disabled = $("mpRejoindre").disabled = true;
   rsEtatTexte("Recherche d'un courtier…");
   // Trois secondes, pas vingt-sept : un refus silencieux (CSP d'un Artifact) doit être dit tout de suite.
@@ -415,6 +451,14 @@ function rendreReseau(e) {
   if (!T.reseau || !e) return;
   const prec = RS.prec; RS.etat = e;
   T.reseau.hote = e.hote; T.reseau.phase = e.phase;
+  // 🚨 L'hôte est parti et c'est moi qui reprends le sabot : la table doit RESTER dans le
+  // salon. Sans ces deux lignes elle continuait de tourner mais sortait de la liste de tout
+  // le monde en 22 s, définitivement — on ne pouvait plus la rejoindre qu'avec son code.
+  // Le drapeau vient de l'ÉTAT (donc de la table), jamais du fait que j'aie cliqué « Ouvrir » :
+  // une table privée qui change de mains reste privée.
+  if (e.publique) RS.publiqueVue = true;
+  if (e.publique && rsHote() && !SALON.publique) { SALON.publique = true; salonAnnoncer(); }
+  else if (e.publique === false && SALON.publique) salonTaire();
   // La table de l'hôte devient la mienne : le lieu, les règles, les limites la suivent.
   if (DB.table !== e.table) { DB.table = e.table; garder(); poserLieu(tableCourante()); rsChipCode(); }
   if (!$("tCode")) rsChipCode();

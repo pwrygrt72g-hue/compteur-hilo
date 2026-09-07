@@ -80,6 +80,12 @@ export function creerPartie(o) {
     // comme avant — aucune ne passe cette option. Seule La Marina la pose (rachats_max: 2).
     // Un 0 explicite reste un 0 (`== null`, pas `||`) : « aucun rachat » doit être posable.
     rachatsMax: o.rachatsMax == null ? Infinity : Math.max(0, o.rachatsMax),
+    // 🚨 « Publique » appartient à la TABLE, pas à celui qui l'a ouverte. Avant, le drapeau
+    // ne vivait que dans SALON.publique côté client : l'hôte partait, un autre reprenait la
+    // main, et plus personne n'annonçait la table — vivante, mais introuvable à jamais dans
+    // le salon. En la portant dans l'état diffusé, le nouvel hôte en hérite et reprend
+    // l'annonce ; une table privée, elle, reste privée en changeant de mains.
+    publique: !!o.publique,
     miseFin: 0, tourFin: 0, assuranceFin: 0, reglementFin: 0, prochaineEtape: 0, cadence: o.cadence || 900,
     journal: [], sabots: [], besoinRemelange: false, regenere: false,
     // Combien de sièges jouent VRAIMENT cette manche, et le temps qu'ils ont chacun.
@@ -453,6 +459,7 @@ export function creerPartie(o) {
       // Infinity ne survit pas à JSON.stringify (il devient null) : on publie -1, que le
       // front lit comme « illimité ». Une valeur nulle se lirait « zéro rachat ».
       rachatsMax: P.rachatsMax === Infinity ? -1 : P.rachatsMax,
+      publique: P.publique,
       miseRestant: P.phase === "mise" ? Math.max(0, Math.ceil((P.miseFin - now) / 1000)) : 0,
       tourRestant: P.phase === "jeu" && P.actif ? Math.max(0, Math.ceil((P.tourFin - now) / 1000)) : 0,
       assuranceRestant: P.phase === "assurance" ? Math.max(0, Math.ceil((P.assuranceFin - now) / 1000)) : 0,
@@ -486,6 +493,11 @@ export function creerPartie(o) {
     P.v = (e.v || 0) + 1; P.hote = nouvelHote; P.table = e.table; P.sys = e.sys || P.sys; P.jeux = e.jeux || P.jeux; P.bots = !!e.bots;
     P.manche = e.manche || 0; P.journal = (e.journal || []).slice(); P.sabots = ((e.sabot && e.sabot.sabots) || []).slice();
     P.miseMin = e.miseMin || P.miseMin; P.miseMax = e.miseMax || P.miseMax; P.par5 = !!e.par5; P.tapisDepart = e.tapisDepart || P.tapisDepart;
+    // ⚠️ Le plafond de recaves était OUBLIÉ ici : l'hôte partait, et La Marina redevenait
+    // une table à recaves illimitées sans que rien ne le dise. -1 = illimité (Infinity ne
+    // survit pas à JSON) ; `undefined` = un état d'avant ce champ, on garde le nôtre.
+    if (e.rachatsMax !== undefined) P.rachatsMax = e.rachatsMax === -1 ? Infinity : Math.max(0, e.rachatsMax);
+    if (e.publique !== undefined) P.publique = !!e.publique;
     P.sieges = (e.sieges || []).map(st => {
       if (!st || st.bot) return null;
       // Ce qui était sur le feutre revient en main : la mise posée (phase de mise), ou

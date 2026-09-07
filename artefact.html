@@ -4188,6 +4188,12 @@ function creerPartie(o) {
     // comme avant — aucune ne passe cette option. Seule La Marina la pose (rachats_max: 2).
     // Un 0 explicite reste un 0 (`== null`, pas `||`) : « aucun rachat » doit être posable.
     rachatsMax: o.rachatsMax == null ? Infinity : Math.max(0, o.rachatsMax),
+    // 🚨 « Publique » appartient à la TABLE, pas à celui qui l'a ouverte. Avant, le drapeau
+    // ne vivait que dans SALON.publique côté client : l'hôte partait, un autre reprenait la
+    // main, et plus personne n'annonçait la table — vivante, mais introuvable à jamais dans
+    // le salon. En la portant dans l'état diffusé, le nouvel hôte en hérite et reprend
+    // l'annonce ; une table privée, elle, reste privée en changeant de mains.
+    publique: !!o.publique,
     miseFin: 0, tourFin: 0, assuranceFin: 0, reglementFin: 0, prochaineEtape: 0, cadence: o.cadence || 900,
     journal: [], sabots: [], besoinRemelange: false, regenere: false,
     // Combien de sièges jouent VRAIMENT cette manche, et le temps qu'ils ont chacun.
@@ -4561,6 +4567,7 @@ function creerPartie(o) {
       // Infinity ne survit pas à JSON.stringify (il devient null) : on publie -1, que le
       // front lit comme « illimité ». Une valeur nulle se lirait « zéro rachat ».
       rachatsMax: P.rachatsMax === Infinity ? -1 : P.rachatsMax,
+      publique: P.publique,
       miseRestant: P.phase === "mise" ? Math.max(0, Math.ceil((P.miseFin - now) / 1000)) : 0,
       tourRestant: P.phase === "jeu" && P.actif ? Math.max(0, Math.ceil((P.tourFin - now) / 1000)) : 0,
       assuranceRestant: P.phase === "assurance" ? Math.max(0, Math.ceil((P.assuranceFin - now) / 1000)) : 0,
@@ -4594,6 +4601,11 @@ function creerPartie(o) {
     P.v = (e.v || 0) + 1; P.hote = nouvelHote; P.table = e.table; P.sys = e.sys || P.sys; P.jeux = e.jeux || P.jeux; P.bots = !!e.bots;
     P.manche = e.manche || 0; P.journal = (e.journal || []).slice(); P.sabots = ((e.sabot && e.sabot.sabots) || []).slice();
     P.miseMin = e.miseMin || P.miseMin; P.miseMax = e.miseMax || P.miseMax; P.par5 = !!e.par5; P.tapisDepart = e.tapisDepart || P.tapisDepart;
+    // ⚠️ Le plafond de recaves était OUBLIÉ ici : l'hôte partait, et La Marina redevenait
+    // une table à recaves illimitées sans que rien ne le dise. -1 = illimité (Infinity ne
+    // survit pas à JSON) ; `undefined` = un état d'avant ce champ, on garde le nôtre.
+    if (e.rachatsMax !== undefined) P.rachatsMax = e.rachatsMax === -1 ? Infinity : Math.max(0, e.rachatsMax);
+    if (e.publique !== undefined) P.publique = !!e.publique;
     P.sieges = (e.sieges || []).map(st => {
       if (!st || st.bot) return null;
       // Ce qui était sur le feutre revient en main : la mise posée (phase de mise), ou
@@ -12417,6 +12429,36 @@ function salonTaire() {
 }
 
 /* ── Écouter (on regarde l'écran « Jouer à plusieurs ») ─────────────────── */
+// 🚨 LE COURTIER EST PUBLIC : n'importe qui peut publier ce qu'il veut sur ce sujet.
+// Le `{ ...m }` d'avant recopiait le message REÇU tel quel, et `salonRendre` interpolait
+// `${t.pris}` et `${t.places}` dans `innerHTML` SANS échappement (seuls le nom, l'hôte et
+// le code passaient par `echapper`). Une annonce forgée exécutait donc du code chez tous
+// ceux qui avaient l'écran « à plusieurs » ouvert — prouvé dans le navigateur le 07/09 :
+// `<img src=x onerror=…>` en guise de `pris`, et le gestionnaire part.
+//
+// On ne garde donc QUE les champs qu'on affiche, chacun ramené de force à son type. Un
+// nombre ne peut pas porter de balise : c'est le seul filtre qui ne dépend pas de se
+// souvenir d'appeler `echapper` au bon endroit dans un gabarit qui grandira.
+const salonEntier = (v, defaut, max) => {
+  const n = Math.trunc(Number(v));
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, max) : defaut;
+};
+function salonPropre(m) {
+  return {
+    t: "table", code: String(m.code),
+    // ⚠️ Ces deux-là RESTENT des chaînes — donc `echapper` reste obligatoire au rendu.
+    // On les borne pour qu'une annonce ne puisse pas pousser la liste hors de l'écran.
+    hote: String(m.hote == null ? "" : m.hote).slice(0, 18),
+    nom: String(m.nom == null ? "" : m.nom).slice(0, 40),
+    pris: salonEntier(m.pris, 1, 99),
+    places: salonEntier(m.places, TR.NB_SIEGES, 99),
+    miseMin: salonEntier(m.miseMin, 10, 1e9),
+    // -1 = « recaves illimitées » (Infinity ne survit pas à JSON). C'est la seule
+    // valeur négative admise : tout le reste retombe dessus.
+    rachats: Number(m.rachats) === -1 ? -1 : salonEntier(m.rachats, -1, 99),
+    vu: Date.now(),
+  };
+}
 async function salonEcouter() {
   if (SALON.api || SALON.essai || window.__reseauTransport) return salonRendre();
   SALON.essai = true; salonRendre();
@@ -12430,7 +12472,7 @@ async function salonEcouter() {
         // rouvrirait la connexion sur laquelle on est déjà assis.
         if (RS.code && m.code === RS.code) return;
         if (m.t === "ferme") SALON.vues.delete(m.code);
-        else if (m.t === "table") SALON.vues.set(m.code, { ...m, vu: Date.now() });
+        else if (m.t === "table") SALON.vues.set(m.code, salonPropre(m));
         salonRendre();
       },
       onClose: () => { SALON.api = null; salonRendre(); },
@@ -12553,6 +12595,7 @@ function rsOptionsPartie() {
     // dix mises — et leur rendait le rachat illimité : les deux réglages qui la définissent
     // étaient perdus entre le catalogue et la machine. Absents = le comportement d'avant.
     tapis: t.tapis_depart || TAPIS_DEPART, rachatsMax: t.rachats_max,
+    publique: SALON.publique || !!RS.publiqueVue,
     sys: DB.sys, valeur: valeurCompte, rcInitial: jeux => CT.compteInitial(DB.sys, jeux), strategie: rsStrategie };
 }
 async function rsCartesNeuves() {
@@ -12569,6 +12612,11 @@ async function ouvrirTable(code, createur, publique) {
   // entrée de salon qui mène à une table dont plus personne ne tient le sabot.
   SALON.publique = !!(createur && publique);
   RS.moi = rsIdentite(); RS.code = code; RS.abandon = false; RS.api = null;
+  // ⚠️ Ce que la table a dit d'elle-même, retenu pour le cas « tout le monde est parti,
+  // je reste seul » : là, la machine repart d'une partie NEUVE (pas d'état à reprendre),
+  // donc `publique` ne peut venir que de ma mémoire. Sinon une table publique dont il ne
+  // reste qu'un joueur sortirait du salon — au moment précis où elle a besoin de monde.
+  RS.publiqueVue = false;
   $("mpCreer").disabled = $("mpRejoindre").disabled = true;
   rsEtatTexte("Recherche d'un courtier…");
   // Trois secondes, pas vingt-sept : un refus silencieux (CSP d'un Artifact) doit être dit tout de suite.
@@ -12647,6 +12695,14 @@ function rendreReseau(e) {
   if (!T.reseau || !e) return;
   const prec = RS.prec; RS.etat = e;
   T.reseau.hote = e.hote; T.reseau.phase = e.phase;
+  // 🚨 L'hôte est parti et c'est moi qui reprends le sabot : la table doit RESTER dans le
+  // salon. Sans ces deux lignes elle continuait de tourner mais sortait de la liste de tout
+  // le monde en 22 s, définitivement — on ne pouvait plus la rejoindre qu'avec son code.
+  // Le drapeau vient de l'ÉTAT (donc de la table), jamais du fait que j'aie cliqué « Ouvrir » :
+  // une table privée qui change de mains reste privée.
+  if (e.publique) RS.publiqueVue = true;
+  if (e.publique && rsHote() && !SALON.publique) { SALON.publique = true; salonAnnoncer(); }
+  else if (e.publique === false && SALON.publique) salonTaire();
   // La table de l'hôte devient la mienne : le lieu, les règles, les limites la suivent.
   if (DB.table !== e.table) { DB.table = e.table; garder(); poserLieu(tableCourante()); rsChipCode(); }
   if (!$("tCode")) rsChipCode();

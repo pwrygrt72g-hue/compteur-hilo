@@ -452,5 +452,65 @@ async function avancer(salles, fil, t, jusqu, pas) {
   }
 }
 
+
+/* ═══ La reprise ne perd plus ce qui définit la table (07/09/2026) ═══
+   L'hôte s'en va, un autre reprend le sabot. Jusqu'ici `reprendre` restaurait la mise
+   minimum, la mise maximum, le 6:5 et la cave — mais NI le plafond de recaves, NI le fait
+   que la table soit publique. Deux dégâts invisibles : La Marina redevenait une table à
+   recaves illimitées, et une table vivante sortait du salon pour toujours. */
+{
+  const source = creerPartie({ regles: REGLES, miseMin: 100, tapis: 5000, rachatsMax: 2 });
+  const e = source.etatPublic(0);
+  ok("l'état diffuse le plafond de recaves", e.rachatsMax, 2);
+
+  const repris = creerPartie({ regles: REGLES });                 // partie NEUVE = illimité
+  ok("avant reprise : illimité", repris.etatPublic(0).rachatsMax, -1);
+  repris.reprendre(e, "b");
+  ok("après reprise : le plafond de la table est retenu", repris.etatPublic(0).rachatsMax, 2);
+
+  // …et il MORD vraiment : la 3e recave doit être refusée.
+  // ⚠️ `reprendre` laisse la partie en phase « sabot » — on ne connaît pas le sabot de
+  // l'ancien hôte, la manche est annulée. Or le rachat répond « Pas maintenant » dans
+  // cette phase : sans sabot neuf, ce test mesurerait ce refus-là et pas le plafond.
+  // (Premier jet : deux échecs qui n'accusaient nullement le code.)
+  repris.remelanger({ cartes: Array.from({ length: 400 }, () => c("5")), empreinte: "neuf" });
+  repris.action({ id: "b", a: "asseoir", v: 0, nom: "Bea" }, 0);
+  const k = repris.etat.sieges.findIndex(x => x && x.id === "b");
+  const essai = () => { const st = repris.etat.sieges[k]; st.tapis = 0; st.mise = 0; return repris.action({ id: "b", a: "rachat" }, 0).ok; };
+  ok("1re recave acceptée après reprise", essai(), true);
+  ok("2e recave acceptée après reprise", essai(), true);
+  ok("3e recave REFUSÉE après reprise", essai(), false);
+}
+{
+  const libre = creerPartie({ regles: REGLES });
+  const r = creerPartie({ regles: REGLES, rachatsMax: 0 });
+  r.reprendre(libre.etatPublic(0), "b");
+  ok("-1 se relit « illimité », jamais « zéro »", r.etatPublic(0).rachatsMax, -1);
+
+  // Un état émis par une version d'AVANT ce champ : on garde le nôtre plutôt que de le
+  // remettre à zéro en silence — un champ absent ne veut pas dire « aucune recave ».
+  const vieux = creerPartie({ regles: REGLES, rachatsMax: 3 }).etatPublic(0);
+  delete vieux.rachatsMax;
+  const b = creerPartie({ regles: REGLES, rachatsMax: 3 });
+  b.reprendre(vieux, "b");
+  ok("champ absent : on conserve le plafond local", b.etatPublic(0).rachatsMax, 3);
+}
+{
+  const pub = creerPartie({ regles: REGLES, publique: true });
+  ok("l'état porte « publique »", pub.etatPublic(0).publique, true);
+  const a = creerPartie({ regles: REGLES });
+  ok("une partie neuve n'est pas publique par défaut", a.etatPublic(0).publique, false);
+  a.reprendre(pub.etatPublic(0), "b");
+  ok("le nouvel hôte en hérite : la table reste dans le salon", a.etatPublic(0).publique, true);
+
+  // 🚨 Le sens inverse compte autant : une table PRIVÉE ne devient pas publique en
+  // changeant de mains. C'est ce qui interdit d'écrire « je suis hôte donc j'annonce ».
+  const prive = creerPartie({ regles: REGLES, publique: false }).etatPublic(0);
+  const d = creerPartie({ regles: REGLES, publique: true });
+  d.reprendre(prive, "b");
+  ok("une table privée reste privée", d.etatPublic(0).publique, false);
+}
+
 console.log(`\n${pass} tests passés, ${fail} échecs`);
 process.exit(fail ? 1 : 0);
+
