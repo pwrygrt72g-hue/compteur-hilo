@@ -1825,17 +1825,32 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
    dans la bouche du sabot et la traînée, poussée derrière elle par --toff, s'allumerait
    par-dessus — un éclair au moment du départ. Neuf pour cent, c'est 14 % du chemin. */
 @keyframes donne-trainee{ 0%{opacity:0} 9%,34%{opacity:.55} 72%,100%{opacity:0} }
-/* L'OMBRE. Elle était identique du sabot au feutre : la carte glissait à plat sur une vitre.
-   En vol elle est haute, molle et décalée ; le contact dur de 2 px n'existe pas encore.
-   🚨 PAS d'image à 100 % — VOULU, et mieux qu'une copie : sans image finale, le navigateur
-   la synthétise depuis la valeur SOUS l'animation. L'ombre d'arrivée est donc, à la lettre,
-   celle que la cascade donne à CETTE carte — y compris le liseré d'or de tes propres cartes
-   (#v-table[data-phase] .siege.toi .carte), qu'une copie de l'ombre ordinaire aurait effacé
-   pendant tout le vol. Rien ne peut plus diverger de la règle de repos : il n'y a plus de copie. */
-@keyframes donne-ombre{
-  0%{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
-      0 0 0 .5px rgba(0,0,0,.26), 0 3px 0 rgba(0,0,0,0), 0 26px 30px -12px rgba(0,0,0,.62) }
-}
+/* L'OMBRE DE VOL. Elle était identique du sabot au feutre : la carte glissait à plat sur une
+   vitre. En vol elle doit être haute, molle et large ; le contact dur de 2 px n'existe pas
+   encore. C'est ce que le commentaire d'avant décrivait — et que le code ne faisait pas. */
+/* 🚨 `donne-ombre` N'INTERPOLAIT RIEN — RETIRÉE LE 07/09. Mesuré en lisant l'ombre calculée
+   d'une carte en vol, 162 relevés pendant une donne : DEUX formes seulement, 5 couches puis
+   8, jamais rien entre les deux. Cause lisible : la 3ᵉ couche de son image 0 % était
+   EXTÉRIEURE (`0 0 0 .5px`) là où celle du repos est INTERNE (`inset 1px 0 0`) — deux listes
+   dont le mot-clé `inset` diffère à un même rang ne sont pas interpolables, et CSS bascule en
+   DISCRET. Le décollage que décrivait son commentaire n'existait pas : il y avait un
+   claquement. Et c'était la seule propriété de PEINTURE animée sur l'objet le plus rapide de
+   l'écran.
+   L'ombre de vol vit désormais sur une PLAQUE (::before dédié, ::after est pris par la
+   traînée), animée en `opacity` et `scale` seulement — deux propriétés que le compositeur
+   sait faire sans repeindre. Large et pâle au décollage, resserrée et dense à l'atterrissage.
+   ⚠️ La box-shadow de la carte ne bouge PLUS DU TOUT pendant le vol : elle garde donc le
+   liseré d'or de tes cartes tout du long, ce que l'ancienne image 0 % effaçait.
+   ⚠️ Hors de .carte--pivot : la carte cachée du croupier porte ses ombres sur ses FACES et a
+   `box-shadow:none` — lui donner une plaque la ferait flotter deux fois. */
+.main .carte--entre:not(.carte--pivot)::before{
+  content:""; position:absolute; z-index:-1; left:5%; right:5%; bottom:-8%; height:32%;
+  border-radius:50%; pointer-events:none;
+  background:radial-gradient(closest-side, rgba(0,0,0,.58), rgba(0,0,0,.30) 56%, transparent 92%);
+  animation:donne-plaque var(--don,150ms) ease-out both }
+@keyframes donne-plaque{
+  0%{ opacity:.30; scale:1.7 2.1 }
+  100%{ opacity:1; scale:1 1 } }
 /* LA ligne importante : la durée de la donne est une FRACTION de l'intervalle
    de l'exercice. À 250 ms par carte, une donne de 300 ms dure plus longtemps
    que l'exercice, et on compte une carte qu'on n'a jamais vue immobile. */
@@ -1855,8 +1870,12 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 /* 🚨 donne-trainee N'EST PAS dans cette liste : elle anime `opacity`, et posée sur la carte
    elle-même elle rendait la CARTE translucide — vu à l'écran le 06/09, on voyait le feutre au
    travers du 5♣ en vol. Elle ne vit que sur le ::after, plus bas. */
-.carte--entre{ animation:donne-trajet var(--don,150ms) linear both, donne-arc var(--don,150ms) linear both,
-  donne-ombre var(--don,150ms) ease-out both;
+/* ⚠️ `will-change` sur .carte--entre UNIQUEMENT, jamais sur .carte : la classe est posée au
+   départ et retirée à animationend (table.js), l'indice est donc transitoire par
+   construction, et une seule carte est en vol actif à la fois. Posé sur .carte, on
+   allouerait dix-neuf couches d'un coup au balayage de fin de manche. */
+.carte--entre{ animation:donne-trajet var(--don,150ms) linear both, donne-arc var(--don,150ms) linear both;
+  will-change:transform;
   /* ⚠️ La largeur s'animait PENDANT le vol (l'éventail se resserre à chaque carte de plus) :
      une propriété de MISE EN PAGE recalculée à chaque image, sur l'objet le plus rapide de
      l'écran. Une carte en vol n'a pas de transition. */
