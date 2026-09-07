@@ -119,6 +119,12 @@ function rendreSalon() {
   const boite = $("salon"); if (!boite) return;
   const filtre = $("filtreSalon").querySelector('[aria-selected="true"]').dataset.f;
   const entame = sabotEntame();
+  // Crochet de vérification, comme window.__modales ou window.__donnes : la sonde tourne
+  // HORS de l'IIFE et ne voit pas DONNEES. Sans ce compte, la seule chose qu'elle sache
+  // vérifier est un nombre écrit à la main — qui tombe le jour où l'on ajoute une table,
+  // c'est-à-dire précisément quand tout va bien. Ce qu'on veut lire, c'est l'ÉGALITÉ
+  // entre le catalogue et ce que le hall affiche.
+  window.__catalogue = DONNEES.catalogue.length;
   // Le numéro est celui du CATALOGUE, pas du filtre : « Table 4 » reste la quatrième.
   boite.innerHTML = DONNEES.catalogue.map((t, i) => ({ t, n: i + 1 })).filter(({ t }) => {
     const i = indiceComptable(t);
@@ -177,7 +183,7 @@ function rendreHall() {
 }
 // Une CC BY sans crédit est une violation : auteur, licence, source, pour chaque photo.
 // Le pied de page porte aussi la PORTÉE du partage à l'identique (les BY-SA obligent la photo,
-// pas la collection qui l'affiche) et la non-affiliation : les neuf tables sont inventées, mais
+// pas la collection qui l'affiche) et la non-affiliation : les dix tables sont inventées, mais
 // les lieux photographiés existent — sans la phrase, on croirait à un partenariat. Voir LICENSE.
 function rendreCredits() {
   const c = $("hallCredits"), L = window.PHOTOS_CREDITS || [];

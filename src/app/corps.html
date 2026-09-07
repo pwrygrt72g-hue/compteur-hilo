@@ -70,7 +70,7 @@
 
 <!-- ════════════════════ LE HALL ════════════════════
      Le menu est un casino. On entre par le hall (la photo du Strip, le nom en serif),
-     puis on choisit une PORTE : une des neuf tables, une salle d'entraînement, le salon
+     puis on choisit une PORTE : une des dix tables, une salle d'entraînement, le salon
      privé, le bureau. Chaque porte est une photo — une vraie, créditée en bas de page.
      « Le salon » d'avant n'est plus une vue : c'est l'ancre #lesTables de ce hall. -->
 <section class="vue" id="v-accueil">
@@ -606,8 +606,26 @@
           <label class="ch"><span class="grave">Ton nom</span><input type="text" id="mpNom" placeholder="Léo" maxlength="18" style="width:150px"></label>
           <div class="ch" id="mpCouleurs"><span class="grave">Ton jeton</span><div class="couleurs" id="mpCouleurBoite" role="radiogroup" aria-label="Ton jeton"></div></div>
         </div>
+        <!-- 🚨 LE SALON DES TABLES (Léo 07/09 : « rajoute la possibilité de rejoindre une
+             table […] je veux que les gens aient le choix entre rejoindre une table et en
+             créer une »). Avant, rejoindre exigeait de CONNAÎTRE un code : il n'existait
+             aucune façon de découvrir qu'une table était ouverte, donc en pratique on ne
+             jouait qu'avec quelqu'un qu'on avait déjà au téléphone. La liste est peuplée
+             par les annonces des hôtes (voir net.mjs, SUJET_SALON) ; elle reste CACHÉE
+             tant qu'il n'y a rien — une liste vide en permanence apprend à ne plus la
+             regarder, y compris le jour où elle ne l'est pas. -->
+        <div class="mp-ouvertes" id="mpOuvertes" hidden>
+          <div class="mp-ouvertes-tete"><span class="grave">Tables ouvertes</span><span class="muet" id="mpOuvertesEtat"></span></div>
+          <div id="mpOuvertesListe"></div>
+        </div>
         <div class="champs mp-ligne" style="margin-top:14px">
           <button class="btn" id="mpCreer">Ouvrir une table</button>
+          <!-- ⚠️ Le courtier est PUBLIC : ouvrir une table publique, c'est publier son code
+               à qui écoute. Les deux boutons existent pour que ce soit un CHOIX et non un
+               effet de bord — une partie entre amis ne doit pas récolter des inconnus sans
+               que personne ne l'ait décidé. En mode « course au comptage » le second
+               disparaît (ensemble.js) : la course n'a pas de siège à remplir. -->
+          <button class="btn creux" id="mpCreerPrive">Table privée</button>
           <span class="muet mp-ou">ou</span>
           <label class="ch"><span class="grave">Code de la table</span><input type="text" id="mpCode" placeholder="A7K2-M9PQ" maxlength="9" autocomplete="off" spellcheck="false" style="text-transform:uppercase;width:176px;font-size:20px;letter-spacing:.12em"></label>
           <button class="btn creux" id="mpRejoindre">Rejoindre</button>
@@ -691,7 +709,7 @@
 
   <div class="laque pad dons-bloc">
     <h2>Tout est ouvert, et ça ne changera pas.</h2>
-    <p>Les neuf tables, les trois exercices, la stratégie calculée pour chacune d'elles, le mode Concentration, la table entre amis : tout est là, tout de suite. Il n'y a pas de version complète ailleurs &#8212; celle que tu as sous les yeux <b>est</b> la version complète.</p>
+    <p>Les dix tables, les trois exercices, la stratégie calculée pour chacune d'elles, le mode Concentration, la table entre amis : tout est là, tout de suite. Il n'y a pas de version complète ailleurs &#8212; celle que tu as sous les yeux <b>est</b> la version complète.</p>
     <div class="dons-preuves">
       <div class="laque"><span class="grave">Aucune publicité</span><p>Il n'y a pas un seul emplacement publicitaire dans ce fichier, et il n'y en aura pas.</p></div>
       <div class="laque"><span class="grave">Aucune donnée revendue</span><p>Il n'y a rien à revendre : tes sessions et tes réglages ne quittent pas ton navigateur. Seuls ton prénom et ce que tu joues en sortent, et seulement à une table entre amis : ils passent par un courtier public pour arriver chez eux. Personne ne les garde, et je ne les vois pas non plus.</p></div>
@@ -758,7 +776,7 @@
        légale. Il informe au lieu de faire la leçon. Numéro vérifié le 06/09/2026. -->
   <div class="dons-mot">
     <span class="grave">Un mot, une fois</span>
-    <p>Ici, personne ne perd d'argent : les jetons ne valent rien et le tapis se rachète d'un clic. Dehors, c'est autre chose. Compter ne rend pas le blackjack gagnant &#8212; ça retire quelques dixièmes de pour cent à la maison, sur des milliers de mains, à condition de ne jamais se tromper. Sur quatre des neuf tables de ce hall, compter ne change rien du tout &#8212; et trois d'entre elles le disent en toutes lettres.</p>
+    <p>Ici, personne ne perd d'argent : les jetons ne valent rien et le tapis se rachète d'un clic. Dehors, c'est autre chose. Compter ne rend pas le blackjack gagnant &#8212; ça retire quelques dixièmes de pour cent à la maison, sur des milliers de mains, à condition de ne jamais se tromper. Sur quatre des dix tables de ce hall, compter ne change rien du tout &#8212; et trois d'entre elles le disent en toutes lettres.</p>
     <p>Si le jeu a cessé d'être un jeu : <b>Joueurs Info Service, 09 74 75 13 13</b> &#8212; anonyme et non surtaxé, tous les jours de 8 h à 2 h.</p>
   </div>
 </section>

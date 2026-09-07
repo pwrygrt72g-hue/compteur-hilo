@@ -113,3 +113,27 @@ export const sujet = code => `compteur-hilo/v1/${code}`;
 // La table de blackjack à plusieurs parle sur son propre sujet : un code de course
 // et un code de table ne se croisent jamais.
 export const sujetTable = code => `compteur-hilo/table/v1/${code}`;
+
+/* ── LE SALON DES TABLES (Léo 07/09 : « rajoute la possibilité de rejoindre une
+   table, et de fermer les tables dès qu'elle est vide ») ────────────────────
+
+   UN SEUL sujet, connu de tous, où les tables PUBLIQUES s'annoncent. Trois choix
+   à comprendre avant d'y toucher :
+
+   1. 🚨 ANNONCE RÉPÉTÉE, JAMAIS RETENUE. MQTT sait garder le dernier message d'un
+      sujet (« retain ») — ce serait le moyen évident, et c'est un piège : une table
+      annoncée une fois y resterait POUR TOUJOURS, y compris après la fermeture de
+      l'onglet qui la tenait. Le salon se remplirait de tables mortes que personne
+      ne peut ni rejoindre ni nettoyer. L'hôte réannonce donc toutes les
+      SALON_BATTEMENT ms, et l'écouteur oublie ce qu'il n'a pas réentendu depuis
+      SALON_PEREMPTION. « Fermer la table quand elle est vide » n'est alors pas une
+      action à écrire : c'est ce qui arrive tout seul quand plus personne ne parle.
+   2. ⚠️ PAS DE TESTAMENT ICI. MQTT n'en autorise qu'UN par connexion, et il est déjà
+      pris par le sujet de la table (c'est lui qui retire un siège fantôme). La
+      péremption ci-dessus joue ce rôle, à vingt secondes près.
+   3. ⚠️ Le courtier est PUBLIC : annoncer une table, c'est publier son code à qui
+      écoute. D'où deux façons d'ouvrir, et une seule qui parle (voir reseau.js).
+      Une table privée ne prononce jamais son code sur ce sujet. */
+export const SUJET_SALON = "compteur-hilo/salon/v1";
+export const SALON_BATTEMENT = 7000;    // l'hôte redit qu'il est là
+export const SALON_PEREMPTION = 22000;  // plus rien depuis ce temps : la table n'existe plus

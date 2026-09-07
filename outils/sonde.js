@@ -67,7 +67,15 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   // « Salon » n'est plus une vue : c'est l'ancre « Les tables » du hall.
   clic('nav [data-vue="salon"]'); await dodo(300);
   ok("salon : l'ancre « Les tables » du hall", !q("#v-accueil").hidden && !!q("#lesTables"), "hidden=" + q("#v-accueil").hidden);
-  ok("salon : 9 tables", qa("#salon .salle-porte").length === 9, qa("#salon .salle-porte").length + " tables");
+  // ⚠️ On compare au CATALOGUE, plus à un nombre écrit ici. Un « === 9 » ne dit qu'une
+  // chose : le compte a changé — et il tombe le jour où l'on AJOUTE une table, ce qui est
+  // le cas normal (07/09, La Marina). Ce qui mérite une alerte, c'est une table du
+  // catalogue qui n'arrive pas jusqu'au hall : le vrai invariant est l'ÉGALITÉ des deux.
+  {
+    const rendues = qa("#salon .salle-porte").length, attendues = window.__catalogue || 0;
+    ok("salon : toutes les tables du catalogue ont leur porte", attendues > 0 && rendues === attendues,
+       rendues + " portes pour " + attendues + " tables au catalogue");
+  }
   ok("salon : tables mortes signalées", qa("#salon .salle-porte.brulee").length === 3, qa("#salon .salle-porte.brulee").length + " brûlées");
   ok("salon : aucune porte « Reprendre » avant la première main", !q("#salon .etat"), "une porte dit Reprendre");
   clic("#salon [data-pourquoi]"); await dodo(300);

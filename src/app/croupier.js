@@ -440,8 +440,16 @@ const CROUPIERS = {
     } },
 };
 // Le lieu de la table propose son croupier ; un choix explicite le verrouille.
+// 🚨 UNE ENTRÉE PAR TABLE DU CATALOGUE, sans exception. Le repli est « vince », et
+// l'accueil de Vince NOMME sa table (« Bienvenue au Boulevard ») : une table oubliée
+// ici ne prend pas un croupier générique, elle accueille les joueurs au nom d'un
+// AUTRE lieu. Vu le 07/09 en ajoutant La Marina — le croupier y souhaitait la
+// bienvenue au Boulevard, sur un feutre violet, à Singapour. La sonde vérifie
+// désormais que chaque table du catalogue a la sienne (outils/sonde.js).
+// La Marina est un salon high limit : le Chef, qui regarde les mises plutôt que les
+// cartes, y est chez lui — et son accueil ne nomme aucun lieu.
 const CROUPIER_DEFAUT = { boulevard: "vince", mainchaude: "vince", neon: "marcel", reno: "marcel", cotai: "lin", aquarium: "lin",
-  cercle: "ada", frontdemer: "chef", salonprive: "chef" };
+  cercle: "ada", frontdemer: "chef", salonprive: "chef", marina: "chef" };
 if (!DB.croupier || typeof DB.croupier !== "object") DB.croupier = { id: typeof DB.croupier === "string" ? DB.croupier : "", nom: "", noms: {} };
 DB.croupier.noms = DB.croupier.noms || {};
 if (DB.croupier.id && !CROUPIERS[DB.croupier.id]) DB.croupier.id = "";

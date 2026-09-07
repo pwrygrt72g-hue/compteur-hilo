@@ -74,6 +74,12 @@ export function creerPartie(o) {
     cartes: (o.cartes || []).slice(), empreinte: o.empreinte || "", graine: o.graine || null, prochain: null,
     coupe: 0, defausse: 0, rc: 0, vues: 0, bots: !!o.bots, csm: !!o.csm,
     miseMin: o.miseMin || 10, miseMax: o.miseMax || 1000, par5: !!o.par5, tapisDepart: o.tapis || TAPIS_DEPART,
+    // 🚨 LE PLAFOND DE RACHATS (Léo 07/09 : « pas de rachat illimité pour jouer
+    // intelligemment »). Le défaut est Infinity, PAS un nombre : `st.rachats >= Infinity`
+    // est faux pour toujours, donc les neuf tables historiques se comportent exactement
+    // comme avant — aucune ne passe cette option. Seule La Marina la pose (rachats_max: 2).
+    // Un 0 explicite reste un 0 (`== null`, pas `||`) : « aucun rachat » doit être posable.
+    rachatsMax: o.rachatsMax == null ? Infinity : Math.max(0, o.rachatsMax),
     miseFin: 0, tourFin: 0, assuranceFin: 0, reglementFin: 0, prochaineEtape: 0, cadence: o.cadence || 900,
     journal: [], sabots: [], besoinRemelange: false, regenere: false,
     // Combien de sièges jouent VRAIMENT cette manche, et le temps qu'ils ont chacun.
@@ -150,9 +156,24 @@ export function creerPartie(o) {
   function revenir(id) { const k = siegeDe(id); if (k < 0 || !P.sieges[k].absent) return false; P.sieges[k].absent = 0; return changer(); }
   function completerBots() {
     if (!P.bots) return;
-    P.sieges.forEach((st, k) => { if (!st) asseoir("bot-" + k, NOMS_BOTS[k % NOMS_BOTS.length], "", k, true); });
+    const pris = new Set(P.sieges.filter(Boolean).map(st => st.nom));
+    P.sieges.forEach((st, k) => {
+      if (st) return;
+      const libre = NOMS_BOTS.find(x => !pris.has(x)) || NOMS_BOTS[k % NOMS_BOTS.length];
+      pris.add(libre);
+      // L'identifiant porte le compteur de manches : un bot ruiné puis remplacé au même
+      // siège ne doit pas hériter de l'identité du précédent (le journal les confondrait).
+      asseoir("bot-" + k + "-" + P.manche, libre, "", k, true);
+    });
   }
   function retirerBots() { P.sieges.forEach((st, k) => { if (st && st.bot) P.sieges[k] = null; }); }
+  // Ruiné = plus de quoi couvrir le minimum, et plus un seul rachat. Sans mains en cours :
+  // on ne retire jamais quelqu'un de la table au milieu de sa propre manche.
+  function botsRuines() {
+    P.sieges.forEach((st, k) => {
+      if (st && st.bot && !st.mains.length && st.tapis < P.miseMin && st.rachats >= P.rachatsMax) P.sieges[k] = null;
+    });
+  }
   function libererAbsents(now) {
     let ch = false;
     P.sieges.forEach((st, k) => { if (st && st.absent && !st.mains.length && (!now || now - st.absent >= ABSENCE_DELAI)) { P.sieges[k] = null; ch = true; } });
@@ -161,7 +182,10 @@ export function creerPartie(o) {
 
   /* ── Les mises ── */
   function miserBot(st) {
-    if (st.tapis < P.miseMin) { st.tapis = P.tapisDepart; st.rachats++; }
+    // ⚠️ Un bot ruiné qui a encore des rachats se renfloue, comme avant. À court de
+    // rachats, il ne peut plus miser : `ouvrirMises` l'aura déjà levé (botRuine).
+    if (st.tapis < P.miseMin && st.rachats < P.rachatsMax) { st.tapis = P.tapisDepart; st.rachats++; }
+    if (st.tapis < P.miseMin) { st.mise = 0; return; }
     let m = Math.max(P.miseMin, Math.min(P.miseMax, st.tapis, P.miseMin * (1 + (P.manche % 3 === 0 ? 1 : 0))));
     if (P.par5) m = Math.max(P.miseMin, Math.floor(m / 5) * 5);
     st.tapis = arr(st.tapis + st.mise - m); st.mise = m;
@@ -171,6 +195,15 @@ export function creerPartie(o) {
     }
     P.sieges.forEach(st => { if (!st) return; st.mains = []; st.passe = false; st.assurance = undefined; if (st.absent) st.mise = 0; });
     libererAbsents(now);
+    // 🚨 Un bot à court de rachats QUITTE la table — et `completerBots` rassoit aussitôt
+    // quelqu'un d'autre à sa place. C'est ce qui se passe dans une vraie salle, et c'est
+    // la seule façon de rendre le plafond honnête pour eux : sans ça, ou bien ils se
+    // renflouaient à l'infini (le joueur humain voit une règle qui ne vaut que pour lui),
+    // ou bien la table se vidait manche après manche jusqu'à ce qu'il joue seul.
+    // ⚠️ Le nom change avec le siège libéré (voir completerBots) : un « Marc » qui a sauté
+    // et revient sous le même nom au coup suivant se lit comme un bug, pas comme un
+    // nouveau joueur.
+    botsRuines();
     completerBots();
     P.phase = "mise"; P.miseFin = now + MISE_DELAI; P.croupier = []; P.cachee = false; P.actif = null;
     P.message = ""; P.evenement = { t: "mises" };
@@ -382,6 +415,10 @@ export function creerPartie(o) {
     if (a === "mise") { if (P.phase !== "mise") return { ok: false, erreur: "Les mises sont fermées." }; const v = arr(+m.v); const err = miseValide(st, v); if (err) return { ok: false, erreur: err };
       st.tapis = arr(st.tapis + st.mise - v); st.mise = v; return { ok: changer() }; }
     if (a === "rachat") { if (P.phase !== "mise" && P.phase !== "attente") return { ok: false, erreur: "Pas maintenant." }; if (st.mise || st.tapis >= P.miseMin) return { ok: false, erreur: "Tu as encore de quoi jouer." };
+      // 🚨 Le plafond se vérifie ICI, côté MACHINE — pas seulement dans le bouton. L'état
+      // est reconstruit par l'hôte à partir des actions reçues : un pair modifié qui envoie
+      // « rachat » se verrait sinon offrir un tapis neuf que personne n'a autorisé.
+      if (st.rachats >= P.rachatsMax) return { ok: false, erreur: P.rachatsMax === 0 ? "Ici on ne rachète pas : c'est une cave unique." : `Tu as déjà repris ${P.rachatsMax} fois — c'est le maximum de cette table.` };
       st.tapis = P.tapisDepart; st.rachats++; P.evenement = { t: "rachat", siege: k }; return { ok: changer() }; }
     if (a === "assurance") { if (P.phase !== "assurance" || st.passe) return { ok: false, erreur: "Pas d'assurance à prendre." }; if (st.assurance !== undefined) return { ok: false, erreur: "Tu as déjà répondu." };
       if (m.v && st.tapis < st.mains[0].bet / 2) return { ok: false, erreur: "Tu n'as pas de quoi t'assurer." }; st.assurance = !!m.v; changer(); etapeAssurance(now); return { ok: true }; }
@@ -413,6 +450,9 @@ export function creerPartie(o) {
       v: P.v, hote: P.hote, table: P.table, sys: P.sys, jeux: P.jeux, phase: P.phase, manche: P.manche, bots: P.bots, message: P.message,
       evenement: P.evenement, regenere: P.regenere,
       miseMin: P.miseMin, miseMax: P.miseMax, par5: P.par5, tapisDepart: P.tapisDepart,
+      // Infinity ne survit pas à JSON.stringify (il devient null) : on publie -1, que le
+      // front lit comme « illimité ». Une valeur nulle se lirait « zéro rachat ».
+      rachatsMax: P.rachatsMax === Infinity ? -1 : P.rachatsMax,
       miseRestant: P.phase === "mise" ? Math.max(0, Math.ceil((P.miseFin - now) / 1000)) : 0,
       tourRestant: P.phase === "jeu" && P.actif ? Math.max(0, Math.ceil((P.tourFin - now) / 1000)) : 0,
       assuranceRestant: P.phase === "assurance" ? Math.max(0, Math.ceil((P.assuranceFin - now) / 1000)) : 0,

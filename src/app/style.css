@@ -46,7 +46,7 @@
   --btn-or:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); --btn-encre:#1A1206;
   /* Les DEUX autres ors de l'application (mesuré le 05/09 : vingt et un hexa distincts, teinte 36-52°) :
      --or-lumiere pour ce qui est ÉCRIT (salutation, lettrage du feutre, appels) et --or-matiere pour
-     ce qui est FAIT d'or (rails, liserés, cercles de mise). Les neuf lieux DÉRIVENT leur or de
+     ce qui est FAIT d'or (rails, liserés, cercles de mise). Les dix lieux DÉRIVENT leur or de
      --or-matiere par color-mix, ils n'en écrivent plus un chacun. */
   --or-base:#D9B45B; --or-lumiere:#F3C866; --or-matiere:var(--or-base);
   --ressort:cubic-bezier(.22,.72,.24,1);
@@ -282,7 +282,7 @@ body.au-hall{ color-scheme:dark;
 
 /* ── Le héros : la photo bord à bord, le titre posé dessus ─────────────── */
 /* Un tiers de l'écran, pas 92 % (mesuré le 05/09 : 586 px sur 800 pour répéter le nom de
-   l'en-tête, les neuf tables sous le pli). Le titre est la promesse, le prénom un clic. */
+   l'en-tête, les dix tables sous le pli). Le titre est la promesse, le prénom un clic. */
 .hall-heros{ position:relative; isolation:isolate; overflow:hidden; color:#F6F2E8; background:#070D0C;
   min-height:clamp(320px, 44vh, 520px); display:flex; align-items:flex-end;
   padding:clamp(36px,5vh,56px) 0 clamp(28px,4vh,44px) }
@@ -519,7 +519,7 @@ div.salle-carte{ cursor:default }
   --sol:#0A0C0E; --sol-clair:#15181C;
   --salle-haut:clamp(44px, 8svh, 90px);    /* la place du croupier au-dessus du rail */
 }
-/* Les neuf lieux. Le feutre est un vrai feutre de casino : une couleur pleine.
+/* Les dix lieux. Le feutre est un vrai feutre de casino : une couleur pleine.
    Le nom du lieu donne aussi l'ambiance autour (lueur, néon, laque). */
 #v-table[data-lieu="boulevard"]{ --feutre:#1F5E44; --feutre-clair:#2B7659; --feutre-ombre:#0C3324;
   --rail:#2A1810; --rail-clair:#43291B; --dos-carte:#8A2420; --lueur:rgba(226,184,87,.20) }
@@ -546,6 +546,14 @@ div.salle-carte{ cursor:default }
 #v-table[data-lieu="reno"]{ --feutre:#59602F; --feutre-clair:#6C7440; --feutre-ombre:#33381A;
   --rail:#4A3620; --rail-clair:#634A2E; --or-matiere:color-mix(in oklab, var(--or-base), #EDE7D9 28%);
   --dos-carte:#3D2B1F; --lueur:rgba(255,240,200,.10); --sol:#0F0E0B; --sol-clair:#1B1913 }
+/* La Marina : la seule table du catalogue dont la leçon porte sur l'ARGENT, pas sur les
+   règles — elle a donc sa propre couleur, et il ne restait qu'elle. Vert, bleu, bordeaux,
+   rouge, marine, charcoal, olive et sarcelle sont pris par les neuf autres ; un violet
+   profond ne se confond avec aucune, et c'est la couleur des salons high limit. */
+#v-table[data-lieu="marina"]{ --feutre:#33265C; --feutre-clair:#43337A; --feutre-ombre:#1B1233;
+  --rail:#191320; --rail-clair:#2C2136; --or-matiere:color-mix(in oklab, var(--or-base), #FFE9A8 34%);
+  --dos-carte:#2B2150; --lueur:rgba(226,184,87,.24); --sol:#08060D; --sol-clair:#151020;
+  --dos-motif:repeating-linear-gradient(45deg, rgba(255,235,180,.16) 0 1px, transparent 1px 7px) }
 #v-table[data-lieu="aquarium"]{ --feutre:#136A72; --feutre-clair:#1B838C; --feutre-ombre:#083E44;
   --rail:#1A1F22; --rail-clair:#2B3338; --or-matiere:color-mix(in oklab, var(--or-base), #CFE3E6 35%);
   --dos-carte:#0F5C66; --lueur:rgba(34,211,238,.20); --neon:#22D3EE; --sol:#050A0C; --sol-clair:#0E181B }
@@ -1550,6 +1558,27 @@ td.U,.legende-grille b.U{background:var(--ardoise)}
 .mp-ou{ align-self:center; padding-bottom:0 }
 .mp-ligne .btn.creux{ padding:10px 18px; min-height:48px }
 .mp-ligne .btn:not(.creux){ min-height:48px }
+/* Le salon des tables : la liste de ce qui est ouvert, au-dessus des boutons.
+   ⚠️ Elle est au-DESSUS de « Ouvrir une table » exprès : rejoindre quelqu'un qui
+   attend déjà vaut mieux que créer une dixième table vide à côté de la sienne. */
+.mp-ouvertes{ margin-top:14px; border:1px solid var(--bord); border-radius:12px; padding:10px 12px 4px;
+  background:color-mix(in oklab, var(--laque) 60%, transparent) }
+.mp-ouvertes-tete{ display:flex; align-items:baseline; justify-content:space-between; gap:10px }
+.mp-ouvertes-tete .muet{ font-size:var(--t-fin) }
+.mp-vide{ font-size:var(--t-fin); margin:6px 0 8px }
+.mp-ouverte{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:8px 0; border-top:1px solid color-mix(in oklab, var(--bord) 60%, transparent) }
+.mp-ouvertes-tete + #mpOuvertesListe .mp-ouverte:first-child{ border-top:0 }
+.mp-ouverte-txt{ min-width:0 }
+.mp-ouverte-txt b{ display:block; line-height:1.25 }
+/* Le détail (hôte, places, minimum) tient sur une ligne et se coupe proprement :
+   un nom saisi à la main peut être long, et il ne doit pas pousser le bouton dehors. */
+.mp-ouverte-txt .muet{ display:block; font-size:var(--t-fin); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.mp-ouverte-btn{ flex:none; min-height:40px; padding:0 16px; white-space:nowrap }
+/* Une table complète garde sa ligne — savoir qu'elle existe et qu'elle est pleine
+   vaut mieux que de la voir disparaître sans qu'on sache pourquoi. */
+.mp-ouverte.pleine{ opacity:.62 }
+.mp-ouverte-btn[disabled]{ cursor:default }
 .mp-comment{ margin-top:14px; font-size:var(--t-fin); color:var(--os-eteint) }
 .mp-comment summary{ cursor:pointer; min-height:44px; display:flex; align-items:center }
 /* Ta couleur = un jeton du rack, cerclé d'or quand il est choisi. Pas d'arc-en-ciel. */

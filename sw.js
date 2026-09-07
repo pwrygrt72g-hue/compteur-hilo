@@ -3,14 +3,14 @@
 // Le nom du cache PORTE LA VERSION. Le monter est ce qui purge l'ancien (voir « activate ») :
 // une retouche de cette liste sans montée de version ne changerait rien chez ceux qui ont
 // déjà installé l'application, et personne ne le verrait.
-const C = "wisehand-v6";
+const C = "wisehand-v7";
 
 // La coquille : le document, le manifeste, les icônes.
 const COQUILLE = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
 
 // Les photos du hall, en version RÉDUITE (640 px, 642 Ko en tout). Le hall en affiche
-// dix-sept — les neuf tables, le héros, et les sept portes des salles (mesuré le 07/09 :
-// toutes les dix-sept sont bien téléchargées, pas quatorze). Sans elles, qui installe
+// dix-huit — les dix tables, le héros, et les sept portes des salles (mesuré le 07/09 :
+// toutes les dix-huit sont bien téléchargées, pas quatorze). Sans elles, qui installe
 // l'application puis la rouvre hors ligne trouve un hall de rectangles noirs, alors que
 // le README lui a promis qu'elle marchait sans réseau.
 //
@@ -23,7 +23,7 @@ const COQUILLE = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon
 // fichier, fait échouer `node build.mjs`. Elle ne peut pas dériver en silence.
 const PHOTOS = [
   "aquarium", "boulevard", "cartes", "cercle", "concentration", "cotai", "entrainement",
-  "frontdemer", "hall", "jetons", "macao", "mainchaude", "neon", "prive", "reno",
+  "frontdemer", "hall", "jetons", "macao", "mainchaude", "marina", "neon", "prive", "reno",
   "salonprive", "strategie",
 ].map(n => `./static/photos/${n}-petit.webp`);
 

@@ -18,7 +18,7 @@ La plupart des applications de ce genre embarquent une image de la stratégie de
 
 `node src/regles.test.mjs` compare tout ça à des références publiées — 78 vérifications.
 
-## Les neuf tables
+## Les dix tables
 
 Chaque table est un règlement réel et une leçon. Deux d'entre elles sont imbattables et le disent en toutes lettres : le blackjack payé six pour cinq et la mélangeuse continue tuent le comptage, quoi que fassent les autres règles.
 

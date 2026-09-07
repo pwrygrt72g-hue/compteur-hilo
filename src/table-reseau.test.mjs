@@ -378,5 +378,79 @@ async function avancer(salles, fil, t, jusqu, pas) {
   }
 }
 
+/* ══ LE PLAFOND DE RACHATS (La Marina) ══════════════════════════════════════
+   Léo, 07/09 : « pas de rachat illimité pour jouer intelligemment ». Ce qui est
+   vérifié ici, ce n'est pas le bouton — c'est la MACHINE. L'état de la table est
+   reconstruit par l'hôte à partir des actions reçues sur le fil : un pair modifié
+   qui envoie « rachat » ne doit pas obtenir un tapis neuf que personne n'a
+   autorisé. Le refus vit donc dans `action`, pas seulement dans l'écran.      */
+{
+  const neuve = o => {
+    const p = creerPartie(Object.assign({ regles: REGLES, miseMin: 100, tapis: 500, cartes: [c("2"), c("3")], empreinte: "x" }, o || {}));
+    p.action({ id: "a", a: "asseoir", v: 0, nom: "Ana" }, 0);
+    return p;
+  };
+  const ruiner = p => { const st = p.etat.sieges[0]; st.tapis = 0; st.mise = 0; return st; };
+  const racheter = p => p.action({ id: "a", a: "rachat" }, 0);
+
+  {
+    const p = neuve({ rachatsMax: 2 });
+    ok("la cave vient de la TABLE, pas d'une constante", p.etat.sieges[0].tapis, 500);
+    ruiner(p); ok("1er rachat accepté", racheter(p).ok, true);
+    ok("...et il rend la cave de la table, pas 1 000", p.etat.sieges[0].tapis, 500);
+    ruiner(p); ok("2e rachat accepté", racheter(p).ok, true);
+    ruiner(p);
+    const r = racheter(p);
+    ok("le 3e est REFUSÉ par la machine", r.ok, false);
+    ok("...et le refus dit pourquoi", /maximum de cette table/.test(r.erreur || ""), true);
+    ok("...et le tapis n'a pas bougé", p.etat.sieges[0].tapis, 0);
+    ok("le compte de rachats est publié", p.etat.sieges[0].rachats, 2);
+    ok("...et le plafond aussi, pour que l'écran puisse le dire", p.etatPublic(0).rachatsMax, 2);
+  }
+
+  {
+    // Une table qui ne se rachète pas du tout : 0 doit rester 0, pas devenir « illimité ».
+    // C'est ce qu'un `o.rachatsMax || Infinity` aurait cassé en silence.
+    const p = neuve({ rachatsMax: 0 });
+    ruiner(p);
+    const r = racheter(p);
+    ok("rachatsMax 0 refuse dès le premier", r.ok, false);
+    ok("...avec sa propre phrase", /cave unique/.test(r.erreur || ""), true);
+  }
+
+  {
+    // 🚨 LE CAS QUI COMPTE : les neuf tables historiques ne passent PAS cette option.
+    // Un défaut mal choisi (0, ou null) les casserait TOUTES, sans un mot.
+    const p = neuve();
+    let tous = true;
+    for (let i = 0; i < 5; i++) { ruiner(p); if (!racheter(p).ok) tous = false; }
+    ok("sans plafond, cinq rachats d'affilée passent", tous, true);
+    ok("et l'état publie « illimité » comme -1, jamais comme null", p.etatPublic(0).rachatsMax, -1);
+  }
+
+  {
+    // Les bots suivent la MÊME règle : sinon le joueur humain voit une contrainte qui ne
+    // vaut que pour lui, à côté de voisins qui se renflouent indéfiniment.
+    // ⚠️ Il faut une manche ENTIÈRE : `botsRuines` vit dans `ouvrirMises`, et asseoir le
+    // premier joueur a DÉJÀ ouvert les mises. Casser les bots juste après et appeler
+    // `etape` ne rejoue pas cette phase — le premier jet de ce test passait donc à côté
+    // de ce qu'il croyait mesurer.
+    const p = creerPartie({ regles: REGLES, miseMin: 100, tapis: 500, rachatsMax: 1, bots: true,
+      cartes: Array.from({ length: 400 }, () => c("5")), empreinte: "x" });
+    p.action({ id: "a", a: "asseoir", v: 0, nom: "Ana" }, 0);
+    p.etat.sieges.forEach(st => { if (st && st.bot) { st.tapis = 0; st.mise = 0; st.rachats = 1; st.mains = []; } });
+    p.action({ id: "a", a: "mise", v: 100 }, 0);
+    for (let t = 1; t < 400000; t += 400) {
+      p.etape(t);
+      if (p.etat.manche >= 1 && p.etat.phase === "mise" && p.etat.sieges.some(st => st && st.bot && st.tapis > 0)) break;
+    }
+    const bots = p.etat.sieges.filter(st => st && st.bot);
+    ok("un bot à court de rachats ne reste pas assis à zéro", bots.every(st => st.tapis > 0 || st.rachats < 1), true);
+    ok("...il est remplacé, la table ne se vide pas", bots.length > 0, true);
+    ok("...et le remplaçant repart d'une cave neuve, sans rachat", bots.every(st => (st.rachats || 0) === 0), true);
+    ok("...et deux voisins n'ont jamais le même nom", new Set(bots.map(st => st.nom)).size, bots.length);
+  }
+}
+
 console.log(`\n${pass} tests passés, ${fail} échecs`);
 process.exit(fail ? 1 : 0);

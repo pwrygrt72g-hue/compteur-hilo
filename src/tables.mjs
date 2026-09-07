@@ -3,7 +3,8 @@
 // au moment de la construction du fichier (voir build.mjs).
 //
 // mise_min / mise_max : les limites de la table, en jetons. Une seule monnaie pour
-// les neuf lieux — tout le monde s'assoit avec le même tapis de 1 000 — et des
+// les dix lieux. Tout le monde s'assoit avec le même tapis de 1 000, SAUF à La Marina
+// (`tapis_depart`), et des
 // minimums plausibles dans leur lieu : 5 sur Fremont Street, 100 au Salon Privé.
 // Le minimum est l'UNITÉ de mise : la rampe de comptage se lit en multiples de lui.
 
@@ -82,6 +83,22 @@ export const TABLES = [
     mise_min: 5, mise_max: 200,
     lecon: "Une table bridée peut être excellente.",
     detail: "Pas d'abandon, pas de doublement après séparation, doubler seulement sur 10 et 11 : sur le papier c'est mesquin. Et pourtant c'est l'une des meilleures tables du catalogue à compter, et celle qui demande la plus petite caisse. Les restrictions coûtent des dixièmes, la géométrie du sabot rapporte des unités.",
+  },
+  {
+    // 🚨 LA TABLE DU MULTIJOUEUR (Léo 07/09 : « une table spéciale pour le multijoueur où
+    // les mises sont plus grosses, et pas de rachat illimité pour jouer intelligemment »).
+    // Les neuf autres portent une leçon sur les RÈGLES ; celle-ci porte la seule leçon
+    // qu'aucune ne portait : la CAISSE. D'où les deux champs que personne d'autre n'a —
+    // `tapis_depart` (on ne s'assoit pas ici avec 1 000) et `rachats_max` (on ne se
+    // renfloue pas indéfiniment). Absents ailleurs = comportement d'avant, inchangé.
+    id: "marina", nom: "La Marina", lieu: "Marina Bay, Singapour",
+    jeux: 6, h17: false, blackjackPays: 1.5, penetration: 0.78, sieges: 7,
+    das: true, surrender: "late", doubleOn: "any", maxHands: 4, hitSplitAces: false,
+    holeCard: true, peek: true, melange: "sabot", cadence: 88,
+    mise_min: 100, mise_max: 25000,
+    tapis_depart: 5000, rachats_max: 2,
+    lecon: "Ta caisse décide avant ta stratégie.",
+    detail: "Les neuf autres tables t'apprennent à reconnaître un bon jeu. Celle-ci t'apprend ce qui arrive une fois que tu en as trouvé un. Le minimum est à 100, et à plusieurs on s'y assied avec 5 000 jetons — cinquante mises — et deux recaves, pas une de plus. Un compteur qui monte à cinq unités sur les comptes forts engage sa caisse entière en dix manches favorables. Avoir raison sur chaque décision et finir à zéro n'est pas de la malchance — c'est l'issue la plus fréquente quand la caisse est trop courte pour la variance.",
   },
   {
     id: "aquarium", nom: "L'Aquarium", lieu: "zone touristes",

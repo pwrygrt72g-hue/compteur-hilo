@@ -25,7 +25,7 @@
    ═══════════════════════════════════════════════════════════════════ */
 const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, tableSolo: "", ticker: null, abandon: false,
   mise: 0, poses: [], miseVue: {}, enVol: {}, emis: new Set(), partis: new Set(), assurPartie: new Set(), vus: new Set(),
-  vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, panneauOuvert: false,
+  vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, rachatFini: false, panneauOuvert: false,
   // Le crochet de visio.js : un message du courtier lui est d'abord proposé (sujets visio/*),
   // et il le garde ou le rend. net.mjs n'a qu'un seul onMessage, posé à la connexion.
   onBrut: null };
@@ -118,7 +118,150 @@ function rendreTableMP() {
   boite.querySelector("[data-vue]").onclick = () => aller("salon");
 }
 rendreCouleurs();
-document.addEventListener("sabot:table", rendreTableMP);
+// ⚠️ Le TEXTE aussi, pas seulement la fiche : il annonce la cave et les recaves de la
+// table courante (ensemble.js, mpTexteTable) et mentirait en restant sur l'ancienne.
+document.addEventListener("sabot:table", () => { rendreTableMP(); rendreModeMP(); });
+
+/* ══ LE SALON DES TABLES ════════════════════════════════════════════════════
+   Léo, 07/09 : « rajoute la possibilité de rejoindre une table, et de fermer
+   les tables dès qu'elle est vide, pour pas boucher le fonctionnement. »
+
+   Avant ce jour, rejoindre exigeait de CONNAÎTRE un code de huit caractères :
+   il n'existait aucune façon de découvrir qu'une table était ouverte. On ne
+   jouait donc qu'avec quelqu'un qu'on avait déjà au téléphone — la moitié du
+   multijoueur ne servait à rien.
+
+   🚨 « FERMER LA TABLE QUAND ELLE EST VIDE » N'EST PAS UNE ACTION À ÉCRIRE.
+   L'hôte réannonce sa table toutes les NET.SALON_BATTEMENT ms ; l'écouteur
+   oublie ce qu'il n'a pas réentendu depuis NET.SALON_PEREMPTION. Une table
+   dont l'onglet a été fermé, dont le navigateur a planté ou dont le réseau est
+   tombé cesse simplement d'être annoncée : elle disparaît de la liste toute
+   seule, sans que personne ait à la nettoyer. Un message « ferme » est envoyé
+   en plus lorsqu'on quitte proprement — c'est du confort (disparition
+   immédiate), jamais le mécanisme. Ne PAS remplacer ça par un message MQTT
+   « retenu » : il survivrait à l'onglet qui l'a posé, et le salon se
+   remplirait de tables mortes que personne ne peut ni rejoindre ni effacer.
+
+   ⚠️ Deuxième connexion, volontairement. Écouter le salon demande d'être relié
+   au courtier ; on ne l'est qu'une fois assis à une table. Le salon ouvre donc
+   sa PROPRE connexion pendant qu'on regarde l'écran « Jouer à plusieurs », et
+   la ferme en le quittant. Elle ne porte aucun testament (MQTT n'en autorise
+   qu'un par connexion, et celui de la table sert déjà à retirer les sièges
+   fantômes) : la péremption ci-dessus en tient lieu.
+
+   ⚠️ L'hôte, lui, annonce par la connexion DE SA TABLE (`api.brut`), sans en
+   ouvrir une seconde. Un transport injecté (sonde, captures) n'a pas de
+   `brut` : il n'annonce alors rien, et tout le reste fonctionne — c'est ce
+   qui permet aux bancs de tourner sans courtier.                          */
+
+const SALON = { api: null, vues: new Map(), tic: 0, battement: 0, publique: false, ouvert: false, essai: false };
+
+// Ce qu'une table dit d'elle-même. Aucune donnée personnelle : un prénom saisi
+// dans l'application, la table, les places. Le courtier est public et l'écran
+// le rappelle — on n'y ajoute rien de plus que ce qui est déjà à l'écran.
+function salonFiche() {
+  const e = RS.etat, t = tableCourante();
+  const humains = e ? e.sieges.filter(st => st && !st.bot && !st.absent).length : 1;
+  return { t: "table", code: RS.code, hote: (prenom() || "Joueur").slice(0, 18), table: t.id, nom: t.nom,
+    pris: Math.max(1, humains), places: TR.NB_SIEGES, miseMin: t.mise_min || 10,
+    cave: t.tapis_depart || TAPIS_DEPART, rachats: t.rachats_max === undefined ? -1 : t.rachats_max };
+}
+function salonEmettre(o) {
+  const brut = RS.api && RS.api.brut;
+  if (!brut || !brut.publier) return;
+  try { brut.publier(NET.SUJET_SALON, JSON.stringify(o)); } catch (err) { /* le salon n'est pas critique */ }
+}
+// L'hôte annonce : tout de suite, puis au battement. Arrêté par salonTaire().
+function salonAnnoncer() {
+  clearInterval(SALON.battement); SALON.battement = 0;
+  if (!SALON.publique || !RS.code) return;
+  salonEmettre(salonFiche());
+  SALON.battement = setInterval(() => { if (SALON.publique && RS.code) salonEmettre(salonFiche()); else { clearInterval(SALON.battement); SALON.battement = 0; } }, NET.SALON_BATTEMENT);
+}
+function salonTaire() {
+  if (SALON.publique && RS.code) salonEmettre({ t: "ferme", code: RS.code });
+  SALON.publique = false;
+  clearInterval(SALON.battement); SALON.battement = 0;
+}
+
+/* ── Écouter (on regarde l'écran « Jouer à plusieurs ») ─────────────────── */
+async function salonEcouter() {
+  if (SALON.api || SALON.essai || window.__reseauTransport) return salonRendre();
+  SALON.essai = true; salonRendre();
+  try {
+    const { api } = await NET.connecterAvecRepli({
+      clientId: "hilo-salon-" + Math.random().toString(36).slice(2, 8),
+      onMessage: (_s, brut) => {
+        let m; try { m = JSON.parse(brut); } catch (e) { return; }
+        if (!m || !m.code || !TR.codeValide(String(m.code))) return;
+        // ⚠️ On n'affiche JAMAIS sa propre table : la rejoindre depuis la liste
+        // rouvrirait la connexion sur laquelle on est déjà assis.
+        if (RS.code && m.code === RS.code) return;
+        if (m.t === "ferme") SALON.vues.delete(m.code);
+        else if (m.t === "table") SALON.vues.set(m.code, { ...m, vu: Date.now() });
+        salonRendre();
+      },
+      onClose: () => { SALON.api = null; salonRendre(); },
+    });
+    api.souscrire(NET.SUJET_SALON);
+    SALON.api = api;
+  } catch (e) { SALON.api = null; }
+  SALON.essai = false;
+  salonRendre();
+}
+function salonArreter() {
+  if (SALON.api) { try { SALON.api.fermer(); } catch (e) {} SALON.api = null; }
+  clearInterval(SALON.tic); SALON.tic = 0;
+  SALON.vues.clear(); SALON.essai = false;
+}
+
+/* ── La liste ───────────────────────────────────────────────────────────── */
+function salonRendre() {
+  const boite = $("mpOuvertes"), liste = $("mpOuvertesListe"), etat = $("mpOuvertesEtat");
+  if (!boite || !liste) return;
+  // La course au comptage n'a ni siège ni mise : elle n'a rien à lister.
+  if (MP.mode !== "table" || T.reseau) { boite.hidden = true; return; }
+  boite.hidden = false;
+  const now = Date.now();
+  for (const [code, t] of SALON.vues) if (now - t.vu > NET.SALON_PEREMPTION) SALON.vues.delete(code);
+  const tables = [...SALON.vues.values()].sort((a, b) => (b.vu || 0) - (a.vu || 0));
+  if (!SALON.tic) SALON.tic = setInterval(salonRendre, 4000);   // la péremption se voit sans nouveau message
+  if (window.__reseauTransport) { etat.textContent = ""; liste.innerHTML = `<p class="muet mp-vide">Le salon ne s'affiche pas ici : la liste des tables passe par un courtier public, bloqué sur cette page.</p>`; return; }
+  if (!SALON.api) {
+    etat.textContent = "";
+    // ⚠️ Dans un Artifact publié, la politique de sécurité coupe TOUTE connexion — le
+    // salon comme la table. Dire « le code d'une table marche toujours » y serait faux :
+    // rien ne marche, et l'utilisateur essaierait un code pour rien. `window.PHOTOS_PETIT`
+    // n'existe qu'en mode « pages » — c'est la même sentinelle que le hall et la 3D.
+    const artefact = !window.PHOTOS_PETIT;
+    liste.innerHTML = `<p class="muet mp-vide">${SALON.essai ? "On regarde qui est là…"
+      : artefact ? `Le jeu à plusieurs ne se connecte pas depuis un Artifact : il se joue sur <a href="${PAGES_URL}" target="_blank" rel="noopener">la version en ligne</a>.`
+      : "Salon injoignable pour le moment — le code d'une table, lui, marche toujours."}</p>`;
+    return;
+  }
+  etat.textContent = tables.length ? (tables.length > 1 ? tables.length + " tables" : "1 table") : "";
+  if (!tables.length) {
+    liste.innerHTML = `<p class="muet mp-vide">Personne n'a de table ouverte pour l'instant. Ouvre la première — elle apparaîtra ici pour les autres tant que tu y es.</p>`;
+    return;
+  }
+  liste.innerHTML = tables.map(t => {
+    const plein = t.pris >= t.places;
+    return `<div class="mp-ouverte${plein ? " pleine" : ""}">
+      <div class="mp-ouverte-txt"><b>${echapper(t.nom || "Table")}</b>
+        <span class="muet">chez ${echapper(t.hote || "quelqu'un")} · ${t.pris}/${t.places} · min ${fmtJ(t.miseMin || 10)}${t.rachats >= 0 ? ` · ${t.rachats} recave${t.rachats > 1 ? "s" : ""}` : ""}</span></div>
+      <button class="btn creux mp-ouverte-btn" data-code="${echapper(t.code)}"${plein ? " disabled" : ""}>${plein ? "Complète" : "Rejoindre"}</button>
+    </div>`;
+  }).join("");
+  liste.querySelectorAll("[data-code]").forEach(b => b.onclick = () => { salonArreter(); ouvrirTable(b.dataset.code, false); });
+}
+// Un nom d'hôte est saisi à la main et traverse un courtier public : il ne va
+// JAMAIS dans du HTML sans passer par ici.
+function echapper(x) { const d = document.createElement("span"); d.textContent = String(x == null ? "" : x); return d.innerHTML.replace(/"/g, "&quot;"); }
+
+document.addEventListener("sabot:vue", e => {
+  const v = (e.detail || {}).vue;
+  if (v === "ensemble") salonEcouter(); else salonArreter();
+});
 
 /* ── Le transport : MQTT en vrai ; une usine injectée (window.__reseauTransport)
    pour la sonde et les captures, qui n'ont pas de courtier. ─────────────── */
@@ -172,7 +315,12 @@ function rsStrategie(cards, up, ctx) {
 function rsOptionsPartie() {
   const t = tableCourante();
   return { regles: reglesTable(), table: t.id, jeux: t.jeux, miseMin: t.mise_min || 10, miseMax: t.mise_max || 1000,
-    par5: t.blackjackPays < 1.5, csm: t.melange === "melangeuse_continue", penetration: t.penetration, tapis: TAPIS_DEPART,
+    par5: t.blackjackPays < 1.5, csm: t.melange === "melangeuse_continue", penetration: t.penetration,
+    // ⚠️ La cave et le plafond de rachats viennent de LA TABLE, plus d'une constante.
+    // Sans ça La Marina asseyait ses joueurs avec 1 000 jetons pour un minimum de 100 —
+    // dix mises — et leur rendait le rachat illimité : les deux réglages qui la définissent
+    // étaient perdus entre le catalogue et la machine. Absents = le comportement d'avant.
+    tapis: t.tapis_depart || TAPIS_DEPART, rachatsMax: t.rachats_max,
     sys: DB.sys, valeur: valeurCompte, rcInitial: jeux => CT.compteInitial(DB.sys, jeux), strategie: rsStrategie };
 }
 async function rsCartesNeuves() {
@@ -182,8 +330,12 @@ async function rsCartesNeuves() {
 }
 
 /* ── Ouvrir ou rejoindre ─────────────────────────────────────────────── */
-async function ouvrirTable(code, createur) {
+async function ouvrirTable(code, createur, publique) {
   if (RS.salle) quitterTable(true);
+  // ⚠️ Seul l'HÔTE annonce, et seulement s'il a choisi « publique ». Un invité qui
+  // annoncerait la table ferait vivre l'annonce après le départ de l'hôte — donc une
+  // entrée de salon qui mène à une table dont plus personne ne tient le sabot.
+  SALON.publique = !!(createur && publique);
   RS.moi = rsIdentite(); RS.code = code; RS.abandon = false; RS.api = null;
   $("mpCreer").disabled = $("mpRejoindre").disabled = true;
   rsEtatTexte("Recherche d'un courtier…");
@@ -208,6 +360,8 @@ async function ouvrirTable(code, createur) {
   // La visio (visio.js) se greffe ici : le courtier est relié, la scène est en mode réseau.
   emettre("reseau-entree", { api, code, moi: RS.moi });
   RS.ticker = setInterval(() => { if (!RS.salle) return; RS.salle.cadence = vitesse(); RS.salle.tic(Date.now()); }, 200);
+  salonArreter();          // on ne regarde plus le salon : on y est
+  salonAnnoncer();         // …et si elle est publique, on s'y annonce
   aller("table");
   bandeau(createur ? "Table ouverte — partage le code " + TR.formaterCode(code) : "Tu rejoins la table " + TR.formaterCode(code), 3600);
 }
@@ -218,7 +372,7 @@ function entrerModeReseau() {
   J.phase = "attente"; J.donnee = false;
   RS.prec = null; RS.etat = null; RS.mise = 0; RS.poses = []; RS.miseVue = {}; RS.enVol = {};
   RS.emis = new Set(); RS.partis = new Set(); RS.assurPartie = new Set(); RS.vus = new Set();
-  RS.vuCroupier = 0; RS.vuCachee = false; RS.signature = ""; RS.bulleAssurance = false; RS.rachatPropose = 0;
+  RS.vuCroupier = 0; RS.vuCachee = false; RS.signature = ""; RS.bulleAssurance = false; RS.rachatPropose = 0; RS.rachatFini = false;
   $("v-table").dataset.reseau = "1"; $("v-table").dataset.phase = "attente";
   $("bReseau").hidden = false; $("bReseau").textContent = "Table " + TR.formaterCode(RS.code);
   $("bNouveauSabot").textContent = "Journal";
@@ -230,6 +384,9 @@ function entrerModeReseau() {
   rsRendreRack();
 }
 function quitterTable(silencieux) {
+  // 🚨 AVANT de fermer la connexion : le « ferme » part par elle. Après, il n'y a plus
+  // de courtier pour le porter, et la table resterait listée jusqu'à sa péremption.
+  salonTaire();
   emettre("reseau-sortie", {});   // la visio se ferme d'abord : son adieu doit partir par un courtier encore relié
   if (RS.salle) { try { RS.salle.quitter(); } catch (e) {} } RS.salle = null;
   if (RS.api) { try { RS.api.fermer(); } catch (e) {} } RS.api = null;
@@ -340,7 +497,7 @@ function rendreReseau(e) {
   /* ── Les gestes, dans l'ordre d'une vraie table ── */
   if (remelange) { emettre("remelange", { table: e.table, cartes: e.sabot.restantes, pendantDonne: !!e.evenement.pendantDonne }); if (!e.evenement.pendantDonne) bandeau("Sabot neuf, scellé : empreinte publiée, graine révélée à la fin."); }
   if (e.evenement && e.evenement.t === "reprise" && (!prec || prec.hote !== e.hote)) bandeau(e.message, 4200);
-  if (e.evenement && e.evenement.t === "rachat" && prec && prec.v < e.v) { const st = e.sieges[e.evenement.siege]; if (st && st.id !== RS.moi) bandeau(st.nom + " reprend 1 000 jetons."); }
+  if (e.evenement && e.evenement.t === "rachat" && prec && prec.v < e.v) { const st = e.sieges[e.evenement.siege]; if (st && st.id !== RS.moi) bandeau(st.nom + " reprend " + fmtJ(e.tapisDepart || TAPIS_DEPART) + " jetons."); }
   if (donneDebut) {
     const moi = T.toi, jetons = moi && moi.mains.length ? moi.mains[0].bet : 0, l = limites();
     const tc = sys().equilibre ? CT.compteVrai(e.rc, e.sabot.restantes / 52) : null;
@@ -359,10 +516,16 @@ function rendreReseau(e) {
     const issues = e.sieges.map(st => st ? st.mains.map(h => ISSUE_BUS[h.result] || h.result) : []);
     const moi = T.toi, k = rsMonSiege();
     const net = moi ? moi.mains.reduce((s, h) => s + (h.net || 0) + (h.assurance ? (E.handTotal(e.croupier) === 21 && e.croupier.length === 2 ? h.assurance * 2 : -h.assurance) : 0), 0) : 0;
-    emettre("manche-fin", { issues, toi: k >= 0 ? issues[k] : [], net, solde: moi ? arr(moi.tapis - TAPIS_DEPART * (1 + (moi.rachats || 0))) : 0, croupier: E.handTotal(e.croupier) });
+    emettre("manche-fin", { issues, toi: k >= 0 ? issues[k] : [], net, solde: moi ? arr(moi.tapis - (e.tapisDepart || TAPIS_DEPART) * (1 + (moi.rachats || 0))) : 0, croupier: E.handTotal(e.croupier) });
     rsRendreRack();
   }
-  if (e.phase === "mise" && T.toi && T.toi.tapis < e.miseMin && !T.toi.mise && RS.rachatPropose !== e.manche && vue === "table" && $("modale").hidden) { RS.rachatPropose = e.manche; setTimeout(() => { if (RS.etat === e && T.toi && T.toi.tapis < e.miseMin) rsRachat(); }, 500); }
+  // ⚠️ On ne propose plus un rachat qu'on va refuser : à court de rachats la modale
+  // s'ouvrait à CHAQUE manche avec un bouton qui rend une erreur. Elle s'ouvre encore —
+  // mais pour dire que c'est fini, et une seule fois (RS.rachatFini).
+  if (e.phase === "mise" && T.toi && T.toi.tapis < e.miseMin && !T.toi.mise && RS.rachatPropose !== e.manche && vue === "table" && $("modale").hidden) {
+    RS.rachatPropose = e.manche;
+    setTimeout(() => { if (RS.etat === e && T.toi && T.toi.tapis < e.miseMin) rsRachat(); }, 500);
+  }
   RS.prec = e;
 }
 
@@ -523,7 +686,7 @@ function rsRendreTapis() {
   $("tTapis").textContent = moi ? fmtJ(moi.tapis) : "—";
   const n = $("tNet"); if (!moi || !e) { n.hidden = true; return; }
   const engage = e.phase === "mise" ? moi.mise : moi.mains.reduce((s, h) => s + (h.net === undefined ? h.bet * (h.doubled ? 2 : 1) + (h.assurance || 0) : 0), 0);
-  const s = arr(moi.tapis + engage - TAPIS_DEPART * (1 + (moi.rachats || 0)));
+  const s = arr(moi.tapis + engage - (e.tapisDepart || TAPIS_DEPART) * (1 + (moi.rachats || 0)));
   n.hidden = !s; n.textContent = (s > 0 ? "+" : "") + fmtJ(s); n.className = s > 0 ? "plus" : s < 0 ? "moins" : "";
 }
 // Ma mise, jeton par jeton : le vol est immédiat, l'hôte confirme le total.
@@ -555,10 +718,30 @@ function rsResyncMise() {
 }
 function rsRachat() {
   const e = RS.etat, moi = T.toi; if (!e || !moi || !$("modale").hidden) return;
+  const cave = e.tapisDepart || TAPIS_DEPART, faits = moi.rachats || 0;
+  // -1 = illimité (Infinity ne traverse pas JSON.stringify, cf. table-reseau.mjs).
+  const max = e.rachatsMax === undefined || e.rachatsMax < 0 ? Infinity : e.rachatsMax;
+  const reste = max - faits;
+  if (reste <= 0) {
+    // 🚨 CE N'EST PAS UNE ERREUR, C'EST LA FIN DE LA CAISSE — et c'est toute la leçon de
+    // la table. Un bouton grisé sans phrase laisserait croire à une panne ; on DIT ce qui
+    // s'est passé, combien a été engagé, et ce qu'il reste à faire (regarder, ou se lever).
+    if (RS.rachatFini) return; RS.rachatFini = true;
+    ouvrirModale(`<h2>Ta caisse est finie</h2>
+      <p>Tu t'es assis avec <b class="cadran">${fmtJ(cave)}</b>${max ? ` et tu as repris ${max} fois` : " et cette table ne se rachète pas"} : <b>${fmtJ(cave * (max + 1))}</b> engagés en tout, il ne reste <b class="cadran">${fmtJ(moi.tapis)}</b>.</p>
+      <p class="muet" style="font-size:var(--t-petit)">C'est la leçon de cette table, et elle n'a rien d'un accident : une caisse trop courte pour la variance finit à zéro même quand chaque décision était juste. Tu peux rester regarder le sabot défiler — le compte continue — ou te lever et revenir sur une table où la mise minimale est à ta portée.</p>
+      <div class="rang-btn" style="justify-content:center;margin-top:12px"><button class="btn creux" id="rsRachatFerme">Rester et regarder</button><button class="btn" data-vue="salon" id="rsRachatSalon">Changer de table</button></div>`);
+    $("rsRachatFerme").onclick = () => { $("modale").hidden = true; };
+    $("rsRachatSalon").onclick = () => { $("modale").hidden = true; aller("salon"); };
+    return;
+  }
+  const combien = max === Infinity
+    ? (faits ? `Tu en es à ${faits}.` : "Ce serait le premier.")
+    : `Il t'en reste <b>${reste}</b> après celui-ci${reste - 1 === 0 ? " — aucun" : ""}. Cette table en autorise ${max} en tout.`;
   ouvrirModale(`<h2>Plus un jeton</h2>
     <p>Il te reste <b class="cadran">${fmtJ(moi.tapis)}</b> en main et le minimum ici est de <b>${fmtJ(e.miseMin)}</b>.</p>
-    <p class="muet" style="font-size:var(--t-petit)">Un rachat remet ton tapis à 1 000 — tout le monde le voit, et il se compte. ${moi.rachats ? `Tu en es à ${moi.rachats}.` : "Ce serait le premier."}</p>
-    <div class="rang-btn" style="justify-content:center;margin-top:12px"><button class="btn" id="rsRachatOui">Reprendre 1 000 jetons</button></div>`);
+    <p class="muet" style="font-size:var(--t-petit)">Un rachat remet ton tapis à ${fmtJ(cave)} — tout le monde le voit, et il se compte. ${combien}</p>
+    <div class="rang-btn" style="justify-content:center;margin-top:12px"><button class="btn" id="rsRachatOui">Reprendre ${fmtJ(cave)} jetons</button></div>`);
   $("rsRachatOui").onclick = () => { $("modale").hidden = true; rsAgir("rachat"); son("jetons"); };
 }
 function rsCoup(a) { if (!RS.etat || !T.toi) return; boutons({}); rsAgir(a); }

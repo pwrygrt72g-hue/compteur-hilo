@@ -73,15 +73,31 @@ const nbSiegesMot = () => EN_LETTRES[TR.NB_SIEGES] || String(TR.NB_SIEGES);
 // réécrites ici, à la même source. Le gabarit garde un nombre lisible pour qui ouvre le
 // fichier ; c'est celui-ci qui fait foi à l'écran.
 document.querySelectorAll("[data-nb-sieges]").forEach(e => { e.textContent = nbSiegesMot(); });
+/* ⚠️ « le même tapis de 1 000 jetons » N'EST PLUS VRAI PARTOUT. Depuis La Marina
+   (tables.mjs : `tapis_depart`, `rachats_max`), la cave et le nombre de recaves
+   appartiennent à la TABLE. Une phrase qui les écrit en dur redevient fausse dès
+   qu'on change de table — c'est mot pour mot le défaut « jusqu'à cinq » corrigé
+   juste au-dessus, un cran plus bas. Le texte se calcule donc, et il est réécrit
+   à chaque changement de table (écouteur `sabot:table`, dans reseau.js). */
+const mpTexteTable = () => {
+  const t = tableCourante(), cave = t.tapis_depart || 1000, max = t.rachats_max;
+  const recave = max === undefined ? ""
+    : max === 0 ? " Ici, on ne rachète pas : ce que tu poses en t'asseyant est tout ce que tu auras."
+    : ` Ici, on ne rachète que ${max} fois : ce n'est pas une table où l'on recommence indéfiniment.`;
+  return `Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de ${fmtJ(cave)} jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.${recave}`;
+};
 const MP_TEXTES = {
-  table: [`Une vraie table, jusqu'à ${nbSiegesMot()}`, "Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de 1 000 jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.", "Ouvrir une table", "Code de la table"],
+  table: [`Une vraie table, jusqu'à ${nbSiegesMot()}`, mpTexteTable, "Ouvrir une table", "Code de la table"],
   course: ["Le même sabot, chacun son compte", "Les cartes sortent du même sabot, chacun compte en silence, et à la fin chacun annonce son compte. Celui qui tombe juste gagne — pas celui qui a le plus de chance.", "Ouvrir une course", "Code de la course"],
 };
 function rendreModeMP() {
-  const [titre, texte, bouton, code] = MP_TEXTES[MP.mode];
+  const [titre, texteOuFn, bouton, code] = MP_TEXTES[MP.mode];
+  const texte = typeof texteOuFn === "function" ? texteOuFn() : texteOuFn;
   $("mpTitre").textContent = titre; $("mpModeTexte").textContent = texte; $("mpCreer").textContent = bouton;
   $("mpCode").previousElementSibling.textContent = code;
   $("mpCouleurs").hidden = MP.mode !== "table";
+  // La course au comptage n'a ni siège ni mise : rien à ouvrir en privé, rien à lister.
+  $("mpCreerPrive").hidden = MP.mode !== "table";
   $("mpModes").querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", b.dataset.mode === MP.mode ? "true" : "false"));
   $("mpEtat").textContent = "";
 }
@@ -92,16 +108,20 @@ function rendreModeMP() {
 // levait, et comme tout vit dans une seule IIFE, il emportait avec lui reseau.js, visio.js,
 // dons.js, progres.js et le clavier : la fiche ne disparaissait pas, la moitié de l'application
 // ne se chargeait plus. Au chargement, c'est reseau.js qui dessine la fiche lui-même.
-$("mpModes").querySelectorAll("button").forEach(b => b.onclick = () => { MP.mode = b.dataset.mode; rendreModeMP(); rendreTableMP(); });
+$("mpModes").querySelectorAll("button").forEach(b => b.onclick = () => { MP.mode = b.dataset.mode; rendreModeMP(); rendreTableMP(); salonRendre(); });
 $("mpNom").value = prenom(); $("mpNom").oninput = () => { DB.prenom = $("mpNom").value; garder(); $("prenom").value = DB.prenom; };
 // Le code se tape comme on veut (minuscules, tiret, espaces) et s'affiche groupé.
 $("mpCode").addEventListener("input", () => { const p = $("mpCode").selectionStart; $("mpCode").value = TR.formaterCode($("mpCode").value); if (p !== null) $("mpCode").setSelectionRange(p, p); });
 $("mpCode").addEventListener("keydown", e => { if (e.key === "Enter") $("mpRejoindre").click(); });
-$("mpCreer").onclick = () => { const code = TR.codeSalon(); MP.mode === "table" ? ouvrirTable(code, true) : ouvrirSalon(code); };
+// ⚠️ « Ouvrir une table » est PUBLIQUE (elle s'annonce au salon), « Table privée » ne
+// prononce jamais son code. Le courtier étant public, annoncer est un choix explicite :
+// une partie entre amis ne doit pas récolter des inconnus sans que personne ne l'ait voulu.
+$("mpCreer").onclick = () => { const code = TR.codeSalon(); MP.mode === "table" ? ouvrirTable(code, true, true) : ouvrirSalon(code); };
+$("mpCreerPrive").onclick = () => { ouvrirTable(TR.codeSalon(), true, false); };
 $("mpRejoindre").onclick = () => {
   const c = TR.normaliserCode($("mpCode").value);
   if (!TR.codeValide(c)) { $("mpEtat").textContent = "Il faut le code complet : huit caractères, comme A7K2-M9PQ."; son("ko"); return; }
-  MP.mode === "table" ? ouvrirTable(c, false) : ouvrirSalon(c);
+  MP.mode === "table" ? ouvrirTable(c, false, false) : ouvrirSalon(c);
 };
 rendreModeMP();
 $("mpQuitter").onclick = () => {

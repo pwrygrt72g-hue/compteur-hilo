@@ -211,5 +211,33 @@ console.log(`\nindex.html écrit : ${ko} Ko, ${out.split("\n").length} lignes, e
       + (fantomes.length ? `  à RETIRER de sw.js (absentes du disque ou du catalogue) : ${fantomes.join(", ")}\n` : ""));
     const poids = [...attendues].reduce((n, p) => n + readFileSync(p).length, 0);
     console.log(`hors ligne : ${attendues.size} photos réduites précachées par sw.js · ${Math.round(poids / 1024)} Ko`);
+
+    // ── UNE TABLE NEUVE NE PEUT PLUS ARRIVER À MOITIÉ ────────────────────────
+    // 🚨 Écrit le 07/09 après avoir ajouté La Marina : sa carte s'affichait, son
+    // feutre était le bon, et le croupier y souhaitait « la bienvenue au Boulevard ».
+    // Trois choses vivent LOIN du catalogue et se laissent oublier une par une, sans
+    // qu'aucune ne fasse d'erreur :
+    //   — la PHOTO (credits.json) : sans elle, une carte de salon noire ;
+    //   — le CROUPIER (croupier.js) : le repli est Vince, dont l'accueil NOMME sa
+    //     table — on accueille donc les joueurs au nom d'un autre lieu ;
+    //   — le FEUTRE (style.css) : sans lui, la table emprunte la couleur de la
+    //     précédente, et deux lieux deviennent indiscernables.
+    // Chacun échouait en SILENCE. Ils échouent maintenant à la construction.
+    const cat = readFileSync("src/tables.mjs", "utf8");
+    const ids = [...cat.matchAll(/^\s*id: "([\w-]+)"/gm)].map(m => m[1]);
+    if (ids.length < 2) throw new Error("tables.mjs : aucun identifiant de table lu — la vérification ne peut plus se faire");
+    const cles = new Set(credits.map(c => c.cle));
+    const croupiers = readFileSync("src/app/croupier.js", "utf8");
+    const blocCr = croupiers.match(/const CROUPIER_DEFAUT = \{([\s\S]*?)\};/);
+    if (!blocCr) throw new Error("croupier.js : CROUPIER_DEFAUT est introuvable — la vérification ne peut plus se faire");
+    const avecCroupier = new Set([...blocCr[1].matchAll(/(\w+):/g)].map(m => m[1]));
+    const feutres = new Set([...css.matchAll(/#v-table\[data-lieu="([\w-]+)"\]/g)].map(m => m[1]));
+    const trous = ids.flatMap(id => [
+      cles.has(id) ? null : `${id} : pas de photo dans credits.json`,
+      avecCroupier.has(id) ? null : `${id} : pas de croupier dans CROUPIER_DEFAUT (croupier.js) — le repli accueillerait au nom du Boulevard`,
+      feutres.has(id) ? null : `${id} : pas de feutre #v-table[data-lieu="${id}"] dans style.css`,
+    ]).filter(Boolean);
+    if (trous.length) throw new Error("tables : une table du catalogue n'est pas complète.\n  " + trous.join("\n  "));
+    console.log(`tables : ${ids.length} au catalogue, chacune avec sa photo, son croupier et son feutre`);
   }
 }
