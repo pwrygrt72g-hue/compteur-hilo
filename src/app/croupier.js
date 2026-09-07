@@ -148,6 +148,50 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
      tranchait les dents en diagonale, ce qui se lisait comme un défaut de rendu. -->
 <path id="@m-brosse" d="M241 86c5-6 12-7 19-4 7-3 14-2 19 4-1 4-9 5-19 4-10 1-18 0-19-4z"/>
 <path id="@m-fine" d="M245 85c5-3 10-3 15-1 5-2 10-2 15 1-2 3-8 4-15 3-7 1-13 0-15-3z"/>
+<!-- Les BARBES. Règle dure, exactement l'inverse de celle des moustaches : leur bord HAUT
+     au menton reste SOUS y = 110 — la bouche la plus basse est « grand » (le rire), dont le
+     ventre descend à 108 et le trait de 3,4 jusqu'à 109,7. Sur les CÔTÉS la contrainte
+     s'inverse encore : la bouche y est haute (ses commissures sont à 93), donc la barbe
+     peut y remonter jusqu'à 96 sans jamais la croiser. C'est cette dissymétrie — basse au
+     menton, haute aux joues — qui donne à un croissant deux points le dessin d'une barbe
+     plutôt qu'un bavoir. Le menton du visage est à 114 : une barbe PEND, donc elle passe
+     dessous jusqu'à 122, sinon elle se lit comme une ombre sur la peau.
+     ⚠️ Elles se peignent APRÈS la bouche, comme la moustache : le poil pousse SUR la peau,
+     donc devant elle. Le pli du menton (opacité .18) passe dessous et disparaît — c'est
+     voulu, un menton barbu n'a pas de pli visible. -->
+<!-- Les VISAGES. Cinq croupiers qui partagent un seul ovale, ce sont cinq recoloriages
+     de la même personne — c'est ce que Léo a vu tout de suite. La moitié HAUTE ne bouge
+     jamais (M260 14 → 210 64) : les oreilles sont posées à x = 212 et 308 entre y = 58
+     et 76, les tempes ombrées juste dessous, la coiffe taillée sur ce crâne-là. Toute
+     l'identité se joue donc SOUS la ligne des oreilles — la mâchoire et le menton, qui
+     sont de toute façon ce qu'on lit d'un visage. Le menton va de 112 (rond) à 119
+     (long) : sept unités suffisent, parce que la LARGEUR à mi-joue change avec.
+     ⚠️ Le tracé existe en DEUX exemplaires — le fond peau et le calque de lumière
+     url(#@peauL) — et les deux doivent porter la MÊME forme, sinon la lumière déborde
+     du visage. C'est la seule raison pour laquelle il y a deux fentes et non une.
+     ⚠️ Le bord extérieur des barbes est calé sur l'ovale de référence : il descend à 119
+     (pleine) et 117 (collier), donc SOUS le menton le plus bas. Une barbe qui flotte au
+     lieu de coller se voit ; une barbe qui déborde de trois unités passe derrière le col. -->
+<g id="@b-rien"/>
+<!-- Le bord EXTÉRIEUR de chaque barbe est le contour du visage lui-même (210,64 → 222,98 →
+     260,114, et son miroir) : un poil pousse SUR la peau, pas à côté. La barbe pleine le
+     déborde de 4 unités sous le menton — elle PEND, c'est ce qui la distingue d'une ombre.
+     Le bord INTÉRIEUR est ce qui fait le modèle : haut sur les joues (y = 83) pour la
+     pleine, à dix unités du contour pour le collier, rien du tout pour le bouc.
+     🚨 La bouche n'est PAS un trou percé dans la barbe : c'est le bord INTÉRIEUR qui
+     plonge autour d'elle (96 sur les joues, 109 au milieu). Un second sous-chemin en
+     fill-rule evenodd a été essayé le 07/09 et donne l'inverse de ce qu'on croit — posé
+     là où la bande ne passe PAS (le milieu du visage, au-dessus du menton), il ne perce
+     rien, il REMPLIT : Marcel s'est retrouvé avec un bloc gris à la place de la bouche.
+     Un bord qui contourne ne peut pas se tromper de sens.
+     ⚠️ Ce bord descend à 109, soit une unité sous le rire (« grand » atteint 109,7) et
+     trois sous les bouches au repos. C'est la marge minimale : la remonter découvrirait
+     le menton, la baisser mangerait la lèvre. -->
+<path id="@b-pleine" d="M216 72C217 89 221 102 229 109C237 116 247 120 260 120C273 120 283 116 291 109C299 102 303 89 304 72C302 84 297 92 290 96C285 98 281 101 278 105C274 108 268 109 260 109C252 109 246 108 242 105C239 101 235 98 230 96C223 92 218 84 216 72Z"/>
+<path id="@b-collier" d="M214 70C215 88 219 101 227 109C235 116 246 120 260 120C274 120 285 116 293 109C301 101 305 88 306 70C304 84 300 95 293 102C285 110 274 114 260 114C246 114 235 110 227 102C220 95 216 84 214 70Z"/>
+<path id="@b-bouc" d="M243 102C249 108 253 110 260 110C267 110 271 108 277 102C277 110 274 117 268 120C264 123 256 123 252 120C246 117 243 110 243 102Z"/>
+<path id="@b-favoris" d="M212 54C212 74 216 89 224 100C227 104 230 107 233 109C227 107 222 101 218 93C214 84 212 70 212 54ZM308 54C308 74 304 89 296 100C293 104 290 107 287 109C293 107 298 101 302 93C306 84 308 70 308 54Z"/>
+<path id="@b-naissante" opacity=".34" d="M216 72C217 89 221 102 229 109C237 116 247 120 260 120C273 120 283 116 291 109C299 102 303 89 304 72C302 84 297 92 290 96C285 98 281 101 278 105C274 108 268 109 260 109C252 109 246 108 242 105C239 101 235 98 230 96C223 92 218 84 216 72Z"/>
 </defs>
 <g id="@crCorps" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".5" stroke-width="2" stroke-linejoin="round">
 <g id="@crBuste">
@@ -180,8 +224,8 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
      existe en DEUX exemplaires — le fond peau et le calque de lumière url(#@peauL) —
      et ils doivent rester identiques, sinon le modelé déborde du visage. -->
 <g transform="translate(260,112)"><g id="@crTete"><g transform="translate(-260,-112)">
- <path d="M260 14C228 14 210 36 210 64C210 78 214 90 222 98C230 108 244 114 260 114C276 114 290 108 298 98C306 90 310 78 310 64C310 36 292 14 260 14Z" fill="var(--cr-peau,#D6A579)"/>
- <path d="M260 14C228 14 210 36 210 64C210 78 214 90 222 98C230 108 244 114 260 114C276 114 290 108 298 98C306 90 310 78 310 64C310 36 292 14 260 14Z" fill="url(#@peauL)" stroke="none"/>
+ <path id="@crVisage" d="M260 14C228 14 210 36 210 64C210 78 214 90 222 98C230 108 244 114 260 114C276 114 290 108 298 98C306 90 310 78 310 64C310 36 292 14 260 14Z" fill="var(--cr-peau,#D6A579)"/>
+ <path id="@crVisageL" d="M260 14C228 14 210 36 210 64C210 78 214 90 222 98C230 108 244 114 260 114C276 114 290 108 298 98C306 90 310 78 310 64C310 36 292 14 260 14Z" fill="url(#@peauL)" stroke="none"/>
  <path d="M212 58c-7-2-12 3-11 10 1 7 6 10 11 8zM308 58c7-2 12 3 11 10-1 7-6 10-11 8z" fill="var(--cr-peau,#D6A579)"/>
  <path d="M206 66c0-2 2-4 4-3M314 66c0-2-2-4-4-3" stroke-opacity=".3"/>
  <path d="M218 70C217 82 221 93 229 101C224 101 220 93 217 83C216 77 216 73 218 70ZM302 70C303 82 299 93 291 101C296 101 300 93 303 83C304 77 304 73 302 70Z" fill="#3A1A0C" opacity=".1" stroke="none"/>
@@ -189,8 +233,8 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
  <ellipse class="cr-joue" id="@crJoueG" cx="232" cy="82" rx="9" ry="5.2" fill="#D9584F" stroke="none" opacity="0"/>
  <ellipse class="cr-joue" id="@crJoueD" cx="288" cy="82" rx="9" ry="5.2" fill="#D9584F" stroke="none" opacity="0"/>
  <!-- les yeux : pivot au centre, l'iris glisse, la paupière descend depuis le haut -->
- <g transform="translate(241,62)" stroke="none"><g id="@crOeilG" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisG"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle id="@crPupG" cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupG" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g>
- <g transform="translate(279,62)" stroke="none"><g id="@crOeilD" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisD"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle id="@crPupD" cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupD" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g>
+ <g transform="translate(241,62)" stroke="none"><g id="@crOrbG"><g id="@crOeilG" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisG"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle id="@crPupG" cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupG" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g></g>
+ <g transform="translate(279,62)" stroke="none"><g id="@crOrbD"><g id="@crOeilD" class="cr-oeil"><ellipse rx="11" ry="8" fill="#F8F4EB"/><g id="@crIrisD"><circle cx="1" r="5.4" fill="var(--cr-iris,#3A2A1C)"/><circle id="@crPupD" cx="1" r="2.6" fill="#0B0906"/><circle cx="-1" cy="-2" r="1.5" fill="#fff" opacity=".9"/></g><g transform="translate(0,-8.2)"><path id="@crPaupD" d="M-11.4 8.2a11.4 8.2 0 0 1 22.8 0z" fill="var(--cr-peau,#D6A579)" style="transform:scaleY(0)"/></g><ellipse rx="11" ry="8" fill="none" stroke="var(--cr-encre,#0A0D0C)" stroke-opacity=".3" stroke-width="1.3"/></g></g></g>
  <!-- sourcils DISSYMÉTRIQUES : deux miroirs exacts font « vecteur généré ».
       ⚠️ Le sourcil se TAILLE VERS LA TEMPE (extrémité extérieure fine, 3 unités ; racine
       épaisse, 6). Ce n'est pas de la coquetterie anatomique, c'est la règle qui l'empêche
@@ -228,6 +272,7 @@ const CR_RIG = `<svg class="cr-svg" viewBox="0 0 520 200" preserveAspectRatio="x
   <path id="@crDents" d="M-11-2h22l-2 4h-18z" fill="#F6F1E4" stroke="none" opacity="0"/>
  </g>
  <path d="M250 106c4 3 16 3 20 0" stroke-opacity=".18" stroke-width="1.8" stroke-linecap="round"/>
+ <use id="@crBarbe" href="#@b-rien" fill="var(--cr-barbe,var(--cr-cheveux,#191411))" stroke="none"/>
  <use id="@crMoustache" href="#@m-rien" fill="var(--cr-cheveux,#191411)" stroke="none"/>
 </g></g></g>
 </g>
@@ -270,7 +315,7 @@ const crSvg = prefixe => CR_RIG.replaceAll("@", prefixe);
    banque `bust` vide retombe sur `moqueur` : rien ne casse si on n'en écrit pas. ──── */
 const CROUPIERS = {
   vince: { nom: "Vince", lieu: "Las Vegas Strip", trait: "Gominé, gouailleur. Parle beaucoup, pardonne peu.",
-    coiffe: "c-plaque", orne: "o-noeud", lunettes: "l-rien", moustache: "m-rien", acc: "a-rien", sourcils: 1,
+    coiffe: "c-plaque", visage: "v-rond", orne: "o-noeud", lunettes: "l-rien", moustache: "m-rien", barbe: "b-bouc", acc: "a-rien", sourcils: 1, oeil: [1, .94],
     p: { "--cr-peau": "#D8A57C", "--cr-cheveux": "#14100E", "--cr-veste": "#171C21", "--cr-manche": "#171C21", "--cr-gilet": "#4A2028",
       "--cr-chemise": "#F2EDE1", "--cr-poignet": "#F2EDE1", "--cr-orne": "#9E3A31", "--cr-iris": "#3A2A1C", "--cr-pochette": "#9E3A31" },
     piquant: .95, colere: .8, vigilance: 1, repos: "content",
@@ -299,8 +344,8 @@ const CROUPIERS = {
   // des joues près : quatre émotions sur huit perdues. Le brun sombre ci-dessous garde son
   // âge (il reste plus clair que le noir des autres) sans se confondre avec sa chevelure.
   marcel: { nom: "Marcel", lieu: "Vieux Reno", trait: "Vieux briscard, moustache en brosse. Lent, exact, et il a tout vu.",
-    coiffe: "c-degarni", orne: "o-noeud", lunettes: "l-rien", moustache: "m-brosse", acc: "a-chaine", sourcils: 1.35,
-    p: { "--cr-peau": "#E2B896", "--cr-cheveux": "#A9A196", "--cr-sourcil": "#5A4C3E", "--cr-veste": "#3A2E26", "--cr-manche": "#3A2E26", "--cr-gilet": "#6B5A44",
+    coiffe: "c-degarni", visage: "v-carre", orne: "o-noeud", lunettes: "l-rien", moustache: "m-brosse", barbe: "b-pleine", acc: "a-chaine", sourcils: 1.35, oeil: [1, .8],
+    p: { "--cr-peau": "#E2B896", "--cr-cheveux": "#A9A196", "--cr-sourcil": "#5A4C3E", "--cr-barbe": "#857C71", "--cr-veste": "#3A2E26", "--cr-manche": "#3A2E26", "--cr-gilet": "#6B5A44",
       "--cr-chemise": "#F3EEE2", "--cr-poignet": "#F3EEE2", "--cr-orne": "#6E4A22", "--cr-iris": "#4A6070", "--cr-pochette": "#D9B45B" },
     piquant: .85, colere: .9, vigilance: 2,
     dit: {
@@ -319,7 +364,7 @@ const CROUPIERS = {
       egalite: ["Égalité. Ni vu ni connu.", "On ne bouge pas."],
     } },
   lin: { nom: "Lin", lieu: "Cotai, Macao", trait: "Impassible. Puis cinglante, quand vous perdez trop.",
-    coiffe: "c-chignon", orne: "o-mao", lunettes: "l-rien", moustache: "m-rien", acc: "a-rien", sourcils: .85,
+    coiffe: "c-chignon", visage: "v-long", orne: "o-mao", lunettes: "l-rien", moustache: "m-rien", barbe: "b-rien", acc: "a-rien", sourcils: .85, oeil: [.98, .84],
     p: { "--cr-peau": "#E6C29B", "--cr-cheveux": "#0F0C0B", "--cr-veste": "#4A0F0D", "--cr-manche": "#4A0F0D", "--cr-gilet": "#7A1410",
       "--cr-chemise": "#EFE7D6", "--cr-poignet": "#EFE7D6", "--cr-orne": "#F2C15A", "--cr-or": "#F2C15A", "--cr-iris": "#241A12", "--cr-pochette": "#F2C15A" },
     piquant: .45, colere: .6, vigilance: 1,
@@ -339,7 +384,7 @@ const CROUPIERS = {
       egalite: ["Égalité.", "Rien ne bouge."],
     } },
   ada: { nom: "Ada", lieu: "Monte-Carlo", trait: "Lunettes carrées, carré strict. Glaciale, précise, jamais un mot de trop.",
-    coiffe: "c-carre", orne: "o-lavalliere", lunettes: "l-carrees", moustache: "m-rien", acc: "a-rien", sourcils: .9,
+    coiffe: "c-carre", visage: "v-ovale", orne: "o-lavalliere", lunettes: "l-carrees", moustache: "m-rien", barbe: "b-rien", acc: "a-rien", sourcils: .9, oeil: [1.05, 1.06],
     p: { "--cr-peau": "#EBD2BA", "--cr-cheveux": "#3A2418", "--cr-veste": "#1B2A4E", "--cr-manche": "#1B2A4E", "--cr-gilet": "#2A4070",
       "--cr-chemise": "#FBF8F0", "--cr-poignet": "#FBF8F0", "--cr-orne": "#D4B46A", "--cr-iris": "#38506B", "--cr-monture": "#20201E", "--cr-pochette": "#FBF8F0" },
     piquant: .6, colere: .7, vigilance: 2,
@@ -364,8 +409,8 @@ const CROUPIERS = {
   // était le seul des cinq à ne pas tenir la règle des 4 unités. À 1,45 il reste, avec
   // Marcel, le sourcil le plus épais de la table, et ses huit émotions passent.
   chef: { nom: "Le Chef", lieu: "Salon privé", trait: "Chef de table, détecteur de triche. Il ne regarde pas vos cartes : il regarde vos mises.",
-    coiffe: "c-courts", orne: "o-cravate", lunettes: "l-rien", moustache: "m-fine", acc: "a-epingle", sourcils: 1.45,
-    p: { "--cr-peau": "#CFA07A", "--cr-cheveux": "#26221F", "--cr-veste": "#0F1418", "--cr-manche": "#0F1418", "--cr-gilet": "#1C242B",
+    coiffe: "c-courts", visage: "v-anguleux", orne: "o-cravate", lunettes: "l-rien", moustache: "m-fine", barbe: "b-collier", acc: "a-epingle", sourcils: 1.45, oeil: [.93, .8],
+    p: { "--cr-peau": "#A9724A", "--cr-cheveux": "#26221F", "--cr-veste": "#0F1418", "--cr-manche": "#0F1418", "--cr-gilet": "#1C242B",
       "--cr-chemise": "#FBF8F0", "--cr-poignet": "#FBF8F0", "--cr-orne": "#141A20", "--cr-iris": "#2A3A46", "--cr-pochette": "#C9A65A" },
     piquant: .8, colere: .9, vigilance: 3, repos: "concentre",
     dit: {
@@ -423,11 +468,30 @@ const crMinuteur = (f, ms) => setTimeout(f, ms);
 // ⚠️ --cr-sourcil est OPTIONNELLE et le reste : `crLook` pose "" quand un croupier ne la
 // donne pas, ce qui RETIRE la propriété, et le fill retombe alors sur --cr-cheveux. Elle
 // n'existe que pour les têtes dont les cheveux ne contrastent plus avec la peau — Marcel.
-const CR_VARS = ["--cr-peau", "--cr-cheveux", "--cr-sourcil", "--cr-veste", "--cr-manche", "--cr-gilet", "--cr-chemise", "--cr-poignet", "--cr-orne", "--cr-iris", "--cr-monture", "--cr-pochette", "--cr-or"];
+const VISAGES = {
+  "v-ovale": "M260 14C228 14 210 36 210 64C210 78 214 90 222 98C230 108 244 114 260 114C276 114 290 108 298 98C306 90 310 78 310 64C310 36 292 14 260 14Z",
+  "v-rond": "M260 14C228 14 210 36 210 64C210 81 216 94 226 102C234 108 246 112 260 112C274 112 286 108 294 102C304 94 310 81 310 64C310 36 292 14 260 14Z",
+  "v-carre": "M260 14C228 14 210 36 210 64C210 80 211 95 219 105C227 113 242 117 260 117C278 117 293 113 301 105C309 95 310 80 310 64C310 36 292 14 260 14Z",
+  "v-long": "M260 14C228 14 210 36 210 64C210 78 215 93 225 103C233 113 247 119 260 119C273 119 287 113 295 103C305 93 310 78 310 64C310 36 292 14 260 14Z",
+  "v-anguleux": "M260 14C228 14 210 36 210 64C210 80 212 96 220 106C229 114 243 118 260 118C277 118 291 114 300 106C308 96 310 80 310 64C310 36 292 14 260 14Z",
+};
+const CR_VARS = ["--cr-peau", "--cr-cheveux", "--cr-sourcil", "--cr-barbe", "--cr-veste", "--cr-manche", "--cr-gilet", "--cr-chemise", "--cr-poignet", "--cr-orne", "--cr-iris", "--cr-monture", "--cr-pochette", "--cr-or"];
 function crLook(svg, c, prefixe) {
   for (const k of CR_VARS) svg.style.setProperty(k, c.p[k] || (k === "--cr-monture" ? "#3A2A1C" : k === "--cr-or" ? "#D9B45B" : ""));
   const u = (id, href) => { const e = svg.querySelector("#" + prefixe + id); if (e) e.setAttribute("href", "#" + prefixe + href); };
   u("crCoiffe", c.coiffe); u("crOrne", c.orne); u("crLunettes", c.lunettes); u("crMoustache", c.moustache); u("crAcc", c.acc || "a-rien");
+  u("crBarbe", c.barbe || "b-rien");
+  // Le VISAGE s'écrit, il ne se référence pas : un <use> aurait été plus court, mais son
+  // instance n'hérite pas du fill posé sur la fente — mesuré le 07/09, le tracé changeait
+  // de FORME et gardait la couleur de repli, si bien que les cinq peaux redevenaient une
+  // seule. Deux setAttribute lus dans la même table ne peuvent pas diverger non plus.
+  const dv = VISAGES[c.visage] || VISAGES["v-ovale"];
+  ["crVisage", "crVisageL"].forEach(k => { const e = svg.querySelector("#" + prefixe + k); if (e) e.setAttribute("d", dv); });
+  // La FORME DES YEUX, posée sur l'orbite et pas sur l'œil : le clignement anime
+  // #crOeil* en scaleY et repartirait de 1, ce qui ferait sauter une paupière tombante
+  // à chaque battement. Un cran au-dessus, l'échelle tient et le clignement s'y compose.
+  const oe = c.oeil || [1, 1];
+  ["crOrbG", "crOrbD"].forEach(k => { const e = svg.querySelector("#" + prefixe + k); if (e) e.style.transform = `scale(${oe[0]},${oe[1]})`; });
   // L'épaisseur des sourcils fait la moitié d'un caractère : posée avec la pose
   // neutre, par le même chemin que les émotions (crVisage la conserve).
   ["crSourcilG", "crSourcilD"].forEach(k => { const e = svg.querySelector("#" + prefixe + k); if (e) e.style.transform = `scaleY(${c.sourcils || 1})`; });
