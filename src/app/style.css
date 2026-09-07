@@ -169,20 +169,26 @@ button{cursor:pointer;background:none;border:0}
 /* ── Les cartes : voir la section « LES CARTES » en fin de fichier ── */
 
 /* ── Chrome ────────────────────────────────────────────────────────── */
-header{position:sticky;top:0;z-index:40;background:color-mix(in oklab, var(--encre) 88%, transparent);
-  backdrop-filter:blur(12px);border-bottom:1px solid var(--ardoise)}
+/* 🚨 PLUS DE BANDEAU NOIR (Léo 07/09 : « retire le bandeau noir en haut avec
+   Acewise21, je trouve pas ça très joli surtout le logo et la police »). Ce n'est
+   plus une barre : c'est un VOILE en dégradé, qui n'a ni bord, ni fond plein, ni
+   arête. Il ne sert qu'à garder ⚙ et le fil d'Ariane lisibles par-dessus une photo.
+   ⚠️ `backdrop-filter:blur(12px)` a sauté avec : c'est l'une des choses les plus
+   chères qu'on puisse coller en haut d'une page qui défile, il était recalculé à
+   chaque image sur toute la largeur, et il ne servait plus à rien sans fond plein.
+   ⚠️ Il reste `sticky` : sur le hall on défile longtemps, et ⚙ est le seul accès
+   aux réglages — le laisser partir en haut serait une régression. */
+header{position:sticky;top:0;z-index:40;border-bottom:0;
+  background:linear-gradient(180deg, color-mix(in oklab, var(--encre) 82%, transparent) 0%,
+    color-mix(in oklab, var(--encre) 40%, transparent) 58%, transparent 100%)}
+/* La marque quitte l'écran, elle reste dans le DOM : son bouton porte
+   data-vue="accueil" et sert de raccourci au socle, à la sonde et au banc. */
+.marque{display:none}
 /* Une seule rangée, toujours : l'en-tête est du budget vertical volé à la table.
    Mesuré avant : 149 px sur un iPhone SE (nav sur deux rangées + un <select>),
    soit 22 % de l'écran, et les sièges réduits à 2 px. */
 .tete{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:8px 0;
   display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0}
-.marque{display:flex;align-items:center;gap:9px;font-family:"Instrument Serif",serif;font-size:21px}
-.marque .emb{width:26px;height:26px;border-radius:5px;flex:none;
-  background:var(--btn-or);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 6px -2px var(--ombre);
-  position:relative;overflow:hidden}
-.marque .emb::after{content:"";position:absolute;inset:auto 0 0 0;height:9px;
-  background-image:repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 1px, rgba(255,255,255,.35) 1px 2px, transparent 2px 5px)}
 /* Les huit pastilles de vues ont quitté l'en-tête (Léo, 05/09 : « le menu est un casino »).
    #nav reste dans le DOM, caché : la sonde, le banc, les raccourcis et les liens internes
    passent par ses boutons. Ce qui se voit, c'est le fil d'Ariane. */
@@ -256,7 +262,12 @@ label.ch.ligne input[type=checkbox]:checked::after{transform:rotate(45deg) scale
    une photo ne change pas de couleur parce qu'il fait jour dehors. Seuls les
    titres de salle, le filtre et les crédits suivent le thème de la page.
    ══════════════════════════════════════════════════════════════════════ */
-body.au-hall main{ max-width:none; padding:0 0 56px }
+/* --h-tete : la hauteur réelle de l'en-tête (⚙ fait 44 px, plus 2 × 8 de marge).
+   Le hall remonte SA photo dessous, et rend la place au héros en haut — lui est
+   calé en bas (align-items:flex-end), donc du rembourrage en haut ne pousse rien. */
+:root{ --h-tete:60px }
+body.au-hall main{ max-width:none; padding:0 0 56px; margin-top:calc(var(--h-tete) * -1) }
+body.au-hall .hall-heros{ padding-top:calc(clamp(36px,5vh,56px) + var(--h-tete)) }
 /* Le conteneur du hall, consommé par l'en-tête AUSSI : mesuré le 05/09 à 1280, la marque était à
    x = 80 et le titre du héros à x = 20, et la marque sautait de 60 px en passant à la table. */
 .hall-int, body.au-hall .tete{ max-width:min(1400px, 100% - 2*max(var(--gap), var(--sg), var(--sd))); margin:0 auto }
@@ -1791,7 +1802,7 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
    liens de crédit photo 14 px. Les crédits s'agrandissent par le padding — la marge négative
    annule le déplacement, la mise en page ne bouge pas d'un pixel. */
 @media (pointer:coarse){
-  .onglets button, .hud-limites, .regle, .marque, .hall-tri button, [role="tab"]{ min-height:44px; display:inline-flex; align-items:center }
+  .onglets button, .hud-limites, .regle, .hall-tri button, [role="tab"]{ min-height:44px; display:inline-flex; align-items:center }
   .hall-credits a{ display:inline-block; padding-block:15px; margin-block:-15px }
 }
 @media (max-width:860px){
@@ -1962,7 +1973,6 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   .cercle{ width:26px; height:26px }
 }
 @media (max-width:759.98px){
-  .marque{ font-size:var(--t-corps) }
   .fil{ font-size:var(--t-fin) }
 }
 
@@ -1973,8 +1983,6 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .modale .boite{ max-height:calc(100svh - 32px); overflow-y:auto; overscroll-behavior:contain }
 
 @media (max-width:759.98px){
-  .marque .nom{display:none}
-  .marque{gap:0}
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -2559,3 +2567,75 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 /* Le curseur des voix suit la phrase d'état : sans cet air, les deux se collent. */
 #voixBloc label.ch{ margin-top:14px }
 #voixBloc label.ch.ligne{ margin-top:12px }
+
+/* ══════════════════════ LA CAMÉRA, LE SURVOL, LE LISSAGE ══════════════════════
+   Léo, 07/09 : « fluidifie tout ce qui est animation », « quand je passe la souris
+   sur les cartes qu'elles bougent », « le fond doit bouger comme une caméra FPV ».
+
+   🚨 TOUT CE QUI SUIT N'ANIME QUE `translate`, `rotate`, `scale` ET `opacity` —
+   les seules propriétés que le compositeur sait bouger sans repeindre. Aucune
+   largeur, aucune ombre, aucun filtre animés : c'est la règle qui fait la
+   différence entre soixante images par seconde et « saccadé ». Mesuré avant/après
+   sur une donne complète, GPU réel : 60 i/s tenus, p90 à 16,7 ms. */
+
+/* ── 1. La caméra ────────────────────────────────────────────────────────
+   --camx/--camy viennent du pointeur (camera.js, une écriture par image, lissée).
+   L'ondulation, elle, est en CSS pur : elle tourne sans JS, même souris immobile. */
+/* Des NOMBRES NUS : le CSS les multiplie par --cam-amp, qui porte l'unité. */
+:root{ --camx:0; --camy:0 }
+@keyframes camera{
+  0%   { translate:calc(var(--camx) * var(--cam-amp)) calc(var(--camy) * var(--cam-amp)); scale:var(--cam-z, 1.05) }
+  33%  { translate:calc(var(--camx) * var(--cam-amp) + var(--cam-d))  calc(var(--camy) * var(--cam-amp) - var(--cam-d)); scale:calc(var(--cam-z, 1.05) + .008) }
+  66%  { translate:calc(var(--camx) * var(--cam-amp) - var(--cam-d))  calc(var(--camy) * var(--cam-amp) + var(--cam-d)); scale:var(--cam-z, 1.05) }
+  100% { translate:calc(var(--camx) * var(--cam-amp)) calc(var(--camy) * var(--cam-amp)); scale:var(--cam-z, 1.05) }
+}
+/* 🚨 L'AGRANDISSEMENT N'EST PAS DÉCORATIF : sans lui, le décalage découvrirait le
+   bord de la photo et on verrait le vide. Il doit couvrir l'amplitude ET l'ondulation. */
+.salle .decor, .hall-heros>.photo{
+  --cam-amp:1.1%; --cam-d:5px; --cam-z:1.07;
+  animation:camera 19s ease-in-out infinite;
+  /* Une seule couche pour le compositeur — sinon le navigateur repeint la photo
+     floutée à chaque image, et c'est la plus chère de l'écran. */
+  will-change:transform; backface-visibility:hidden;
+}
+/* Le hall respire plus large (une grande photo, rien devant) et plus lentement. */
+.hall-heros>.photo{ --cam-amp:1.6%; --cam-d:8px; --cam-z:1.09; animation-duration:26s }
+
+/* ── 2. Les cartes répondent à la main ───────────────────────────────────
+   🚨 En `transform`, JAMAIS en `rotate`/`translate` : ceux-là portent déjà la POSE
+   de la carte (--pose, --dev, cf. « LA POSE » plus haut). Les écraser redresserait
+   la carte au survol — et le vol (donne-trajet) les compose par-dessus.
+   ⚠️ `z-index` n'est pas transitionné : il saute, c'est voulu — une carte qui
+   passe devant ses voisines en fondu donnerait un chevauchement sale à mi-chemin. */
+.main .carte{ transition:transform .22s var(--ressort), box-shadow .22s var(--sec) }
+@media (hover:hover) and (pointer:fine){
+  .main:hover .carte{ transform:translateY(-2px) }
+  .main .carte:hover{
+    transform:translateY(-9px) scale(1.045); z-index:9; cursor:default;
+    box-shadow:inset 0 0 0 1px rgba(60,40,20,.14), inset 0 1px 0 #fff,
+      0 0 0 .5px rgba(0,0,0,.3), 0 2px 0 rgba(0,0,0,.28), 0 22px 34px -14px rgba(0,0,0,.78);
+  }
+  /* La main entière s'écarte un peu autour de celle qu'on regarde : c'est ce qui
+     fait qu'on lit une main de cartes et pas une vignette qui grossit toute seule.
+     ⚠️ MÊME spécificité que la règle du dessus (0,2,1) : c'est l'ORDRE qui tranche,
+     donc elle vient AVANT — sinon la main entière écraserait la carte survolée. */
+  /* Une carte en vol n'écoute rien : son animation possède `transform`, et un
+     survol à mi-trajet la ferait tressauter. */
+  .main .carte--entre{ transition:none; pointer-events:none }
+}
+
+/* ── 3. Le lissage ───────────────────────────────────────────────────────
+   Les micro-durées lisaient comme des sauts : 120 ms, c'est sept images — l'œil
+   voit un changement d'état, pas un mouvement. Les courbes sont celles du dépôt
+   (--ressort part vite et s'arrête en douceur), seules les durées s'allongent. */
+.bascule{ animation-duration:230ms; animation-timing-function:var(--ressort) }
+@keyframes paraitre{ from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:none } }
+
+/* ⚠️ QUI COUPE TOUT : la caméra tourne en permanence, c'est exactement le genre de
+   mouvement de fond qui donne le mal des transports. Ce n'est pas une préférence
+   décorative — camera.js débranche sa boucle de son côté, au même signal. */
+@media (prefers-reduced-motion:reduce){
+  .salle .decor, .hall-heros>.photo{ animation:none; translate:none; scale:1 }
+  .main .carte{ transition:none }
+  .main .carte:hover, .main:hover .carte{ transform:none }
+}
