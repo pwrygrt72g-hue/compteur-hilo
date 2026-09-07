@@ -92,6 +92,16 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
     ok("quête : « une autre fois » la referme", q("#quete").hidden, "elle reste à l'écran");
     ok("quête : refermée, elle ne revient pas toute seule", window.ouvrirQuete() === false, "elle se rouvrirait");
   }
+  // ── LE COMPTEUR DE VISITES : livré ÉTEINT, et la phrase qui le décrit avec lui.
+  // 🚨 Ce contrôle fige l'ÉTAT DE LIVRAISON. Le jour où Léo colle son code GoatCounter,
+  // il DOIT devenir rouge : c'est le seul rappel que la page « Soutenir » ne dit plus la
+  // vérité tant que la phrase reste cachée — les deux se règlent au même endroit.
+  ok("compteur : rien n'est chargé tant qu'aucun code n'est renseigné",
+     !q("script[data-goatcounter]") && !qa('script[src*="goatcounter"], script[src*="gc.zgo.at"]').length,
+     "un compteur est chargé alors que le code est vide");
+  ok("compteur : la phrase qui l'annonce reste cachée tant qu'il ne tourne pas",
+     !!q("#donsCompteur") && q("#donsCompteur").hidden,
+     "la page annonce une collecte qui n'a pas lieu");
   ok("caisse : rien ne vient de l'extérieur",
      qa("#v-dons img[src], #v-dons script, #v-dons iframe").filter(e => !/^data:|^static\//.test(e.getAttribute("src") || "")).length === 0,
      "une ressource externe dans la caisse");
