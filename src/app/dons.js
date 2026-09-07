@@ -1,5 +1,5 @@
 /* ══════════════════════ DONS — la caisse ══════════════════════
-   Une page qui explique pourquoi Acewise21 est gratuit, ce qu'il coûte
+   Une page qui explique pourquoi LasVegas21 est gratuit, ce qu'il coûte
    vraiment, et à quoi sert un don. Elle ne compte rien, ne mesure rien,
    n'envoie rien : tout le fichier tient dans les vingt lignes ci-dessous.
 

@@ -186,7 +186,7 @@ function rendreCredits() {
   c.innerHTML = `<span class="grave">Photos</span><p>` + L.map(x =>
     `<span class="credit"><a href="${echap(x.source)}" target="_blank" rel="noopener" title="${echap(x.titre)}">${echap(x.auteur)}</a>`
     + ` <a class="lic" href="${echap(x.licence_url)}" target="_blank" rel="noopener">${echap(x.licence)}</a></span>`).join(" · ")
-    + `</p><p>Recadrées, redimensionnées et encodées en WebP ; les originaux sont chez leurs auteurs. Chaque photo modifiée reste sous la licence de son original — les CC BY-SA sont donc partagées à l'identique. Le reste de l'application ne l'est pas : elle les rassemble, elle n'en dérive pas. Acewise21 n'est affilié à aucun casino. Les noms de tables sont fictifs ; les photos montrent des lieux réels, sous licence libre.</p>`;
+    + `</p><p>Recadrées, redimensionnées et encodées en WebP ; les originaux sont chez leurs auteurs. Chaque photo modifiée reste sous la licence de son original — les CC BY-SA sont donc partagées à l'identique. Le reste de l'application ne l'est pas : elle les rassemble, elle n'en dérive pas. LasVegas21 n'est affilié à aucun casino. Les noms de tables sont fictifs ; les photos montrent des lieux réels, sous licence libre.</p>`;
 }
 $("bHallReglages").onclick = () => $("bReglages").click();
 
