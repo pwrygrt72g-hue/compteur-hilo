@@ -110,7 +110,13 @@ const SONDE = `(() => {
   // de la case, pour retrouver le champ. Une case nue, hors label, reste mesurée telle quelle.
   const cible = e => (e.matches("input[type=checkbox],input[type=radio]") && e.closest("label")) || e;
   const petits = [...document.querySelectorAll("button:not([hidden]), input, select, summary")]
-    .filter(e => { const r = cible(e).getBoundingClientRect(); return r.width > 0 && (r.height < 44 || r.width < 24); })
+    // 🚨 UNE DEMI-DÉCIMALE DE TOLÉRANCE, sinon le banc crie au loup. Un élément qui
+    // mesure EXACTEMENT 44 (un <summary> des Exercices) rend tantôt 44, tantôt 43,99
+    // selon l'arrondi sous-pixel du moteur : mesuré le 07/09, deux passages d'affilée sur
+    // un arbre INCHANGÉ, l'un vert et l'autre rouge. C'est le même défaut que la bascule
+    // à 33,5 px des boutons, corrigée deux jours plus tôt — un banc qui échoue au hasard
+    // finit par n'être plus lu, et c'est alors qu'il rate un vrai défaut.
+    .filter(e => { const r = cible(e).getBoundingClientRect(); return r.width > 0 && (r.height < 43.5 || r.width < 23.5); })
     // 🚨 UNE DÉCIMALE SUR LA HAUTEUR, et ce n'est pas de la coquetterie. Les boutons
     // d'« Exercices » mesurent EXACTEMENT 33,500 px (mesuré quatre fois de suite, police
     // Archivo peinte, valeur identique au millième). Un arrondi de 33,5 rend 34 ou 33 selon

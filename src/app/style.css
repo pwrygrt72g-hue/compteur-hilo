@@ -1046,8 +1046,11 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    finie, elle est toujours la mienne). */
 #v-table:is([data-phase="jeu"],[data-phase="reglement"]) .siege:not(.toi):not(.actif){ filter:brightness(.88) saturate(.92) }
 /* Quand c'est à toi de jouer — et jusqu'au verdict : un liseré d'or sur TES cartes. */
+/* ⚠️ Cette règle est en (1,4,0) : elle gagnera TOUJOURS contre `.main .carte:hover` (0,3,0).
+   Sa dernière couche lit donc var(--ombre-portee) — c'est le seul moyen que tes cartes se
+   décollent au survol comme les autres SANS perdre leur liseré d'or au passage. */
 #v-table:is([data-phase="jeu"],[data-phase="reglement"]) .siege.toi .carte{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
-  0 0 0 2px var(--or), 0 0 18px -2px var(--or), 0 6px 10px -4px rgba(0,0,0,.5) }
+  0 0 0 2px var(--or), 0 0 18px -2px var(--or), var(--ombre-portee) }
 /* Mesuré le 05/09 : un grand rectangle doré PLUS un pointillé autour des cartes = deux
    cadres imbriqués, penchés par --tilt et coupés par le rail. Le siège qui joue, c'est
    son cercle qui s'allume et un plafonnier sur sa main. */
@@ -1807,8 +1810,14 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
   background:linear-gradient(var(--tang,180deg), rgba(255,246,226,.62), rgba(255,246,226,.17) 46%, rgba(255,246,226,0) 88%);
   opacity:0; animation:donne-trainee var(--don,150ms) linear var(--tdelai,0ms) both;
 }
-/* Une carte qui change de largeur (l'éventail se resserre) glisse, elle ne saute pas. */
-.carte{ transition:width .25s var(--sec) }
+/* Une carte qui change de largeur (l'éventail se resserre) glisse, elle ne saute pas.
+   🚨 La valeur vit dans --tr-largeur parce que `transition` est une propriété RACCOURCIE :
+   toute règle plus spécifique qui redéclare `transition` REMPLACE celle-ci au lieu de s'y
+   ajouter. C'est exactement ce qui est arrivé le 07/09 — `.main .carte{ transition:transform,
+   box-shadow }` a effacé la largeur pour toutes les cartes d'une main, et le resserrement de
+   l'éventail s'est remis à sauter, sans que rien ne le signale. Toute règle qui redéclare
+   `transition` sur une carte DOIT donc reprendre var(--tr-largeur) en tête de sa liste. */
+.carte{ --tr-largeur:width .25s var(--sec); transition:var(--tr-largeur) }
 /* LA POSE. Deux cartes d'une même main n'étaient jamais de travers : le tapis avait l'air
    imprimé. ±1,6° et ±2 px, tirés de la carte elle-même (poseCarte, table.js).
    🚨 C'est le REPOS qui la porte, pas le vol : écrite seulement dans .carte--entre, elle
@@ -2026,7 +2035,17 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
    en ligne par dimensionnerCartes() sur la table. Rien ici ne déclare --w
    sur .carte lui-même : ce serait couper l'héritage.
    ══════════════════════════════════════════════════════════════════════ */
+/* --ombre-portee : LA seule ombre portée d'une carte, déclarée ici et reprise par les trois
+   règles qui peignent une carte (le carton, le dos, ton liseré d'or). Une PROPRIÉTÉ
+   PERSONNALISÉE traverse la spécificité : le survol (.main .carte:hover, 0,3,0) n'a plus qu'à
+   la redéfinir pour que la règle de TES cartes (#v-table … .siege.toi .carte, 1,4,0) se lève
+   avec les autres, sans !important et sans réordonner.
+   🚨 C'est ce qui manquait le 07/09 : le survol redéclarait `box-shadow` EN ENTIER, donc il
+   perdait la cascade sur tes propres cartes ; et pour les autres il passait de 8 couches à 5,
+   deux listes de longueurs différentes ne s'interpolant pas, l'ombre SAUTAIT au lieu de suivre
+   son `transition:box-shadow .22s`. Une seule couche change désormais, des deux côtés. */
 .carte{
+  --ombre-portee:0 6px 10px -4px rgba(0,0,0,.5);
   width:var(--w,104px); aspect-ratio:1/1.4; border-radius:calc(var(--w,104px) * .07);
   position:relative; flex:none; user-select:none; color:#141110;
   -webkit-font-smoothing:antialiased;   /* le texte reste en niveaux de gris : rien ne saute pendant une transformation */
@@ -2039,9 +2058,18 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
     repeating-linear-gradient(0deg, rgba(120,100,70,.028) 0 1px, transparent 1px 3px),
     repeating-linear-gradient(90deg, rgba(120,100,70,.022) 0 1px, transparent 1px 3px),
     linear-gradient(165deg, #FFFFFF 0%, #FBF8F0 42%, #EFE7D4 100%);
+  /* Le chanfrein : le bord n'est pas UN filet d'un demi-pixel, c'est une TRANCHE — claire en
+     haut où la lumière tombe, sombre en bas. Deux ombres internes de plus, c'est ce qui la
+     décolle du feutre sans lui ajouter d'ombre portée.
+     🚨 Il vivait dans « LA MATIÈRE », tout en bas du fichier, dans un SECOND `.carte, .carte
+     .face.av{}` — à spécificité ÉGALE mais plus bas, il écrasait donc `.carte--pivot{
+     box-shadow:none }` écrit vingt lignes plus loin, et la carte cachée du croupier reprenait
+     une ombre qu'on lui avait explicitement retirée. Sa place est ICI, avant les exceptions. */
   box-shadow:
-    inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
-    0 0 0 .5px rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.28), 0 6px 10px -4px rgba(0,0,0,.5);
+    inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(90,66,32,.16),
+    inset 1px 0 0 rgba(255,255,255,.5),  inset -1px 0 0 rgba(90,66,32,.1),
+    inset 0 0 0 1px rgba(60,40,20,.12),
+    0 0 0 .5px rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.28), var(--ombre-portee);
 }
 .carte.rouge{ color:#A8281C }
 .carte .face-svg{ position:absolute; inset:0; width:100%; height:100%; display:block; fill:currentColor; overflow:visible }
@@ -2065,7 +2093,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
     inset 0 0 0 calc(var(--w,84px) * .06) #F6F2E8,
     inset 0 0 0 calc(var(--w,84px) * .06 + 1px) rgba(0,0,0,.4),
     inset 0 0 calc(var(--w,84px) * .3) rgba(0,0,0,.35),
-    0 0 0 .5px rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.28), 0 6px 10px -4px rgba(0,0,0,.5);
+    0 0 0 .5px rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.28), var(--ombre-portee);
 }
 .carte .face.ar::after{
   content:""; position:absolute; left:50%; top:50%; width:44%; height:30%; border-radius:50%;
@@ -2641,13 +2669,23 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
    la carte au survol — et le vol (donne-trajet) les compose par-dessus.
    ⚠️ `z-index` n'est pas transitionné : il saute, c'est voulu — une carte qui
    passe devant ses voisines en fondu donnerait un chevauchement sale à mi-chemin. */
-.main .carte{ transition:transform .22s var(--ressort), box-shadow .22s var(--sec) }
+.main .carte{ transition:var(--tr-largeur), transform .22s var(--ressort), box-shadow .22s var(--sec) }
+/* 🚨 HORS du @media (hover:hover) qui suit, et c'est tout l'intérêt : `.carte--entre{
+   transition:none }` (0,1,0, plus haut) PERD contre `.main .carte` (0,2,0). Sans cette ligne,
+   une carte EN VOL retrouverait sa transition de largeur sur tout appareil sans pointeur fin —
+   une propriété de MISE EN PAGE recalculée à chaque image sur l'objet le plus rapide de
+   l'écran, précisément ce que la règle du vol interdit. */
+.main .carte--entre{ transition:none }
 @media (hover:hover) and (pointer:fine){
   .main:hover .carte{ transform:translateY(-2px) }
   .main .carte:hover{
     transform:translateY(-9px) scale(1.045); z-index:9; cursor:default;
-    box-shadow:inset 0 0 0 1px rgba(60,40,20,.14), inset 0 1px 0 #fff,
-      0 0 0 .5px rgba(0,0,0,.3), 0 2px 0 rgba(0,0,0,.28), 0 22px 34px -14px rgba(0,0,0,.78);
+    /* On ne redéclare surtout PAS `box-shadow` : on ne touche QUE la couche qui bouge. C'est
+       ce qui laisse en place le liseré d'or de tes cartes (sa règle est en 1,4,0, elle
+       gagnerait de toute façon) et ce qui garde les deux listes de même longueur — donc une
+       ombre qui s'anime au lieu de sauter. Les micro-écarts d'insets d'avant (.14 au lieu de
+       .12, .3 au lieu de .35) tombent : invisibles, et c'était deux définitions du même bord. */
+    --ombre-portee:0 22px 34px -14px rgba(0,0,0,.78);
   }
   /* La main entière s'écarte un peu autour de celle qu'on regarde : c'est ce qui
      fait qu'on lit une main de cartes et pas une vignette qui grossit toute seule.
@@ -2655,7 +2693,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
      donc elle vient AVANT — sinon la main entière écraserait la carte survolée. */
   /* Une carte en vol n'écoute rien : son animation possède `transform`, et un
      survol à mi-trajet la ferait tressauter. */
-  .main .carte--entre{ transition:none; pointer-events:none }
+  .main .carte--entre{ pointer-events:none }
 }
 
 /* ── 3. Le lissage ───────────────────────────────────────────────────────
@@ -2704,17 +2742,13 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
     radial-gradient(150% 120% at 50% 55%, transparent 42%, var(--feutre-ombre) 100%);
 }
 
-/* ── Les cartes : un chanfrein, pas un trait ─────────────────────────────
-   Le bord était UN filet sombre d'un demi-pixel. Une vraie carte a une tranche :
-   claire en haut où la lumière tombe, sombre en bas. Deux ombres internes de plus
-   — c'est ce qui la décolle du feutre sans lui ajouter d'ombre portée. */
-.carte, .carte .face.av{
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(90,66,32,.16),
-    inset 1px 0 0 rgba(255,255,255,.5),  inset -1px 0 0 rgba(90,66,32,.1),
-    inset 0 0 0 1px rgba(60,40,20,.12),
-    0 0 0 .5px rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.28), 0 6px 10px -4px rgba(0,0,0,.5);
-}
+/* ── Les cartes : le chanfrein est REMONTÉ ───────────────────────────────
+   Il vit maintenant avec le carton, dans « LES CARTES » (règle `.carte, .carte .face.av`).
+   🚨 NE PAS le redescendre ici : posé en fin de fichier il passe APRÈS
+   `.carte--pivot{ box-shadow:none }`, à spécificité ÉGALE — il rendait donc son ombre
+   portée à la carte cachée du croupier, alors que son animation de retournement
+   (retourne-leve) part et finit à `box-shadow:none`. L'ombre disparaissait puis revenait
+   en une image à chaque fois qu'elle se retournait. Mesuré le 07/09. */
 
 /* ── Les jetons : un reflet de tranche ───────────────────────────────────
    La tranche d'une pile était rayée mais mate. Un liseré clair sur son quart
