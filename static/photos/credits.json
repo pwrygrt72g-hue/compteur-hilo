@@ -232,5 +232,18 @@
     "fichier": "static/photos/cartes.webp",
     "fichier_petit": "static/photos/cartes-petit.webp",
     "modifications": "recadrage 4:3, redimensionnement, encodage WebP"
+  },
+  {
+    "cle": "leo",
+    "titre": "Léo Lejeau à une table de blackjack",
+    "titre_original": null,
+    "auteur": "Léo Lejeau",
+    "licence": "Tous droits réservés — usage autorisé par l'auteur",
+    "licence_url": null,
+    "origine": "Image générée (Google Gemini), fournie par l'auteur de WiseHand",
+    "source": null,
+    "fichier": "static/photos/leo.webp",
+    "fichier_petit": "static/photos/leo-petit.webp",
+    "modifications": "redimensionnement, encodage WebP"
   }
 ]

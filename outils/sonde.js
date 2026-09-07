@@ -55,6 +55,27 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
        avec ? "href = " + href : "un lien traîne dans l'état sans cagnotte");
   }
   ok("caisse : le numéro d'aide au jeu y est", /09 74 75 13 13/.test(txt("#v-dons")), "numéro absent");
+
+  // ── LA QUÊTE : la seule chose qui réclame quelque chose sans qu'on l'ait cherché.
+  // On ne vérifie PAS qu'elle est ouverte à cet instant (la sonde a déjà cliqué partout,
+  // et elle ne s'ouvre que sur l'accueil) : on vérifie son CONTRAT, celui qui la rend
+  // supportable — trois sorties, une seule entrée, et l'astérisque qui porte la blague.
+  {
+    const b = q("#quete");
+    ok("quête : la fenêtre existe et sait s'ouvrir", !!b && typeof window.ouvrirQuete === "function", "absente");
+    const ouverte = b && window.ouvrirQuete(true) && !b.hidden;
+    ok("quête : forcée, elle s'ouvre", !!ouverte, "elle refuse de s'ouvrir même forcée");
+    ok("quête : le bouton de don mène à la MÊME adresse que la caisse",
+       q("#queteDon").href === q("#donsLien").href, q("#queteDon").href + " ≠ " + q("#donsLien").href);
+    // 🚨 Sans l'astérisque, la fenêtre promet SÉRIEUSEMENT de devenir riche au casino.
+    ok("quête : la promesse est démentie juste en dessous",
+       /riche/i.test(txt("#quete")) && /casino gagne toujours/i.test(txt("#quete")),
+       "la blague n'est pas désamorcée");
+    ok("quête : trois sorties", !!(q("#queteFermer") && q("#queteNon") && q("#quete").onclick), "il en manque une");
+    q("#queteNon").click(); await dodo(60);
+    ok("quête : « une autre fois » la referme", q("#quete").hidden, "elle reste à l'écran");
+    ok("quête : refermée, elle ne revient pas toute seule", window.ouvrirQuete() === false, "elle se rouvrirait");
+  }
   ok("caisse : rien ne vient de l'extérieur",
      qa("#v-dons img[src], #v-dons script, #v-dons iframe").filter(e => !/^data:|^static\//.test(e.getAttribute("src") || "")).length === 0,
      "une ressource externe dans la caisse");

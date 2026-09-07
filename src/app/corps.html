@@ -720,10 +720,16 @@
   <div class="laque pad dons-bloc">
     <h2>Ce que ça coûte, honnêtement.</h2>
     <div class="duo dons-duo">
-      <p><b>L'hébergement ne coûte rien.</b> WiseHand est un seul fichier posé sur un hébergement statique gratuit : pas de serveur à louer, pas de base de données, rien qui tourne quand tu ne joues pas. Quand tu joues à plusieurs, les messages passent par des courtiers publics gratuits et la vidéo va d'un navigateur à l'autre &#8212; rien ne transite par une machine que je paierais. Un nom de domaine coûterait une douzaine d'euros par an : ce serait la seule ligne de dépense de tout le projet.</p>
+      <p><b>L'hébergement ne coûte rien.</b> WiseHand est un seul fichier posé sur un hébergement statique gratuit : pas de serveur à louer, pas de base de données, rien qui tourne quand tu ne joues pas. Quand tu joues à plusieurs, les messages passent par des courtiers publics gratuits et la vidéo va d'un navigateur à l'autre &#8212; rien ne transite par une machine que je paierais. Depuis le 7 septembre 2026 il y a une ligne de dépense, une seule : le nom de domaine <b>wisehand21.com</b>, 11,08&nbsp;$ par an, renouvellement compris. C&#039;est tout le budget du projet.</p>
       <p><b>Ce que ça coûte, c'est du temps.</b> Lire neuf règlements de casino, un par table, et les transcrire sans en arrondir un seul. Écrire un solveur qui retrouve tout seul la stratégie de base au lieu de recopier une image. Jouer trois millions de mains par table avant chaque publication pour <em>mesurer</em> l'avantage de chacune plutôt que de l'annoncer. Et refaire la mise en page jusqu'à ce qu'une table de blackjack tienne dans un écran.</p>
     </div>
     <p class="muet dons-chute">Ton don ne paie donc pas un serveur : il paie la prochaine table, le prochain exercice, le prochain défaut corrigé. Dans un casino, ça porte un nom &#8212; c'est un pourboire, pas une facture.</p>
+  </div>
+
+  <div class="laque pad dons-bloc">
+    <h2>Pourquoi je le demande quand même.</h2>
+    <p>Tu es peut-être arrivé par une fenêtre où je réclame de quoi &#171;&nbsp;subvenir à mon train de vie&nbsp;&#187;. C&#039;était une blague. La voici sans la blague : WiseHand est écrit le soir et le week-end, par une seule personne, et rien dans l&#039;application ne rapporte quoi que ce soit &#8212; ni pub, ni données, ni version payante.</p>
+    <p class="muet">Un don ne répare donc rien et ne paie aucune facture. Il dit seulement que ça valait la peine, et c&#039;est ce qui fait écrire la table suivante. Si tu ne donnes rien, tu ne me dois rien : c&#039;est écrit plus bas, et c&#039;est vrai.</p>
   </div>
 
   <div id="donsCaisse">
@@ -791,6 +797,33 @@
      sans issue. -->
 <button class="voix-temoin" id="voixTemoin" hidden data-etat="ouvert"><span class="voix-txt">Micro ouvert</span></button>
 
+<!-- ══════════════════════ LA QUÊTE ══════════════════════
+     Le seul endroit de l'application qui demande de l'argent SANS qu'on l'ait cherché.
+     Elle s'affiche UNE FOIS par visiteur (DB.quete), pas à chaque arrivée : une demande
+     qu'on doit refermer tous les jours cesse d'être une blague et devient une bannière.
+     ⚠️ Elle ne s'ouvre JAMAIS par-dessus une partie en cours ni sur un lien d'invitation
+     (#table=…) : quelqu'un qu'un ami attend à une table n'a pas à commencer par une
+     demande de don. -->
+<div class="quete" id="quete" hidden>
+  <div class="laque quete-boite" role="dialog" aria-modal="true" aria-labelledby="queteTitre">
+    <button class="quete-x" id="queteFermer" aria-label="Fermer">&#215;</button>
+    <div class="quete-photo" data-photo="leo">
+      <img class="photo" alt="Léo, à une table de blackjack, les mains jointes" decoding="async" sizes="(max-width:620px) 88vw, 260px">
+    </div>
+    <div class="quete-txt">
+      <span class="grave">Un mot du patron</span>
+      <h2 id="queteTitre">Donne-moi de l&#039;argent pour subvenir à mon train de vie.</h2>
+      <p>C&#039;est moi sur la photo. J&#039;ai l&#039;air riche : c&#039;est une image générée, je n&#039;ai jamais mis les pieds là-bas.</p>
+      <p class="quete-promesse">Suis la méthode jusqu&#039;au bout et tu deviendras <b>immensément riche</b>.<sup>*</sup></p>
+      <p class="muet quete-etoile"><sup>*</sup> Non. Le casino gagne toujours, c&#039;est mathématique &#8212; et c&#039;est exactement ce que WiseHand t&#039;apprend à mesurer. Joue pour le plaisir, avec ce que tu peux perdre.</p>
+      <div class="quete-gestes">
+        <a class="btn quete-don" id="queteDon" href="#" target="_blank" rel="noopener">Faire un don à Léo</a>
+        <button class="btn creux quete-plus" id="queteEnSavoir">Pourquoi je demande</button>
+      </div>
+      <button class="quete-non" id="queteNon">Une autre fois &#8212; laisse-moi jouer</button>
+    </div>
+  </div>
+</div>
 <div class="modale" id="modale" hidden><div class="laque boite" id="modaleBoite"></div></div>
 
 <!-- L'ONGLET QU'ON A QUITTÉ (clavier.js). Chrome bride les minuteurs à une seconde dans un

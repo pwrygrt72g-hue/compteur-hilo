@@ -213,7 +213,12 @@ main{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:var(--gap) 
 @keyframes paraitre{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
 /* ── Contrôles ─────────────────────────────────────────────────────── */
-.btn{background:var(--btn-or);color:var(--btn-encre);border-radius:10px;padding:11px 18px;
+/* ⚠️ `text-decoration:none` vit ICI, pas dans un correctif local. Un <a class="btn">
+   hérite du soulignement des liens : la page des dons le retirait dans `.dons-geste .btn`,
+   donc le SEUL autre lien-bouton de l'application (celui de la fenêtre d'arrivée) sortait
+   souligné, à côté d'un <button> qui ne l'était pas. Vérifié : il n'existe que deux
+   <a class="btn"> dans tout le balisage, la règle générale ne peut donc rien surprendre. */
+.btn{background:var(--btn-or);color:var(--btn-encre);border-radius:10px;padding:11px 18px;text-decoration:none;
   font-weight:600;font-size:var(--t-fort);transition:filter .15s,transform .08s;display:inline-flex;
   align-items:center;gap:8px;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 8px 18px -10px rgba(0,0,0,.7)}
 .btn:hover{filter:brightness(1.08)}
@@ -2720,4 +2725,62 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   border-radius:0 0 50% 50% / 0 0 12% 12%; pointer-events:none;
   background:linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.06) 55%, transparent);
   mix-blend-mode:screen;
+}
+
+/* ══════════════════════ LA QUÊTE — la fenêtre d'arrivée ══════════════════════
+   Une demande de don qui s'ouvre toute seule est, par nature, une intrusion. Elle est
+   donc écrite pour être REFERMÉE vite et sans regret : trois façons d'en sortir (la
+   croix, « une autre fois », la touche Échap), une seule pour donner. Le jour où l'on
+   hésite entre « c'est drôle » et « c'est lourd », c'est qu'elle est lourde. */
+.quete{position:fixed;inset:0;background:rgba(6,10,16,.74);backdrop-filter:blur(3px);
+  display:grid;place-items:center;padding:20px;z-index:90;animation:paraitre .24s}
+.quete-boite{position:relative;display:grid;grid-template-columns:260px 1fr;gap:26px;
+  align-items:center;max-width:760px;width:100%;padding:26px 28px;text-align:left}
+.quete-photo{border-radius:14px;overflow:hidden;line-height:0;
+  box-shadow:0 18px 40px -18px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.07)}
+.quete-photo .photo{width:100%;height:auto;display:block}
+.quete-txt h2{margin:.28em 0 .5em;font-size:1.32rem;line-height:1.22;text-wrap:balance}
+.quete-txt p{margin:0 0 .62em}
+.quete-promesse{font-size:1.02rem}
+/* ⚠️ L'astérisque porte TOUT le sens de la blague : sans elle, la fenêtre promet
+   sérieusement de devenir riche au casino. Elle ne doit jamais devenir invisible —
+   d'où une taille plancher, et pas un simple `.muet` rétréci. */
+.quete-etoile{font-size:.8rem;line-height:1.45}
+.quete-gestes{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 10px}
+/* Le clignotement demandé par Léo : une respiration, pas un stroboscope. Il porte sur
+   `transform` et `box-shadow` seulement, et il s'ARRÊTE au survol — un bouton qui bouge
+   encore sous le curseur se rate. */
+.quete-don{animation:queteBat 1.9s ease-in-out infinite}
+.quete-don:hover,.quete-don:focus-visible{animation:none}
+@keyframes queteBat{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(90,190,140,.55)}
+  50%{transform:scale(1.035);box-shadow:0 0 0 9px rgba(90,190,140,0)}
+}
+/* ⚠️ 44 px de haut, pas 24 : le banc de mise en page l'a refusée en dessous, et il a
+   raison — c'est la sortie principale d'une fenêtre qui s'ouvre toute seule, ratée au
+   doigt elle transforme une blague en piège. Le SOULIGNEMENT reste collé au texte
+   (`padding` vertical, pas `line-height`), sinon le trait flotte loin sous les mots. */
+.quete-non{background:none;border:0;padding:11px 0;min-height:44px;font:inherit;font-size:.86rem;
+  color:var(--text3);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.quete-non:hover{color:var(--text2)}
+/* La croix mesure 44×44 (cible tactile) alors que le signe, lui, reste petit :
+   c'est la ZONE qu'on agrandit, pas le dessin. */
+.quete-x{position:absolute;top:4px;right:6px;width:44px;height:44px;line-height:1;
+  display:grid;place-items:center;
+  background:none;border:0;font-size:1.5rem;color:var(--text3);cursor:pointer;border-radius:10px}
+.quete-x:hover{color:var(--text);background:rgba(255,255,255,.07)}
+@media (max-width:620px){
+  /* Sur un téléphone la photo passe AU-DESSUS et rétrécit : en colonne à sa taille
+     d'ordinateur, elle poussait le bouton de don hors de l'écran — une fenêtre dont on
+     ne voit pas le bouton ne demande rien, elle bloque. */
+  .quete{padding:12px}
+  .quete-boite{grid-template-columns:1fr;gap:16px;padding:20px 18px;
+    max-height:calc(100svh - 24px);overflow-y:auto;overscroll-behavior:contain}
+  .quete-photo{width:150px;margin:0 auto}
+  .quete-txt{text-align:center}
+  .quete-gestes{justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){
+  .quete{animation:none}
+  .quete-don{animation:none}
 }

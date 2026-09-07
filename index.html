@@ -233,7 +233,12 @@ main{max-width:min(1120px,100% - 2*var(--gap));margin:0 auto;padding:var(--gap) 
 @keyframes paraitre{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
 /* ── Contrôles ─────────────────────────────────────────────────────── */
-.btn{background:var(--btn-or);color:var(--btn-encre);border-radius:10px;padding:11px 18px;
+/* ⚠️ `text-decoration:none` vit ICI, pas dans un correctif local. Un <a class="btn">
+   hérite du soulignement des liens : la page des dons le retirait dans `.dons-geste .btn`,
+   donc le SEUL autre lien-bouton de l'application (celui de la fenêtre d'arrivée) sortait
+   souligné, à côté d'un <button> qui ne l'était pas. Vérifié : il n'existe que deux
+   <a class="btn"> dans tout le balisage, la règle générale ne peut donc rien surprendre. */
+.btn{background:var(--btn-or);color:var(--btn-encre);border-radius:10px;padding:11px 18px;text-decoration:none;
   font-weight:600;font-size:var(--t-fort);transition:filter .15s,transform .08s;display:inline-flex;
   align-items:center;gap:8px;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 8px 18px -10px rgba(0,0,0,.7)}
 .btn:hover{filter:brightness(1.08)}
@@ -2742,6 +2747,64 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   mix-blend-mode:screen;
 }
 
+/* ══════════════════════ LA QUÊTE — la fenêtre d'arrivée ══════════════════════
+   Une demande de don qui s'ouvre toute seule est, par nature, une intrusion. Elle est
+   donc écrite pour être REFERMÉE vite et sans regret : trois façons d'en sortir (la
+   croix, « une autre fois », la touche Échap), une seule pour donner. Le jour où l'on
+   hésite entre « c'est drôle » et « c'est lourd », c'est qu'elle est lourde. */
+.quete{position:fixed;inset:0;background:rgba(6,10,16,.74);backdrop-filter:blur(3px);
+  display:grid;place-items:center;padding:20px;z-index:90;animation:paraitre .24s}
+.quete-boite{position:relative;display:grid;grid-template-columns:260px 1fr;gap:26px;
+  align-items:center;max-width:760px;width:100%;padding:26px 28px;text-align:left}
+.quete-photo{border-radius:14px;overflow:hidden;line-height:0;
+  box-shadow:0 18px 40px -18px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.07)}
+.quete-photo .photo{width:100%;height:auto;display:block}
+.quete-txt h2{margin:.28em 0 .5em;font-size:1.32rem;line-height:1.22;text-wrap:balance}
+.quete-txt p{margin:0 0 .62em}
+.quete-promesse{font-size:1.02rem}
+/* ⚠️ L'astérisque porte TOUT le sens de la blague : sans elle, la fenêtre promet
+   sérieusement de devenir riche au casino. Elle ne doit jamais devenir invisible —
+   d'où une taille plancher, et pas un simple `.muet` rétréci. */
+.quete-etoile{font-size:.8rem;line-height:1.45}
+.quete-gestes{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 10px}
+/* Le clignotement demandé par Léo : une respiration, pas un stroboscope. Il porte sur
+   `transform` et `box-shadow` seulement, et il s'ARRÊTE au survol — un bouton qui bouge
+   encore sous le curseur se rate. */
+.quete-don{animation:queteBat 1.9s ease-in-out infinite}
+.quete-don:hover,.quete-don:focus-visible{animation:none}
+@keyframes queteBat{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(90,190,140,.55)}
+  50%{transform:scale(1.035);box-shadow:0 0 0 9px rgba(90,190,140,0)}
+}
+/* ⚠️ 44 px de haut, pas 24 : le banc de mise en page l'a refusée en dessous, et il a
+   raison — c'est la sortie principale d'une fenêtre qui s'ouvre toute seule, ratée au
+   doigt elle transforme une blague en piège. Le SOULIGNEMENT reste collé au texte
+   (`padding` vertical, pas `line-height`), sinon le trait flotte loin sous les mots. */
+.quete-non{background:none;border:0;padding:11px 0;min-height:44px;font:inherit;font-size:.86rem;
+  color:var(--text3);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.quete-non:hover{color:var(--text2)}
+/* La croix mesure 44×44 (cible tactile) alors que le signe, lui, reste petit :
+   c'est la ZONE qu'on agrandit, pas le dessin. */
+.quete-x{position:absolute;top:4px;right:6px;width:44px;height:44px;line-height:1;
+  display:grid;place-items:center;
+  background:none;border:0;font-size:1.5rem;color:var(--text3);cursor:pointer;border-radius:10px}
+.quete-x:hover{color:var(--text);background:rgba(255,255,255,.07)}
+@media (max-width:620px){
+  /* Sur un téléphone la photo passe AU-DESSUS et rétrécit : en colonne à sa taille
+     d'ordinateur, elle poussait le bouton de don hors de l'écran — une fenêtre dont on
+     ne voit pas le bouton ne demande rien, elle bloque. */
+  .quete{padding:12px}
+  .quete-boite{grid-template-columns:1fr;gap:16px;padding:20px 18px;
+    max-height:calc(100svh - 24px);overflow-y:auto;overscroll-behavior:contain}
+  .quete-photo{width:150px;margin:0 auto}
+  .quete-txt{text-align:center}
+  .quete-gestes{justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){
+  .quete{animation:none}
+  .quete-don{animation:none}
+}
+
 </style>
 <header><div class="tete">
   <button class="marque" data-vue="accueil" title="Retour au hall"><span class="emb"></span><span class="nom">WiseHand</span></button>
@@ -3465,10 +3528,16 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   <div class="laque pad dons-bloc">
     <h2>Ce que ça coûte, honnêtement.</h2>
     <div class="duo dons-duo">
-      <p><b>L'hébergement ne coûte rien.</b> WiseHand est un seul fichier posé sur un hébergement statique gratuit : pas de serveur à louer, pas de base de données, rien qui tourne quand tu ne joues pas. Quand tu joues à plusieurs, les messages passent par des courtiers publics gratuits et la vidéo va d'un navigateur à l'autre &#8212; rien ne transite par une machine que je paierais. Un nom de domaine coûterait une douzaine d'euros par an : ce serait la seule ligne de dépense de tout le projet.</p>
+      <p><b>L'hébergement ne coûte rien.</b> WiseHand est un seul fichier posé sur un hébergement statique gratuit : pas de serveur à louer, pas de base de données, rien qui tourne quand tu ne joues pas. Quand tu joues à plusieurs, les messages passent par des courtiers publics gratuits et la vidéo va d'un navigateur à l'autre &#8212; rien ne transite par une machine que je paierais. Depuis le 7 septembre 2026 il y a une ligne de dépense, une seule : le nom de domaine <b>wisehand21.com</b>, 11,08&nbsp;$ par an, renouvellement compris. C&#039;est tout le budget du projet.</p>
       <p><b>Ce que ça coûte, c'est du temps.</b> Lire neuf règlements de casino, un par table, et les transcrire sans en arrondir un seul. Écrire un solveur qui retrouve tout seul la stratégie de base au lieu de recopier une image. Jouer trois millions de mains par table avant chaque publication pour <em>mesurer</em> l'avantage de chacune plutôt que de l'annoncer. Et refaire la mise en page jusqu'à ce qu'une table de blackjack tienne dans un écran.</p>
     </div>
     <p class="muet dons-chute">Ton don ne paie donc pas un serveur : il paie la prochaine table, le prochain exercice, le prochain défaut corrigé. Dans un casino, ça porte un nom &#8212; c'est un pourboire, pas une facture.</p>
+  </div>
+
+  <div class="laque pad dons-bloc">
+    <h2>Pourquoi je le demande quand même.</h2>
+    <p>Tu es peut-être arrivé par une fenêtre où je réclame de quoi &#171;&nbsp;subvenir à mon train de vie&nbsp;&#187;. C&#039;était une blague. La voici sans la blague : WiseHand est écrit le soir et le week-end, par une seule personne, et rien dans l&#039;application ne rapporte quoi que ce soit &#8212; ni pub, ni données, ni version payante.</p>
+    <p class="muet">Un don ne répare donc rien et ne paie aucune facture. Il dit seulement que ça valait la peine, et c&#039;est ce qui fait écrire la table suivante. Si tu ne donnes rien, tu ne me dois rien : c&#039;est écrit plus bas, et c&#039;est vrai.</p>
   </div>
 
   <div id="donsCaisse">
@@ -3536,6 +3605,33 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
      sans issue. -->
 <button class="voix-temoin" id="voixTemoin" hidden data-etat="ouvert"><span class="voix-txt">Micro ouvert</span></button>
 
+<!-- ══════════════════════ LA QUÊTE ══════════════════════
+     Le seul endroit de l'application qui demande de l'argent SANS qu'on l'ait cherché.
+     Elle s'affiche UNE FOIS par visiteur (DB.quete), pas à chaque arrivée : une demande
+     qu'on doit refermer tous les jours cesse d'être une blague et devient une bannière.
+     ⚠️ Elle ne s'ouvre JAMAIS par-dessus une partie en cours ni sur un lien d'invitation
+     (#table=…) : quelqu'un qu'un ami attend à une table n'a pas à commencer par une
+     demande de don. -->
+<div class="quete" id="quete" hidden>
+  <div class="laque quete-boite" role="dialog" aria-modal="true" aria-labelledby="queteTitre">
+    <button class="quete-x" id="queteFermer" aria-label="Fermer">&#215;</button>
+    <div class="quete-photo" data-photo="leo">
+      <img class="photo" alt="Léo, à une table de blackjack, les mains jointes" decoding="async" sizes="(max-width:620px) 88vw, 260px">
+    </div>
+    <div class="quete-txt">
+      <span class="grave">Un mot du patron</span>
+      <h2 id="queteTitre">Donne-moi de l&#039;argent pour subvenir à mon train de vie.</h2>
+      <p>C&#039;est moi sur la photo. J&#039;ai l&#039;air riche : c&#039;est une image générée, je n&#039;ai jamais mis les pieds là-bas.</p>
+      <p class="quete-promesse">Suis la méthode jusqu&#039;au bout et tu deviendras <b>immensément riche</b>.<sup>*</sup></p>
+      <p class="muet quete-etoile"><sup>*</sup> Non. Le casino gagne toujours, c&#039;est mathématique &#8212; et c&#039;est exactement ce que WiseHand t&#039;apprend à mesurer. Joue pour le plaisir, avec ce que tu peux perdre.</p>
+      <div class="quete-gestes">
+        <a class="btn quete-don" id="queteDon" href="#" target="_blank" rel="noopener">Faire un don à Léo</a>
+        <button class="btn creux quete-plus" id="queteEnSavoir">Pourquoi je demande</button>
+      </div>
+      <button class="quete-non" id="queteNon">Une autre fois &#8212; laisse-moi jouer</button>
+    </div>
+  </div>
+</div>
 <div class="modale" id="modale" hidden><div class="laque boite" id="modaleBoite"></div></div>
 
 <!-- L'ONGLET QU'ON A QUITTÉ (clavier.js). Chrome bride les minuteurs à une seconde dans un
@@ -3553,7 +3649,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   </div>
 </div>
 
-<script>window.PHOTOS={"hall":"static/photos/hall.webp","boulevard":"static/photos/boulevard.webp","neon":"static/photos/neon.webp","frontdemer":"static/photos/frontdemer.webp","cotai":"static/photos/cotai.webp","cercle":"static/photos/cercle.webp","mainchaude":"static/photos/mainchaude.webp","salonprive":"static/photos/salonprive.webp","marina":"static/photos/marina.webp","reno":"static/photos/reno.webp","aquarium":"static/photos/aquarium.webp","macao":"static/photos/macao.webp","entrainement":"static/photos/entrainement.webp","strategie":"static/photos/strategie.webp","concentration":"static/photos/concentration.webp","prive":"static/photos/prive.webp","jetons":"static/photos/jetons.webp","cartes":"static/photos/cartes.webp"};window.PHOTOS_PETIT={"hall":"static/photos/hall-petit.webp","boulevard":"static/photos/boulevard-petit.webp","neon":"static/photos/neon-petit.webp","frontdemer":"static/photos/frontdemer-petit.webp","cotai":"static/photos/cotai-petit.webp","cercle":"static/photos/cercle-petit.webp","mainchaude":"static/photos/mainchaude-petit.webp","salonprive":"static/photos/salonprive-petit.webp","marina":"static/photos/marina-petit.webp","reno":"static/photos/reno-petit.webp","aquarium":"static/photos/aquarium-petit.webp","macao":"static/photos/macao-petit.webp","entrainement":"static/photos/entrainement-petit.webp","strategie":"static/photos/strategie-petit.webp","concentration":"static/photos/concentration-petit.webp","prive":"static/photos/prive-petit.webp","jetons":"static/photos/jetons-petit.webp","cartes":"static/photos/cartes-petit.webp"};window.PHOTOS_CREDITS=[{"cle":"hall","titre":"Le Strip de Las Vegas la nuit : Paris Las Vegas et son lac","titre_original":null,"auteur":"Tom Podmore","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/las-vegas-strip-hotels-illuminated-at-night-oXN5TKXgmsg","fichier":"static/photos/hall.webp","fichier_petit":"static/photos/hall-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"boulevard","titre":"Las Vegas Boulevard vu d'en haut, la nuit","titre_original":"Las Vegas Strip at night, 2012.jpg","auteur":"Clément Bardot","licence":"CC BY-SA 3.0","licence_url":"https://creativecommons.org/licenses/by-sa/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Las_Vegas_Strip_at_night,_2012.jpg","fichier":"static/photos/boulevard.webp","fichier_petit":"static/photos/boulevard-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"neon","titre":"La canopée de Fremont Street, Downtown Las Vegas","titre_original":"Fremont Street Experience, Las Vegas NV.jpg","auteur":"John Phelan","licence":"CC BY-SA 3.0","licence_url":"https://creativecommons.org/licenses/by-sa/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Fremont_Street_Experience,_Las_Vegas_NV.jpg","fichier":"static/photos/neon.webp","fichier_petit":"static/photos/neon-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"frontdemer","titre":"Atlantic City à la tombée de la nuit, les casinos à l'horizon","titre_original":"Atlantic City NJ night.jpg","auteur":"Ron Miguel","licence":"CC BY 2.0","licence_url":"https://creativecommons.org/licenses/by/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Atlantic_City_NJ_night.jpg","fichier":"static/photos/frontdemer.webp","fichier_petit":"static/photos/frontdemer-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"cotai","titre":"Le Venetian Macao sur le Cotai Strip, la nuit","titre_original":"The Venetian Macao Night View 201104.jpg","auteur":"soeperbaby","licence":"CC BY 2.0","licence_url":"https://creativecommons.org/licenses/by/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:The_Venetian_Macao_Night_View_201104.jpg","fichier":"static/photos/cotai.webp","fichier_petit":"static/photos/cotai-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"cercle","titre":"La façade du Casino de Monte-Carlo, la nuit","titre_original":"Real Monte Carlo Casino.jpg","auteur":"sam garza from Los Angeles, USA","licence":"CC BY 2.0","licence_url":"https://creativecommons.org/licenses/by/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Real_Monte_Carlo_Casino.jpg","fichier":"static/photos/cercle.webp","fichier_petit":"static/photos/cercle-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"mainchaude","titre":"Une table de blackjack sur la moquette d'un casino","titre_original":"DelLagoCasinoBlackjackTable.jpg","auteur":"DanielPenfield","licence":"CC BY-SA 4.0","licence_url":"https://creativecommons.org/licenses/by-sa/4.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:DelLagoCasinoBlackjackTable.jpg","fichier":"static/photos/mainchaude.webp","fichier_petit":"static/photos/mainchaude-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"salonprive","titre":"Le salon rouge du Casino de Baden-Baden : lustres, dorures, tables","titre_original":"Baden-Baden 10-2015 img63 Casino.jpg","auteur":"A.Savin, Wikipedia","licence":"CC BY-SA 3.0","licence_url":"https://creativecommons.org/licenses/by-sa/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Baden-Baden_10-2015_img63_Casino.jpg","fichier":"static/photos/salonprive.webp","fichier_petit":"static/photos/salonprive-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"marina","titre":"Marina Bay Sands, Singapour, à la nuit tombée","titre_original":"Marina Bay Sands (230913).jpg","auteur":"Moheen Reeyad","licence":"CC BY-SA 4.0","licence_url":"https://creativecommons.org/licenses/by-sa/4.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Marina_Bay_Sands_(230913).jpg","fichier":"static/photos/marina.webp","fichier_petit":"static/photos/marina-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"reno","titre":"L'arche de Reno, « The Biggest Little City in the World », la nuit","titre_original":"Reno, Big, Little - panoramio.jpg","auteur":"Bohao Zhao","licence":"CC BY 3.0","licence_url":"https://creativecommons.org/licenses/by/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Reno,_Big,_Little_-_panoramio.jpg","fichier":"static/photos/reno.webp","fichier_petit":"static/photos/reno-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"aquarium","titre":"Un sol de machines à sous sous les lustres, Las Vegas","titre_original":null,"auteur":"Kvnga","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/slot-machines-in-a-casino-vBWsG91aR_U","fichier":"static/photos/aquarium.webp","fichier_petit":"static/photos/aquarium-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"macao","titre":"Wynn Macau et Grand Lisboa, Macao, la nuit","titre_original":"Macau Night 2.jpg","auteur":"Philip Nalangan","licence":"CC BY 4.0","licence_url":"https://creativecommons.org/licenses/by/4.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Macau_Night_2.jpg","fichier":"static/photos/macao.webp","fichier_petit":"static/photos/macao-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"entrainement","titre":"Cartes et jetons sur le feutre d'une table de blackjack","titre_original":"Blackjack board.JPG","auteur":"Ppntori (Wikimedia Commons)","licence":"Public domain","licence_url":"https://commons.wikimedia.org/wiki/Commons:Licensing#Public_domain","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Blackjack_board.JPG","fichier":"static/photos/entrainement.webp","fichier_petit":"static/photos/entrainement-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"strategie","titre":"Un jeu de cartes en éventail, en gros plan","titre_original":null,"auteur":"Klim Musalimov","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/a-close-up-of-a-playing-card-on-a-table-P9BtSqfwZNU","fichier":"static/photos/strategie.webp","fichier_petit":"static/photos/strategie-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"concentration","titre":"Le croupier distribue : mains en mouvement sur le feutre","titre_original":"Blurry blackjack table.jpg","auteur":"Frerk Meyer","licence":"CC BY-SA 2.0","licence_url":"https://creativecommons.org/licenses/by-sa/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Blurry_blackjack_table.jpg","fichier":"static/photos/concentration.webp","fichier_petit":"static/photos/concentration-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"prive","titre":"Des amis autour d'une table, cartes en main","titre_original":null,"auteur":"Sidral Mundet","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/friends-play-cards-sharing-snacks-and-drinks-nzSd8jiIbGc","fichier":"static/photos/prive.webp","fichier_petit":"static/photos/prive-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"jetons","titre":"Jetons de casino alignés sur une table de craps","titre_original":null,"auteur":"Leo_Visions","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/a-close-up-of-many-different-colored-poker-chips-_FU9NK_t6A8","fichier":"static/photos/jetons.webp","fichier_petit":"static/photos/jetons-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"cartes","titre":"Le valet de pique, en gros plan","titre_original":null,"auteur":"Tom M","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/a-close-up-of-a-playing-card-on-a-table-UWh8vs4ZMMM","fichier":"static/photos/cartes.webp","fichier_petit":"static/photos/cartes-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"}];</script>
+<script>window.PHOTOS={"hall":"static/photos/hall.webp","boulevard":"static/photos/boulevard.webp","neon":"static/photos/neon.webp","frontdemer":"static/photos/frontdemer.webp","cotai":"static/photos/cotai.webp","cercle":"static/photos/cercle.webp","mainchaude":"static/photos/mainchaude.webp","salonprive":"static/photos/salonprive.webp","marina":"static/photos/marina.webp","reno":"static/photos/reno.webp","aquarium":"static/photos/aquarium.webp","macao":"static/photos/macao.webp","entrainement":"static/photos/entrainement.webp","strategie":"static/photos/strategie.webp","concentration":"static/photos/concentration.webp","prive":"static/photos/prive.webp","jetons":"static/photos/jetons.webp","cartes":"static/photos/cartes.webp","leo":"static/photos/leo.webp"};window.PHOTOS_PETIT={"hall":"static/photos/hall-petit.webp","boulevard":"static/photos/boulevard-petit.webp","neon":"static/photos/neon-petit.webp","frontdemer":"static/photos/frontdemer-petit.webp","cotai":"static/photos/cotai-petit.webp","cercle":"static/photos/cercle-petit.webp","mainchaude":"static/photos/mainchaude-petit.webp","salonprive":"static/photos/salonprive-petit.webp","marina":"static/photos/marina-petit.webp","reno":"static/photos/reno-petit.webp","aquarium":"static/photos/aquarium-petit.webp","macao":"static/photos/macao-petit.webp","entrainement":"static/photos/entrainement-petit.webp","strategie":"static/photos/strategie-petit.webp","concentration":"static/photos/concentration-petit.webp","prive":"static/photos/prive-petit.webp","jetons":"static/photos/jetons-petit.webp","cartes":"static/photos/cartes-petit.webp","leo":"static/photos/leo-petit.webp"};window.PHOTOS_CREDITS=[{"cle":"hall","titre":"Le Strip de Las Vegas la nuit : Paris Las Vegas et son lac","titre_original":null,"auteur":"Tom Podmore","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/las-vegas-strip-hotels-illuminated-at-night-oXN5TKXgmsg","fichier":"static/photos/hall.webp","fichier_petit":"static/photos/hall-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"boulevard","titre":"Las Vegas Boulevard vu d'en haut, la nuit","titre_original":"Las Vegas Strip at night, 2012.jpg","auteur":"Clément Bardot","licence":"CC BY-SA 3.0","licence_url":"https://creativecommons.org/licenses/by-sa/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Las_Vegas_Strip_at_night,_2012.jpg","fichier":"static/photos/boulevard.webp","fichier_petit":"static/photos/boulevard-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"neon","titre":"La canopée de Fremont Street, Downtown Las Vegas","titre_original":"Fremont Street Experience, Las Vegas NV.jpg","auteur":"John Phelan","licence":"CC BY-SA 3.0","licence_url":"https://creativecommons.org/licenses/by-sa/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Fremont_Street_Experience,_Las_Vegas_NV.jpg","fichier":"static/photos/neon.webp","fichier_petit":"static/photos/neon-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"frontdemer","titre":"Atlantic City à la tombée de la nuit, les casinos à l'horizon","titre_original":"Atlantic City NJ night.jpg","auteur":"Ron Miguel","licence":"CC BY 2.0","licence_url":"https://creativecommons.org/licenses/by/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Atlantic_City_NJ_night.jpg","fichier":"static/photos/frontdemer.webp","fichier_petit":"static/photos/frontdemer-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"cotai","titre":"Le Venetian Macao sur le Cotai Strip, la nuit","titre_original":"The Venetian Macao Night View 201104.jpg","auteur":"soeperbaby","licence":"CC BY 2.0","licence_url":"https://creativecommons.org/licenses/by/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:The_Venetian_Macao_Night_View_201104.jpg","fichier":"static/photos/cotai.webp","fichier_petit":"static/photos/cotai-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"cercle","titre":"La façade du Casino de Monte-Carlo, la nuit","titre_original":"Real Monte Carlo Casino.jpg","auteur":"sam garza from Los Angeles, USA","licence":"CC BY 2.0","licence_url":"https://creativecommons.org/licenses/by/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Real_Monte_Carlo_Casino.jpg","fichier":"static/photos/cercle.webp","fichier_petit":"static/photos/cercle-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"mainchaude","titre":"Une table de blackjack sur la moquette d'un casino","titre_original":"DelLagoCasinoBlackjackTable.jpg","auteur":"DanielPenfield","licence":"CC BY-SA 4.0","licence_url":"https://creativecommons.org/licenses/by-sa/4.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:DelLagoCasinoBlackjackTable.jpg","fichier":"static/photos/mainchaude.webp","fichier_petit":"static/photos/mainchaude-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"salonprive","titre":"Le salon rouge du Casino de Baden-Baden : lustres, dorures, tables","titre_original":"Baden-Baden 10-2015 img63 Casino.jpg","auteur":"A.Savin, Wikipedia","licence":"CC BY-SA 3.0","licence_url":"https://creativecommons.org/licenses/by-sa/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Baden-Baden_10-2015_img63_Casino.jpg","fichier":"static/photos/salonprive.webp","fichier_petit":"static/photos/salonprive-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"marina","titre":"Marina Bay Sands, Singapour, à la nuit tombée","titre_original":"Marina Bay Sands (230913).jpg","auteur":"Moheen Reeyad","licence":"CC BY-SA 4.0","licence_url":"https://creativecommons.org/licenses/by-sa/4.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Marina_Bay_Sands_(230913).jpg","fichier":"static/photos/marina.webp","fichier_petit":"static/photos/marina-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"reno","titre":"L'arche de Reno, « The Biggest Little City in the World », la nuit","titre_original":"Reno, Big, Little - panoramio.jpg","auteur":"Bohao Zhao","licence":"CC BY 3.0","licence_url":"https://creativecommons.org/licenses/by/3.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Reno,_Big,_Little_-_panoramio.jpg","fichier":"static/photos/reno.webp","fichier_petit":"static/photos/reno-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"aquarium","titre":"Un sol de machines à sous sous les lustres, Las Vegas","titre_original":null,"auteur":"Kvnga","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/slot-machines-in-a-casino-vBWsG91aR_U","fichier":"static/photos/aquarium.webp","fichier_petit":"static/photos/aquarium-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"macao","titre":"Wynn Macau et Grand Lisboa, Macao, la nuit","titre_original":"Macau Night 2.jpg","auteur":"Philip Nalangan","licence":"CC BY 4.0","licence_url":"https://creativecommons.org/licenses/by/4.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Macau_Night_2.jpg","fichier":"static/photos/macao.webp","fichier_petit":"static/photos/macao-petit.webp","modifications":"recadrage 16:9, redimensionnement, encodage WebP"},{"cle":"entrainement","titre":"Cartes et jetons sur le feutre d'une table de blackjack","titre_original":"Blackjack board.JPG","auteur":"Ppntori (Wikimedia Commons)","licence":"Public domain","licence_url":"https://commons.wikimedia.org/wiki/Commons:Licensing#Public_domain","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Blackjack_board.JPG","fichier":"static/photos/entrainement.webp","fichier_petit":"static/photos/entrainement-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"strategie","titre":"Un jeu de cartes en éventail, en gros plan","titre_original":null,"auteur":"Klim Musalimov","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/a-close-up-of-a-playing-card-on-a-table-P9BtSqfwZNU","fichier":"static/photos/strategie.webp","fichier_petit":"static/photos/strategie-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"concentration","titre":"Le croupier distribue : mains en mouvement sur le feutre","titre_original":"Blurry blackjack table.jpg","auteur":"Frerk Meyer","licence":"CC BY-SA 2.0","licence_url":"https://creativecommons.org/licenses/by-sa/2.0/","origine":"Wikimedia Commons","source":"https://commons.wikimedia.org/wiki/File:Blurry_blackjack_table.jpg","fichier":"static/photos/concentration.webp","fichier_petit":"static/photos/concentration-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"prive","titre":"Des amis autour d'une table, cartes en main","titre_original":null,"auteur":"Sidral Mundet","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/friends-play-cards-sharing-snacks-and-drinks-nzSd8jiIbGc","fichier":"static/photos/prive.webp","fichier_petit":"static/photos/prive-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"jetons","titre":"Jetons de casino alignés sur une table de craps","titre_original":null,"auteur":"Leo_Visions","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/a-close-up-of-many-different-colored-poker-chips-_FU9NK_t6A8","fichier":"static/photos/jetons.webp","fichier_petit":"static/photos/jetons-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"cartes","titre":"Le valet de pique, en gros plan","titre_original":null,"auteur":"Tom M","licence":"Unsplash","licence_url":"https://unsplash.com/license","origine":"Unsplash","source":"https://unsplash.com/photos/a-close-up-of-a-playing-card-on-a-table-UWh8vs4ZMMM","fichier":"static/photos/cartes.webp","fichier_petit":"static/photos/cartes-petit.webp","modifications":"recadrage 4:3, redimensionnement, encodage WebP"},{"cle":"leo","titre":"Léo Lejeau à une table de blackjack","titre_original":null,"auteur":"Léo Lejeau","licence":"Tous droits réservés — usage autorisé par l'auteur","licence_url":null,"origine":"Image générée (Google Gemini), fournie par l'auteur de WiseHand","source":null,"fichier":"static/photos/leo.webp","fichier_petit":"static/photos/leo-petit.webp","modifications":"redimensionnement, encodage WebP"}];</script>
 <script>
 (function(){
 "use strict";
@@ -14009,6 +14105,81 @@ const DONS_LIEN = "https://www.paypal.com/paypalme/leolejeau";
   $("donsAmis").onclick = () => aller("ensemble");
 }
 
+/* ══════════════════════ LA QUÊTE — la fenêtre d'arrivée ══════════════════════
+   Léo, 07/09/2026 : « dès qu'une personne arrive sur le site, ma photo avec ce que je
+   t'ai dit doit apparaître ». C'est la seule chose de toute l'application qui réclame
+   quelque chose sans qu'on l'ait cherché — elle est donc bornée par quatre règles, et
+   chacune répare un travers connu des fenêtres de ce genre.
+
+   1. UNE FOIS PAR VISITEUR (DB.quete). Une demande qu'on referme tous les jours cesse
+      d'être une blague et devient une bannière : on la ferme sans lire, puis on ferme
+      le site. Le numéro de version permet de la remontrer si le message change VRAIMENT
+      — pas à chaque déploiement.
+   2. JAMAIS SUR UNE INVITATION. Arriver par #table=CODE, c'est être attendu par un ami :
+      commencer par une demande d'argent est le pire premier écran possible.
+   3. JAMAIS PAR-DESSUS UNE PARTIE. On ne s'ouvre que sur l'accueil.
+   4. TROIS SORTIES (croix, « une autre fois », Échap) pour UNE entrée. Le clignotement du
+      bouton est demandé ; l'enfermement, non.
+
+   ⚠️ Sans cagnotte ouverte, la fenêtre ne s'affiche PAS DU TOUT. Une demande de don qui
+   ne mène nulle part est une publicité pour rien. */
+const QUETE_VERSION = 1;
+{
+  const boite = $("quete");
+  const fermer = () => {
+    if (!boite || boite.hidden) return;
+    boite.hidden = true;
+    DB.quete = QUETE_VERSION; garder();
+    document.removeEventListener("keydown", auClavier);
+  };
+  const auClavier = e => { if (e.key === "Escape") fermer(); };
+
+  // ⚠️ La photo n'est PAS posée par rendreHall() : celle-ci ne parcourt les [data-photo]
+  // qu'une fois, au démarrage, et une image de 108 Ko chargée pour une fenêtre que la
+  // plupart des visiteurs ont déjà refusée est du poids pour rien. On la pose donc au
+  // moment de montrer, et seulement à ce moment-là.
+  const poserPhoto = () => {
+    const img = boite && boite.querySelector(".quete-photo .photo");
+    if (!img || img.getAttribute("src")) return;
+    const grande = photoDe("leo"), petite = photoPetiteDe("leo");
+    if (!grande) { const c = boite.querySelector(".quete-photo"); if (c) c.remove(); return; }
+    if (petite) img.setAttribute("srcset", `${petite} 360w, ${grande} 720w`);
+    img.src = grande;
+  };
+
+  window.ouvrirQuete = function (force) {
+    if (!boite) return false;
+    // Sans lien de don, rien à demander. `donsAvec` porte déjà le verdict : il n'est
+    // visible que si DONS_LIEN est une vraie URL — on ne réévalue pas la règle ici,
+    // deux copies finiraient par diverger.
+    if ($("donsAvec") && $("donsAvec").hidden) return false;
+    if (!force) {
+      if (DB.quete >= QUETE_VERSION) return false;           // déjà vue
+      if (location.hash && location.hash.length > 1) return false;  // invitation, course…
+      if (vue !== "accueil") return false;                    // jamais par-dessus une partie
+    }
+    poserPhoto();
+    $("queteDon").href = $("donsLien").href;
+    boite.hidden = false;
+    document.addEventListener("keydown", auClavier);
+    // Le focus va sur la SORTIE, pas sur le don : on ne piège pas la touche Entrée
+    // de quelqu'un qui tapait autre chose au moment où la fenêtre s'est ouverte.
+    try { $("queteFermer").focus({ preventScroll: true }); } catch (e) { /* vieux navigateur */ }
+    return true;
+  };
+
+  if (boite) {
+    $("queteFermer").onclick = fermer;
+    $("queteNon").onclick = fermer;
+    // Donner referme AUSSI : au retour de PayPal, retrouver la demande encore ouverte
+    // donnerait l'impression que le don n'a pas compté.
+    $("queteDon").onclick = () => { DB.quete = QUETE_VERSION; garder(); setTimeout(fermer, 60); };
+    $("queteEnSavoir").onclick = () => { fermer(); aller("dons"); };
+    // Le fond referme, la boîte non — sinon un clic dans le texte ferme la fenêtre.
+    boite.onclick = e => { if (e.target === boite) fermer(); };
+  }
+}
+
 
 /* ═══ progres.js ═══ */
 /* ══════════════════════ PROGRESSION ══════════════════════ */
@@ -14254,6 +14425,11 @@ nouveauSabot();
 // Le hall : photos sur les portes, crédits, salut — puis on y entre, sauf si un lien
 // (#table=CODE, #course=CODE, traités plus haut) a déjà emmené ailleurs.
 rendreHall(); if (vue === "accueil") aller("accueil");
+// La fenêtre de dons, en DERNIER et après un souffle : elle ne doit jamais recouvrir un
+// hall encore en train de se peindre — on verrait la demande avant l'application, ce qui
+// est exactement l'inverse de ce qu'on veut faire lire. Elle décide seule si elle
+// s'affiche (déjà vue, invitation en cours, pas de cagnotte : elle se tait).
+setTimeout(() => { try { window.ouvrirQuete && window.ouvrirQuete(); } catch (e) { /* jamais au prix du démarrage */ } }, 900);
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 
 })();

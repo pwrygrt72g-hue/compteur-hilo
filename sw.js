@@ -3,7 +3,7 @@
 // Le nom du cache PORTE LA VERSION. Le monter est ce qui purge l'ancien (voir « activate ») :
 // une retouche de cette liste sans montée de version ne changerait rien chez ceux qui ont
 // déjà installé l'application, et personne ne le verrait.
-const C = "wisehand-v7";
+const C = "wisehand-v8";
 
 // La coquille : le document, le manifeste, les icônes.
 const COQUILLE = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
@@ -23,7 +23,8 @@ const COQUILLE = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon
 // fichier, fait échouer `node build.mjs`. Elle ne peut pas dériver en silence.
 const PHOTOS = [
   "aquarium", "boulevard", "cartes", "cercle", "concentration", "cotai", "entrainement",
-  "frontdemer", "hall", "jetons", "macao", "mainchaude", "marina", "neon", "prive", "reno",
+  "frontdemer", "hall", "jetons", "leo", "macao", "mainchaude", "marina", "neon",
+  "prive", "reno",
   "salonprive", "strategie",
 ].map(n => `./static/photos/${n}-petit.webp`);
 
