@@ -40,18 +40,36 @@ TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 magick -size 630x1200 gradient:'gray94-gray28' -rotate -90 "$TMP/masque.png"
 magick -size 1200x630 xc:'#070D0C' "$TMP/masque.png" -alpha off -compose CopyOpacity -composite "$TMP/voile.png"
 
-magick static/photos/cartes.webp \
-  -resize 1200x630^ -gravity center -extent 1200x630 -modulate 100,78,100 \
-  "$TMP/voile.png" -compose over -composite \
-  -font "$SERIF" -pointsize 88 -fill '#F6F2E8' -gravity northwest \
-    -annotate +80+132 'Compter les cartes,' \
-    -annotate +80+230 'pour de vrai.' \
-  -font "$SANS" -pointsize 28 -fill '#C6CAC4' \
-    -annotate +84+376 'Dix tables de casino. Avantage maison mesuré, pas recopié.' \
-    -annotate +84+418 'Gratuit, sans compte, sans argent réel.' \
-  -font "$BOLD" -pointsize 25 -fill '#E0BC63' \
-    -annotate +84+498 'WISEHAND21.COM' \
-  -quality 88 -sampling-factor 4:2:0 -strip \
-  static/og.jpg
+# 🚨 DEUX IMAGES, UNE PAR LANGUE (07/09/2026). La page anglaise n'en déclarait AUCUNE :
+# tout partage de /en/blackjack/ sortait sans aperçu, et rien ne le signalait. Lui donner
+# l'image française aurait mis « Compter les cartes, pour de vrai » sur un lien anglais —
+# une carte de partage qui parle une autre langue que la page se lit comme une erreur.
+# Le gabarit est le même ; seules les trois lignes de texte changent.
+carte() {   # carte <sortie> <titre1> <titre2> <ligne1> <ligne2>
+  magick static/photos/cartes.webp \
+    -resize 1200x630^ -gravity center -extent 1200x630 -modulate 100,78,100 \
+    "$TMP/voile.png" -compose over -composite \
+    -font "$SERIF" -pointsize 88 -fill '#F6F2E8' -gravity northwest \
+      -annotate +80+132 "$2" \
+      -annotate +80+230 "$3" \
+    -font "$SANS" -pointsize 28 -fill '#C6CAC4' \
+      -annotate +84+376 "$4" \
+      -annotate +84+418 "$5" \
+    -font "$BOLD" -pointsize 25 -fill '#E0BC63' \
+      -annotate +84+498 'WISEHAND21.COM' \
+    -quality 88 -sampling-factor 4:2:0 -strip \
+    "$1"
+  magick identify -format "$1 : %wx%h · %[size] octets · %m\n" "$1"
+}
 
-magick identify -format 'static/og.jpg : %wx%h · %[size] octets · %m\n' static/og.jpg
+carte static/og.jpg \
+  'Compter les cartes,' 'pour de vrai.' \
+  'Dix tables de casino. Avantage maison mesuré, pas recopié.' \
+  'Gratuit, sans compte, sans argent réel.'
+
+# ⚠️ Le titre anglais tient en deux lignes de la MÊME longueur visuelle que le français,
+# sinon il déborde du voile : 'Count cards, for real.' mesuré à 88 pt tient largement.
+carte static/og-en.jpg \
+  'Count cards,' 'for real.' \
+  'Ten casino tables. House edge measured, not copied.' \
+  'Free, no account, no real money.'

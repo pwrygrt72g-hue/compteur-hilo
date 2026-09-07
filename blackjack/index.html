@@ -97,7 +97,7 @@
         {
           "@type": "Question",
           "name": "Combien rapporte le comptage des cartes ?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Beaucoup moins qu'on ne le raconte. Le comptage retire quelques dixièmes de pour cent à l'avantage de la maison — il ne le renverse pas d'un coup. Mesurée sur 25 millions de mains à une table à six jeux, la rampe de mise de référence de WiseHand rapporte environ 0,007 unité par main : à 10 € l'unité, c'est de l'ordre de 7 centimes par main, avec une variance qui dépasse largement ce gain sur une session." }
+          "acceptedAnswer": { "@type": "Answer", "text": "Beaucoup moins qu'on ne le raconte. Le comptage retire quelques dixièmes de pour cent à l'avantage de la maison — il ne le renverse pas d'un coup. Mesurée au Boulevard, une table à six jeux, la rampe de mise de référence de WiseHand rapporte environ 0,007 unité par main : à 10 € l'unité, c'est de l'ordre de 7 centimes par main, avec une variance qui dépasse largement ce gain sur une session." }
         },
         {
           "@type": "Question",
@@ -112,7 +112,7 @@
         {
           "@type": "Question",
           "name": "Que veut dire un blackjack payé 6:5 ?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Cela signifie qu'un blackjack rapporte 12 € pour 10 € misés au lieu de 15 €. C'est la modification de règle la plus coûteuse du jeu : elle ajoute à elle seule environ 1,4 point d'avantage à la maison. Sur les tables de WiseHand qui la portent, l'avantage maison mesuré atteint 1,85 % et 2,07 %, contre 0,58 % sur la même table payée 3:2. Aucun comptage ne rattrape cela." }
+          "acceptedAnswer": { "@type": "Answer", "text": "Cela signifie qu'un blackjack rapporte 12 € pour 10 € misés au lieu de 15 €. C'est la modification de règle la plus coûteuse du jeu : elle ajoute à elle seule environ 1,4 point d'avantage à la maison. Sur les tables de WiseHand qui la portent, l'avantage maison mesuré atteint 1,85 % et 2,07 %, quand les huit tables payées 3:2 tiennent entre 0,36 % et 0,63 %. Aucun comptage ne rattrape cela." }
         },
         {
           "@type": "Question",
@@ -189,7 +189,7 @@ footer a{color:var(--os-eteint)}
 
 <p class="chapo">Cette page explique le blackjack sans rien vendre. Les chiffres d'avantage
 maison qu'elle donne ne sont pas recopiés ailleurs : ils sont mesurés en simulant trois
-millions de mains par table, à chaque publication du site.</p>
+millions de mains par table, et recalculés dès qu'une règle change.</p>
 
 <h2 id="definition">Le blackjack en trente secondes</h2>
 
@@ -242,8 +242,10 @@ que tous les autres, et ils sont affichés sur le tapis ou lisibles en une minut
 pour une table à peu près bonne, et complètement fausse pour les autres. Le tableau
 ci-dessous donne l'avantage de la maison sur les dix tables de WiseHand, en supposant une
 stratégie de base parfaite. <strong>Ces valeurs ne sont pas reprises d'un ouvrage : elles
-sont obtenues en simulant trois millions de mains par table</strong> au moment où le site
-est construit, à partir des règles exactes de chacune.</p>
+sont obtenues en simulant trois millions de mains par table</strong>, à partir des
+règles exactes de chacune. La simulation est rejouée dès qu'une règle, le solveur ou
+le simulateur change — c'est une empreinte des sources qui le décide, pas une main
+humaine.</p>
 
 <div class="tableau">
 <table>
@@ -341,16 +343,16 @@ de pour cent à la maison, sur des milliers de mains, à condition de ne jamais 
 <dl>
 <dt>Le gain est minuscule, et la variance est énorme.</dt>
 <dd>La rampe de mise de référence de WiseHand — deux unités par point de compte vrai
-au-dessus de +1 — rapporte environ <strong>0,007 unité par main</strong>, mesuré sur
-25 millions de mains à une table à six jeux. À 10 € l'unité, cela fait de l'ordre de sept
+au-dessus de +1 — rapporte environ <strong>0,007 unité par main</strong>, mesuré au
+Boulevard, une table à six jeux. À 10 € l'unité, cela fait de l'ordre de sept
 centimes par main. Une session de trois heures qui finit dans le rouge est le résultat le
 plus banal du monde.</dd>
 
 <dt>Sur beaucoup de tables, compter ne rapporte rien du tout.</dt>
-<dd>Sur quatre des dix tables ci-dessus, le comptage est sans objet : deux paient le
-blackjack 6:5, ce qui place le point d'équilibre hors de portée ; une utilise une
-mélangeuse continue, qui détruit l'information ; une distribue si peu de cartes avant
-de mélanger que les comptes forts n'arrivent presque jamais. <strong>La compétence la plus
+<dd>Sur trois des dix tables ci-dessus, le comptage est sans objet : deux paient le
+blackjack 6:5, ce qui place le point d'équilibre hors de portée, et une utilise une
+mélangeuse continue, qui détruit l'information. Ce sont les deux seules règles qui
+l'annulent. Une pénétration médiocre, elle, affaiblit une table sans la tuer. <strong>La compétence la plus
 rentable au blackjack est de savoir se lever de table.</strong></dd>
 
 <dt>Une rampe de mise mal réglée annule tout.</dt>
@@ -377,8 +379,8 @@ le blackjack. Ce n'est donc pas un délit, mais ça peut coûter l'accès à la 
 
 <h3>Combien rapporte le comptage des cartes&nbsp;?</h3>
 <p>Beaucoup moins qu'on ne le raconte. Le comptage retire quelques dixièmes de pour cent à
-l'avantage de la maison — il ne le renverse pas d'un coup. Mesurée sur 25 millions de mains
-à une table à six jeux, la rampe de mise de référence de WiseHand rapporte environ 0,007
+l'avantage de la maison — il ne le renverse pas d'un coup. Mesurée au Boulevard, une table à
+six jeux, la rampe de mise de référence de WiseHand rapporte environ 0,007
 unité par main : à 10 € l'unité, c'est de l'ordre de 7 centimes par main, avec une variance
 qui dépasse largement ce gain sur une session.</p>
 
@@ -398,7 +400,8 @@ stratégie.</p>
 <p>Cela signifie qu'un blackjack rapporte 12 € pour 10 € misés au lieu de 15 €. C'est la
 modification de règle la plus coûteuse du jeu : elle ajoute à elle seule environ 1,4 point
 d'avantage à la maison. Sur les tables de WiseHand qui la portent, l'avantage maison mesuré
-atteint 1,85 % et 2,07 %, contre 0,58 % sur la même table payée 3:2. Aucun comptage ne
+atteint 1,85 % et 2,07 %, quand les huit tables payées 3:2 tiennent entre 0,36 % et
+0,63 %. Aucun comptage ne
 rattrape cela.</p>
 
 <h3>Peut-on compter les cartes avec une mélangeuse continue&nbsp;?</h3>

@@ -20,9 +20,21 @@
 <meta property="og:title" content="How to Play Blackjack: Rules, Basic Strategy and House Edge">
 <meta property="og:description" content="The complete basic strategy chart, and what every house rule costs — measured by simulation, not copied.">
 <meta property="og:url" content="https://wisehand21.com/en/blackjack/">
-<meta property="og:locale" content="en_GB">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="fr_FR">
 <meta property="og:site_name" content="WiseHand">
+<!-- 🚨 Cette page déclarait `summary_large_image` SANS aucune image : tout partage
+     sortait en lien nu, et rien ne le signalait. L'image est la variante anglaise
+     (outils/og-image.sh en fabrique une par langue) — lui donner la française
+     aurait mis « Compter les cartes, pour de vrai » sur un lien anglais. -->
+<meta property="og:image" content="https://wisehand21.com/static/og-en.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A jack of spades in close-up, with the title &quot;Count cards, for real.&quot;">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wisehand21.com/static/og-en.jpg">
+<meta name="twitter:image:alt" content="A jack of spades in close-up, with the title &quot;Count cards, for real.&quot;">
 </head>
 <body>
 <style>
@@ -30,6 +42,21 @@
    Autonome : ne dépend d'aucune règle de l'application. Les couleurs sont des
    variables locales avec un repli, pour qu'un futur thème puisse les reprendre
    sans que la page casse s'il n'existe pas. */
+/* 🚨 LE FOND DE LA PAGE, ET PAS SEULEMENT CELUI DE LA COLONNE (posé le 07/09/2026).
+   Les jetons vivent sur `.art` : `body` ne pouvait donc pas s'en servir, et n'avait
+   AUCUNE règle. En thème sombre, la colonne sombre flottait au milieu d'un fond BLANC
+   laissé par le navigateur, plus une marge blanche de 8 px tout autour — mesuré à
+   812 px de colonne dans une fenêtre de 1440. La page française, elle, peint bien son
+   `body` ; c'est l'anglaise qui l'avait perdu.
+   Les deux valeurs sont écrites EN DUR, en double des jetons de `.art` : `body` est au-
+   dessus de `.art` dans l'arbre, il ne peut pas hériter de variables déclarées dessous.
+   Elles doivent donc rester en phase avec --p-fond / --p-encre juste en dessous.
+   `color-scheme` en plus : sans lui, les ascenseurs et les champs restent clairs sur
+   une page sombre. */
+:root{ color-scheme:light dark; }
+html,body{ margin:0; background:#faf8f3; color:#12100c; }
+@media (prefers-color-scheme:dark){ html,body{ background:#12140f; color:#ece7dc; } }
+
 .art{
   --p-encre:#12100c; --p-fond:#faf8f3; --p-doux:#5c5850; --p-trait:#ded8cc;
   --p-jade:#0f6b4f; --p-cinabre:#a8321f; --p-or:#6f5410; --p-lien:#0f6b4f; --p-bleu:#2f6296;
@@ -398,7 +425,7 @@ proposition, and you can price it in one line of arithmetic.</p>
 <p>Insurance pays 2:1, so it breaks even when the hole card is a ten
 <strong>one time in three</strong> — 33.3%. In a fresh six-deck shoe there are
 96 ten-valued cards among 312. With the dealer's Ace and your own two cards
-visible, 309 cards are unknown and 96 of them are tens:</p>
+visible — neither of them a ten — 309 cards are unknown and 96 of them are tens:</p>
 
 <p class="math">96 ÷ 309 = <strong>31.1%</strong>, against a break-even of 33.3%.
 Expected value: (2 × 0.311) − 0.689 = <strong>−0.068</strong>.</p>
@@ -410,9 +437,10 @@ a moment of anxiety.</p>
 <p>The version that fools the most people is <strong>even money</strong>. You
 have a blackjack, the dealer shows an Ace, and they offer you a guaranteed 1:1
 payout instead of the 3:2 you might push. That is insurance under another name —
-and it is the <em>worst</em> possible moment to take it, because two of the tens
-you need are in your own hand. The same arithmetic gives 94 ÷ 309 = 30.4%, an
-expected loss of <strong>8.7%</strong>. Decline it. You will lose that hand
+and it is the <em>worst</em> possible moment to take it, because one of the tens
+you need is already in your own hand — a blackjack is an Ace <em>and</em> a ten. The
+same arithmetic gives 95 ÷ 309 = 30.7%, an expected loss of <strong>7.8%</strong> on
+every dollar of insurance. Decline it. You will lose that hand
 sometimes. You will still be ahead over a year.</p>
 
 <p class="note">The one exception is a card counter who knows the remaining shoe
@@ -768,9 +796,18 @@ from it.</p>
       "isFamilyFriendly": false,
       "mainEntityOfPage": "https://wisehand21.com/en/blackjack/",
       "about": [
-        {"@type": "Thing", "name": "Blackjack"},
-        {"@type": "Thing", "name": "Basic strategy"},
-        {"@type": "Thing", "name": "Card counting"}
+        {
+          "@type": "Thing",
+          "name": "Blackjack"
+        },
+        {
+          "@type": "Thing",
+          "name": "Basic strategy"
+        },
+        {
+          "@type": "Thing",
+          "name": "Card counting"
+        }
       ],
       "publisher": {
         "@type": "Organization",
@@ -787,47 +824,31 @@ from it.</p>
           "name": "Is counting cards illegal?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. Keeping a mental tally of cards already dealt is not a crime anywhere. Casinos are private property and may refuse service, so counters are sometimes asked to leave or barred, but that is a business decision rather than a legal one. Using a device or an accomplice to assist counting is illegal in many jurisdictions, including Nevada."
+            "text": "No. Keeping a mental tally of cards that have been dealt in front of you is not a crime anywhere. Casinos are private property and can refuse service, so counters get asked to leave or barred — but that is a business decision, not a legal one. Using a device or an accomplice to help you count is illegal in many jurisdictions, including Nevada."
           }
         },
         {
           "@type": "Question",
-          "name": "Does another player's bad play cost me money at blackjack?",
+          "name": "Does another player's bad play cost me money?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. When another player takes a card that would have busted the dealer, they were equally likely to have taken one that would have saved you. Over any meaningful number of hands the effect is exactly zero. Other players change the order of the cards, not the odds."
+            "text": "No, and this is the most persistent myth at the table. When the player next to you hits a 15 and takes \"the dealer's bust card\", they were equally likely to have taken a card that would have saved you. Over any meaningful number of hands the effect is exactly zero. Their decisions change the order of the cards, not the odds. Play your own hand."
           }
         },
         {
           "@type": "Question",
-          "name": "Why do you hit 16 against a dealer 10?",
+          "name": "Why do I have to hit 16 against a 10? I always bust.",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Hitting 16 busts 61.5% of the time, but standing wins only when the dealer busts, which happens about 23% of the time with a 10 showing after checking for blackjack. Hitting is the less bad of two losing plays. Where late surrender is offered, surrendering 16 against a 10 is cheaper than either."
+            "text": "You do, 61.5% of the time. But if you stand you win only when the dealer busts, which they do about 23% of the time when showing a 10 (having already checked for blackjack). Hitting is not a good play — it is the less bad of two losing plays. If the table offers surrender, the chart says to take it, which is the cheapest of the three."
           }
         },
         {
           "@type": "Question",
-          "name": "Should you take insurance in blackjack?",
+          "name": "Should I always split 8s, even against a 10?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. Insurance pays 2 to 1, so it breaks even only if the hole card is a ten one time in three, or 33.3%. In a fresh six-deck shoe there are 96 ten-valued cards among the 309 unseen, which is 31.1%. The expected value is minus 6.8 cents per dollar wagered. Taking even money on a blackjack is the same bet at a worse moment, losing 8.7%. The only exception is a card counter at a true count of +3 or higher."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What is the difference between 3:2 and 6:5 blackjack?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A 3:2 blackjack pays 15 dollars on a 10 dollar bet; a 6:5 blackjack pays 12. Measured by simulation on one eight-deck game with only the payout changed, the house edge rose from 0.72% to 2.08% — the 6:5 payout alone costs 1.36 percentage points, roughly tripling the cost of playing. No other rule comes close. Check the payout before sitting down."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What does H17 mean in blackjack?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "H17 means the dealer hits a soft 17, such as Ace-6, instead of standing. S17 means they stand. H17 is worse for the player: measured on the same six-deck game with nothing else changed, it costs about 0.22 percentage points, raising the house edge from 0.35% to 0.57%. It also changes several correct player decisions."
+            "text": "Yes — with one exception in this rule set. A hard 16 is the worst hand in blackjack; two hands starting with an 8 are both better than one hand of 16, even against a strong up-card. You are not splitting to win, you are splitting to lose less. The exception: against an Ace at an H17 table with surrender available, the chart says surrender instead."
           }
         },
         {
@@ -835,15 +856,23 @@ from it.</p>
           "name": "Can you count cards against a continuous shuffling machine?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. A continuous shuffling machine returns played cards to the shuffler after every hand, so the composition of the remaining cards never drifts and the true count stays near zero. There is nothing to track, and no counting system defeats it."
+            "text": "No. A CSM returns cards to the shuffler after every hand, so the composition never drifts away from a full shoe and the true count stays pinned near zero. There is nothing to track. No counting system defeats a CSM."
           }
         },
         {
           "@type": "Question",
-          "name": "Does basic strategy guarantee you win at blackjack?",
+          "name": "Does basic strategy mean I will win?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. Basic strategy is the best available play and it still loses money slowly. It reduces the house edge from roughly 2% for an average player to a few tenths of one percent. That is a reduction in cost, not a profit."
+            "text": "No. Basic strategy is the best available play, and the best available play still loses money slowly at every table listed above. It reduces the house edge from roughly 2% for an average player to a few tenths of a point. That is the whole benefit, and it is worth having — but it is a reduction in cost, not a profit."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the best blackjack table to look for?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In order: 3:2 blackjack (non-negotiable), dealer stands on soft 17, double on any two cards, double after splitting, surrender available, and fewer decks. Check the payout first. It outweighs everything else combined."
           }
         },
         {
@@ -851,7 +880,7 @@ from it.</p>
           "name": "Is there a betting system that beats blackjack?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. Martingale, Paroli, D'Alembert and every other progression change the distribution of results without changing the expected value. No sequence of bet sizes turns a negative-expectation game positive; only changing the odds does that."
+            "text": "No. Martingale, Paroli, D'Alembert and every other progression change the shape of your results — many small wins and rare catastrophic losses, or the reverse — without changing the expected value by a single cent. No sequence of bet sizes can turn a negative-expectation game positive. Only changing the odds does that, which is what counting attempts and why it is hard."
           }
         }
       ]
