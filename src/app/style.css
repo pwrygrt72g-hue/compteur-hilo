@@ -233,6 +233,10 @@ label.ch.ligne{flex-direction:row;align-items:center;gap:8px;align-self:flex-end
 select,input[type=text],input[type=number]{background:var(--relief);border:1px solid var(--bord);
   color:var(--os);padding:8px 10px;border-radius:9px;font-family:"Martian Mono",monospace;font-size:var(--t-petit)}
 input[type=range]{accent-color:var(--laiton);width:170px}
+/* Dans une fiche de réglage, le curseur prend la LARGEUR DISPONIBLE. La règle globale
+   ci-dessus (170 px) sert six curseurs ; celui de la cadence couvre 65 crans, soit 1,8 px
+   par cran une fois le pouce dessus — on ne règle pas une cadence à 1,8 px près. */
+label.ch input[type=range]{ width:100%; min-width:180px; max-width:340px }
 /* Chaque champ occupe la MÊME boîte : libellé en haut, contrôle de 44 px en bas. Mesuré le
    05/09 : alignés par le bas, le curseur (20 px) faisait descendre son libellé de 23 px sous
    la ligne des autres — une ligne de libellés brisée au milieu d'une rangée de six. */
@@ -1334,10 +1338,26 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 @media (min-width:1024px){ .rang-table{ padding-left:12px; border-left:1px solid rgba(255,255,255,.16) } }
 /* Le menu « Plus » : les utilitaires rares vivent derrière un bouton, à TOUTES les largeurs. */
 .plus{ position:relative; display:block }
-.plus-menu{ display:none; position:absolute; right:0; bottom:calc(100% + 8px); z-index:30; flex-direction:column; align-items:stretch; gap:4px; min-width:220px;
+/* 🚨 max-width, et le min-width qui CÈDE. Mesuré le 07/09 à 390 px : le menu faisait
+   278 px de large, ancré à droite sous une barre centrée → left = −46 px, et le premier
+   bouton se lisait « ence & croupier ». Or c'est précisément « Cadence & croupier » qui
+   contient le remède au « c'est long ». −34 px à 414, −26 à 430 : les trois largeurs
+   d'iPhone les plus courantes. Au-dessus de 500 px rien ne change. */
+.plus-menu{ display:none; position:absolute; right:0; bottom:calc(100% + 8px); z-index:30; flex-direction:column; align-items:stretch; gap:4px;
+  min-width:min(220px, calc(100vw - 20px)); max-width:calc(100vw - 20px);
   padding:8px; border-radius:14px; background:linear-gradient(180deg,#171B1F,#0E1114); border:1px solid rgba(255,255,255,.14);
   box-shadow:0 18px 40px -16px rgba(0,0,0,.95), 0 0 0 1px rgba(0,0,0,.6); animation:bascule 140ms var(--sec) }
 .plus.ouvert .plus-menu{ display:flex }
+/* 🚨 SOUS 520 px, LE MENU S'ANCRE SUR LA BARRE, PAS SUR SON BOUTON. Le bloc conteneur
+   était #plusTable, large de 74 px et centré : `right:0` posait donc le bord droit du menu
+   à 232 px, et ses 278 px de large finissaient à −46. Un `max-width` ne corrige RIEN ici —
+   ce n'est pas la largeur qui déborde, c'est l'ancrage (vérifié : le max-width posé seul
+   laissait −46 à 390 px et −34 à 414). On rend #plusTable statique : le bloc conteneur
+   devient .zone-actions (déjà `position:relative`), qui fait toute la largeur. */
+@media (max-width:519.98px){
+  #plusTable{ position:static }
+  .plus-menu{ left:10px; right:10px; min-width:0; max-width:none }
+}
 .plus-menu .btn.verre.mini{ width:100%; justify-content:flex-start; text-align:left; padding:8px 12px }
 .plus-menu #bNouveauSabot{ margin-left:0; margin-top:4px }
 .plus-menu #bNouveauSabot::before{ left:8px; right:8px; top:-4px; bottom:auto; width:auto; height:1px }

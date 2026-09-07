@@ -24,6 +24,16 @@ const vitesse = () => DB.cadence;
 // (voir dureeVol). La donne passe de 6,2 s à 4,8 s pendant que chaque carte vole PLUS
 // longtemps. Le libellé du réglage se recalcule seul.
 const cadenceDonne = () => Math.max(240, Math.min(470, Math.round(vitesse() * .40)));
+/* La donne BOUT À BOUT — le seul chiffre qui réponde à « c'est long ». Le curseur annonçait
+   « 0,4 s par carte » sans jamais dire ce que ça coûte en tout. Les nombres sont ceux de
+   distribuer() : la pause de la main du croupier, l'avance initiale (= le plafond du vol),
+   une carte par créneau, et le battement du bout de premier tour. ⚠️ Le nombre de cartes
+   dépend de la TABLE (sièges, carte cachée), pas d'un 12 écrit en dur. */
+function dureeDonne() {
+  const r = cadenceDonne(), sieges = (T.sieges && T.sieges.length) || 5;
+  const n = 2 * sieges + (reglesTable().holeCard ? 2 : 1);
+  return 260 + Math.max(280, Math.round(r * 1.15)) + (n - 1) * r + Math.round(r * .55);
+}
 // Le temps de réflexion d'un VOISIN : réglé à part (« rythme des voisins »), parce
 // qu'il n'a rien à voir avec la cadence à laquelle on compte les cartes.
 if (DB.voisins === undefined) DB.voisins = 450;
@@ -1044,7 +1054,12 @@ function actionAvecEcart(cards, up, st, h, tc) {
 
 async function distribuer() {
   if (T.occupe || T.enJeu) return;
-  T.occupe = true; turbo(false); boutons({}); ac();
+  /* ⏩ LE MODE ACCÉLÉRÉ (DB.rapide). Armé ICI, à la donne — et les trois `turbo(false)`
+     restent en place : ton tour (plus bas) et le règlement rendent la vitesse normale.
+     C'est tout l'arbitrage : le mode couvre la distribution et le jeu des VOISINS, jamais
+     le moment où l'on compte ni celui où l'on lit son verdict. Un turbo permanent ferait
+     de cette application un jeu de cartes rapide au lieu d'un entraîneur. */
+  T.occupe = true; turbo(!!DB.rapide); boutons({}); ac();
   const t = tableCourante();
   // Une mélangeuse continue remet les cartes jouées dans le sabot après chaque main :
   // le compte ne s'accumule jamais. C'est la seule façon honnête de la simuler.
@@ -1462,12 +1477,15 @@ $("feutre").addEventListener("click", e => {
 $("bNouveauSabot").onclick = () => nouveauSabot();
 // Les réglages d'installation — cadence, aide — se règlent une fois et n'ont
 // rien à faire sur le feutre à côté des coups qu'on joue à chaque main.
+const libelleCadence = () => fr1(DB.cadence / 1000) + " s par carte · la donne entière en " + fr1(dureeDonne() / 1000) + " s";
 $("bReglagesTable").onclick = () => {
   ouvrirModale(`<h2>Réglages de la table</h2>
     <div class="demande" style="flex-direction:column;align-items:stretch;text-align:left">
       <label class="ch"><span class="grave">Cadence du croupier</span>
         <input type="range" id="rgCadence" min="120" max="1400" step="20" value="${DB.cadence}">
-        <span class="muet" id="rgCadenceL">${fr1(DB.cadence / 1000)} s par carte · donne initiale à ${fr1(cadenceDonne() / 1000)} s</span></label>
+        <span class="muet" id="rgCadenceL">${libelleCadence()}</span></label>
+      <label class="ch ligne"><input type="checkbox" id="rgRapide"${DB.rapide ? " checked" : ""}>
+        &#9193; Accéléré <span class="muet">(la donne et les voisins au plus vite ; ton tour et le règlement gardent la cadence normale)</span></label>
       <label class="ch"><span class="grave">Rythme des voisins</span>
         <input type="range" id="rgVoisins" min="120" max="1500" step="30" value="${voisins()}">
         <span class="muet" id="rgVoisinsL">${fr1(voisins() / 1000)} s de réflexion par décision — un clic sur le feutre pendant qu'ils jouent passe en accéléré</span></label>
@@ -1476,9 +1494,10 @@ $("bReglagesTable").onclick = () => {
     </div>`);
   $("rgCadence").oninput = () => {
     DB.cadence = +$("rgCadence").value; garder();
-    $("rgCadenceL").textContent = fr1(DB.cadence / 1000) + " s par carte · donne initiale à " + fr1(cadenceDonne() / 1000) + " s";
+    $("rgCadenceL").textContent = libelleCadence();
     poserIntervalle(rythme());
   };
+  $("rgRapide").onchange = () => { DB.rapide = $("rgRapide").checked; garder(); };
   $("rgVoisins").oninput = () => {
     DB.voisins = +$("rgVoisins").value; garder();
     $("rgVoisinsL").textContent = fr1(voisins() / 1000) + " s de réflexion par décision — un clic sur le feutre pendant qu'ils jouent passe en accéléré";
