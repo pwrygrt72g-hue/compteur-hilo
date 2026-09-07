@@ -265,7 +265,14 @@ function ton(a, sortie, t, o) {
 // famille (0,0133 pour les gestes). Ils ne se règlent pas à l'oreille — outils/ecouter.mjs
 // les vérifie, et refuse plus de 8 dB d'écart à la médiane de la famille.
 const NIVEAU = { carte: 6.71, pose: 5.19, jeton: 2.63, jetons: 2.15, raclement: 1.42,
-  blackjack: .89, bust: .89, gain: 1.41, ok: 1.82, ko: .91, alerte: 1.72 };
+  blackjack: .89, bust: .89, gain: 1.41, perd: .74, ok: 1.82, ko: .91, alerte: 1.72 };
+/* 🚨 LA FAMILLE DE CHAQUE GENRE, DÉCLARÉE ICI. outils/ecouter.mjs portait sa propre liste
+   littérale, dérivée de rien : un genre ajouté à NIVEAU sans être ajouté là-bas n'était
+   mesuré par RIEN, et son `default:` le faisait passer au vert. Le banc lit désormais
+   cette table (window.__sonsMesurables) et refuse un genre sans famille. */
+const FAMILLE_SON = { carte: "geste", pose: "geste", jeton: "geste", jetons: "geste", raclement: "geste",
+  blackjack: "verdict", bust: "verdict", gain: "verdict", perd: "verdict",
+  ok: "retour", ko: "retour", alerte: "retour" };
 function synthese(a, sortie, genre, t, k) {
   k = k || 1;
   const niv = NIVEAU[genre];
@@ -376,6 +383,16 @@ function synthese(a, sortie, genre, t, k) {
       // (c) le souffle, resserré.
       bruit(a, sortie, t, { f: 300, q: .6, type: "lowpass", g: .13, att: .002, dec: .045, dur: .14, k });
       return .47;
+    case "perd":       // la main est perdue SANS avoir sauté : on le dit, on n'en fait pas un drame
+      /* La moitié des verdicts était MUETTE : le bus en déclare six (gagne, perd, bust,
+         blackjack, egalite, abandon), on n'en sonorisait que trois — perdre 18 contre 20
+         ne produisait AUCUN son, et on n'entendait une défaite que si l'on sautait.
+         ⚠️ Une seule note basse, SANS chute : le glissando descendant est la signature du
+         bust, la lui emprunter effacerait la différence entre « fermé » et « perdu ».
+         Égalité et abandon restent muets, eux : il ne s'est rien passé. */
+      ton(a, sortie, t, { f: 174.61, g: .34, att: .004, dec: .062, dur: .16, k });
+      bruit(a, sortie, t, { f: 420, q: .7, type: "lowpass", g: .10, att: .002, dec: .028, dur: .09, k });
+      return .28;
     case "gain": {     // « ça a marché » — posé, sans triomphe : il sonnera cent fois
       // Même famille tonale que le blackjack (do majeur) : le gain ÉNONCE, le blackjack
       // énonce ET résout sur l'octave. C'est ce qui les rend frères sans les rendre
@@ -400,10 +417,19 @@ function synthese(a, sortie, genre, t, k) {
 // son(genre, { apres: secondes, gain: 0-1 }) — `apres` cale le son sur une arrivée (la pose d'une carte).
 function son(genre, o) {
   if (!DB.son) return; o = o || {};
-  // Les verdicts (deux mains séparées gagnent d'un coup) ne sonnent qu'une fois par instant.
+  /* Les verdicts ne sonnent qu'une fois par INSTANT — et l'instant qui compte est celui où
+     le son SORT (now + apres), pas celui de l'appel : `apres` porte J.attente, qui vaut
+     ~140 ms par main déjà réglée et monte à plusieurs secondes à huit sièges séparés.
+     🚨 UNE SEULE CLÉ pour les quatre verdicts. Étranglés par GENRE, un « gagne » et un
+     « blackjack » émis dans le même tick passaient tous les deux et se superposaient
+     (mesuré : +3,7 dB au-dessus de la cible de famille). 90 ms et non 150 : deux mains qui
+     se règlent l'une après l'autre sont espacées de ~140 ms, et chacune doit s'entendre. */
   const now = performance.now();
-  if ((genre === "gain" || genre === "bust" || genre === "blackjack") && now - (DERNIER_INSTANT[genre] || -1e9) < 150) return;
-  DERNIER_INSTANT[genre] = now;
+  if (FAMILLE_SON[genre] === "verdict") {
+    const vise = now + (o.apres || 0) * 1000;
+    if (Math.abs(vise - (DERNIER_INSTANT.verdict === undefined ? -1e9 : DERNIER_INSTANT.verdict)) < 90) return;
+    DERNIER_INSTANT.verdict = vise;
+  }
   SON_JOURNAL.push(genre); if (SON_JOURNAL.length > 400) SON_JOURNAL.shift();
   SON_TRACE.push(genre + (o.apres ? "+" + Math.round(o.apres * 1000) : "") + "@" + Math.round(now)); if (SON_TRACE.length > 400) SON_TRACE.shift();
   if (!AC || AC.state !== "running" || !MG) return;   // pas de geste encore, ou onglet endormi : on se tait
@@ -413,6 +439,7 @@ function son(genre, o) {
 function log(quoi, e) { try { console.debug(quoi, e); } catch (x) {} }
 function appliquerVolume() { if (MG && AC) MG.gain.setTargetAtTime(volumeGain(), AC.currentTime, .02); }
 // Mesure hors ligne (outils/ecouter.mjs) : rend le son dans un OfflineAudioContext et en donne le relief.
+window.__sonsMesurables = () => ({ genres: Object.keys(NIVEAU), familles: FAMILLE_SON });
 window.__rendreSon = async genre => {
   const dur = 2, sr = 44100, oc = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, sr * dur, sr);
   const annonce = synthese(oc, oc.destination, genre, .05, 1);
@@ -432,6 +459,7 @@ document.addEventListener("sabot:main-fin", e => {
   if (d.issue === "bust") son("bust");
   else if (d.issue === "blackjack") son("blackjack", { apres: attente + .12 });
   else if (d.issue === "gagne") son("gain", { apres: attente + .1 });
+  else if (d.issue === "perd") son("perd", { apres: attente + .1 });
 });
 // 🚨 CE BANDEAU EST LE SEUL CANAL DE CERTAINES PANNES (un micro refusé, un casque
 // débranché) : sans `role="status"` ni `aria-live`, il n'existait pas du tout pour un

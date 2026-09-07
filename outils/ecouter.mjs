@@ -33,14 +33,21 @@ await cdp("Page.enable"); await cdp("Runtime.enable");
 await cdp("Page.navigate", { url: `http://127.0.0.1:${PORT}/index.html` });
 await dodo(1500);
 
-// Ce que chaque son ANNONCE (durée approximative rendue par synthese), et ce qu'on exige de lui.
-const GENRES = ["carte", "pose", "jeton", "jetons", "raclement", "blackjack", "bust", "gain", "ok", "ko", "alerte"];
-/* Les trois FAMILLES. Un banc qui ne vérifie qu'« audible » et « ne sature pas » laisse
+/* 🚨 LA LISTE VIENT DE L'APPLICATION, elle n'est plus recopiée ici. Avant, GENRES et
+   FAMILLES étaient deux tableaux littéraux dérivés de rien : un genre ajouté à NIVEAU sans
+   être ajouté ici n'était mesuré par RIEN, et le `default:` de synthese() le faisait passer
+   au vert. socle.js expose désormais sa propre table (NIVEAU + FAMILLE_SON).
+   Les trois FAMILLES : un banc qui ne vérifie qu'« audible » et « ne sature pas » laisse
    passer 26 dB d'écart entre une carte et un bust — c'est ce qu'on mesurait le 06/09 :
    l'application criait quand on perdait et chuchotait quand on gagnait. Un son ne doit pas
    s'écarter de plus de 8 dB de la médiane de sa famille, sinon la dérive revient en silence. */
-const FAMILLES = { geste: ["carte", "pose", "jeton", "jetons", "raclement"],
-  verdict: ["blackjack", "bust", "gain"], retour: ["ok", "ko", "alerte"] };
+const table = await evaluer("window.__sonsMesurables && JSON.stringify(window.__sonsMesurables())");
+if (!table) { console.error("ÉCHEC : window.__sonsMesurables est absent — le banc ne sait pas quoi mesurer."); process.exit(2); }
+const { genres: GENRES, familles: FAM } = JSON.parse(table);
+const sansFamille = GENRES.filter(g => !FAM[g]);
+if (sansFamille.length) { console.error(`ÉCHEC : genre(s) sans famille dans socle.js : ${sansFamille.join(", ")} — ils ne seraient comparés à rien.`); process.exit(2); }
+const FAMILLES = {};
+for (const g of GENRES) (FAMILLES[FAM[g]] = FAMILLES[FAM[g]] || []).push(g);
 const ECART_MAX_DB = 8;
 const rms = {};
 const echecs = [];
