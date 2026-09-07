@@ -2708,7 +2708,13 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 :root{ --camx:0; --camy:0 }
 @keyframes camera{
   0%   { translate:calc(var(--camx) * var(--cam-amp)) calc(var(--camy) * var(--cam-amp)); scale:var(--cam-z, 1.05) }
-  33%  { translate:calc(var(--camx) * var(--cam-amp) + var(--cam-d))  calc(var(--camy) * var(--cam-amp) - var(--cam-d)); scale:calc(var(--cam-z, 1.05) + .008) }
+  /* 🚨 `scale` NE VARIE PLUS (07/09). Il valait `+ .008` ici : une échelle qui change
+     force le navigateur à RE-RASTÉRISER la photo — et donc à la RE-FLOUTER — à chaque
+     image, alors que le flou est le poste le plus cher de l'écran (jusqu'à blur(3px) en
+     plein écran, six lieux sur dix). Un `translate` seul se compose sur le GPU sans
+     retoucher la couche. Le zoom qui couvre la dérive (--cam-z:1.07) est une CONSTANTE ;
+     seule sa respiration de 8 millièmes disparaît — invisible, et elle coûtait la donne. */
+  33%  { translate:calc(var(--camx) * var(--cam-amp) + var(--cam-d))  calc(var(--camy) * var(--cam-amp) - var(--cam-d)); scale:var(--cam-z, 1.05) }
   66%  { translate:calc(var(--camx) * var(--cam-amp) - var(--cam-d))  calc(var(--camy) * var(--cam-amp) + var(--cam-d)); scale:var(--cam-z, 1.05) }
   100% { translate:calc(var(--camx) * var(--cam-amp)) calc(var(--camy) * var(--cam-amp)); scale:var(--cam-z, 1.05) }
 }
@@ -2721,6 +2727,10 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
      floutée à chaque image, et c'est la plus chère de l'écran. */
   will-change:transform; backface-visibility:hidden;
 }
+/* Le souffle du croupier (croupier.js, CR.souffle) est une animation INFINIE posée sur un
+   nœud SVG : sans promotion, elle refait une mise en page à chaque image, table vide
+   comprise — mesuré, 128 mises en page sur 123 trames au repos. */
+#cr-crTorse, #cr-crBuste{ will-change:transform }
 /* Le hall respire plus large (une grande photo, rien devant) et plus lentement. */
 .hall-heros>.photo{ --cam-amp:1.6%; --cam-d:8px; --cam-z:1.09; animation-duration:26s }
 
