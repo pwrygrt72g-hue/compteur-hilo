@@ -4,6 +4,7 @@
 //   node src/table-reseau.test.mjs
 import * as E from "./engine.mjs";
 import { creerPartie, creerSalle, codeSalon, formaterCode, normaliserCode, codeValide, MISE_DELAI, ELECTION_DELAI, TAPIS_DEPART,
+  salonJauge, salonNettoyer, salonLigne,
   NB_SIEGES, NOMS_BOTS, TOUR_DELAI, TOUR_DELAI_MIN, TOUR_BUDGET_MS, tourDelai } from "./table-reseau.mjs";
 
 let pass = 0, fail = 0;
@@ -509,6 +510,127 @@ async function avancer(salles, fil, t, jusqu, pas) {
   const d = creerPartie({ regles: REGLES, publique: true });
   d.reprendre(prive, "b");
   ok("une table privée reste privée", d.etatPublic(0).publique, false);
+}
+
+/* ── Le salon ne doit pas promettre une place qui n'existe pas ─────────────── */
+{
+  const siege = (id, bot) => ({ id, bot: !!bot, nom: id, mains: [], mise: 0 });
+  // Trois bots, deux humains, huit sièges : la table est PLEINE. En ne comptant que
+  // les humains, elle s'annonçait « 2/8 » et le bouton disait « Rejoindre ».
+  const pleine = { phase: "mise", sieges: [siege("a"), siege("b"), siege("x", 1), siege("y", 1), siege("z", 1), siege("w", 1), siege("v", 1), siege("u", 1)] };
+  ok("salon : un bot occupe un siège, donc il compte", salonJauge(pleine, 2).pris, 8);
+  ok("salon : la table pleine de bots est vue pleine", salonJauge(pleine, 2).pris >= 8, true);
+
+  // …et le contraire : trois personnes DEBOUT, aucun siège pris. « 0/8 » a l'air
+  // désert ; c'est `gens` qui dit qu'il y a du monde.
+  const debout = { phase: "mise", sieges: [null, null, null, null, null, null, null, null] };
+  ok("salon : personne d'assis, mais du monde relié", salonJauge(debout, 3).gens, 3);
+  ok("salon : et zéro siège pris", salonJauge(debout, 3).pris, 0);
+  ok("salon : un siège vide ne compte pas", salonJauge({ phase: "mise", sieges: [siege("a"), null] }, 1).pris, 1);
+
+  // `gens` ne descend jamais sous 1 : l'hôte qui annonce est forcément là.
+  ok("salon : au moins une personne, toujours", salonJauge(debout, 0).gens, 1);
+  ok("salon : pas encore d'état = rien d'assis", salonJauge(null, 1).pris, 0);
+
+  // Une manche en cours : on n'entre pas au milieu d'une donne.
+  for (const ph of ["donne", "jeu", "assurance", "croupier", "reglement"])
+    ok("salon : « " + ph + " » = manche en cours", salonJauge({ phase: ph, sieges: [] }, 1).jeu, true);
+  for (const ph of ["mise", "sabot"])
+    ok("salon : « " + ph + " » = on peut entrer tout de suite", salonJauge({ phase: ph, sieges: [] }, 1).jeu, false);
+}
+{
+  // 🚨 Le courtier est PUBLIC. Ce nettoyage est ce qui empêche une annonce forgée
+  // d'atteindre innerHTML — il reste la seule barrière pour les nombres.
+  const sale = salonNettoyer({ code: "ABCD1234", pris: '<img src=x onerror=alert(1)>', places: "8", hote: "x".repeat(90), nom: "n".repeat(90), gens: -4, jeu: "1", miseMin: "50", rachats: -1 });
+  ok("annonce : un nombre forgé retombe sur son défaut", sale.pris, 1);
+  ok("annonce : le nom de l'hôte est tronqué", sale.hote.length, 18);
+  ok("annonce : le nom de la table est tronqué", sale.nom.length, 40);
+  ok("annonce : un négatif interdit retombe sur son défaut", sale.gens, 0);
+  ok("annonce : « recaves illimitées » survit", sale.rachats, -1);
+  ok("annonce : la mise mini traverse", sale.miseMin, 50);
+  ok("annonce : jeu accepte la chaîne « 1 »", sale.jeu, 1);
+
+  // ⚠️ Un onglet plus ancien n'envoie NI `gens` NI `jeu`. 0 veut dire « on ne sait
+  // pas » — le rendu n'affiche alors rien, plutôt que d'inventer « 1 joueur ».
+  const vieux = salonNettoyer({ code: "ABCD1234", pris: 2, places: 8, hote: "Léo", nom: "Table", miseMin: 10, rachats: 2 });
+  ok("annonce d'un vieil onglet : gens inconnu", vieux.gens, 0);
+  ok("annonce d'un vieil onglet : jeu inconnu", vieux.jeu, 0);
+  ok("annonce d'un vieil onglet : le reste passe", vieux.pris + "/" + vieux.places, "2/8");
+}
+
+/* ── Rejoindre une table morte ne doit pas ressembler à un succès ──────────── */
+{
+  // Léo clique « Rejoindre » sur une entrée de salon dont l'hôte est parti : l'annonce
+  // survit jusqu'à sa péremption, donc la table est encore listée. Personne ne répond.
+  const fil = new Fil(); const t = { now: 0 };
+  const seul = creer(fil, "zz", "Léo", false, sabotFixe(["AS"]));
+  seul.entrer(t.now);
+  await avancer([seul], fil, t, ELECTION_DELAI + 600);
+  const dit = seul.infos.join(" | ");
+  ok("table morte : on n'annonce pas « Tu ouvres la table »", /Tu ouvres la table/.test(dit), false);
+  ok("table morte : on dit qu'il n'y a personne", /personne à cette table/i.test(dit), true);
+  ok("table morte : on redonne le geste utile (partager le code)", /partage-le/i.test(dit), true);
+  ok("table morte : je tiens quand même le sabot", seul.hote, "zz");
+}
+{
+  // …et le créateur, lui, garde sa phrase : le correctif ne déborde pas.
+  const fil = new Fil(); const t = { now: 0 };
+  const h = creer(fil, "aa", "Hôte", true, sabotFixe(["AS"]));
+  h.entrer(t.now);
+  await avancer([h], fil, t, ELECTION_DELAI + 600);
+  ok("ouvrir une table : la phrase ne change pas", /Tu ouvres la table/.test(h.infos.join(" | ")), true);
+  ok("ouvrir une table : on ne parle pas de table vide", /personne à cette table/i.test(h.infos.join(" | ")), false);
+}
+{
+  // L'hôte part EN COURS DE PARTIE : la reprise garde sa phrase à elle. C'est le cas
+  // que les deux nouveaux motifs ne doivent surtout pas manger.
+  const fil = new Fil(); const t = { now: 0 };
+  const H = creer(fil, "aa", "Hôte", true, sabotFixe(["AS", "KS", "QS", "JS", "TS", "9S"]));
+  const B = creer(fil, "bb", "B", false, sabotFixe(["AS"]));
+  H.entrer(t.now); await attendre(); fil.livrer(t.now);
+  B.entrer(t.now); fil.livrer(t.now); await attendre(); fil.livrer(t.now);
+  await avancer([H, B], fil, t, ELECTION_DELAI + 600);
+  B.infos.length = 0;
+  fil.detacher("aa");
+  B.recevoir({ t: "adieu", id: "aa" }, t.now);
+  await avancer([B], fil, t, t.now + 1200);
+  const dit = B.infos.join(" | ");
+  ok("l'hôte s'en va : la phrase de reprise est conservée", /reprends la main/i.test(dit), true);
+  ok("l'hôte s'en va : on ne dit pas « il n'y a personne »", /personne à cette table/i.test(dit), false);
+}
+
+/* ── Ce que la ligne du salon dit vraiment ────────────────────────────────── */
+{
+  const base = { hote: "Léo", pris: 3, places: 8, gens: 2, jeu: 0, rachats: -1 };
+  ok("ligne : l'essentiel, sans bavardage",
+     salonLigne(base, "10 €").join(" · "), "chez Léo · 2 joueurs · 3/8 sièges · min 10 €");
+  ok("ligne : une seule personne, au singulier",
+     salonLigne(Object.assign({}, base, { gens: 1 }), "10 €")[1], "1 joueur");
+  ok("ligne : une manche en cours se dit",
+     salonLigne(Object.assign({}, base, { jeu: 1 }), "10 €").includes("manche en cours"), true);
+  ok("ligne : au repos, on n'en parle pas",
+     salonLigne(base, "10 €").includes("manche en cours"), false);
+  ok("ligne : les recaves bornées se disent",
+     salonLigne(Object.assign({}, base, { rachats: 2 }), "10 €").pop(), "2 recaves");
+  ok("ligne : une recave, au singulier",
+     salonLigne(Object.assign({}, base, { rachats: 1 }), "10 €").pop(), "1 recave");
+  ok("ligne : recaves illimitées = on n'en parle pas",
+     salonLigne(base, "10 €").some(x => /recave/.test(x)), false);
+  // ⚠️ Le cas de l'onglet plus ancien : `gens` vaut 0. On saute le morceau au lieu
+  // d'annoncer « 0 joueur » (une table déserte) ou d'inventer « 1 joueur ».
+  ok("ligne : personne compté = aucun morceau, pas « 0 joueur »",
+     salonLigne(Object.assign({}, base, { gens: 0 }), "10 €").join(" · "), "chez Léo · 3/8 sièges · min 10 €");
+  ok("ligne : hôte sans nom, on reste poli",
+     salonLigne(Object.assign({}, base, { hote: "" }), "10 €")[0], "chez quelqu'un");
+  // 🚨 LA FRONTIÈRE ANTI-INJECTION EST CHEZ L'APPELANT (`.map(echapper)`), et elle y
+  // reste : ce helper ne fabrique aucun balisage, et laisse passer l'entrée telle
+  // quelle. Le jour où il rendrait du HTML tout fait, l'échappement de l'appelant
+  // deviendrait une double-protection illusoire — le premier test le verrait.
+  ok("ligne : le helper n'invente aucun balisage",
+     salonLigne(base, "10 €").some(x => /[<>&]/.test(x)), false);
+  ok("ligne : l'entrée ressort telle quelle — c'est l'appelant qui échappe",
+     salonLigne(Object.assign({}, base, { hote: "<img src=x onerror=alert(1)>" }), "10 €")[0],
+     "chez <img src=x onerror=alert(1)>");
 }
 
 console.log(`\n${pass} tests passés, ${fail} échecs`);

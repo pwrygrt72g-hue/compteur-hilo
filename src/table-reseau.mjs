@@ -64,6 +64,70 @@ const arr = x => Math.round(x * 100) / 100;
 const carteTxt = c => c.r + c.suit;
 
 /* ── La partie ─────────────────────────────────────────────────────────── */
+/* ── Ce qu'une table dit d'elle-même au salon ─────────────────────────────────
+   Deux nombres, parce qu'il y a deux questions — et les confondre était le défaut :
+     · `pris`  = les SIÈGES OCCUPÉS, bots compris. C'est ce que le bouton
+                 « Rejoindre » promet. En ne comptant que les humains, une table
+                 dont trois sièges étaient tenus par des bots s'annonçait « 2/5 » :
+                 on cliquait, on ne pouvait pas s'asseoir, et rien ne le disait.
+     · `gens`  = les PERSONNES reliées, DEBOUT COMPRISES. Trois spectateurs sans
+                 siège, c'est « 0/5 » — une table qui a l'air déserte alors qu'il
+                 y a du monde.
+   `jeu` dit si une manche est lancée : on n'entre pas au milieu d'une donne, on
+   attend le prochain tour de mise. Les phases « mise » et « sabot » ne comptent
+   pas — là, on entre tout de suite.                                            */
+const SALON_PHASES_EN_JEU = ["donne", "jeu", "assurance", "croupier", "reglement"];
+export function salonJauge(etat, nbPairs) {
+  const e = etat && Array.isArray(etat.sieges) ? etat : null;
+  return {
+    pris: e ? e.sieges.filter(st => st).length : 0,
+    gens: Math.max(1, Math.trunc(Number(nbPairs)) || 0),
+    jeu: !!(e && SALON_PHASES_EN_JEU.indexOf(e.phase) >= 0),
+  };
+}
+
+/* Une annonce vient d'un courtier PUBLIC : n'importe qui peut en poster une. Tout
+   ce qui en sort est soit un nombre borné, soit une chaîne tronquée — et les deux
+   chaînes restent des chaînes, donc l'échappement au rendu reste obligatoire.
+   ⚠️ `gens` et `jeu` valent 0 quand ils manquent (annonce d'un onglet plus ancien) :
+   0 veut dire « on ne sait pas », et le rendu n'affiche alors rien plutôt que
+   d'inventer « 1 joueur ». */
+const salonEntier = (v, defaut, max) => {
+  const n = Math.trunc(Number(v));
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, max) : defaut;
+};
+/* La ligne descriptive d'une table du salon, en MORCEAUX — jamais du HTML. C'est
+   l'appelant qui échappe chacun d'eux : la frontière anti-injection reste à un seul
+   endroit, et ce qui décide QUOI dire est testable sans navigateur.
+   `miseTxt` arrive déjà formaté (la monnaie est une affaire d'application).
+   ⚠️ Un champ inconnu (0) ne produit AUCUN morceau : mieux vaut ne rien dire que
+   d'affirmer « 1 joueur » sur une annonce qui ne l'a jamais dit. */
+export function salonLigne(t, miseTxt) {
+  return [
+    "chez " + (t.hote || "quelqu'un"),
+    t.gens > 0 ? t.gens + (t.gens > 1 ? " joueurs" : " joueur") : "",
+    t.pris + "/" + t.places + " sièges",
+    t.jeu ? "manche en cours" : "",
+    miseTxt ? "min " + miseTxt : "",
+    t.rachats >= 0 ? t.rachats + " recave" + (t.rachats > 1 ? "s" : "") : "",
+  ].filter(Boolean);
+}
+export function salonNettoyer(m) {
+  return {
+    t: "table", code: String(m.code),
+    hote: String(m.hote == null ? "" : m.hote).slice(0, 18),
+    nom: String(m.nom == null ? "" : m.nom).slice(0, 40),
+    pris: salonEntier(m.pris, 1, 99),
+    places: salonEntier(m.places, NB_SIEGES, 99),
+    gens: salonEntier(m.gens, 0, 99),
+    jeu: Number(m.jeu) === 1 ? 1 : 0,
+    miseMin: salonEntier(m.miseMin, 10, 1e9),
+    // -1 = « recaves illimitées » (Infinity ne survit pas à JSON). C'est la seule
+    // valeur négative admise : tout le reste retombe dessus.
+    rachats: Number(m.rachats) === -1 ? -1 : salonEntier(m.rachats, -1, 99),
+  };
+}
+
 export function creerPartie(o) {
   o = o || {};
   const regles = makeRules(o.regles || {});
@@ -597,21 +661,39 @@ export function creerSalle(o) {
       Promise.resolve(o.cartesNeuves()).then(s => { S.prochainEnCours = false; if (S.partie) S.partie.fournirProchain(s); }, () => { S.prochainEnCours = false; });
     }
   }
-  function devenirHote(now, repris) {
+  // `motif` dit POURQUOI je prends le sabot. Sans lui, les trois cas rendaient la même
+  // phrase — « Tu ouvres la table. » — y compris celui où l'on venait de cliquer
+  // « Rejoindre » sur une table morte : l'échec était annoncé comme un succès.
+  //   null        j'ai cliqué « Ouvrir »
+  //   "personne"  j'ai cliqué « Rejoindre » et il n'y avait personne
+  //   "sans-hote" j'ai rejoint, il y a du monde, mais plus aucun hôte
+  function devenirHote(now, repris, motif) {
     S.hote = S.moi;
     S.partie = creerPartie(optionsPartie());
     if (repris) S.partie.reprendre(repris, S.moi);
     // Les pairs présents sont bien là ; les sièges dont le joueur a disparu (l'ancien hôte) se libèrent.
     for (const id of S.pairs.keys()) S.partie.revenir(id);
     for (const st of S.partie.etat.sieges) if (st && !st.bot && !S.pairs.has(st.id)) S.partie.quitter(st.id, 1);
-    info(repris ? "L'hôte a quitté la table : tu reprends la main. Manche annulée, mises rendues, sabot neuf scellé." : "Tu ouvres la table.");
+    info(repris ? "L'hôte a quitté la table : tu reprends la main. Manche annulée, mises rendues, sabot neuf scellé."
+       : motif === "personne" ? "Il n'y a personne à cette table : elle s'est vidée. Tu en ouvres une neuve avec le même code — partage-le pour qu'on te rejoigne."
+       : motif === "sans-hote" ? "Cette table n'avait plus d'hôte : tu reprends la main, avec un sabot neuf."
+       : "Tu ouvres la table.");
     assurerSabot(now); diffuser(now);
   }
   function elire(now) {
     const ids = [...S.pairs.keys()].sort();
     const nouveau = ids[0];
-    if (nouveau === S.moi) devenirHote(now, S.etat);
-    else { S.hote = nouveau; info("L'hôte a quitté la table : " + ((S.pairs.get(nouveau) || {}).nom || nouveau) + " reprend la main."); }
+    // ⚠️ Pas d'état à reprendre = il n'y a jamais eu d'hôte de mon point de vue (j'arrive
+    // sur une table sans maître). Dire « l'hôte a quitté » serait faux : je n'en ai
+    // jamais vu. Les deux branches se posent la même question.
+    const orphelin = !S.etat;
+    if (nouveau === S.moi) devenirHote(now, S.etat, orphelin ? "sans-hote" : null);
+    else {
+      S.hote = nouveau;
+      const qui = (S.pairs.get(nouveau) || {}).nom || nouveau;
+      info(orphelin ? "Cette table n'avait plus d'hôte : " + qui + " reprend la main."
+                    : "L'hôte a quitté la table : " + qui + " reprend la main.");
+    }
   }
 
   S.entrer = now => {
@@ -659,7 +741,10 @@ export function creerSalle(o) {
   };
   S.tic = now => {
     if (S.entre && !S.hote && now - S.attenteDepuis >= ELECTION_DELAI) {
-      if (S.pairs.size === 1) devenirHote(now, null); else elire(now);
+      // `S.pairs` me contient (posé à la construction) : taille 1 = je suis SEUL.
+      // C'est le cas « la table que je voulais rejoindre n'existe plus » — l'hôte
+      // n'annonce plus, mais son entrée de salon survit jusqu'à sa péremption.
+      if (S.pairs.size === 1) devenirHote(now, null, S.createur ? null : "personne"); else elire(now);
     }
     if (!estHote()) return;
     S.partie.cadence = S.cadence;

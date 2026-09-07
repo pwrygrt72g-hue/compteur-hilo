@@ -222,9 +222,13 @@ const SALON = { api: null, vues: new Map(), tic: 0, battement: 0, publique: fals
 // le rappelle — on n'y ajoute rien de plus que ce qui est déjà à l'écran.
 function salonFiche() {
   const e = RS.etat, t = tableCourante();
-  const humains = e ? e.sieges.filter(st => st && !st.bot && !st.absent).length : 1;
+  // Les deux nombres et l'état de la manche viennent de TR.salonJauge — une seule
+  // définition, testée en Node. Cf. son commentaire : « places libres » et
+  // « y a-t-il quelqu'un » sont deux questions, et les confondre faisait promettre
+  // des sièges tenus par des bots.
+  const j = TR.salonJauge(e, RS.salle && RS.salle.pairs ? RS.salle.pairs.size : 1);
   return { t: "table", code: RS.code, hote: (prenom() || "Joueur").slice(0, 18), table: t.id, nom: t.nom,
-    pris: Math.max(1, humains), places: TR.NB_SIEGES, miseMin: t.mise_min || 10,
+    pris: j.pris, places: TR.NB_SIEGES, gens: j.gens, jeu: j.jeu ? 1 : 0, miseMin: t.mise_min || 10,
     cave: t.tapis_depart || TAPIS_DEPART, rachats: t.rachats_max === undefined ? -1 : t.rachats_max };
 }
 function salonEmettre(o) {
@@ -256,26 +260,9 @@ function salonTaire() {
 // On ne garde donc QUE les champs qu'on affiche, chacun ramené de force à son type. Un
 // nombre ne peut pas porter de balise : c'est le seul filtre qui ne dépend pas de se
 // souvenir d'appeler `echapper` au bon endroit dans un gabarit qui grandira.
-const salonEntier = (v, defaut, max) => {
-  const n = Math.trunc(Number(v));
-  return Number.isFinite(n) && n >= 0 ? Math.min(n, max) : defaut;
-};
-function salonPropre(m) {
-  return {
-    t: "table", code: String(m.code),
-    // ⚠️ Ces deux-là RESTENT des chaînes — donc `echapper` reste obligatoire au rendu.
-    // On les borne pour qu'une annonce ne puisse pas pousser la liste hors de l'écran.
-    hote: String(m.hote == null ? "" : m.hote).slice(0, 18),
-    nom: String(m.nom == null ? "" : m.nom).slice(0, 40),
-    pris: salonEntier(m.pris, 1, 99),
-    places: salonEntier(m.places, TR.NB_SIEGES, 99),
-    miseMin: salonEntier(m.miseMin, 10, 1e9),
-    // -1 = « recaves illimitées » (Infinity ne survit pas à JSON). C'est la seule
-    // valeur négative admise : tout le reste retombe dessus.
-    rachats: Number(m.rachats) === -1 ? -1 : salonEntier(m.rachats, -1, 99),
-    vu: Date.now(),
-  };
-}
+// Le nettoyage vit dans TR (testé en Node) ; `vu` est posé ici parce qu'il dépend de
+// l'horloge locale, que le module ne lit jamais.
+const salonPropre = m => Object.assign(TR.salonNettoyer(m), { vu: Date.now() });
 async function salonEcouter() {
   if (SALON.api || SALON.essai || window.__reseauTransport) return salonRendre();
   SALON.essai = true; salonRendre();
@@ -339,7 +326,7 @@ function salonRendre() {
     const plein = t.pris >= t.places;
     return `<div class="mp-ouverte${plein ? " pleine" : ""}">
       <div class="mp-ouverte-txt"><b>${echapper(t.nom || "Table")}</b>
-        <span class="muet">chez ${echapper(t.hote || "quelqu'un")} · ${t.pris}/${t.places} · min ${fmtJ(t.miseMin || 10)}${t.rachats >= 0 ? ` · ${t.rachats} recave${t.rachats > 1 ? "s" : ""}` : ""}</span></div>
+        <span class="muet">${TR.salonLigne(t, fmtJ(t.miseMin || 10)).map(echapper).join(" · ")}</span></div>
       <button class="btn creux mp-ouverte-btn" data-code="${echapper(t.code)}"${plein ? " disabled" : ""}>${plein ? "Complète" : "Rejoindre"}</button>
     </div>`;
   }).join("");

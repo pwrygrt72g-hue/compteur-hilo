@@ -76,7 +76,7 @@
 </ul>
 
 <h3>Abandonner (<i>surrender</i>)</h3>
-<p>Vous jetez votre main et récupérez la moitié de votre mise. Ça n'existe que sur certaines tables, et seulement sur vos deux premières cartes. Ça paraît défaitiste ; c'est mathématiquement correct sur exactement quatre situations (16 contre 9, 10 ou as ; 15 contre 10), auxquelles s'ajoutent 15 et 17 contre l'as quand le croupier tire sur 17 souple.</p>
+<p>Vous jetez votre main et récupérez la moitié de votre mise. Ça n'existe que sur certaines tables, et seulement sur vos deux premières cartes. Ça paraît défaitiste ; c'est mathématiquement correct sur exactement quatre situations (16 contre 9, 10 ou as ; 15 contre 10), auxquelles s'ajoutent, quand le croupier tire sur 17 souple, 15 et 17 contre l'as, ainsi que la paire de 8 contre l'as.</p>
 
 <h2 id="assurance">L'assurance : le seul pari qu'on peut réfuter avec une division</h2>
 
@@ -228,7 +228,7 @@
 
 <h2 id="regles">Ce que chaque règle change vraiment sur l'avantage maison</h2>
 
-<p>C'est ici que se joue l'essentiel, et c'est ce que presque personne ne mesure. Deux tables voisines, avec les mêmes cartes et le même croupier, peuvent avoir un avantage maison qui varie du simple au quadruple selon des lignes écrites en petit sur le tapis.</p>
+<p>C'est ici que se joue l'essentiel, et c'est ce que presque personne ne mesure. Deux tables voisines, avec les mêmes cartes et le même croupier, peuvent avoir un avantage maison qui va de 0,37&nbsp;% à près de 2&nbsp;% — un facteur cinq — selon des lignes écrites en petit sur le tapis.</p>
 
 <p>Chaque chiffre ci-dessous vient d'une simulation de <strong>320 millions de mains</strong> jouées en stratégie parfaite recalculée pour chaque variante. On part d'une table de référence et on <strong>ne change qu'une règle à la fois</strong>. L'incertitude de chaque mesure reste inférieure à ±0,01 point.</p>
 
@@ -381,7 +381,7 @@
 
 <p>Trois enseignements, tous contre-intuitifs :</p>
 
-<p><strong>1. Compter sans faire varier la mise ne rapporte rien.</strong> Ligne 2 : un compteur parfait, connaissant tous les écarts au compte et refusant l'assurance au bon moment, qui garde une mise constante, gagne exactement autant qu'un joueur de stratégie de base — c'est-à-dire qu'il perd. <strong>Tout le bénéfice vient du fait de miser plus quand le sabot est favorable</strong>, et de rien d'autre. Les écarts au compte ne font qu'amplifier un avantage créé par la mise : ils ajoutent ici 0,0018 unité par main, soit un peu plus d'un cinquième du total.</p>
+<p><strong>1. Compter sans faire varier la mise ne rapporte rien.</strong> Regardez la deuxième ligne du tableau : un compteur parfait, connaissant tous les écarts au compte et refusant l'assurance au bon moment, qui garde une mise constante, gagne exactement autant qu'un joueur de stratégie de base — c'est-à-dire qu'il perd. <strong>Tout le bénéfice vient du fait de miser plus quand le sabot est favorable</strong>, et de rien d'autre. Les écarts au compte ne font qu'amplifier un avantage créé par la mise : ils ajoutent ici 0,0018 unité par main, soit un peu plus d'un cinquième du total.</p>
 
 <p><strong>2. Une petite variation de mise ne suffit pas.</strong> De 1 à 2, on perd encore. De 1 à 4, on est à peine à l'équilibre. Il faut un écart de 1 à 8 ou 1 à 12 pour dégager quelque chose — c'est-à-dire une variation de mise que n'importe quel responsable de salle repère.</p>
 
@@ -389,7 +389,7 @@
 
 <h3>La variance : pourquoi cet avantage ne se voit jamais</h3>
 
-<p>C'est le chiffre qui devrait figurer sur toutes les pages consacrées au comptage, et qui n'y figure jamais. Dans la même simulation, l'écart-type est de <strong>2,76 unités par main</strong>, contre une espérance de 0,0083.</p>
+<p>C'est le chiffre qui devrait figurer sur toutes les pages consacrées au comptage, et qu'on y trouve pourtant rarement. Dans la même simulation, l'écart-type est de <strong>2,76 unités par main</strong>, contre une espérance de 0,0083.</p>
 
 <p>Le bruit est <strong>plus de trois cents fois plus grand que le signal</strong>. Conséquences directes :</p>
 
@@ -449,7 +449,7 @@
 <h2 id="faq">Questions fréquentes</h2>
 
 <h3>Faut-il faire 21 pour gagner ?</h3>
-<p>Non. Il faut finir devant le croupier sans dépasser 21. Une main gagnante moyenne se situe autour de 18-20. Beaucoup de mains se gagnent parce que le croupier a sauté.</p>
+<p>Non. Il faut finir devant le croupier sans dépasser 21. Beaucoup de mains se gagnent sans rien faire de spectaculaire : le croupier saute lui-même dans 29&nbsp;% des cas environ (29,1&nbsp;% en S17, 29,6&nbsp;% en H17).</p>
 
 <h3>Que fait exactement le croupier ?</h3>
 <p>Il n'a aucune liberté. Il tire tant que son total est inférieur à 17, puis s'arrête. La seule variante est le 17 souple : selon la table, il tire ou il reste. C'est écrit sur le tapis, et ça vaut 0,193 point d'avantage.</p>
@@ -458,7 +458,7 @@
 <p>Non. Sur six jeux, l'assurance a une espérance de −7,4&nbsp;% de la somme misée, et jusqu'à −8,7&nbsp;% si vous tenez un 20. Elle ne devient rentable que si plus d'un tiers des cartes restantes valent 10, ce qu'un joueur ordinaire ne peut pas savoir.</p>
 
 <h3>Le blackjack est-il un jeu de hasard ou d'adresse ?</h3>
-<p>Les deux. La distribution est du hasard pur ; les décisions ne le sont pas. C'est le seul jeu de casino courant où la qualité de votre jeu déplace l'avantage de la maison de plusieurs points de pourcentage. Elle ne le fait toutefois jamais passer en votre faveur sans comptage.</p>
+<p>Les deux. La distribution est du hasard pur ; les décisions ne le sont pas. C'est l'un des rares jeux de casino où la qualité de votre jeu déplace l'avantage de la maison de plusieurs points de pourcentage. Elle ne le fait toutefois jamais passer en votre faveur sans comptage.</p>
 
 <h3>Quelle est la meilleure table pour un débutant ?</h3>
 <p>Celle qui paie le blackjack <strong>3:2</strong>, où le croupier <strong>reste sur 17 souple</strong>, où l'on peut <strong>doubler sur n'importe quel total</strong> et <strong>doubler après séparation</strong>. Le nombre de jeux vient loin derrière ces quatre points.</p>
