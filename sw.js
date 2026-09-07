@@ -1,9 +1,9 @@
-// Le service worker de LasVegas21 : ce qu'il faut pour que l'application s'ouvre dans l'avion.
+// Le service worker de WiseHand : ce qu'il faut pour que l'application s'ouvre dans l'avion.
 //
 // Le nom du cache PORTE LA VERSION. Le monter est ce qui purge l'ancien (voir « activate ») :
 // une retouche de cette liste sans montée de version ne changerait rien chez ceux qui ont
 // déjà installé l'application, et personne ne le verrait.
-const C = "lasvegas21-v5";
+const C = "wisehand-v6";
 
 // La coquille : le document, le manifeste, les icônes.
 const COQUILLE = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png"];

@@ -73,9 +73,26 @@ await cdp("Page.enable"); await cdp("Runtime.enable");
 // y = 776 sur une fenêtre de 800) faisait dépasser le document de 27 px — un défaut « 1,04 écran »
 // qui n'existait qu'une fois sur deux, selon que la sonde tombait pendant ou après le vol (mesuré le
 // 05/09, 1280 × 800, Salon Privé). On attend que plus aucun jeton ne vole, 2,5 s au plus.
-const POSE = `new Promise(res => { const t0 = performance.now(); const tic = () => {
-  const n = document.querySelectorAll("#jetonsCalque .jt-vol").length;
-  if (!n || performance.now() - t0 > 2500) res(n); else setTimeout(tic, 80); }; tic(); })`;
+//
+// 🚨 …ET SUR UNE POLICE PEINTE. Les trois fontes viennent de Google Fonts : tant que la fonte
+// de repli n'a pas été remplacée, les métriques diffèrent d'un pixel. Mesuré le 07/09 : les
+// MÊMES boutons d'« Exercices » font 33 px au lieu de 34, et la tolérance du banc
+// (`^BUTTON \d+×3[4-9]$`) ne couvre que l'état peint — donc le banc invente un défaut. Trois
+// passages d'affilée ont donné trois verdicts DIFFÉRENTS sur un dépôt inchangé : propre,
+// « SUMMARY 1080×44 », puis trois « BUTTON 95×33 ». Un banc qui échoue au hasard ne prouve plus
+// rien, et il empêche surtout de savoir si le changement qu'on vient d'écrire a cassé quelque
+// chose. `document.fonts.ready` résout quand le chargement est terminé ; les deux images
+// d'attente laissent la mise en page se refaire avec les nouvelles métriques.
+// ⚠️ Plafonné comme le reste : une police injoignable doit laisser passer la mesure, pas la geler.
+const POSE = `(async () => {
+  const dodo = ms => new Promise(r => setTimeout(r, ms));
+  const image = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await Promise.race([document.fonts.ready, dodo(3000)]);
+  await image();
+  return new Promise(res => { const t0 = performance.now(); const tic = () => {
+    const n = document.querySelectorAll("#jetonsCalque .jt-vol").length;
+    if (!n || performance.now() - t0 > 2500) res(n); else setTimeout(tic, 80); }; tic(); });
+})()`;
 
 // La sonde : ce qui compte pour juger un écran, pas ce qui est facile à mesurer.
 const SONDE = `(() => {
@@ -94,7 +111,14 @@ const SONDE = `(() => {
   const cible = e => (e.matches("input[type=checkbox],input[type=radio]") && e.closest("label")) || e;
   const petits = [...document.querySelectorAll("button:not([hidden]), input, select, summary")]
     .filter(e => { const r = cible(e).getBoundingClientRect(); return r.width > 0 && (r.height < 44 || r.width < 24); })
-    .map(e => { const r = cible(e).getBoundingClientRect(); return (e.id || e.className || e.tagName) + " " + Math.round(r.width) + "×" + Math.round(r.height); });
+    // 🚨 UNE DÉCIMALE SUR LA HAUTEUR, et ce n'est pas de la coquetterie. Les boutons
+    // d'« Exercices » mesurent EXACTEMENT 33,500 px (mesuré quatre fois de suite, police
+    // Archivo peinte, valeur identique au millième). Un arrondi de 33,5 rend 34 ou 33 selon
+    // le dernier bit du calcul de mise en page — et la tolérance ci-dessous, écrite contre la
+    // CHAÎNE arrondie, basculait avec lui : trois passages sur un dépôt inchangé donnaient
+    // trois verdicts différents. La géométrie était déterministe, c'est l'arrondi qui ne
+    // l'était pas. Une décimale déplace la comparaison hors de la frontière.
+    .map(e => { const r = cible(e).getBoundingClientRect(); return (e.id || e.className || e.tagName) + " " + Math.round(r.width) + "×" + (Math.round(r.height * 10) / 10); });
   const largeurDoc = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth);
   // Ce qui dépasse EN BAS de la fenêtre (le document fait plus d'un écran) : nommé, sinon on
   // cherche à l'aveugle. Mesuré le 05/09 : « 1,07 écran » au Salon Privé à 1024 × 768 sans savoir quoi.
@@ -228,7 +252,10 @@ let courant = null;
 const exiger = (cond, msg) => { if (!cond) (courant && courant.L >= LARGEUR_STRICTE ? echecs : infos).push(msg); };
 // Cibles tactiles tolérées sous 44 px : les puces de nav (38 px, scroll-snap),
 // la marque (un lien, pas un bouton d'action), et les entrées de formulaire.
-const TOLERE = /^(marque|prenom|eJeux|sys)\b|^BUTTON \d+×3[4-9]$/;
+// ⚠️ La borne basse est 33, pas 34 : les boutons d'« Exercices » font 33,5 px depuis toujours.
+// L'auteur avait écrit `3[4-9]` en lisant « 34 » à l'écran — un arrondi, pas une mesure.
+// La partie décimale est optionnelle : une hauteur ronde n'en porte pas.
+const TOLERE = /^(marque|prenom|eJeux|sys)\b|^BUTTON \d+×3[3-9](\.\d)?$/;
 for (const r of rapport) {
   courant = r;
   const ou = `${r.L}×${r.H}/${r.vue}`;

@@ -1,8 +1,8 @@
-# LasVegas21 — compter les cartes, pour de vrai
+# WiseHand — compter les cartes, pour de vrai
 
 Entraînement au comptage de cartes au blackjack, dans le navigateur. Des jetons, mais aucun argent : tout le monde s'assoit avec le même tapis de 1 000, et c'est un outil pour s'entraîner.
 
-Le nom est un clin d'œil au film *21*, où des étudiants du MIT comptent les cartes à Las Vegas. Rien du film n'est repris : ni son logo, ni son affiche, ni ses personnages, ni ses images — seulement l'idée qu'on peut apprendre à compter.
+Le nom dit ce qu'on vient y chercher : au blackjack, une *main* est ce qu'on vous distribue — la jouer **sagement** est la seule part qui vous appartienne.
 
 **→ [Jouer en ligne](https://pwrygrt72g-hue.github.io/compteur-hilo/)**
 
@@ -94,4 +94,4 @@ Le code est sous **MIT** ; les dix-sept photos ne le sont pas — chacune reste 
 
 Le partage à l'identique s'arrête à la photo : une application qui affiche des images ne dérive pas d'elles, elle les rassemble. Le détail est dans [`LICENSE`](LICENSE), photo par photo dans [`static/photos/CREDITS.md`](static/photos/CREDITS.md).
 
-LasVegas21 n'est affilié à aucun casino : les noms de tables sont inventés, les lieux photographiés existent.
+WiseHand n'est affilié à aucun casino : les noms de tables sont inventés, les lieux photographiés existent.
