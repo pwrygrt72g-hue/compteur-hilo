@@ -15,7 +15,19 @@ import { GLTFLoader } from "./GLTFLoader.js";
 // ce qui permet aux cinq croupiers de partager UNE géométrie et de rester cinq
 // personnes. La clé de gauche est le nom du matériau, celle de droite la
 // variable de croupier.js — même palette que le SVG, donc mêmes gens.
-const TEINTES = { Suit: "veste", Tie: "orne", White: "chemise", Skin: "peau", Hair: "cheveux", Eyebrows: "sourcil", Eye: "encre", Black: "veste" };
+// Deux modèles, du MÊME lot Quaternius : même squelette (62 os, mêmes noms) et
+// mêmes 24 clips, donc l'un remplace l'autre sans une ligne de plus ici. Seuls
+// leurs matériaux diffèrent — l'homme les nomme par vêtement (Suit, Tie…), la
+// femme par couleur (Red, LimeGreen…). Une seule table suffit : « Skin » est le
+// seul nom commun, et il veut dire la même chose des deux côtés.
+const TEINTES = {
+  // « Business Man »
+  Suit: "veste", Tie: "orne", White: "chemise", Skin: "peau", Hair: "cheveux", Eyebrows: "sourcil", Eye: "encre", Black: "veste",
+  // « Animated Woman — Formal » : la robe est LimeGreen, les cheveux Red, la
+  // ceinture Gold, les sourcils et les yeux Brown. Les noms mentent, pas les
+  // surfaces : c'est vérifié en teignant chaque matériau d'une couleur vive.
+  LimeGreen: "veste", Red: "cheveux", Brown: "sourcil", Gold: "orne",
+};
 // Les 24 animations du lot sont surtout du combat et de la course. Quatre
 // seulement ont un sens derrière une table ; le reste n'est jamais joué.
 const CLIPS = { repos: /Idle_Neutral/i, salut: /\|Wave/i, geste: /\|Interact/i };
@@ -74,7 +86,7 @@ export async function monter({ hote, modele, palette, etat }) {
   o.traverse(n => { if (n.isMesh) (Array.isArray(n.material) ? n.material : [n.material]).forEach(m => mats.push(m)); });
   const poser = pal => mats.forEach(m => {
     const c = pal[TEINTES[m.name]]; if (c) m.color = new T.Color(c);
-    m.metalness = 0; m.roughness = /suit|tie/i.test(m.name) ? .62 : .9;
+    m.metalness = 0; m.roughness = /suit|tie|limegreen|gold/i.test(m.name) ? .62 : .9;
   });
   poser(palette || {});
 

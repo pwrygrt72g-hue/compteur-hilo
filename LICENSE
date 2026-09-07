@@ -101,13 +101,21 @@ intégral, de nommer les fontes et de conserver leurs notices de copyright — e
 §3 interdit de leur garder leur nom réservé si on les modifie.
 
 
-4. LE CROUPIER EN 3D (facultatif, éteint par défaut)
----------------------------------------------------
+4. LE CROUPIER EN 3D
+--------------------
 
-static/modeles/croupier.glb — « Business Man », du pack « Ultimate Modular Men »
-de Quaternius (quaternius.com), sous CC0 1.0 (domaine public). Le CC0 n'exige
-aucune attribution ; on le crédite quand même, parce que c'est mérité et que ça
-dit d'où vient le fichier à celui qui reprendra ce dépôt.
+Deux modèles, tous deux de Quaternius (quaternius.com), sous CC0 1.0 (domaine
+public), récupérés via poly.pizza :
+
+  static/modeles/croupier.glb — « Business Man » (pack Ultimate Modular Men),
+  porté par Vince, Marcel et Le Chef ;
+  static/modeles/femme.glb — « Animated Woman », tenue Formal, portée par Lin
+  et Ada.
+
+Ils partagent le même squelette (62 os) et les mêmes 24 animations, ce qui est
+la raison pour laquelle l'un remplace l'autre sans une ligne de code en plus.
+Le CC0 n'exige aucune attribution ; on les crédite quand même, parce que c'est
+mérité et que ça dit d'où viennent les fichiers à celui qui reprendra ce dépôt.
 
 static/3d/ — three.js r160 (three.module.min.js, GLTFLoader.js,
 utils/BufferGeometryUtils.js), sous licence MIT, © 2010-2024 three.js authors.

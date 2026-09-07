@@ -374,7 +374,7 @@ const CROUPIERS = {
       egalite: ["Égalité. Ni vu ni connu.", "On ne bouge pas."],
     } },
   lin: { nom: "Lin", lieu: "Cotai, Macao", trait: "Impassible. Puis cinglante, quand vous perdez trop.",
-    coiffe: "c-chignon", visage: "v-long", orne: "o-mao", lunettes: "l-rien", moustache: "m-rien", barbe: "b-rien", acc: "a-rien", sourcils: .85, oeil: [.98, .84],
+    modele3d: "femme", coiffe: "c-chignon", visage: "v-long", orne: "o-mao", lunettes: "l-rien", moustache: "m-rien", barbe: "b-rien", acc: "a-rien", sourcils: .85, oeil: [.98, .84],
     p: { "--cr-peau": "#E6C29B", "--cr-cheveux": "#0F0C0B", "--cr-veste": "#4A0F0D", "--cr-manche": "#4A0F0D", "--cr-gilet": "#7A1410",
       "--cr-chemise": "#EFE7D6", "--cr-poignet": "#EFE7D6", "--cr-orne": "#F2C15A", "--cr-or": "#F2C15A", "--cr-iris": "#241A12", "--cr-pochette": "#F2C15A" },
     piquant: .45, colere: .6, vigilance: 1,
@@ -394,7 +394,7 @@ const CROUPIERS = {
       egalite: ["Égalité.", "Rien ne bouge."],
     } },
   ada: { nom: "Ada", lieu: "Monte-Carlo", trait: "Lunettes carrées, carré strict. Glaciale, précise, jamais un mot de trop.",
-    coiffe: "c-carre", visage: "v-ovale", orne: "o-lavalliere", lunettes: "l-carrees", moustache: "m-rien", barbe: "b-rien", acc: "a-rien", sourcils: .9, oeil: [1.05, 1.06],
+    modele3d: "femme", coiffe: "c-carre", visage: "v-ovale", orne: "o-lavalliere", lunettes: "l-carrees", moustache: "m-rien", barbe: "b-rien", acc: "a-rien", sourcils: .9, oeil: [1.05, 1.06],
     p: { "--cr-peau": "#EBD2BA", "--cr-cheveux": "#3A2418", "--cr-veste": "#1B2A4E", "--cr-manche": "#1B2A4E", "--cr-gilet": "#2A4070",
       "--cr-chemise": "#FBF8F0", "--cr-poignet": "#FBF8F0", "--cr-orne": "#D4B46A", "--cr-iris": "#38506B", "--cr-monture": "#20201E", "--cr-pochette": "#FBF8F0" },
     piquant: .6, colere: .7, vigilance: 2,
@@ -506,24 +506,42 @@ function crLook(svg, c, prefixe) {
   // neutre, par le même chemin que les émotions (crVisage la conserve).
   ["crSourcilG", "crSourcilD"].forEach(k => { const e = svg.querySelector("#" + prefixe + k); if (e) e.style.transform = `scaleY(${c.sourcils || 1})`; });
 }
-/* ── LE CROUPIER 3D : un moteur ALTERNATIF, jamais un remplaçant ───────
-   Le SVG reste le défaut et n'a rien perdu — cinq visages, cinq barbes, huit
-   émotions réglées à la mesure. La 3D apporte ce qu'un dessin plat ne peut pas
-   donner (un vrai volume, une respiration d'os, une tête qui tourne sur un cou)
-   et perd ce que le SVG a (les expressions : le modèle CC0 n'a AUCUN morph
-   target, son visage est figé). Aucun des deux ne gagne partout — d'où
-   l'interrupteur, et d'où le défaut sur le dessin, qui ne régresse sur rien.
+/* ── LE CROUPIER 3D : le moteur par DÉFAUT depuis le 07/09/2026 ───────
+   Léo, après avoir vu la planche des rendus : « met les modèles 3D qu'on a pris
+   et customise les, on oublie toutes les distinctions qu'avait les anciens
+   croupiers ». C'est donc un arbitrage explicite, pas un glissement : on gagne
+   le volume, la respiration d'os et la tête qui tourne sur un cou ; on perd les
+   HUIT EXPRESSIONS (les modèles CC0 n'ont aucun morph target, le visage est
+   figé) et le détail des cinq têtes — la moustache en brosse de Marcel, le
+   chignon de Lin, les lunettes carrées d'Ada. Ce n'est pas une régression
+   involontaire, c'est ce qui a été demandé, et la case des réglages permet de
+   revenir au dessin en un clic.
 
-   ⚠️ Rien n'est téléchargé tant qu'il est éteint : 655 Ko de three.js et 1,5 Mo
-   de modèle vivent dans static/, hors du fichier unique, et n'arrivent qu'au
-   premier allumage. C'est la raison d'être du `import()` dynamique.
+   ⚠️ LE SVG NE PART PAS, et ne doit pas partir : il porte la bulle, les gestes
+   de bras et tout le jeu, il est le repli quand la 3D échoue, et il est le SEUL
+   croupier de l'artefact publié. Le supprimer laisserait une table vide là-bas.
+
+   Deux modèles pour cinq croupiers (Lin et Ada sont des femmes) : ils viennent
+   du MÊME lot, donc même squelette, mêmes clips, et l'un remplace l'autre sans
+   une ligne de plus dans le moteur.
+
+   ⚠️ Rien n'est téléchargé tant qu'on n'ouvre pas une table : 655 Ko de three.js
+   et ~1,5 Mo de modèle vivent dans static/, hors du fichier unique, et n'arrivent
+   qu'au premier montage. C'est la raison d'être du `import()` dynamique — et un
+   seul des deux modèles part, celui du croupier de la table.
    ⚠️ Indisponible dans l'ARTEFACT, et il faut le DIRE : sa politique de sécurité
    bloque toute requête externe, donc le module et le modèle n'arriveraient
    jamais — silencieusement, comme la visio. On détecte l'artefact au même
    signal que le hall : window.PHOTOS_PETIT n'existe qu'en mode « pages ». */
-const CR3D = { api: null, etat: { regard: 0, penche: 0, clip: "repos" }, occupe: false, panne: "" };
+const CR3D = { api: null, etat: { regard: 0, penche: 0, clip: "repos" }, occupe: false, panne: "", modele: "" };
 const cr3dPossible = () => !!window.PHOTOS_PETIT;
-const cr3dVoulu = () => DB.croupier.tri3d === 1 && cr3dPossible();
+// 🚨 ALLUMÉE PAR DÉFAUT depuis le 07/09 (Léo : « met les modèles 3D qu'on a
+// pris »). `!== 0` et pas `=== 1` : une base d'avant ce jour n'a pas la clé,
+// et `=== 1` l'aurait laissée éteinte pour tous ceux qui jouaient déjà.
+const cr3dVoulu = () => DB.croupier.tri3d !== 0 && cr3dPossible();
+// Deux modèles seulement, et c'est assumé : les cinq croupiers ne se
+// distinguent plus que par le corps (homme/femme) et par la palette.
+const cr3dModele = c => "static/modeles/" + (c.modele3d || "croupier") + ".glb";
 // Même palette que le SVG : les cinq croupiers sont les mêmes gens des deux côtés.
 const cr3dPalette = c => { const p = c.p || {}, t = {};
   for (const k of ["peau", "cheveux", "sourcil", "veste", "chemise", "orne"]) t[k] = p["--cr-" + k] || "";
@@ -534,7 +552,9 @@ async function cr3dMonter() {
   try {
     const m = await import("./static/3d/croupier3d.js");
     if (!cr3dVoulu()) return;                       // éteint pendant le chargement
-    CR3D.api = await m.monter({ hote, modele: "static/modeles/croupier.glb", palette: cr3dPalette(crPerso()), etat: CR3D.etat });
+    const c = crPerso(), url = cr3dModele(c);
+    CR3D.api = await m.monter({ hote, modele: url, palette: cr3dPalette(c), etat: CR3D.etat });
+    CR3D.modele = url;
     hote.classList.add("en3d");
   } catch (e) {
     // Un échec doit se DIRE : un croupier absent sans un mot passe pour une panne
@@ -545,7 +565,7 @@ async function cr3dMonter() {
 }
 function cr3dDemonter() {
   const hote = $("croupierScene");
-  if (CR3D.api) { try { CR3D.api.demonter(); } catch (e) { console.debug("croupier 3D : démontage", e); } CR3D.api = null; }
+  if (CR3D.api) { try { CR3D.api.demonter(); } catch (e) { console.debug("croupier 3D : démontage", e); } CR3D.api = null; CR3D.modele = ""; }
   if (hote) hote.classList.remove("en3d");
 }
 function log3d() { if (CR3D.panne) console.warn("croupier 3D indisponible : " + CR3D.panne); }
@@ -563,7 +583,12 @@ function monterCroupier() {
   crLancerAmbiance();
   // Le SVG est monté quoi qu'il arrive : c'est lui le repli si la 3D échoue,
   // et c'est lui qui porte la bulle, les gestes de bras et le reste du jeu.
-  if (cr3dVoulu()) cr3dMonter(); else cr3dDemonter();
+  // ⚠️ Changer de croupier peut changer de MODÈLE (Lin et Ada sont des femmes) :
+  // repeindre ne suffit pas, il faut redémonter. Même modèle ⇒ on repeint, et la
+  // 3D ne recharge rien.
+  if (!cr3dVoulu()) cr3dDemonter();
+  else if (CR3D.api && CR3D.modele !== cr3dModele(c)) { cr3dDemonter(); cr3dMonter(); }
+  else if (!CR3D.api) cr3dMonter();
   if (CR3D.api) CR3D.api.poser(cr3dPalette(c));
 }
 
@@ -1368,9 +1393,9 @@ function rendreChoixCroupier() {
         <span class="cr-vignette">${id ? crSvg("v" + id + "-") : `<span class="cr-auto">⌂</span>`}</span><b>${echap(nom)}</b><i>${echap(sous)}</i></label>`).join("")}</div>
     <p class="muet cr-trait" id="crTrait"></p>
     <label class="ch"><span class="grave">Son nom à cette table</span><input type="text" id="crNomSaisie" maxlength="18" placeholder="${echap(crPerso().nom)}" value="${echap(DB.croupier.noms[crEffectif()] || "")}"></label>
-    <label class="ch ligne"><input type="checkbox" id="cr3d"${DB.croupier.tri3d === 1 ? " checked" : ""}${cr3dPossible() ? "" : " disabled"}>
+    <label class="ch ligne"><input type="checkbox" id="cr3d"${cr3dVoulu() ? " checked" : ""}${cr3dPossible() ? "" : " disabled"}>
       <span>Croupier en 3D <i class="muet">${cr3dPossible()
-        ? "un modèle animé, mais sans expressions"
+        ? "décoche pour revenir au croupier dessiné, qui lui a des expressions"
         : "indisponible ici : cette page publiée bloque le téléchargement du modèle"}</i></span></label>`;
   const fermer = $("modaleFermer"); const rang = fermer && fermer.parentNode;
   if (rang) boite.insertBefore(sec, rang); else boite.appendChild(sec);
