@@ -478,6 +478,17 @@ div.salle-carte{ cursor:default }
 .mp-table .salle-carte .bas{ right:20px }
 .mp-table .salle-carte .sous{ display:none }
 .mp-table .salle-carte .chiffres{ gap:2px 14px; margin-top:6px }
+/* Le choix de table en place (reseau.js, rendreTableMP). C'est de la PROSE — des noms de
+   casinos —, pas un champ de chiffres : la mono de 13 px des autres <select> avance à
+   ~7,8 px par signe, et « Le Front de Mer · min 15 · cave 1 000 » (33 signes ≈ 257 px,
+   plus 20 px de rembourrage et la flèche) déborde des 300 px de la colonne. Le nom se
+   ferait couper au moment précis où il sert à choisir. Police du corps, largeur pleine :
+   sous 860 px la .mp-grille passe à une colonne, donc à 375 px le sélecteur prend toute
+   la largeur au lieu de pousser la fiche, et son libellé fermé s'ellipse.
+   ⚠️ La hauteur de 44 px vient déjà de `label.ch select` — la cible du doigt est acquise,
+   ne pas la redéclarer ici où elle se désynchroniserait. */
+.mp-choix{ margin-top:12px }
+.mp-choix select{ font-family:inherit; font-size:var(--t-petit); width:100%; max-width:100%; text-overflow:ellipsis }
 
 /* ── Les crédits : discrets, présents ──────────────────────────────────── */
 .hall-credits{ margin-top:clamp(40px, 6vh, 72px); padding-top:18px; border-top:1px solid var(--ardoise);
@@ -12467,6 +12478,43 @@ const manchesParSabot = (t, joueurs) =>
 // vraie le jour où une table de huit y entrerait.
 const siegesMaxCasino = () => Math.max(...DONNEES.catalogue.map(x => x.sieges));
 
+/* ── CE QUI DISTINGUE LES TABLES *POUR LE MULTIJOUEUR* ───────────────────────
+   Deux nombres, pas dix : la mise MINIMUM (l'unité dont la rampe se compte) et la
+   CAVE (avec quoi on s'assoit). Ce sont eux qui décident combien de temps on tient —
+   c'est toute la leçon de La Marina, min 100 et cave 5 000, la seule table écrite
+   pour jouer à plusieurs. Le nom seul ne dit rien à qui n'a pas ouvert le hall, et
+   l'avantage maison ne se compare pas de tête au moment de choisir.
+   🚨 EN COURSE AU COMPTAGE, NI MISE NI CAVE N'EXISTENT — personne ne s'assied,
+   personne ne mise. L'étiquette porte alors ce qui décide du COMPTE, les jeux et le
+   mélange, exactement comme la fiche juste au-dessus (pucesCompte). Écrire « min 100 »
+   sur l'écran d'une course rejouerait mot pour mot les trois choses fausses qu'on a
+   retirées de cette fiche.
+   ⚠️ `function` et non `const` : tout ce fichier vit dans une seule portée partagée où
+   les `const` ne remontent pas, et rendreTableMP() tourne dès rendreCouleurs(). */
+function mpEtiquetteTable(x, course) {
+  if (course) return `${x.nom} · ${x.jeux} jeu${x.jeux > 1 ? "x" : ""} · ${x.penetration ? "pén. " + Math.round(x.penetration * 100) + " %" : "mélangeuse"}`;
+  return `${x.nom} · min ${fmtJ(x.mise_min)} · cave ${fmtJ(x.tapis_depart || TAPIS_DEPART)}`;
+}
+/* Changer de table SANS quitter l'écran. Mêmes conséquences qu'une porte du hall
+   (salon.js) : le sabot solo est REFAIT. Sans ça on garderait les 312 cartes du
+   Boulevard sous une barre qui annonce « Le Néon · 1 jeu », et T.coupe comme T.rc (le
+   compte de départ en KO dépend du nombre de jeux) resteraient ceux de l'ancienne —
+   une table qui ment sur ses propres cartes, et la nav cachée `data-vue="table"` y mène.
+   `nouveauSabot()` pose le lieu et émet « sabot:table » : la fiche, le texte de cave et
+   le nombre de recaves se réécrivent seuls (l'écouteur juste sous rendreTableMP).
+   ⚠️ Il ne navigue PAS — c'est tout l'objet de ce correctif. */
+function mpPoserTable(id) {
+  if (T.reseau) return;                        // l'hôte décide — cf. rendreTableMP
+  const t = DONNEES.catalogue.find(x => x.id === id);
+  if (!t || t.id === DB.table) return;
+  const entame = sabotEntame();                // salon.js : T.mains > 0 || T.enJeu
+  DB.table = id; garder();
+  nouveauSabot();
+  // On le DIT quand une partie solo en cours vient d'être remélangée : la remplacer en
+  // silence, c'est le genre de perte qu'on met une session entière à comprendre.
+  bandeau(entame ? `Ta table : « ${t.nom} » — ton sabot solo a été remélangé.` : `Ta table : « ${t.nom} ».`, 3200);
+}
+
 // La table où l'on va s'asseoir, à droite du formulaire : la carte du salon, telle
 // quelle (mêmes règles, même avantage maison), avec ses sièges — on voit ce qu'on ouvre.
 function rendreTableMP() {
@@ -12487,9 +12535,33 @@ function rendreTableMP() {
     ? `<p class="muet mp-sieges" style="font-size:var(--t-fin);margin:8px 0 0">Le sabot de la course est celui de cette table : ${t.jeux} jeu${t.jeux > 1 ? "x" : ""} de 52 cartes, mélangés et scellés. Personne ne s'assied, personne ne mise — on compte.</p>`
     : `<p class="muet mp-sieges" style="font-size:var(--t-fin);margin:8px 0 0">Jusqu'à ${TR.NB_SIEGES} places · mise minimale ${fmtJ(t.mise_min)}</p>
        <p class="muet mp-places" style="font-size:var(--t-fin);margin:4px 0 0">Table entre amis : une vraie table de casino en a ${siegesMaxCasino()} au plus.${manches}</p>`;
-  boite.innerHTML = carteTableHtml(t, { n, inerte: true, compte: course }) + sous
-    + `<div class="rang-btn" style="margin-top:8px;justify-content:flex-start"><button class="btn creux" data-vue="salon">Changer de table</button></div>`;
+  /* ── LE CHOIX DE LA TABLE, EN PLACE ─────────────────────────────────────────
+     Léo, 07/09 : « on peut jouer que sur une ». Les dix étaient jouables, mais le seul
+     chemin passait par le hall (data-vue="salon" → allerHall("lesTables")) : six gestes,
+     un atterrissage sur la table SOLO, et le mode comme le code tapé à refaire en
+     revenant. On ne changeait donc jamais, et La Marina — la seule table écrite pour
+     jouer à plusieurs — ne se trouvait pas.
+     🚨 AUCUN CHOIX QUAND ON EST DÉJÀ ASSIS (T.reseau). Les règles descendent de l'HÔTE :
+     rendreReseau() fait `if (DB.table !== e.table) { DB.table = e.table; … }` au prochain
+     état reçu. Un sélecteur y serait écrasé sans un mot — il ne changerait rien et
+     laisserait croire le contraire. Ce n'est pas théorique : #mpAccueil reste VISIBLE
+     pendant qu'on est en réseau (ouvrirTable ne le cache pas, contrairement à ouvrirSalon).
+     ⚠️ Le bouton vers le hall RESTE dans ce cas : c'est la sortie (un clic sur une porte
+     du hall quitte la table — l'écouteur sur #salon, plus bas), et la retirer fermerait
+     un chemin qui existe. Ailleurs il ne « change » plus rien, il MONTRE : le hall garde
+     les photos, la leçon et le bouton « Pourquoi ? ». Son compte vient du catalogue, il
+     ne peut pas devenir faux le jour d'une onzième table. */
+  const choix = T.reseau ? "" : `<label class="ch mp-choix"><span class="grave">Ta table</span>
+      <select id="mpTableChoix" aria-label="Choisir la table">${DONNEES.catalogue.map(x =>
+        `<option value="${echap(x.id)}"${x.id === t.id ? " selected" : ""}>${echap(mpEtiquetteTable(x, course))}</option>`).join("")}</select></label>`;
+  boite.innerHTML = carteTableHtml(t, { n, inerte: true, compte: course }) + sous + choix
+    + (T.reseau ? `<p class="muet mp-choix-hote" style="font-size:var(--t-fin);margin:10px 0 0">Tu es assis à une table : c'est l'hôte qui choisit le lieu, les règles et les limites.</p>` : "")
+    + `<div class="rang-btn" style="margin-top:8px;justify-content:flex-start"><button class="btn creux" data-vue="salon">${T.reseau ? "Changer de table" : `Voir les ${DONNEES.catalogue.length} tables`}</button></div>`;
   boite.querySelector("[data-vue]").onclick = () => aller("salon");
+  // Le <select> est reconstruit à chaque rendu (« sabot:table » redessine toute la boîte,
+  // et c'est justement ce que déclenche mpPoserTable) : on rebranche à chaque fois, et il
+  // porte déjà la bonne valeur — il n'y a rien à resynchroniser à la main.
+  const sel = $("mpTableChoix"); if (sel) sel.onchange = () => mpPoserTable(sel.value);
 }
 rendreCouleurs();
 // ⚠️ Le TEXTE aussi, pas seulement la fiche : il annonce la cave et les recaves de la

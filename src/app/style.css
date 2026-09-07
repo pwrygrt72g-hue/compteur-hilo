@@ -465,6 +465,17 @@ div.salle-carte{ cursor:default }
 .mp-table .salle-carte .bas{ right:20px }
 .mp-table .salle-carte .sous{ display:none }
 .mp-table .salle-carte .chiffres{ gap:2px 14px; margin-top:6px }
+/* Le choix de table en place (reseau.js, rendreTableMP). C'est de la PROSE — des noms de
+   casinos —, pas un champ de chiffres : la mono de 13 px des autres <select> avance à
+   ~7,8 px par signe, et « Le Front de Mer · min 15 · cave 1 000 » (33 signes ≈ 257 px,
+   plus 20 px de rembourrage et la flèche) déborde des 300 px de la colonne. Le nom se
+   ferait couper au moment précis où il sert à choisir. Police du corps, largeur pleine :
+   sous 860 px la .mp-grille passe à une colonne, donc à 375 px le sélecteur prend toute
+   la largeur au lieu de pousser la fiche, et son libellé fermé s'ellipse.
+   ⚠️ La hauteur de 44 px vient déjà de `label.ch select` — la cible du doigt est acquise,
+   ne pas la redéclarer ici où elle se désynchroniserait. */
+.mp-choix{ margin-top:12px }
+.mp-choix select{ font-family:inherit; font-size:var(--t-petit); width:100%; max-width:100%; text-overflow:ellipsis }
 
 /* ── Les crédits : discrets, présents ──────────────────────────────────── */
 .hall-credits{ margin-top:clamp(40px, 6vh, 72px); padding-top:18px; border-top:1px solid var(--ardoise);

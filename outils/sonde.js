@@ -316,6 +316,34 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   clic('#mpModes [data-mode="course"]'); await dodo(80);
   ok("multijoueur : la course reste accessible", /course/i.test(txt("#mpCreer")), txt("#mpCreer"));
   clic('#mpModes [data-mode="table"]'); await dodo(80);
+
+  // ── LE CHOIX DE LA TABLE, EN PLACE (Léo 07/09 : « on peut jouer que sur une »)
+  // 🚨 CHAQUE contrôle est gardé sur l'existence du sélecteur. Sans garde, un
+  // `q("#mpTableChoix").value = …` sur un élément absent ne rend pas « KO » : il fait
+  // PLANTER toute la sonde, et les quarante contrôles suivants disparaissent — un
+  // harnais qui meurt en silence est pire qu'un contrôle manquant.
+  {
+    const sel = q("#mpTableChoix");
+    ok("table en place : le sélecteur est là, sur l'écran à plusieurs", !!sel, "absent");
+    if (sel) {
+      const opts = [...sel.options];
+      ok("table en place : les dix tables du catalogue", opts.length === 10, opts.length + " options");
+      // Ce qui distingue les tables POUR LE MULTIJOUEUR, c'est la mise et la cave.
+      ok("table en place : chaque ligne dit sa mise et sa cave",
+         opts.every(o => /min\s/.test(o.textContent) && /cave\s/.test(o.textContent)),
+         opts.slice(0, 2).map(o => o.textContent.trim()).join(" | "));
+      ok("table en place : La Marina s'y trouve", opts.some(o => /Marina/.test(o.textContent)), "absente du sélecteur");
+      // …et il CHANGE vraiment la table : la fiche à côté doit suivre.
+      const avant = sel.value, autre = opts.find(o => o.value !== avant);
+      const ficheAvant = txt("#mpTable");
+      sel.value = autre.value; sel.dispatchEvent(new Event("change")); await dodo(250);
+      ok("table en place : changer de table réécrit la fiche, SANS quitter l'écran",
+         txt("#mpTable") !== ficheAvant && !q("#v-ensemble").hidden && q("#v-table").hidden,
+         "fiche inchangée ou on a navigué");
+      ok("table en place : le hall reste atteignable", !!q("#mpTable [data-vue]"), "le bouton vers le hall a disparu");
+      sel.value = avant; sel.dispatchEvent(new Event("change")); await dodo(250);
+    }
+  }
   ok("multijoueur : le code se tape groupé", (q("#mpCode").value = "a7k2m9pq", q("#mpCode").dispatchEvent(new Event("input")), q("#mpCode").value === "A7K2-M9PQ"), q("#mpCode").value);
   // ── L'ARTEFACT : WebSocket bloqué SANS erreur visible. L'écran doit le dire en moins de
   // trois secondes, avec le lien DU SITE, ne pas ouvrir la table — et ne jamais
