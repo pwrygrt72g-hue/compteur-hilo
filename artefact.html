@@ -6489,6 +6489,107 @@ function bruit(a, sortie, t, o) {
   const g = enveloppe(a, t, o.g || .2, o.att || .003, o.dec || .02);
   s.connect(f).connect(g).connect(sortie); s.start(t, Math.random() * .4); s.stop(t + (o.dur || .12) + .05);
 }
+/* ── UN BANC MODAL ────────────────────────────────────────────────────────────
+   Comment sonne un objet SOLIDE qu'on frappe : un choc très court excite plusieurs
+   résonances qui s'éteignent chacune à son rythme. Un jeton d'argile est un disque
+   libre — ses modes sont INHARMONIQUES (rapports 1 : 1,73 : 2,33 : 4,11), et c'est
+   précisément ça qu'on reconnaît comme « objet » plutôt que comme « bip ».
+   🚨 Mesuré le 07/09 sur l'ancien `jeton` : UN seul pic spectral, 100 % de l'énergie
+   dans une octave. Une sinusoïde ne peut pas sonner comme un jeton, quel que soit
+   son volume — c'est un défaut de TIMBRE, la dimension que le banc ne mesurait pas.
+   ⚠️ Le Q se CALCULE, il ne se tâtonne pas : l'enveloppe d'un passe-bande décroît en
+   exp(−π·f·t/Q), donc pour un T60 visé, Q = T60 · f / 2,199. Régler un Q « à l'oreille »
+   fait dériver l'amortissement avec la fréquence, et les modes hauts traînent. */
+function modal(a, sortie, t, o) {
+  // Un mode = une SINUSOÏDE AMORTIE. Le timbre vient des RAPPORTS entre modes, pas du
+  // procédé qui les fait sonner : c'est l'inharmonicité (1 : 1,73 : 2,33 : 4,11) que
+  // l'oreille reconnaît comme « disque d'argile », et l'amortissement décroissant avec
+  // le mode (les aigus s'éteignent les premiers) qui la rend crédible.
+  // 🚨 PREMIÈRE VERSION ABANDONNÉE, et pourquoi — elle excitait quatre passe-bandes à
+  // Q calculé (98 à 108) avec un choc de 0,4 ms. Le Q était juste, la physique aussi,
+  // et ça ne rendait RIEN : mesuré au banc, crête 0,002 et 35,8 dB sous sa famille.
+  // Une bande de 24 Hz de large ne capte presque aucune énergie d'un choc large ; il
+  // aurait fallu compenser par un gain tâtonné, c'est-à-dire remplacer un réglage
+  // physique par un réglage à l'oreille. Les sinusoïdes donnent le même timbre avec
+  // une amplitude qu'on maîtrise.
+  // ⚠️ `dec` est la constante de temps de enveloppe() : −60 dB tombe à ~6,9 τ, donc
+  // pour un T60 visé, dec = T60 / 6,9. C'est la même conversion, transposée.
+  let fin = 0;
+  for (const m of o.modes) {
+    const f = (o.f || 2400) * m.r * (o.k || 1) * (o.detune || 1);
+    if (f > a.sampleRate * .45) continue;          // au-dessus de Nyquist : repliement
+    ton(a, sortie, t, { f, type: "sine", g: (o.g || .3) * m.g, att: .0006, dec: m.t60 / 6.9, dur: m.t60 });
+    if (m.t60 > fin) fin = m.t60;
+  }
+  // …et le CONTACT lui-même. Sans lui on entend une cloche minuscule ; avec lui, un
+  // objet qui touche quelque chose. C'est le transitoire qui situe l'instant du choc.
+  bruit(a, sortie, t, { f: (o.f || 2400) * 1.6, q: 1.2, g: (o.g || .3) * .40, att: .0004, dec: .0025, dur: .010, k: o.k || 1 });
+  return fin;
+}
+
+/* Du bruit dont le filtre BALAIE — le glissement d'une carte sur du feutre est un
+   frottement « stick-slip » dont le spectre se déplace, pas un filtre figé. Mesuré :
+   l'ancien `carte` ne balayait que 10 demi-tons, et seulement par accident (sa 2ᵉ salve
+   démarrait 10 ms plus tard). `lfo` module l'amplitude : c'est le grain du papier. */
+function bruitBalaye(a, sortie, t, o) {
+  const s = a.createBufferSource(); s.buffer = bruitBuffer(a);
+  const f = a.createBiquadFilter(); f.type = "bandpass"; f.Q.value = o.q || 1.2;
+  const k = o.k || 1, dur = o.dur || .07;
+  f.frequency.setValueAtTime((o.f0 || 900) * k, t);
+  f.frequency.exponentialRampToValueAtTime((o.f1 || 2600) * k, t + dur);
+  const g = enveloppe(a, t, o.g || .2, o.att || .006, o.dec || .016);
+  s.connect(f).connect(g);
+  if (o.lfo) {
+    const m = a.createGain(); m.gain.value = 1 - (o.prof || .35);
+    const osc = a.createOscillator(); osc.type = "sine"; osc.frequency.value = o.lfo;
+    const prof = a.createGain(); prof.gain.value = o.prof || .35;
+    osc.connect(prof).connect(m.gain); osc.start(t); osc.stop(t + dur + .05);
+    g.connect(m).connect(sortie);
+  } else g.connect(sortie);
+  s.start(t, Math.random() * .4); s.stop(t + dur + .05);
+  return dur;
+}
+
+/* ── LE RIFFLE, CALCULÉ UNE FOIS ──────────────────────────────────────────────
+   🚨 L'ancien mélange programmait 26 `bruit()`, soit 87 nœuds pour un seul son — à lui
+   seul le pic de charge de toute la donne, sur une application dont Léo dit qu'elle
+   saccade. Et il ne sonnait pas : 26 clics en 394 ms = 66 clics/s, alors qu'un vrai
+   riffle lâche 52 cartes en 250-400 ms, soit 130 à 200 clics/s. À 66/s l'oreille
+   RÉSOUT encore chaque clic — on entendait une crécelle, pas un déchirement.
+   La densité ne se règle pas avec un volume : il faut les 52 cartes. On les calcule
+   donc UNE FOIS dans un tampon, joué ensuite par trois nœuds.
+   ⚠️ Le tampon est par CONTEXTE (WeakMap) : le contexte hors ligne du banc de mesure
+   a sa propre fréquence d'échantillonnage, et un tampon rendu à 44,1 kHz joué à
+   48 kHz transposerait tout le son. */
+const RIFFLES = new WeakMap();
+function riffleBuffers(a) {
+  let v = RIFFLES.get(a); if (v) return v;
+  const sr = a.sampleRate;
+  v = [0, 1].map(variante => {
+    const dur = .92, n = Math.ceil(sr * dur), b = a.createBuffer(1, n, sr), d = b.getChannelData(0);
+    // 52 cartes, la cadence qui ACCÉLÈRE comme un pouce qui lâche le paquet.
+    let ti = .02, pas = .0115;
+    for (let i = 0; i < 52; i++) {
+      const i0 = Math.floor(ti * sr), amp = .28 * (.72 + .5 * Math.random()) * (1 - i / 140);
+      const lg = Math.floor(sr * .0022);
+      for (let j = 0; j < lg && i0 + j < n; j++) d[i0 + j] += (Math.random() * 2 - 1) * amp * Math.exp(-j / (sr * .00035));
+      ti += pas; pas = Math.max(.0053, pas * .9575);
+    }
+    // Le CORPS du paquet : la masse de cartes qui vibre pendant qu'elles s'entrelacent.
+    const f0 = 165 * (variante ? 1.06 : 1);
+    for (let j = 0; j < Math.floor(sr * .55) && j < n; j++)
+      d[j + Math.floor(sr * .02)] += Math.sin(2 * Math.PI * f0 * j / sr) * .05 * Math.exp(-j / (sr * .16));
+    // Les deux TAPES d'égalisation : on tasse le paquet sur la table.
+    for (const [tt, aa] of [[.63, .5], [.74, .42]]) {
+      const i0 = Math.floor(tt * sr), lg = Math.floor(sr * .05);
+      for (let j = 0; j < lg && i0 + j < n; j++)
+        d[i0 + j] += (Math.random() * 2 - 1) * aa * Math.exp(-j / (sr * .0035));
+    }
+    return b;
+  });
+  RIFFLES.set(a, v); return v;
+}
+
 // Une note. o : { f, type, g, att, dec, dur, k, vers (glissando exponentiel vers cette fréquence) }
 function ton(a, sortie, t, o) {
   const os = a.createOscillator(); os.type = o.type || "sine";
@@ -6507,60 +6608,136 @@ function ton(a, sortie, t, o) {
    FAMILLE — les gestes (carte, pose, jetons, raclement) à 0,014 de rms, les verdicts (bust,
    gain, blackjack) à 0,041, les retours d'exercice (ok, ko, alerte) à 0,016. Les facteurs
    sont le quotient mesuré ; le banc vérifie qu'aucun genre ne s'écarte de sa famille. */
-const NIVEAU = { carte: 3.33, pose: 5.19, jeton: 3.78, jetons: 2.55, raclement: 1.84,
-  blackjack: 1.15, bust: .46, gain: 1.83, ok: 1.82, ko: .91, alerte: 1.72 };
+// ⚠️ RECALIBRÉ le 07/09/2026, après la réécriture des cinq gestes : chaque facteur est
+// le QUOTIENT MESURÉ entre le rms rendu par la nouvelle synthèse et la cible de sa
+// famille (0,0133 pour les gestes). Ils ne se règlent pas à l'oreille — outils/ecouter.mjs
+// les vérifie, et refuse plus de 8 dB d'écart à la médiane de la famille.
+const NIVEAU = { carte: 6.71, pose: 5.19, jeton: 2.63, jetons: 2.15, raclement: 1.42,
+  blackjack: .89, bust: .89, gain: 1.41, ok: 1.82, ko: .91, alerte: 1.72 };
 function synthese(a, sortie, genre, t, k) {
   k = k || 1;
   const niv = NIVEAU[genre];
   if (niv && niv !== 1) { const n = a.createGain(); n.gain.value = niv; n.connect(sortie); sortie = n; }
   switch (genre) {
-    case "carte":      // une carte qui SORT du sabot : un chuintement passe-bande de 60 ms
-      bruit(a, sortie, t, { f: 2600, q: .7, g: .21, att: .006, dec: .016, dur: .07, k });
-      bruit(a, sortie, t + .01, { f: 6500, q: .5, type: "highpass", g: .05, att: .004, dec: .012, dur: .05, k });
+    case "carte":      // une carte qui SORT du sabot : le frottement, la lèvre, la boîte
+      // ⚠️ Le passe-bande BALAIE (900 → 2600 Hz) : un frottement est un stick-slip dont
+      // le spectre se déplace. L'ancien filtre était FIXE — d'où le « pshhh ».
+      bruitBalaye(a, sortie, t, { f0: 900, f1: 2600, q: 1.2, g: .21, att: .006, dec: .016, dur: .07, lfo: 52, prof: .35, k });
+      // 🚨 4200 Hz en PASSE-BANDE, plus 6500 Hz en passe-haut : un passe-haut n'a pas de
+      // borne supérieure et laissait 41 % de l'énergie au-dessus de 8 kHz (mesuré) — du
+      // souffle, pas une carte. C'est la détente sur la lèvre du sabot, elle est bornée.
+      bruit(a, sortie, t + .01, { f: 4200, q: 1.4, g: .05, att: .004, dec: .012, dur: .05, k });
+      // Le CORPS de la boîte. Sans lui, 0 % d'énergie sous 1 kHz : l'oreille entend un
+      // filtre, pas un objet posé quelque part.
+      bruit(a, sortie, t, { f: 240, q: 6, g: .07, att: .004, dec: .022, dur: .07, k });
       return .08;
-    case "pose":       // la carte qui se POSE : un clic feutré, presque rien
+    case "pose":       // la carte qui se POSE : un clic feutré, sur une table qui répond
       bruit(a, sortie, t, { f: 820, q: .9, type: "lowpass", g: .34, att: .002, dec: .009, dur: .04, k });
       bruit(a, sortie, t, { f: 2100, q: 1.6, g: .10, att: .001, dec: .004, dur: .02, k });
-      return .05;
-    case "jeton":      // UN jeton qu'on prend ou qu'on lâche : un claquement d'argile, sec
-      bruit(a, sortie, t, { f: 3900, q: 2.2, g: .17, att: .001, dec: .011, dur: .05, k });
-      ton(a, sortie, t, { f: 2950, type: "sine", g: .055, att: .001, dec: .026, dur: .04, k });
+      // Le PANNEAU tendu de feutre — une table est une caisse, elle sonne grave et court.
+      bruit(a, sortie, t, { f: 140, q: 3.5, g: .095, att: .003, dec: .022, dur: .06, k });
+      // …et l'ARÊTE de la carte qui touche : 3 ms, c'est ce qui situe l'instant.
+      bruit(a, sortie, t, { f: 5600, q: 1.1, g: .055, att: .0004, dec: .003, dur: .015, k });
       return .07;
-    case "jetons": {   // des jetons qui tintent : deux ou trois impulsions amorties, chacune à sa hauteur
-      const n = 2 + (Math.random() < .5 ? 1 : 0); let dt = 0, fin = 0;
+    case "jeton":      // UN jeton d'argile : un DISQUE LIBRE, donc des modes inharmoniques
+      modal(a, sortie, t, { f: 2400, g: .34, choc: .0004, k, modes: [
+        { r: 1,    g: .30, t60: .090 },
+        { r: 1.73, g: .17, t60: .062 },
+        { r: 2.33, g: .10, t60: .042 },
+        { r: 4.11, g: .05, t60: .024 }] });
+      return .09;
+    case "jetons": {   // une PILE qui retombe : LE MÊME objet frappé plusieurs fois
+      // 🚨 Trois choses que l'ancienne version faisait à l'envers, toutes mesurées :
+      //  · son pic d'enveloppe arrivait 50 ms APRÈS le début — or dans une pile qui
+      //    retombe, le PREMIER choc est le plus fort, les suivants sont amortis par
+      //    les jetons du dessous. D'où l'amplitude × .74 par impact.
+      //  · les impacts étaient espacés de 40 à 65 ms, trop régulièrement : du vrai
+      //    clapotis est GROUPÉ (9 + 31·rand² ms — la queue longue est rare).
+      //  · chaque impact tirait sa hauteur au hasard : ce sont alors trois objets
+      //    différents. C'est le MÊME banc, désaccordé de 2,2 % par choc, parce que
+      //    la pile s'alourdit.
+      const n = 3 + (Math.random() < .55 ? 1 : 0);
+      let dt = 0, amp = .34, det = 1, fin = 0;
       for (let i = 0; i < n; i++) {
-        const kk = k * (.96 + Math.random() * .08), ti = t + dt;
-        bruit(a, sortie, ti, { f: 4300, q: 3, g: .15, att: .001, dec: .010, dur: .05, k: kk });
-        ton(a, sortie, ti, { f: 2500 + Math.random() * 900, type: "triangle", g: .06, att: .001, dec: .042, dur: .06, k: kk });
-        ton(a, sortie, ti, { f: 5300, type: "sine", g: .028, att: .001, dec: .03, dur: .05, k: kk });
-        fin = dt + .12; dt += .04 + Math.random() * .025;
+        const gros = i % 2 === 0 ? 1 : 1.27;   // deux tailles de jeton dans la pile
+        modal(a, sortie, t + dt, { f: 2400 * gros, g: amp, choc: .00035, k, detune: det, modes: [
+          { r: 1,    g: .30, t60: .072 },
+          { r: 1.73, g: .15, t60: .050 },
+          { r: 2.33, g: .09, t60: .034 },
+          { r: 4.11, g: .04, t60: .020 }] });
+        fin = dt + .10;
+        const r = Math.random();
+        dt += .009 + .031 * r * r; amp *= .74; det *= .978;
       }
       return fin;
     }
-    case "raclement": { // le mélange : un riffle qui accélère, puis les cartes qu'on égalise en deux tapes
-      bruit(a, sortie, t, { f: 700, q: .5, type: "lowpass", g: .09, att: .04, dec: .16, dur: .55, k });
-      let dt = 0, pas = .026;
-      for (let i = 0; i < 26 && dt < .48; i++) { bruit(a, sortie, t + dt, { f: 1500 + i * 25, q: 1.2, g: .18, att: .0015, dec: .0055, dur: .03, k }); dt += pas; pas = Math.max(.010, pas * .95); }
-      bruit(a, sortie, t + .60, { f: 520, q: .8, type: "lowpass", g: .24, att: .002, dec: .02, dur: .06, k });
-      bruit(a, sortie, t + .71, { f: 520, q: .8, type: "lowpass", g: .20, att: .002, dec: .018, dur: .06, k });
+    case "raclement": { // le mélange : 52 cartes, calculées une fois (cf. riffleBuffers)
+      // TROIS nœuds au lieu de 87. La variation vient de la vitesse de lecture et de
+      // deux tampons tirés d'avance — pas d'une reprogrammation à chaque mélange.
+      const bufs = riffleBuffers(a);
+      const src = a.createBufferSource(); src.buffer = bufs[Math.random() < .5 ? 0 : 1];
+      src.playbackRate.value = (.95 + Math.random() * .10) * k;
+      const lp = a.createBiquadFilter(); lp.type = "lowpass";
+      lp.frequency.value = 2600 * k; lp.Q.value = .7;
+      const g = a.createGain(); g.gain.value = .95;
+      src.connect(lp).connect(g).connect(sortie);
+      src.start(t); src.stop(t + 1.1);
       return .85;
     }
-    case "blackjack":  // une note douce : trois partiels, attaque lente, longue traîne
-      ton(a, sortie, t, { f: 880, g: .15, att: .025, dec: .32, dur: .9, k });
-      ton(a, sortie, t + .02, { f: 1320, g: .07, att: .03, dec: .22, dur: .7, k });
-      ton(a, sortie, t + .04, { f: 1760, g: .035, att: .03, dec: .16, dur: .5, k });
-      ton(a, sortie, t + .18, { f: 1174.7, g: .06, att: .03, dec: .28, dur: .7, k });
-      return 1.6;
-    case "bust":       // un boum sourd : un glissando grave, un souffle, et c'est tout
-      ton(a, sortie, t, { f: 150, vers: 42, g: .62, att: .004, dec: .16, dur: .26, k });
-      bruit(a, sortie, t, { f: 380, q: .6, type: "lowpass", g: .22, att: .002, dec: .05, dur: .16, k });
-      return .9;
-    case "gain": {     // un accord bref, majeur, égrené : do, mi, sol — et l'octave qui s'éteint
-      [[523.25, 0], [659.25, .035], [783.99, .07]].forEach(([f, dt]) => {
-        ton(a, sortie, t + dt, { f, type: "triangle", g: .10, att: .006, dec: .17, dur: .3, k });
-        ton(a, sortie, t + dt, { f: f * 2, type: "sine", g: .03, att: .006, dec: .22, dur: .3, k });
+    case "blackjack": {  // UNE CLOCHE QUI SE POSE — cinq couches, 1,85 s
+      // 🚨 Mesuré le 07/09 : l'ancienne « note douce » avait le PLUS FAIBLE facteur de
+      // crête des trois verdicts (6,1 contre 10,3 pour un simple gain). Une attaque de
+      // 25 ms sur une sinusoïde n'a AUCUN transitoire : il n'y a pas d'instant de frappe,
+      // donc rien à célébrer — et ça n'a rien à voir avec le volume, qui était déjà bon
+      // (0,1 dB d'écart avec le gain). C'est la raison mesurable pour laquelle un
+      // blackjack ne récompensait pas.
+      // ⚠️ Aucune scie, aucune répétition, aucune montée sans fin : les trois marqueurs
+      // du casino social. C'est un outil d'entraînement, la fête doit rester habillée.
+      // ① LE CORPS — la main qui se pose. C'est LUI qui porte le transitoire manquant.
+      ton(a, sortie, t, { f: 130.81, g: .30, att: .004, dec: .055, dur: .14, k });
+      // ② L'ARPÈGE do-mi-sol, 58 ms d'écart : une phrase, pas quatre bips.
+      [[523.25, 0, .115, .15], [659.25, .058, .105, .17], [783.99, .116, .100, .30]].forEach(([f, dt, g, dec]) => {
+        ton(a, sortie, t + dt, { f, type: "triangle", g, att: .005, dec, dur: .26, k });
+        ton(a, sortie, t + dt, { f: f * 2, type: "sine", g: g * .28, att: .005, dec: .10, dur: .26, k });
       });
-      return .9;
+      // ③ LA CLOCHE, à t+174 ms — partiels INHARMONIQUES de barre idéale. C'est
+      //    l'inharmonicité qui fait « cloche frappée » plutôt qu'« accord de synthé ».
+      //    ⚠️ C'est aussi l'instant que l'animation doit viser (cf. table.js).
+      [[1, .105, .465], [2.76, .042, .315], [5.40, .020, .30], [8.93, .009, .22]].forEach(([r, g, dec]) => {
+        ton(a, sortie, t + .174, { f: 1046.5 * r, type: "sine", g, att: .004, dec, dur: 1.5, k });
+      });
+      // ④ L'ÉCLAT : 45 ms de brillance, pas du bruit.
+      bruit(a, sortie, t + .174, { f: 7200, q: .7, type: "highpass", g: .030, att: .004, dec: .045, dur: .14, k });
+      // ⑤ LA TRAÎNE — la quinte qui reste et dit « c'est acquis ».
+      ton(a, sortie, t + .174, { f: 1567.98, type: "sine", g: .030, att: .03, dec: .4125, dur: 1.4, k });
+      return 1.85;
+    }
+    case "bust":       // « c'est refermé, on passe » — pas une punition
+      // ⚠️ Ce qu'on doit RESSENTIR : la main est close. C'est un outil d'entraînement,
+      // pas un casino qui gronde. Plus court qu'avant (0,46 s contre 0,68).
+      // (a) LE CLIC d'attaque : l'ancienne attaque de 4 ms sur une sinusoïde de 150 Hz
+      //     faisait un gonflement, pas un événement — on ne savait pas SITUER l'instant.
+      bruit(a, sortie, t, { f: 900, q: .8, type: "lowpass", g: .30, att: .001, dec: .012, dur: .05, k });
+      // (b) une CHUTE MUSICALE — une tierce mineure qui descend, donc une forme.
+      ton(a, sortie, t, { f: 196, vers: 98, g: .40, att: .003, dec: .075, dur: .20, k });
+      ton(a, sortie, t + .10, { f: 164.81, vers: 82.4, g: .22, att: .006, dec: .085, dur: .22, k });
+      // (c) le souffle, resserré.
+      bruit(a, sortie, t, { f: 300, q: .6, type: "lowpass", g: .13, att: .002, dec: .045, dur: .14, k });
+      return .47;
+    case "gain": {     // « ça a marché » — posé, sans triomphe : il sonnera cent fois
+      // Même famille tonale que le blackjack (do majeur) : le gain ÉNONCE, le blackjack
+      // énonce ET résout sur l'octave. C'est ce qui les rend frères sans les rendre
+      // interchangeables — mesuré avant : ils ne différaient que de 0,1 dB.
+      // (a) le CORPS court dessous : le « oui » physique qui manquait.
+      ton(a, sortie, t, { f: 130.81, g: .20, att: .004, dec: .045, dur: .10, k });
+      // (b) l'accord se POSE au lieu de s'arrêter : la dernière note dure.
+      [[523.25, 0, .100, .15], [659.25, .038, .098, .17], [783.99, .076, .100, .30]].forEach(([f, dt, g, dec]) => {
+        ton(a, sortie, t + dt, { f, type: "triangle", g, att: .006, dec, dur: .3, k });
+        ton(a, sortie, t + dt, { f: f * 2, type: "sine", g: g * .30, att: .006, dec: .22, dur: .3, k });
+      });
+      // (c) un éclat minuscule sur la dernière note.
+      bruit(a, sortie, t + .076, { f: 6800, q: .7, type: "highpass", g: .014, att: .004, dec: .030, dur: .10, k });
+      return 1.30;
     }
     case "ok": ton(a, sortie, t, { f: 880, g: .11, att: .01, dec: .045, dur: .12, k }); return .3;
     case "ko": ton(a, sortie, t, { f: 220, g: .16, att: .01, dec: .09, dur: .24, k }); return .5;
