@@ -188,7 +188,7 @@ export const ETATS_VOIX = ["ferme", "coupe", "ouvert"];
 // se change ; six phrases qui nomment un hébergeur, on en oublie toujours une, et
 // celle-là envoie un joueur sur une page morte. Les textes visibles disent donc
 // « le site » ou « la version en ligne » — jamais qui l'héberge.
-export const LIEN_SITE = "https://pwrygrt72g-hue.github.io/compteur-hilo/";
+export const LIEN_SITE = "https://wisehand21.com/";
 export const MESSAGE_ARTEFACT = "La visio ne peut pas marcher sur cette page publiée : sa politique de sécurité bloque les connexions vers le courtier. Ouvre le site pour voir tes amis : " + LIEN_SITE;
 // STUN seul : deux serveurs de Google, gratuits, qui ne font qu'apprendre à chacun
 // son adresse publique. C'est ce qu'on a quand aucun relais n'est configuré.
