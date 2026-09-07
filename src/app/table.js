@@ -1408,7 +1408,7 @@ const VERDICT_TENUE = 1900;   // ms : le temps de lire un mot — et l'horloge d
 const VERDICT_MOT = { bust: "Sauté", perd: "Perdu", gagne: "Gagné", blackjack: "Blackjack", egalite: "Égalité", abandon: "Abandon" };
 const VERDICT_TON = { bust: "p", perd: "p", gagne: "g", blackjack: "bj", egalite: "n", abandon: "n" };
 let VERDICT_T = null, VERDICT_D = null;
-function inscrireVerdict(issue, retard) {
+function inscrireVerdict(issue, retard, montant) {
   const v = $("verdict"), f = $("feutre"); if (!v || !f || !VERDICT_MOT[issue]) return;
   clearTimeout(VERDICT_D);
   VERDICT_D = setTimeout(() => {
@@ -1420,13 +1420,40 @@ function inscrireVerdict(issue, retard) {
     clearTimeout(VERDICT_T);
     v.className = "verdict " + VERDICT_TON[issue]; v.textContent = VERDICT_MOT[issue];
     void v.offsetWidth; v.classList.add("on");   // relance l'animation même si le mot est le même
+    /* ── LE MONTANT, ET LA FÊTE DE BLACKJACK (Léo, le 07/09) ────────────────────
+       Avant, « Blackjack » et « Gagné » ne différaient que par 7 px de corps, et le
+       paiement 3:2 n'était écrit NULLE PART sur le feutre : le meilleur coup du jeu
+       ressemblait à un coup ordinaire. Le temps est GRATUIT — la table est déjà
+       immobile 1 900 ms au règlement (VERDICT_TENUE), la fête se loge dedans et ne
+       coûte pas une milliseconde à la 200e main.
+       🚨 LE MONTANT EST UN ::after, PAS UN NŒUD. outils/sonde.js:244 exige que
+       #verdict.textContent soit EXACTEMENT le mot — or le contenu d'un pseudo-élément
+       n'entre pas dans textContent, donc la contrainte tient sans nœud séparé. Essayé
+       d'abord en frère absolu : à z-index 6 il passait DERRIÈRE la main du croupier, à
+       7 avec son propre halo il se lisait mal sur les cartes blanches (vu à l'écran le
+       07/09, deux fois). Le feutre n'a pas de bande libre à cette hauteur ; dans la
+       ligne du mot, le montant partage son halo et se lit toujours. */
+    const somme = typeof montant === "number" && montant
+      ? (montant > 0 ? "+" + fmtJ(montant) : fmtJ(montant)) + (issue === "blackjack" ? "  ·  3:2" : "")
+      : "";
+    v.style.setProperty("--somme", somme ? JSON.stringify("  " + somme) : '""');
+    // La fête : le feutre s'éclaire une fois, et TES cartes fleurissent. Accrochée au
+    // RÈGLEMENT, jamais sur handTotal === 21 — c'est la seule source ayant traversé
+    // settleHand, donc la seule qui distingue un blackjack d'un push (Le Cercle affiche
+    // la pastille or 2,4 s sur un push avant de la démentir) et d'un 21 après séparation.
+    if (issue === "blackjack") {
+      f.classList.remove("fete-bj"); void f.offsetWidth; f.classList.add("fete-bj");
+      const toi = document.querySelector("#sieges .siege.toi");
+      if (toi) { toi.classList.remove("fete-bj"); void toi.offsetWidth; toi.classList.add("fete-bj"); }
+      setTimeout(() => { f.classList.remove("fete-bj"); if (toi) toi.classList.remove("fete-bj"); }, VERDICT_TENUE);
+    }
     VERDICT_T = setTimeout(() => { v.classList.remove("on"); }, VERDICT_TENUE);
   }, retard || 0);
 }
 document.addEventListener("sabot:main-fin", e => {
   const d = e.detail || {}; if (!d.toi) return;
   const attente = (d.issue === "bust" || d.issue === "abandon") ? 0 : ((typeof J === "object" && J && typeof J.attente === "number") ? J.attente : 0) + 60;
-  inscrireVerdict(d.issue, attente);
+  inscrireVerdict(d.issue, attente, d.montant);
 });
 $("feutre").addEventListener("click", e => {
   if (e.target.closest("button, .bulle, input, select")) return;

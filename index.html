@@ -1233,6 +1233,41 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   100%{ opacity:0; clip-path:inset(-72% -62% -72% -62%); translate:0 -16px; filter:blur(4px) } }
 @media (prefers-reduced-motion:reduce){ .feutre>.verdict.on{ animation:none; opacity:1 } }
 @media (max-width:999.98px){ .feutre>.verdict{ font-size:24px } .feutre>.verdict.bj{ font-size:28px } }
+
+/* ── LE MONTANT, dans la ligne du mot ──────────────────────────────────────
+   « Blackjack  +37,50 · 3:2 ». Un ::after, pas un nœud : le contenu d'un
+   pseudo-élément n'entre pas dans textContent, donc la contrainte de la sonde
+   (le mot SEUL dans #verdict) tient. Il partage le halo du mot — c'est ce qui le
+   rend lisible par-dessus les cartes, là où un nœud séparé ne l'était pas. */
+.feutre>.verdict::after{ content:var(--somme, ""); font-size:.40em; letter-spacing:.05em;
+  font-style:normal; font-variant-numeric:tabular-nums; vertical-align:.46em; opacity:.92 }
+
+/* ── LA FÊTE DE BLACKJACK ──────────────────────────────────────────────────
+   Léo, le 07/09 : « avoir une animation en cas de blackjack ». Elle est GRATUITE :
+   la table est déjà immobile 1 900 ms au règlement (VERDICT_TENUE, table.js), et
+   tout se joue sur `opacity` et `box-shadow` d'éléments déjà composés — rien
+   n'entre dans la boucle de mise en page.
+   Le feutre s'éclaire une fois par le bas, comme un projecteur qu'on monte. */
+.feutre.fete-bj::after{ content:""; position:absolute; inset:0; z-index:5; pointer-events:none; border-radius:inherit;
+  background:radial-gradient(115% 80% at 50% 60%, color-mix(in oklab, var(--or) 46%, transparent), color-mix(in oklab, var(--or) 16%, transparent) 42%, transparent 72%);
+  mix-blend-mode:screen;
+  animation:fete-lueur 1.9s cubic-bezier(.2,0,.2,1) both }
+@keyframes fete-lueur{ 0%{ opacity:0 } 16%{ opacity:1 } 55%{ opacity:.5 } 100%{ opacity:0 } }
+/* TES cartes fleurissent : le liseré d'or qu'elles portent DÉJÀ (règle en (1,4,0) plus
+   haut) s'ouvre et se referme. On anime la même propriété, donc rien ne se dispute. */
+#v-table[data-phase="reglement"] .siege.toi.fete-bj .carte{ animation:fete-carte 1.15s cubic-bezier(.2,0,.2,1) both }
+@keyframes fete-carte{
+  0%{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff, 0 0 0 2px var(--or), 0 0 18px -2px var(--or), var(--ombre-portee) }
+  34%{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff, 0 0 0 4px var(--or), 0 0 34px 2px var(--or), var(--ombre-portee) }
+  100%{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff, 0 0 0 2px var(--or), 0 0 18px -2px var(--or), var(--ombre-portee) } }
+/* Le halo du siège respire UNE fois — il réutilise `respire-siege`, déjà écrit pour le
+   siège actif : deux courbes pour le même souffle finiraient par diverger. */
+.siege.fete-bj .mains::before{ opacity:1; animation:respire-siege 1.15s ease-in-out 1 }
+/* ⚠️ Toute la fête s'éteint sous prefers-reduced-motion : c'est une DÉCORATION, le mot
+   et le montant, eux, restent (ils portent l'information). */
+@media (prefers-reduced-motion:reduce){
+  .feutre.fete-bj::after{ animation:none; opacity:0 }
+  #v-table[data-phase="reglement"] .siege.toi.fete-bj .carte, .siege.fete-bj .mains::before{ animation:none } }
 #v-table.turbo .feutre{ cursor:default }
 #v-table[data-phase="jeu"]:not(.turbo) .feutre{ cursor:pointer }
 .conseil b{ color:var(--or) }
@@ -2250,7 +2285,15 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .rj-bloc b{ color:var(--ivoire); font-size:var(--t-fort); font-weight:600; white-space:nowrap }
 .rj-bloc .rj-sous{ font-family:"Martian Mono",monospace; font-size:12px; color:color-mix(in oklab, var(--ivoire) 82%, transparent); white-space:nowrap }
 .rj-jetons{ display:flex; gap:6px; align-items:center; padding:0 4px }
-.rj-jetons .jt{ --w:44px; cursor:pointer; transition:transform .14s var(--ressort), opacity .2s, filter .2s }
+/* touch-action:none sur le JETON seulement — la poussée (jetons.js) a besoin des
+   pointermove verticaux. Sur .rack-jetons il tuerait le défilement du rack au doigt. */
+.rj-jetons .jt{ --w:44px; position:relative; cursor:pointer; touch-action:none; transition:transform .14s var(--ressort), opacity .2s, filter .2s }
+/* Le jeton POUSSÉ : il se soulève et porte le compte de la pile qu'on est en train de
+   monter (« ×4 »). Le pseudo-élément ne prend pas de place — le rack ne bouge pas d'un px,
+   et six échecs bloquants de mesurer.mjs avec (les jetons rendent 46 px pour un seuil de 43,5). */
+.rj-jetons .jt.pousse{ transform:translateY(-10px); filter:drop-shadow(0 10px 7px rgba(0,0,0,.6)) }
+.rj-jetons .jt.pousse::after{ content:attr(data-pousse); position:absolute; left:50%; top:-14px; transform:translateX(-50%);
+  font:700 var(--t-petit)/1 var(--f-titre); color:var(--or); text-shadow:0 1px 3px #000; pointer-events:none; white-space:nowrap }
 .rj-jetons .jt:hover:not([disabled]), .rj-jetons .jt:focus-visible{ transform:translateY(-5px) }
 /* Le jeton qu'on vient de poser reste SOULEVÉ dans le rack, son ombre dessous : on voit lequel on joue. */
 .rj-jetons .jt.choisi{ transform:translateY(-6px); filter:drop-shadow(0 7px 5px rgba(0,0,0,.55)) }
@@ -2264,6 +2307,13 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .rj-rachat{ min-height:44px; padding:0 14px; border-radius:12px; white-space:nowrap; font-weight:600; font-size:var(--t-petit);
   background:var(--btn-or); color:var(--btn-encre);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px -8px rgba(0,0,0,.9) }
+/* « Tout — 975 » : DISCRET, en verre. Le doré est réservé à l'action principale
+   (« Distribuer ») ; deux boutons dorés côte à côte et on ne sait plus lequel décide.
+   .rj-rachat garde le doré, lui : il ne s'affiche que quand on est à sec, seul. */
+.rj-tout{ min-height:44px; padding:0 12px; border-radius:12px; white-space:nowrap; font-weight:600;
+  font-size:var(--t-petit); font-variant-numeric:tabular-nums; color:var(--ivoire);
+  border:1px solid color-mix(in oklab, var(--or) 42%, transparent); background:rgba(255,255,255,.06) }
+.rj-tout:hover, .rj-tout:focus-visible{ border-color:var(--or); background:rgba(255,255,255,.12) }
 
 /* La ligne du coach : ta mise en unités et, si le compte est affiché, sa cohérence. */
 /* Une pastille de règle qui a une explication le DIT : sans ce signe, personne ne survole,
@@ -3154,7 +3204,11 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
       <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b></div>
       <div class="rj-jetons" id="rjJetons" role="group" aria-label="Jetons à miser"></div>
       <div class="rj-bloc"><span class="grave">Mise</span><b class="cadran" id="rjMise">0</b><span class="rj-sous" id="rjUnites">—</span></div>
-      <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier jeton (Retour arrière)" aria-label="Retirer le dernier jeton">&#8630;</button>
+      <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier geste (Retour arrière)" aria-label="Retirer le dernier geste">&#8630;</button>
+      <!-- Le tapis entier, en un geste. Le libellé porte le MONTANT (jetons.js le réécrit) :
+           « All-in » tout seul n'annonce pas ce qu'on engage. Caché tant qu'il n'y a rien à
+           miser de plus, comme « Racheter ». -->
+      <button class="rj-tout" id="bTout" hidden title="Miser tout ton tapis">Tout</button>
       <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
     </div>
     <div class="rang-btn" id="coups">
@@ -9318,7 +9372,7 @@ const VERDICT_TENUE = 1900;   // ms : le temps de lire un mot — et l'horloge d
 const VERDICT_MOT = { bust: "Sauté", perd: "Perdu", gagne: "Gagné", blackjack: "Blackjack", egalite: "Égalité", abandon: "Abandon" };
 const VERDICT_TON = { bust: "p", perd: "p", gagne: "g", blackjack: "bj", egalite: "n", abandon: "n" };
 let VERDICT_T = null, VERDICT_D = null;
-function inscrireVerdict(issue, retard) {
+function inscrireVerdict(issue, retard, montant) {
   const v = $("verdict"), f = $("feutre"); if (!v || !f || !VERDICT_MOT[issue]) return;
   clearTimeout(VERDICT_D);
   VERDICT_D = setTimeout(() => {
@@ -9330,13 +9384,40 @@ function inscrireVerdict(issue, retard) {
     clearTimeout(VERDICT_T);
     v.className = "verdict " + VERDICT_TON[issue]; v.textContent = VERDICT_MOT[issue];
     void v.offsetWidth; v.classList.add("on");   // relance l'animation même si le mot est le même
+    /* ── LE MONTANT, ET LA FÊTE DE BLACKJACK (Léo, le 07/09) ────────────────────
+       Avant, « Blackjack » et « Gagné » ne différaient que par 7 px de corps, et le
+       paiement 3:2 n'était écrit NULLE PART sur le feutre : le meilleur coup du jeu
+       ressemblait à un coup ordinaire. Le temps est GRATUIT — la table est déjà
+       immobile 1 900 ms au règlement (VERDICT_TENUE), la fête se loge dedans et ne
+       coûte pas une milliseconde à la 200e main.
+       🚨 LE MONTANT EST UN ::after, PAS UN NŒUD. outils/sonde.js:244 exige que
+       #verdict.textContent soit EXACTEMENT le mot — or le contenu d'un pseudo-élément
+       n'entre pas dans textContent, donc la contrainte tient sans nœud séparé. Essayé
+       d'abord en frère absolu : à z-index 6 il passait DERRIÈRE la main du croupier, à
+       7 avec son propre halo il se lisait mal sur les cartes blanches (vu à l'écran le
+       07/09, deux fois). Le feutre n'a pas de bande libre à cette hauteur ; dans la
+       ligne du mot, le montant partage son halo et se lit toujours. */
+    const somme = typeof montant === "number" && montant
+      ? (montant > 0 ? "+" + fmtJ(montant) : fmtJ(montant)) + (issue === "blackjack" ? "  ·  3:2" : "")
+      : "";
+    v.style.setProperty("--somme", somme ? JSON.stringify("  " + somme) : '""');
+    // La fête : le feutre s'éclaire une fois, et TES cartes fleurissent. Accrochée au
+    // RÈGLEMENT, jamais sur handTotal === 21 — c'est la seule source ayant traversé
+    // settleHand, donc la seule qui distingue un blackjack d'un push (Le Cercle affiche
+    // la pastille or 2,4 s sur un push avant de la démentir) et d'un 21 après séparation.
+    if (issue === "blackjack") {
+      f.classList.remove("fete-bj"); void f.offsetWidth; f.classList.add("fete-bj");
+      const toi = document.querySelector("#sieges .siege.toi");
+      if (toi) { toi.classList.remove("fete-bj"); void toi.offsetWidth; toi.classList.add("fete-bj"); }
+      setTimeout(() => { f.classList.remove("fete-bj"); if (toi) toi.classList.remove("fete-bj"); }, VERDICT_TENUE);
+    }
     VERDICT_T = setTimeout(() => { v.classList.remove("on"); }, VERDICT_TENUE);
   }, retard || 0);
 }
 document.addEventListener("sabot:main-fin", e => {
   const d = e.detail || {}; if (!d.toi) return;
   const attente = (d.issue === "bust" || d.issue === "abandon") ? 0 : ((typeof J === "object" && J && typeof J.attente === "number") ? J.attente : 0) + 60;
-  inscrireVerdict(d.issue, attente);
+  inscrireVerdict(d.issue, attente, d.montant);
 });
 $("feutre").addEventListener("click", e => {
   if (e.target.closest("button, .bulle, input, select")) return;
@@ -9666,9 +9747,22 @@ const ancreCercle = si => { const e = $("cercle_" + si); return e ? centre(e) : 
 // rack, par-dessus les tubes, avant de glisser. Il sort de dessous, et il APPARAÎT (vol, o.apparait).
 const ancreCroupier = () => { const e = $("rack"); if (!(e && e.offsetWidth)) return { x: salleRect().width / 2, y: 30 };
   const c = centre(e); c.y += e.offsetHeight / 2 + 22; return c; };
-// Le rack fermé est sous le rail : les jetons en partent (ou y rentrent) par le bas.
+/* Rack fermé — c'est-à-dire AU RÈGLEMENT, le moment où on est payé — le jeton visait
+   `{ x: milieu, y: hauteur + 40 }` : hors de la fenêtre. Mesuré le 07/09 à 1280×800 :
+   y = 760 dans une salle qui s'arrête à 720, soit ~836 px sur une fenêtre de 800. Le
+   paiement traversait le feutre et DISPARAISSAIT sous le bord ; le meilleur moment du
+   jeu se terminait par une disparition, et seul le cadran du tapis en témoignait.
+   Il rentre donc DANS le cadran (#tTapis, toujours visible, dans la barre du haut) :
+   le jeton arrive sur le chiffre, le chiffre s'incrémente au contact (le rappel `fin`
+   appelle déjà rendreTapis). Rien d'autre ne change — ni engager(), ni rendre().
+   ⚠️ Repli sur l'ancien point si le cadran n'est pas mesurable (mode tranche, téléphone
+   couché) : une ancre fausse vaut mieux qu'une ancre NaN, qui poserait le jeton en 0,0. */
 const ancreRack = v => { const b = $("rjJetons").querySelector(`[data-v="${v}"]`) || $("rjJetons"); const c = centre(b);
-  if (!$("rackJetons").classList.contains("ouvert")) { const s = salleRect(); c.x = s.width / 2; c.y = s.height + 40; } return c; };
+  if (!$("rackJetons").classList.contains("ouvert")) {
+    const cad = $("tTapis");
+    if (cad && cad.offsetWidth) return centre(cad);
+    const s = salleRect(); c.x = s.width / 2; c.y = s.height + 40;
+  } return c; };
 // « Chez soi » : ton rack pour toi ; pour un voisin, le rail juste sous son nom.
 const ancreMaison = si => { const st = T.sieges[si]; if (st && st.toi) return ancreRack(25); const c = ancreCercle(si); return { x: c.x, y: c.y + 72 }; };
 
@@ -9789,7 +9883,10 @@ function rendreRack(o) {
   const rk = $("rack"); if (rk) rk.dataset.min = fmtJ(l.min);
   if (!boite.children.length) RACK.forEach(v => {
     const b = jetonEl(v, 46, "button"); b.type = "button"; b.setAttribute("aria-label", `Poser un jeton de ${fmtJ(v)}`);
-    b.onclick = () => poserJeton(v); boite.appendChild(b);
+    // Un clic pose un jeton ; une poussée vers le haut en pose plusieurs (armerPoussee
+    // pose b.__pousse pour que le clic qui suit le relâchement ne double pas le geste).
+    b.onclick = () => { if (b.__pousse) { b.__pousse = false; return; } poserJeton(v); };
+    armerPoussee(b, v); boite.appendChild(b);
   });
   const ouvert = J.phase === "mise";
   boite.querySelectorAll("button").forEach(b => {
@@ -9803,6 +9900,15 @@ function rendreRack(o) {
   if (!o.differe) rendreMontants();
   $("bRetirer").disabled = !ouvert || !J.poses.length;
   $("bRachat").hidden = !(ouvert && DB.tapis < l.min && J.mise === 0);
+  // « Tout — 975 » : le bouton porte le MONTANT. « All-in » tout seul n'annonce pas ce
+  // qu'on s'apprête à engager, et c'est précisément ce qu'on veut lire avant de cliquer.
+  // Pas de modale : « Retirer » défait le geste d'un clic, et une confirmation posée sur
+  // un geste annulable est la porte qu'on ferme sans la lire. L'accident existait DÉJÀ
+  // sans ce bouton — au Salon Privé, un clic sur le jeton de 1 000 vide le tapis.
+  const tout = ouvert ? miseTapis() : 0;
+  $("bTout").hidden = !(ouvert && tout > 0 && arr(J.mise + tout) >= l.min);
+  $("bTout").textContent = "Tout — " + fmtJ(arr(J.mise + tout));
+  $("bTout").title = `Miser tout ton tapis : ${fmtJ(arr(J.mise + tout))}`;
   r.classList.toggle("ouvert", ouvert);
 }
 // Les montants du rack et de la barre : écrits ensemble, quand le jeton est arrivé.
@@ -9827,21 +9933,31 @@ function majDonne() {
     $("bDonne").title = T.miseOk ? "" : `Pose d'abord une mise : au moins ${fmtJ(limites().min)}`;
   }
 }
-function poserJeton(v) {
+/* ── UN GESTE = UNE ENTRÉE DANS J.poses ───────────────────────────────────
+   Trois façons de poser, un seul chemin : le clic (un jeton), la POUSSÉE (une pile
+   du même jeton, Léo le 07/09 : « genre pousser les jetons ») et le TAPIS (all-in).
+   « Retirer » défait le dernier GESTE, pas son sixième : pousser six jetons puis
+   devoir cliquer six fois pour se raviser serait pire que de ne pas pouvoir pousser.
+   ⚠️ `vol({montant})` et JAMAIS `vol({v})` dès que la somme n'est pas une dénomination :
+   jetonDe retombe SILENCIEUSEMENT sur le jeton blanc de 1 pour toute autre valeur
+   (jetonDe, plus haut), donc un all-in de 975 ferait voler un jeton de 1. */
+const estDenomination = v => JETONS.some(j => j.v === v);
+function poserSurFeutre(montant, o) {
+  o = o || {};
   if (J.phase !== "mise" || !T.toi) return;
   const l = limites();
-  if (l.par5 && v % 5 !== 0) return bandeau("Ici les mises vont par 5.");
-  if (v > DB.tapis) return bandeau("Il ne te reste pas ça en main.");
-  if (J.mise + v > l.max) return bandeau(`Maximum de la table : ${fmtJ(l.max)}.`);
-  const si = T.sieges.indexOf(T.toi), depuis = ancreRack(v);
+  if (l.par5 && montant % 5 !== 0) return bandeau("Ici les mises vont par 5.");
+  if (montant > DB.tapis) return bandeau("Il ne te reste pas ça en main.");
+  if (arr(J.mise + montant) > l.max) return bandeau(`Maximum de la table : ${fmtJ(l.max)}.`);
+  const v = o.v, si = T.sieges.indexOf(T.toi), depuis = ancreRack(v || 25);
   // L'accusé du clic : le jeton du rack se soulève, le clone part de sa place. Sans ça rien
   // ne reliait le clic au jeton qui vole (mesuré le 05/09).
-  const bouton = $("rjJetons").querySelector(`[data-v="${v}"]`);
+  const bouton = v ? $("rjJetons").querySelector(`[data-v="${v}"]`) : null;
   // Le jeton CHOISI reste soulevé dans le rack (style.css, .choisi) : on voit lequel on vient de poser.
   $("rjJetons").querySelectorAll(".choisi").forEach(b => { if (b !== bouton) b.classList.remove("choisi"); });
   if (bouton) bouton.classList.add("choisi");
   if (bouton && !reduit()) { const a = bouton.animate([{ transform: "translateY(0)" }, { transform: "translateY(-7px)", offset: .4 }, { transform: "none" }], { duration: 200, easing: "ease-out" }); a.finished.then(() => a.cancel(), () => {}); }
-  engager(T.toi, v); J.mise = arr(J.mise + v); J.poses.push(v); T.toi.mise = T.mise = J.mise;
+  engager(T.toi, montant); J.mise = arr(J.mise + montant); J.poses.push(montant); T.toi.mise = T.mise = J.mise;
   // L'ÉTAT tout de suite (Distribuer s'ouvre au clic, une ligne) ; le DESSIN à l'image suivante.
   // Le clone décolle d'abord ; le rack et l'appel du croupier se redessinent après — mesuré le
   // 05/09 : ~55 ms immobile au rack avant la première image en vol, un hoquet. ⚠️ majDonne reste
@@ -9852,20 +9968,87 @@ function poserJeton(v) {
   // une page nue (raf1 = 7 ms, raf2 absent après 700 ms). Un rack qui ne se redessine jamais
   // laisse « Retirer » fermé pour de bon.
   majDonne();
-  vol({ v, w: tailleJeton(true), de: tailleRack(), depuis, vers: ancreCercle(si), fin: () => {
+  // Un seul jeton part comme un jeton ; une pile part comme une PILE (pileEl).
+  const forme = o.pile ? { montant } : { v };
+  vol({ ...forme, w: tailleJeton(true), de: tailleRack(), depuis, vers: ancreCercle(si), fin: () => {
     rendreMontants(); if (J.phase !== "mise") return;
-    T.toi.miseVue = Math.min(J.mise, arr((T.toi.miseVue || 0) + v)); garnirCercles(); son("jetons"); } });
+    T.toi.miseVue = Math.min(J.mise, arr((T.toi.miseVue || 0) + montant)); garnirCercles(); son("jetons"); } });
   setTimeout(() => { rendreRack({ differe: true }); appelMise(); }, 0);
+}
+const poserJeton = v => poserSurFeutre(v, { v });
+// Combien de jetons de `v` peut-on ENCORE poser : la main, le maximum de table, le pas de 5.
+function poussable(v) {
+  const l = limites();
+  if (l.par5 && v % 5 !== 0) return 0;
+  return Math.max(0, Math.min(Math.floor(arr(DB.tapis) / v), Math.floor(arr(l.max - J.mise) / v)));
+}
+// Le TAPIS : tout ce qu'on a, plafonné par la table. Planché à l'ENTIER — DB.tapis finit
+// en ,50 après un blackjack 3:2, et le jeton de 2,50 ne se mise jamais — puis au multiple
+// de 5 là où la table l'exige (Néon, Aquarium).
+function miseTapis() {
+  const l = limites(), dispo = arr(DB.tapis + J.mise);
+  let cible = Math.floor(Math.min(dispo, l.max));
+  if (l.par5) cible -= cible % 5;
+  return arr(cible - J.mise);
 }
 function retirerJeton() {
   if (J.phase !== "mise" || !J.poses.length || !T.toi) return;
   const v = J.poses.pop(), si = T.sieges.indexOf(T.toi);
   J.mise = arr(J.mise - v); T.toi.mise = T.mise = J.mise; T.toi.miseVue = Math.min(T.toi.miseVue || 0, J.mise);
   rendre(T.toi, v, v); garnirCercles(); rendreRack(); majDonne(); appelMise();
-  vol({ v, w: tailleJeton(true), depuis: ancreCercle(si), vers: ancreRack(v), fin: () => son("jetons") });
+  // ⚠️ Même piège qu'à l'aller : une pile ou un all-in n'est pas une dénomination.
+  const forme = estDenomination(v) ? { v } : { montant: v };
+  vol({ ...forme, w: tailleJeton(true), depuis: ancreCercle(si), vers: ancreRack(estDenomination(v) ? v : 25), fin: () => son("jetons") });
+}
+/* ── LA POUSSÉE ────────────────────────────────────────────────────────────
+   Léo, le 07/09 : « genre pousser les jetons ». Avant, la seule façon de miser était
+   un clic PAR jeton : le rack n'a ni 10 ni 20, donc la mise minimale coûtait 2 clics
+   au Boulevard, 3 au Front de Mer, 4 au Cercle — chacun déclenchant un vol de 320 ms.
+   On appuie sur un jeton, on pousse vers le feutre, la pile grossit sous le doigt, on
+   lâche : UNE volée. C'est aussi le seul geste de mise qui ne VISE rien, donc le seul
+   qui survive à la pellicule de sièges non recentrée sur téléphone.
+   ⚠️ Sous 44 px de course c'est un CLIC : le chemin d'avant, bit pour bit.
+   ⚠️ `touch-action:none` va sur `.jt` SEULEMENT (style.css) — sur `.rack-jetons` il
+   tuerait le défilement horizontal du rack sur téléphone. */
+const PAS_POUSSEE = 28;    // px de course par jeton ajouté
+const SEUIL_POUSSEE = 44;  // px en deçà desquels rien ne se passe : c'est un clic
+function armerPoussee(b, v) {
+  let y0 = 0, n = 0, actif = false;
+  const rendre = k => {
+    if (k === n) return;
+    if (k > n) son("jeton");                       // un clic feutré par jeton empilé
+    n = k;
+    b.dataset.pousse = n > 1 ? "×" + n : "";
+    b.classList.toggle("pousse", n > 0);
+  };
+  const finir = e => {
+    if (!actif) return;
+    actif = false;
+    try { b.releasePointerCapture(e.pointerId); } catch (err) { /* déjà relâché */ }
+    const k = n; rendre(0);
+    if (k <= 0) return;
+    b.__pousse = true;                              // le clic qui suit ne doit pas doubler
+    if (k === 1) return poserJeton(v);              // un seul jeton : chemin d'avant
+    poserSurFeutre(arr(k * v), { v, pile: true });
+  };
+  b.addEventListener("pointerdown", e => {
+    if (b.disabled || J.phase !== "mise" || !T.toi) return;
+    actif = true; n = 0; y0 = e.clientY; b.__pousse = false;
+    try { b.setPointerCapture(e.pointerId); } catch (err) { /* vieux navigateur */ }
+  });
+  b.addEventListener("pointermove", e => {
+    if (!actif) return;
+    const course = y0 - e.clientY;                  // vers le HAUT = vers le feutre
+    const veut = course < SEUIL_POUSSEE ? 0 : 1 + Math.floor((course - SEUIL_POUSSEE) / PAS_POUSSEE);
+    rendre(Math.min(veut, poussable(v)));
+  });
+  b.addEventListener("pointerup", finir);
+  // Redescendre sous le seuil ANNULE : on repose le doigt sans avoir misé.
+  b.addEventListener("pointercancel", () => { actif = false; rendre(0); });
 }
 function poserJetonRang(k) { const b = $("rjJetons").children[k - 1]; if (b && !b.disabled) b.click(); }
 $("bRetirer").onclick = retirerJeton;
+$("bTout").onclick = () => { const m = miseTapis(); if (m > 0) poserSurFeutre(m, { pile: true }); };
 $("bRachat").onclick = () => proposerRachat();
 
 /* ── Les voisins : ils misent visiblement, et mal ─────────────────────────

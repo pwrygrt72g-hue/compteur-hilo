@@ -1192,6 +1192,41 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   100%{ opacity:0; clip-path:inset(-72% -62% -72% -62%); translate:0 -16px; filter:blur(4px) } }
 @media (prefers-reduced-motion:reduce){ .feutre>.verdict.on{ animation:none; opacity:1 } }
 @media (max-width:999.98px){ .feutre>.verdict{ font-size:24px } .feutre>.verdict.bj{ font-size:28px } }
+
+/* ── LE MONTANT, dans la ligne du mot ──────────────────────────────────────
+   « Blackjack  +37,50 · 3:2 ». Un ::after, pas un nœud : le contenu d'un
+   pseudo-élément n'entre pas dans textContent, donc la contrainte de la sonde
+   (le mot SEUL dans #verdict) tient. Il partage le halo du mot — c'est ce qui le
+   rend lisible par-dessus les cartes, là où un nœud séparé ne l'était pas. */
+.feutre>.verdict::after{ content:var(--somme, ""); font-size:.40em; letter-spacing:.05em;
+  font-style:normal; font-variant-numeric:tabular-nums; vertical-align:.46em; opacity:.92 }
+
+/* ── LA FÊTE DE BLACKJACK ──────────────────────────────────────────────────
+   Léo, le 07/09 : « avoir une animation en cas de blackjack ». Elle est GRATUITE :
+   la table est déjà immobile 1 900 ms au règlement (VERDICT_TENUE, table.js), et
+   tout se joue sur `opacity` et `box-shadow` d'éléments déjà composés — rien
+   n'entre dans la boucle de mise en page.
+   Le feutre s'éclaire une fois par le bas, comme un projecteur qu'on monte. */
+.feutre.fete-bj::after{ content:""; position:absolute; inset:0; z-index:5; pointer-events:none; border-radius:inherit;
+  background:radial-gradient(115% 80% at 50% 60%, color-mix(in oklab, var(--or) 46%, transparent), color-mix(in oklab, var(--or) 16%, transparent) 42%, transparent 72%);
+  mix-blend-mode:screen;
+  animation:fete-lueur 1.9s cubic-bezier(.2,0,.2,1) both }
+@keyframes fete-lueur{ 0%{ opacity:0 } 16%{ opacity:1 } 55%{ opacity:.5 } 100%{ opacity:0 } }
+/* TES cartes fleurissent : le liseré d'or qu'elles portent DÉJÀ (règle en (1,4,0) plus
+   haut) s'ouvre et se referme. On anime la même propriété, donc rien ne se dispute. */
+#v-table[data-phase="reglement"] .siege.toi.fete-bj .carte{ animation:fete-carte 1.15s cubic-bezier(.2,0,.2,1) both }
+@keyframes fete-carte{
+  0%{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff, 0 0 0 2px var(--or), 0 0 18px -2px var(--or), var(--ombre-portee) }
+  34%{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff, 0 0 0 4px var(--or), 0 0 34px 2px var(--or), var(--ombre-portee) }
+  100%{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff, 0 0 0 2px var(--or), 0 0 18px -2px var(--or), var(--ombre-portee) } }
+/* Le halo du siège respire UNE fois — il réutilise `respire-siege`, déjà écrit pour le
+   siège actif : deux courbes pour le même souffle finiraient par diverger. */
+.siege.fete-bj .mains::before{ opacity:1; animation:respire-siege 1.15s ease-in-out 1 }
+/* ⚠️ Toute la fête s'éteint sous prefers-reduced-motion : c'est une DÉCORATION, le mot
+   et le montant, eux, restent (ils portent l'information). */
+@media (prefers-reduced-motion:reduce){
+  .feutre.fete-bj::after{ animation:none; opacity:0 }
+  #v-table[data-phase="reglement"] .siege.toi.fete-bj .carte, .siege.fete-bj .mains::before{ animation:none } }
 #v-table.turbo .feutre{ cursor:default }
 #v-table[data-phase="jeu"]:not(.turbo) .feutre{ cursor:pointer }
 .conseil b{ color:var(--or) }
@@ -2209,7 +2244,15 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .rj-bloc b{ color:var(--ivoire); font-size:var(--t-fort); font-weight:600; white-space:nowrap }
 .rj-bloc .rj-sous{ font-family:"Martian Mono",monospace; font-size:12px; color:color-mix(in oklab, var(--ivoire) 82%, transparent); white-space:nowrap }
 .rj-jetons{ display:flex; gap:6px; align-items:center; padding:0 4px }
-.rj-jetons .jt{ --w:44px; cursor:pointer; transition:transform .14s var(--ressort), opacity .2s, filter .2s }
+/* touch-action:none sur le JETON seulement — la poussée (jetons.js) a besoin des
+   pointermove verticaux. Sur .rack-jetons il tuerait le défilement du rack au doigt. */
+.rj-jetons .jt{ --w:44px; position:relative; cursor:pointer; touch-action:none; transition:transform .14s var(--ressort), opacity .2s, filter .2s }
+/* Le jeton POUSSÉ : il se soulève et porte le compte de la pile qu'on est en train de
+   monter (« ×4 »). Le pseudo-élément ne prend pas de place — le rack ne bouge pas d'un px,
+   et six échecs bloquants de mesurer.mjs avec (les jetons rendent 46 px pour un seuil de 43,5). */
+.rj-jetons .jt.pousse{ transform:translateY(-10px); filter:drop-shadow(0 10px 7px rgba(0,0,0,.6)) }
+.rj-jetons .jt.pousse::after{ content:attr(data-pousse); position:absolute; left:50%; top:-14px; transform:translateX(-50%);
+  font:700 var(--t-petit)/1 var(--f-titre); color:var(--or); text-shadow:0 1px 3px #000; pointer-events:none; white-space:nowrap }
 .rj-jetons .jt:hover:not([disabled]), .rj-jetons .jt:focus-visible{ transform:translateY(-5px) }
 /* Le jeton qu'on vient de poser reste SOULEVÉ dans le rack, son ombre dessous : on voit lequel on joue. */
 .rj-jetons .jt.choisi{ transform:translateY(-6px); filter:drop-shadow(0 7px 5px rgba(0,0,0,.55)) }
@@ -2223,6 +2266,13 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .rj-rachat{ min-height:44px; padding:0 14px; border-radius:12px; white-space:nowrap; font-weight:600; font-size:var(--t-petit);
   background:var(--btn-or); color:var(--btn-encre);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 6px 14px -8px rgba(0,0,0,.9) }
+/* « Tout — 975 » : DISCRET, en verre. Le doré est réservé à l'action principale
+   (« Distribuer ») ; deux boutons dorés côte à côte et on ne sait plus lequel décide.
+   .rj-rachat garde le doré, lui : il ne s'affiche que quand on est à sec, seul. */
+.rj-tout{ min-height:44px; padding:0 12px; border-radius:12px; white-space:nowrap; font-weight:600;
+  font-size:var(--t-petit); font-variant-numeric:tabular-nums; color:var(--ivoire);
+  border:1px solid color-mix(in oklab, var(--or) 42%, transparent); background:rgba(255,255,255,.06) }
+.rj-tout:hover, .rj-tout:focus-visible{ border-color:var(--or); background:rgba(255,255,255,.12) }
 
 /* La ligne du coach : ta mise en unités et, si le compte est affiché, sa cohérence. */
 /* Une pastille de règle qui a une explication le DIT : sans ce signe, personne ne survole,

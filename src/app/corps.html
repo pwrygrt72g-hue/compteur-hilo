@@ -280,7 +280,11 @@
       <div class="rj-bloc"><span class="grave">Tapis</span><b class="cadran" id="rjTapis">1 000</b></div>
       <div class="rj-jetons" id="rjJetons" role="group" aria-label="Jetons à miser"></div>
       <div class="rj-bloc"><span class="grave">Mise</span><b class="cadran" id="rjMise">0</b><span class="rj-sous" id="rjUnites">—</span></div>
-      <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier jeton (Retour arrière)" aria-label="Retirer le dernier jeton">&#8630;</button>
+      <button class="rj-retirer" id="bRetirer" disabled title="Retirer le dernier geste (Retour arrière)" aria-label="Retirer le dernier geste">&#8630;</button>
+      <!-- Le tapis entier, en un geste. Le libellé porte le MONTANT (jetons.js le réécrit) :
+           « All-in » tout seul n'annonce pas ce qu'on engage. Caché tant qu'il n'y a rien à
+           miser de plus, comme « Racheter ». -->
+      <button class="rj-tout" id="bTout" hidden title="Miser tout ton tapis">Tout</button>
       <button class="rj-rachat" id="bRachat" hidden>Racheter 1 000</button>
     </div>
     <div class="rang-btn" id="coups">
