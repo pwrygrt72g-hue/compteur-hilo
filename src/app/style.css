@@ -622,7 +622,7 @@ div.salle-carte{ cursor:default }
 /* …et la BARRE DU HAUT aussi (mesuré le 05/09 en clair : barre crème, scène sombre, barre des
    coups noire — un sandwich). Le poste de jeu est UN objet sombre posé sur la page. */
 #v-table{ color-scheme:dark }
-/* …et la PAGE autour aussi, en-tête compris (mesuré le 05/09 en clair : un en-tête crème « Le Sabot »
+/* …et la PAGE autour aussi, en-tête compris (mesuré le 05/09 en clair : un en-tête crème « Acewise21 »
    posé sur une barre, une salle et des coups forcés sombres — deux applications collées). Le poste de
    jeu est un objet de nuit : la page qui le porte l'est aussi, comme le hall. */
 body.a-table{ color-scheme:dark;
@@ -721,7 +721,7 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 .feutre>svg.grain, .feutre>svg.motif, .feutre>svg.lettrage{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none;
   border-radius:inherit; overflow:hidden }
 .feutre>svg.grain{ mix-blend-mode:overlay; opacity:.55 }
-.feutre>svg.lettrage{ z-index:1 }
+.feutre>svg.lettrage{ z-index:1; transition:opacity .35s ease }
 /* Mesuré le 06/09 : avec fill:var(--or) — l'or MÉLANGÉ À 12 % DE FEUTRE — la grande ligne
    sortait à 2,19:1 sur le vert (seuil 3:1) et à 2,95:1 sur le rouge du Cotai. On désaturait
    l'encre vers le fond exactement là où elle doit s'en détacher. L'encre est donc l'or de
@@ -737,6 +737,14 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    qu'ailleurs, c'est lui qui porte le contraste sur les neuf feutres — le rouge du Cotai est
    le pire cas, pas le vert du Boulevard. */
 .feutre>svg.lettrage text.rail{ fill:var(--or-lumiere); opacity:1; stroke:rgba(0,0,0,.8); stroke-width:2.1px }
+/* PENDANT LA MANCHE, LE FEUTRE RECULE. Le sujet de l'écran, ce sont les cartes, les totaux
+   et le verdict ; l'impression est le décor. Mesuré le 06/09 : 29,9 % du lettrage passait sous
+   les cartes distribuées, et le mot du verdict s'écrivait sur l'arc doré.
+   `.3` n'est pas une valeur neuve : c'est celle que la feuille a DÉJÀ choisie pour ce geste
+   exact quand une annonce s'affiche (plus bas, ≥ 1000 px). Un seul geste, une seule valeur.
+   ⚠️ HORS de tout @media : sous 1000 px les cartes couvrent le même lettrage, et une règle
+   enfermée dans `min-width:1000px` y serait muette. */
+#v-table:is([data-phase="jeu"],[data-phase="reglement"]) #lettrage{ opacity:.3 }
 .feutre>*:not(svg){ position:relative; z-index:2 }
 
 /* La rangée haute passe AU-DESSUS des sièges : le sabot y a rang 3, une carte qui
@@ -744,6 +752,19 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    pas en fantôme par-dessus. */
 .feutre>.rangee-haute{ z-index:3 }
 .sabot{ z-index:3 }
+/* …ELLE EN SORT VRAIMENT. Sondé le 06/09 sur une donne entière : chaque carte passait ses
+   huit premières images derrière #sabot, puis six de plus derrière .rangee-haute, .croupier,
+   .qui, #dScore — 65 % du vol (247 ms sur 382) INVISIBLE. On ne retouche pas la courbe d'une
+   carte qu'on ne voit pas : dès qu'elle est sortie de la boîte, le groupe qui la porte passe
+   au-dessus de la rangée haute.
+   ⚠️ On lève .sieges et non .siege : .feutre>*:not(svg) pose z-index:2 sur .sieges, qui est
+   donc un CONTEXTE D'EMPILEMENT — un z-index sur un siège n'y aurait jamais rien changé,
+   il ne classe que les sièges entre eux.
+   Les 55 ms préservent l'intention d'origine (« elle naît DESSOUS et en SORT ») ; l'idiome
+   `transition:z-index 0s` est celui de #dMain .carte--pivot, plus bas. Et 4 reste sous
+   #croupierScene : les avant-bras du croupier passent devant la carte, c'est juste. */
+.feutre>.sieges:has(.carte--entre){ z-index:4; transition:z-index 0s linear var(--sortie,55ms) }
+.rangee-haute .croupier:has(.carte--entre){ position:relative; z-index:4; transition:z-index 0s linear var(--sortie,55ms) }
 /* L'annonce et le conseil vivent DANS la bande entre la main du croupier et les
    sièges, par-dessus le lettrage (qui s'efface tant qu'une annonce est affichée) :
    ils ne prennent plus 60 px de hauteur à un feutre qui n'en a que 450 à 1280 × 800. */
@@ -775,12 +796,42 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   .feutre>.annonce:not(:empty){ width:max-content; max-width:min(92%, 720px); left:50%; right:auto; transform:translateX(-50%);
     background:rgba(0,0,0,.6); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:999px; padding:5px 18px }
   #v-table.cr-parle:not([data-reseau]) .feutre>.annonce{ display:none }
+  /* 🚨 À SEPT ET HUIT SIÈGES, LA BANDE N'EXISTE PLUS — la pastille va au coin.
+     La règle du dessus la pose à `--bande-haut + 4`, c'est-à-dire quatre pixels sous le bas
+     de la rangée du croupier. Ça marchait quand le milieu de l'arc était creux. À huit, les
+     sièges du MILIEU sont les plus bas de l'arc et leurs cartes commencent à 410 px — la
+     pastille aussi. Mesuré à 1280 × 800, table à huit, après une donne : « À Sonia de jouer »
+     (562→718 × 410→453) recouvrait la main de Léa ET celle de Paul sur 68 × 43 px chacune,
+     donc exactement le coin haut-gauche des cartes, là où sont la valeur et la couleur. On
+     annonce à qui c'est le tour en rendant deux mains sur huit illisibles.
+     ⚠️ Le défaut est ANTÉRIEUR aux huit sièges (à sept il mangeait déjà 124 × 19 px de la main
+     centrale ; à cinq il passe à 8 px près) — mais à huit il est deux fois plus haut et touche
+     DEUX mains, parce qu'il n'y a plus de siège central.
+     🚨 Et il n'y a AUCUNE place au centre : un balayage du feutre entier (pastille de
+     156 × 43, tous les 6 px) ne trouve pas une seule position centrée libre — de la carte
+     retournée du croupier jusqu'aux noms des sièges, la colonne du milieu est pleine. Monter
+     la pastille la met sur la carte visible du croupier (celle dont dépend toute la
+     stratégie), la descendre la met sur les totaux puis sur les cercles. Les seules places
+     libres sont les COINS, et c'est là qu'on la met — une ligne d'état n'a pas besoin du
+     centre, elle a besoin de ne rien cacher. À cinq sièges et moins la bande existe encore :
+     la pastille y reste au centre, c'est pour ça que la règle est scopée. */
+  /* --annonce-gauche est mesurée par rendreLettrage (table.js) : le bord DROIT des cartes
+     qui montent dans ce coin, ou 16 px quand il n'y en a aucune. Un « 16px » en dur posait
+     la pastille sur tes deux premières cartes dès que le feutre est court (1280 × 800 et
+     1366 × 768, les deux formats de portable les plus courants). */
+  #v-table[data-sieges="7"] .feutre>.annonce:not(:empty),
+  #v-table[data-sieges="8"] .feutre>.annonce:not(:empty){ left:var(--annonce-gauche, 16px); right:auto; transform:none; top:8px;
+    max-width:var(--annonce-large, min(92%, 720px)); text-align:left }
   /* …et quand la pastille EST là (le croupier s'est tu, cf. crParleMaj), elle occupe la même
      bande que l'arc doré — 50 px de haut à 1280 × 800, il n'y a pas la place pour les deux.
      Le lettrage ne DISPARAÎT pas (un feutre imprimé ne s'efface pas) : il passe en second
      plan le temps qu'on lise la phrase, et revient. */
   #v-table:not(.cr-parle) .feutre:has(>.annonce:not(:empty)) > svg.lettrage{ opacity:.3 }
-  .feutre > svg.lettrage{ transition:opacity .35s ease }
+  /* …et le MÊME recul quand le croupier parle À PLUSIEURS : la règle du dessus l'exclut par
+     `:not(.cr-parle)`, et celle qui tait la pastille l'exclut par `:not([data-reseau])` — donc
+     en réseau la pastille était bien affichée, sur un lettrage qui, lui, ne reculait pour
+     personne. Deux exclusions qui se croisent laissent un trou : on le rebouche ici. */
+  #v-table[data-reseau].cr-parle .feutre:has(>.annonce:not(:empty)) > svg.lettrage{ opacity:.3 }
   .sabot, .defausse{ margin-top:-10px }
   .rack{ padding-bottom:14px }   /* le bas du buste du croupier passe derrière */
 }
@@ -870,9 +921,19 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
     0 12px 20px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.14) }
 .sabot::before{ content:""; position:absolute; left:11%; right:11%; bottom:23%; height:calc(var(--sh) * .05 + var(--reste,1) * var(--sh) * .56); border-radius:2px;
   background-image:repeating-linear-gradient(0deg, #EFE7D0 0 1px, #B9AD8E 1px 2px, #EFE7D0 2px 3px); transition:height .3s }
-/* La carte de coupe : rouge, plus large que la pile (elle dépasse), un léger halo. */
+/* La carte de coupe : rouge, plus large que la pile (elle dépasse), un léger halo.
+   ⚠️ L'OPACITÉ NE MESURE RIEN — c'est la POSITION (bottom, plus haut) qui dit la pénétration.
+   Le facteur était `* 4`, calibré quand `--coupe` valait 0,25 partout : il rendait le trait
+   opaque pile à cette valeur. Les pénétrations ayant été creusées depuis, `--coupe` a baissé
+   et le trait a pâli AVEC — mesuré le 07/09 sur la page servie : Le Boulevard (0,250) à 1,0
+   mais Le Salon Privé (0,147) à 0,588. Autrement dit la table la plus profonde, celle où la
+   carte de coupe compte le PLUS, portait le repère le plus effacé : exactement l'inverse.
+   `min(1, … * 10)` le rend franc dès 0,10 — tout le catalogue, donc. Le zéro reste noir sur
+   blanc : `--coupe:0` (mélangeuse continue, posé par table.js) donne 0, et il n'y a alors
+   pas de carte de coupe à montrer. ⚠️ Cette table-là ne passe de toute façon pas par ici :
+   `#v-table[data-melange="csm"] .sabot::after` la remplace par le mot « mélangeuse ». */
 .sabot::after{ content:""; position:absolute; left:5%; right:5%; bottom:calc(25% + var(--coupe,.25) * var(--sh) * .56); height:3px; border-radius:1px;
-  background:linear-gradient(90deg,#C8251E,#F5493D 45%,#C8251E); box-shadow:0 0 6px rgba(240,58,46,.85), 0 1px 0 rgba(0,0,0,.55); opacity:calc(var(--coupe,.25) * 4) }
+  background:linear-gradient(90deg,#C8251E,#F5493D 45%,#C8251E); box-shadow:0 0 6px rgba(240,58,46,.85), 0 1px 0 rgba(0,0,0,.55); opacity:min(1, var(--coupe,.25) * 10) }
 .defausse{ border-radius:5px; background:var(--bois);
   box-shadow:0 0 0 1.5px var(--liseret), 0 10px 18px -8px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.1), inset 0 0 14px rgba(0,0,0,.4) }
 .defausse::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:3px; background:var(--liseret); opacity:.7; border-radius:0 0 5px 5px }
@@ -921,13 +982,33 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 /* --surelev (posé par cartes.js selon la hauteur du feutre) soulève TON siège au-dessus de
    l'arc des voisins : mesuré le 05/09, à cinq sièges il fallait chercher sa main — mêmes cartes,
    même hauteur, même total, seule la bague du cercle était dorée. Tes cartes sont plus grandes
-   (cartes.js, × 1,12), ton total est en or et plus gros, et pendant la main les voisins
+   (cartes.js, × 1,12), ton total est bien plus gros, et pendant la main les voisins
    s'éteignent d'un cran. */
 .siege{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 6px 4px; border-radius:14px; min-width:126px;
   transform:translateY(calc(var(--lift, 0px) + var(--surelev, 0px))) rotate(var(--tilt, 0deg)); transition:filter .35s ease }
 .siege.toi{ --surelev:var(--surelev-toi, 0px) }
 .siege.toi .cercle{ box-shadow:0 0 0 2px var(--or) inset, 0 0 14px -4px var(--or); opacity:1 }
-.siege.toi .score{ font-size:clamp(17px, calc(var(--w-table, 84px) * .22), 23px); color:var(--or); font-weight:600 }
+/* TON TOTAL EST LE PLUS GROS CHIFFRE PERMANENT DE L'ÉCRAN. C'est de lui que dépend la
+   décision — il était à 17 px pendant que le nom de la salle, dont rien ne dépend, s'écrivait
+   à 19 (cf. .hud-table b, redescendu à 16). La hiérarchie était à l'envers.
+   Et il est en IVOIRE, plus en or : --or est un color-mix à 12 % du feutre clair du lieu, donc
+   l'or se teinte de la couleur du fond sur lequel il s'écrit. Mesuré le 06/09 : 3,43:1, et six
+   tables sur neuf sous le seuil (Aquarium 2,86 · Reno 3,06 · Boulevard 3,45 · Cotai 3,74 ·
+   Néon 4,26 · Main Chaude 4,31). En ivoire les neuf passent (5,59 à 14,19). L'identité dorée
+   de ton siège reste portée par le cercle et par le halo de tes cartes, qui eux ne sont pas
+   du texte à lire.
+   Le débordement de sa ligne est VOULU (cf. .siege .score, height fixe) : la ligne du total est
+   réservée à la même hauteur pour tout le monde, ton chiffre déborde symétriquement au lieu de
+   creuser la boîte et de faire remonter tes cartes. */
+.siege.toi .score{ font-size:clamp(26px, calc(var(--w-table, 84px) * .34), 34px); color:var(--ivoire); font-weight:600 }
+/* :not(.compte) — le tic du score qui s'incrémente (.score.compte, plus bas) a son ombre à lui,
+   et ce sélecteur-ci est plus spécifique : sans la garde, TON siège — le seul où la lueur sert —
+   serait le seul à la perdre. */
+.siege.toi .score:not(.compte){ text-shadow:0 1px 3px rgba(0,0,0,.7) }
+/* Le qualificatif (« souple », « · doublé ») garde sa taille de lecture pendant que le nombre
+   grandit : c'est le nombre qui porte la décision (cf. ecrireScore, table.js). Sans lui, ta
+   ligne de total passait de 214 à 328 px et écrasait celle des voisins à 1024 × 768. */
+.siege .score .qual{ font-size:.6em; font-weight:400; opacity:.88; margin-left:.1em; align-self:center }
 /* Mesuré le 06/09 : les deux règles qui te DÉSIGNENT étaient conditionnées à la phase « jeu »
    et tombaient ENSEMBLE au règlement — mon « 7♣ 9♥ · 16 · PERDU » devenait strictement
    indiscernable de celui de Sonia, au moment précis où je le cherche. Elles valent maintenant
@@ -996,7 +1077,7 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
 .issue.bj{ background:var(--or); color:#1A1409 }
 /* Une vraie case de mise, à l'échelle de la carte (85 %) : la pile de jetons (56 % de la
    carte, comme un vrai jeton face à une vraie carte) se lit DEDANS. */
-.cercle{ width:clamp(54px, calc(var(--w-table, 84px) * .82), 96px); height:clamp(54px, calc(var(--w-table, 84px) * .82), 96px); border-radius:50%; position:relative; margin-top:3px; flex:none;
+.cercle{ width:clamp(var(--cercle-min, 54px), calc(var(--w-table, 84px) * .82), 96px); height:clamp(var(--cercle-min, 54px), calc(var(--w-table, 84px) * .82), 96px); border-radius:50%; position:relative; margin-top:3px; flex:none;
   box-shadow:0 0 0 1.5px color-mix(in oklab, var(--or) 78%, transparent) inset, 0 0 10px -4px var(--or); opacity:.9 }
 .cercle::after{ content:""; position:absolute; inset:6px; border-radius:50%; border:1px solid color-mix(in oklab, var(--or) 40%, transparent) }
 /* L'appel à miser : ton cercle bat deux fois quand la mise n'est pas posée. Deux, pas l'infini. */
@@ -1015,8 +1096,15 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
   font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:clamp(30px, 3.1vw, 58px); line-height:1.05; letter-spacing:.01em; white-space:nowrap;
   color:var(--ivoire); opacity:0; padding:0 .12em; isolation:isolate;
   text-shadow:0 2px 0 rgba(0,0,0,.35), 0 6px 22px rgba(0,0,0,.65), 0 0 34px color-mix(in oklab, var(--or) 50%, transparent) }
-.feutre>.verdict::before{ content:""; position:absolute; z-index:-1; left:-42%; right:-42%; top:-46%; bottom:-46%;
-  background:radial-gradient(closest-side, rgba(6,14,11,.86), rgba(6,14,11,.55) 52%, transparent 78%) }
+/* Mesuré le 06/09 : le mot tombait à 1,00:1 sur 15,2 % de sa surface — l'or du verdict sur
+   l'or du lettrage, illisible. Le halo était trop PETIT et s'éteignait trop tôt : à -42/-46 %
+   le coin du mot est au rayon normalisé 0,75, où le dégradé ne valait plus que 0,06 d'alpha,
+   donc plus rien. Élargi à -58/-64 %, ce même coin tombe à 0,64, où l'alpha vaut 0,80 → ≥ 7:1.
+   Ça reste un HALO (il s'éteint à 96 %), pas une plaque posée sur le feutre : atténuer le
+   lettrage à la place ne montait qu'à 2,67:1, c'est la géométrie du dégradé qu'il fallait
+   corriger, ses coins étaient vides. */
+.feutre>.verdict::before{ content:""; position:absolute; z-index:-1; left:-58%; right:-58%; top:-64%; bottom:-64%;
+  background:radial-gradient(closest-side, rgba(6,14,11,.92), rgba(6,14,11,.88) 55%, rgba(6,14,11,.70) 76%, transparent 96%) }
 .feutre>.verdict.g, .feutre>.verdict.bj{ color:var(--or) }
 .feutre>.verdict.bj{ font-size:clamp(34px, 3.6vw, 66px) }
 .feutre>.verdict.p{ color:#FF9B7A }
@@ -1024,24 +1112,43 @@ body.a-table .hud{ color:var(--os); --laque:#0E1817; --relief:#16221F; --os:#EDE
    et la réouverture des mises. UNE horloge, pas deux — sinon « Pose ta mise » s'affiche
    au-dessus de cinq verdicts encore en place. */
 .feutre>.verdict.on{ animation:verdict-inscrit 1.9s cubic-bezier(.3,0,.2,1) both }
+/* ⚠️ LE CLIP DOIT LAISSER PASSER TOUT LE HALO. Il porte sur l'élément, donc aussi sur son
+   ::before : à -30 % / -8 % il coupait le dégradé alors qu'il valait encore .7 d'alpha, et
+   le halo s'affichait en RECTANGLE à bords francs — une plaque noire posée sur le feutre
+   (vu à l'écran le 06/09, après élargissement du halo). Les marges du clip passent donc
+   au-delà des -58 % / -64 % du halo. Le tout premier temps ferme à 162 % à droite : la
+   fenêtre a une largeur NULLE (bord gauche du halo), sinon on verrait sa traîne avant la
+   première lettre. La plume révèle l'encre ET son ombre, ensemble. */
 @keyframes verdict-inscrit{
-  0%{ opacity:1; clip-path:inset(-30% 100% -30% -4%); translate:0 6px; filter:blur(0) }
-  30%{ opacity:1; clip-path:inset(-30% -8% -30% -4%); translate:0 0 }
-  74%{ opacity:1; clip-path:inset(-30% -8% -30% -4%); translate:0 0; filter:blur(0) }
-  100%{ opacity:0; clip-path:inset(-30% -8% -30% -4%); translate:0 -16px; filter:blur(4px) } }
+  0%{ opacity:1; clip-path:inset(-72% 162% -72% -62%); translate:0 6px; filter:blur(0) }
+  30%{ opacity:1; clip-path:inset(-72% -62% -72% -62%); translate:0 0 }
+  74%{ opacity:1; clip-path:inset(-72% -62% -72% -62%); translate:0 0; filter:blur(0) }
+  100%{ opacity:0; clip-path:inset(-72% -62% -72% -62%); translate:0 -16px; filter:blur(4px) } }
 @media (prefers-reduced-motion:reduce){ .feutre>.verdict.on{ animation:none; opacity:1 } }
 @media (max-width:999.98px){ .feutre>.verdict{ font-size:24px } .feutre>.verdict.bj{ font-size:28px } }
 #v-table.turbo .feutre{ cursor:default }
 #v-table[data-phase="jeu"]:not(.turbo) .feutre{ cursor:pointer }
 .conseil b{ color:var(--or) }
-.conseil .lien{ background:none; border:0; padding:0 0 0 12px; margin:0; color:rgba(246,241,228,.62); font-family:Archivo,sans-serif; font-size:var(--t-fin);
+/* « masquer l'aide » (#bMasquerAide) : mesuré le 06/09 à 89 × 16 px — une cible haute de seize
+   pixels, sous tout minimum tactile, pour un geste qu'on fait une fois et qui éteint l'aide.
+   Il passe à 97 × 24, et pas un pixel de plus : il ne doit pas concurrencer les boutons de coup,
+   qui sont à 44. Le padding rend les 12 px de retrait d'avant (l'espace du texte s'y ajoute).
+   ⚠️ `line-height:1` n'est pas cosmétique : la pastille du conseil vit dans les vingt-cinq
+   pixels que le feutre laisse sous les noms des sièges. Sans lui le bouton faisait 26 px, la
+   pastille 30, et elle dépassait le bord du feutre de cinq. À 24 elle en dépasse trois — assez
+   peu pour se lire comme une étiquette posée sur le rail (vérifié à l'écran le 06/09), et
+   surtout sans remonter sur « TOI », le repère qui dit où tu es assis. */
+.conseil .lien{ background:none; border:0; min-height:24px; line-height:1; padding:5px 10px; margin:0; vertical-align:middle;
+  color:rgba(246,241,228,.62); font-family:Archivo,sans-serif; font-size:var(--t-fin);
   text-decoration:underline; text-underline-offset:2px; cursor:pointer; pointer-events:auto }
 .conseil .lien:hover{ color:var(--ivoire) }
 
 /* ── La barre : une seule ligne, le feutre prend la place ──────────────── */
 .hud{ display:flex; align-items:center; gap:14px; padding:2px 6px 2px 16px; min-height:44px; flex-wrap:wrap; margin-bottom:8px }
 .hud-table{ display:flex; align-items:center; gap:10px; min-width:0; flex-wrap:wrap }
-.hud-table b{ font-family:"Instrument Serif",serif; font-weight:400; font-size:19px; white-space:nowrap }
+/* 16 px, pas 19 : le nom de la salle était le plus gros texte permanent de l'écran, devant le
+   total de ta main. Il dit OÙ on est, une fois ; le total se relit à chaque carte. */
+.hud-table b{ font-family:"Instrument Serif",serif; font-weight:400; font-size:16px; white-space:nowrap }
 .hud-limites{ font-family:"Martian Mono",monospace; font-size:var(--t-fin); color:var(--os-eteint); white-space:nowrap;
   padding:3px 9px; border-radius:999px; border:1px solid rgba(255,255,255,.12) }
 .hud-compte{ margin-left:auto; display:flex; gap:18px; font-family:"Martian Mono",monospace; font-size:var(--t-fin); flex-wrap:wrap }
@@ -1207,6 +1314,10 @@ details.reglages > .laque{ border-radius:0 0 var(--r) var(--r) }
 .meta{display:flex;justify-content:space-between;max-width:460px;margin:7px auto 0;
   font-family:"Martian Mono",monospace;font-size:var(--t-fin);color:var(--os-eteint)}
 .reponses{display:flex;justify-content:center;gap:11px;margin:16px 0 4px;flex-wrap:wrap}
+/* La ligne des touches, sous les boutons de la leçon. Même vocabulaire que la consigne
+   des exercices (kbd encadré, chasse fixe). */
+.lecon-touches{font-size:var(--t-fin);margin:8px 0 0}
+.lecon-touches kbd{font-family:"Martian Mono",monospace;font-size:11px;padding:1px 6px;border:1px solid var(--bord);border-radius:5px}
 .reponses button{width:110px;height:70px;border-radius:13px;border:2px solid var(--bord);
   background:var(--ardoise);font-family:"Martian Mono",monospace;font-size:26px;font-weight:700;
   transition:border-color .15s,transform .08s}
@@ -1266,11 +1377,32 @@ details.reglages > .laque{ border-radius:0 0 var(--r) var(--r) }
 table.grille{border-collapse:collapse;font-family:"Martian Mono",monospace;font-size:var(--t-fin);width:100%}
 table.grille th,table.grille td{padding:3px 4px;text-align:center;border:1px solid var(--ardoise)}
 table.grille th{color:var(--os-eteint);font-weight:600;font-size:var(--t-micro)}
-td.H{background:color-mix(in oklab,var(--cinabre) 16%,transparent)}
-td.S{background:color-mix(in oklab,var(--jade) 16%,transparent)}
-td.D{background:color-mix(in oklab,var(--laiton) 22%,transparent)}
-td.P{background:color-mix(in oklab,var(--filet) 26%,transparent)}
-td.U{background:var(--ardoise)}
+/* ── Les écarts de la table, en TABLEAU (strategie.js, rendreListeEcarts) ──────────
+   C'était une phrase de vingt-deux écarts séparés par des points médians, sur l'écran
+   qu'on vient relire ENTRE DEUX MAINS : on y cherchait « 16 contre 10 » à l'œil, dans
+   cinq lignes de prose. La première colonne est la clé de recherche — elle garde la
+   couleur du texte, et non le gris des en-têtes, sinon on cherche dans du gris. */
+table.grille.ecarts{width:auto;min-width:min(100%,520px);font-size:var(--t-petit)}
+table.grille.ecarts th,table.grille.ecarts td{padding:4px 14px;white-space:nowrap}
+table.grille.ecarts tr th:first-child{text-align:left;color:var(--os);font-weight:700;font-size:var(--t-petit)}
+table.grille.ecarts td.acte{font-family:Archivo,sans-serif;letter-spacing:.01em}
+table.grille.ecarts td.n{color:var(--laiton);font-weight:700}
+/* La ligne d'en-tête reprend le gris et les capitales des autres « grave » de la maison. */
+table.grille.ecarts tr:first-child th{color:var(--os-eteint);font-weight:600;font-size:var(--t-micro);
+  letter-spacing:.12em;text-transform:uppercase;text-align:center}
+/* La LÉGENDE porte les mêmes lettres et les mêmes fonds que les cases : une légende qui
+   n'énumérait que « Tirer · Rester · Doubler · Séparer · Abandonner » ne reliait RIEN aux
+   H/S/D/P/U de la grille — et le piège est actif, un lecteur français lit « S » comme
+   *Séparer* alors que S = *Stand* = Rester, pendant que le drill d'à côté, lui, utilise
+   bien S pour Séparer. Les fonds sont déclarés une seule fois, ici, pour les deux. */
+td.H,.legende-grille b.H{background:color-mix(in oklab,var(--cinabre) 16%,transparent)}
+td.S,.legende-grille b.S{background:color-mix(in oklab,var(--jade) 16%,transparent)}
+td.D,.legende-grille b.D{background:color-mix(in oklab,var(--laiton) 22%,transparent)}
+td.P,.legende-grille b.P{background:color-mix(in oklab,var(--filet) 26%,transparent)}
+td.U,.legende-grille b.U{background:var(--ardoise)}
+.legende-grille{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px}
+.legende-grille b{font-family:"Martian Mono",monospace;font-weight:700;color:var(--os);
+  border:1px solid var(--ardoise);border-radius:4px;padding:1px 5px;margin-right:4px}
 
 /* ── Concentration ─────────────────────────────────────────────────── */
 .concentration{display:grid;grid-template-columns:1fr 296px;gap:14px;align-items:start}
@@ -1284,6 +1416,34 @@ td.U{background:var(--ardoise)}
 .suspicion.chaude i{animation:respire 1.6s ease-in-out infinite alternate}
 .oeil{font-size:24px;filter:grayscale(1);opacity:.45;transition:.2s}
 .oeil.on{filter:none;opacity:1}
+/* 🚨 LA BULLE A SON CRÉNEAU, ELLE NE SE POSE PLUS SUR LES BOUTONS. Mesuré le 07/09 à
+   1280 × 800 : posée en absolu au bas du panneau, une bulle sociale recouvrait 58 % de
+   « Rester détendu » — le seul geste qui la fasse taire, à faire en 1,3 à 1,8 s — et
+   100 % de « Quitter la table ». Le jeu demandait un bouton qu'il cachait lui-même.
+   Le créneau est TOUJOURS là, vide ou plein : une place qui apparaît ferait sauter les
+   deux boutons au moment précis où on va les viser.
+   124 px : la hauteur de la PLUS HAUTE bulle, mesurée sur les neuf qui existent (les huit
+   sociales et de calcul font 124, celle du REGARD 91). Le créneau est donc entièrement
+   payé, et plus rien ne déborde nulle part.
+
+   ⚠️ Il a d'abord valu 96 — la hauteur du seul regard — pour garder « Quitter la table »
+   au-dessus de la ligne de flottaison : le panneau finissait alors à 843 px dans une
+   fenêtre de 800. Les 28 px manquants passaient sur la LIGNE MÉTA, et c'était un mauvais
+   marché : « 309 cartes restantes » est le diviseur du compte vrai, on le lit pendant
+   qu'on compte. Mesuré à l'écran, la bulle en mangeait 14 px — « 12 / 80 · 309 cartes
+   restantes » se lisait « 12 … ces ».
+   Ce compromis n'a plus d'objet : `#coScene{min-height:0}` et le clamp de la carte, deux
+   lignes plus bas, ont rendu ~250 px dans le même lot. Re-mesuré le 07/09 avec le créneau
+   plein, « Quitter la table » finit à 591 px à 1280 × 800, 609 à 1512 × 945, 623 à
+   1920 × 1080 — 209 px de marge au pire, et zéro recouvrement de la méta. */
+#coBulle{ position:relative; min-height:124px; margin-top:10px }
+#coBulle .bulle{ bottom:0 }
+/* Le créneau doit être PAYÉ, sinon « Quitter la table » passe sous la ligne de flottaison :
+   mesuré, le panneau finissait à 843 px dans une fenêtre de 800. La carte de concentration
+   suit donc la hauteur de la fenêtre — 112 px à 800, 132 à 945, ses 148 d'origine dès 1057 —
+   et la scène ne réserve plus 238 px pour une carte qui en fait 207. */
+#coScene{ min-height:0 }
+#coScene .carte{ --w:clamp(104px, 14vh, 148px) }
 .bulle{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:4;
   background:var(--relief);border:1px solid var(--laiton);border-radius:14px;padding:12px 16px;
   max-width:420px;width:calc(100% - 36px);box-shadow:0 14px 40px -10px var(--ombre);animation:surgir .2s var(--ressort)}
@@ -1297,11 +1457,28 @@ td.U{background:var(--ardoise)}
 @keyframes vider{from{width:100%}to{width:0}}
 .bulle.regard{text-align:center;border-color:var(--cinabre)}
 .bulle.regard .q{font-family:"Instrument Serif",serif;font-size:var(--t-titre);color:var(--cinabre)}
-.cam{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:4/3}
-.cam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+/* 🚨 CAMÉRA COUPÉE = UNE SILHOUETTE, JAMAIS UN APLAT NOIR — la règle des têtes des amis
+   (« .visage », plus bas dans cette feuille), appliquée là où elle manquait le plus : la
+   case « Utiliser la caméra » est DÉCOCHÉE par défaut, donc l'immense majorité des joueurs
+   n'a jamais vu que ce rectangle de 296 × 222. Et `#000` est faux deux fois : en thème
+   clair, c'était un trou noir dans un panneau crème. Le fond suit le thème (--ardoise),
+   la silhouette suit le texte (--os), et le mot qui dit POURQUOI reste dessous. */
+.cam{position:relative;border-radius:12px;overflow:hidden;background:var(--ardoise);aspect-ratio:4/3}
+.cam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block;background:transparent}
 .cam canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.cam .hors{position:absolute;inset:0;display:grid;place-items:center;color:var(--os-eteint);
-  font-size:var(--t-petit);text-align:center;padding:14px}
+.cam .silhouette{position:absolute;left:50%;top:40%;translate:-50% -50%;width:34%;height:auto;
+  color:color-mix(in oklab, var(--os) 18%, transparent)}
+/* Flux à l'écran = `.hors` est masqué (concentration.js) : la silhouette s'efface, et le
+   cadre reprend son noir de vidéo. Un seul état, lu là où il est déjà posé. */
+.cam:has(.hors[hidden]) .silhouette{display:none}
+.cam:has(.hors[hidden]){background:#000}
+.cam .hors{position:absolute;inset:auto 0 0 0;color:var(--os-eteint);
+  font-size:var(--t-petit);text-align:center;padding:0 14px 16px}
+/* « Ce qui t'a trahi » ne coiffe pas du vide : l'intertitre part avec sa liste. */
+.trahi:has(.indices:empty){display:none}
+/* Le mot du détecteur (concentration.js, direEtatCam) : trois tons, jamais des nombres. */
+#coCamEtat[data-ton="alerte"]{color:var(--cinabre)}
+#coCamEtat[data-ton="attention"]{color:var(--laiton)}
 .indices{list-style:none;margin:7px 0 0;padding:0;font-size:var(--t-fin);color:var(--os-eteint);max-height:172px;overflow:auto}
 .indices li{padding:4px 0;border-bottom:1px solid var(--ardoise)}
 .indices li b{color:var(--cinabre);font-family:"Martian Mono",monospace;margin-right:6px}
@@ -1430,6 +1607,13 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 
 /* ── Fenêtre modale et bandeau ─────────────────────────────────────── */
 .modale{position:fixed;inset:0;background:rgba(0,0,0,.62);display:grid;place-items:center;padding:20px;z-index:60;animation:paraitre .2s}
+/* Le voile de pause d'onglet (clavier.js) : le patron de la modale, un cran EN DESSOUS
+   d'elle — on ne met pas en pause par-dessus une boîte de dialogue ouverte. */
+.pause-onglet{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:20px;z-index:58;animation:paraitre .2s}
+.pause-onglet[hidden]{display:none}
+.pause-onglet .boite{max-width:420px;width:100%;padding:24px 26px;text-align:center}
+.pause-onglet h2{margin:4px 0 8px}
+.pause-onglet p{margin:0 auto;max-width:44ch}
 .modale .boite{max-width:520px;width:100%;padding:24px 26px;text-align:center}
 .bandeau-bas{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:70;
   background:var(--relief);border:1px solid var(--laiton);border-radius:999px;padding:10px 18px;
@@ -1447,23 +1631,122 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 /* Mesuré le 05/09 en rAF : avec un fondu 0 → 1 sur les 14 premiers pour-cent et une
    courbe qui part vite (.2,.6), la carte n'apparaissait qu'à ~230 px du sabot — elle se
    MATÉRIALISAIT en l'air. Pleine opacité dès l'image zéro : elle sort DU sabot. */
+/* Mesuré le 06/09 : la carte franchissait jusqu'à 96 px par image — sa propre largeur entre
+   deux images, d'où le strobage. La courbe part moins sec (pic à 2,05 × la vitesse moyenne au
+   lieu de 2,73) et s'arrête net (0,08 de vitesse résiduelle à 90 % du trajet) : 63 px par image.
+   🚨 UNE COURBE PAR IMAGE CLÉ. C'est l'absence de `animation-timing-function` par segment qui
+   avait produit le calage à mi-arc du 04/09 : sans elle, la courbe du raccourci s'applique
+   ENTIÈRE à chaque segment, et chaque stop devient un coup de frein.
+   Le stop à 86 % est le DÉPASSEMENT : la carte va 4 px au-delà de sa place (--ovx/--ovy, dans
+   le sens du trajet, posés par animerDepuisSabot) puis revient — une carte lancée ne s'arrête
+   pas sur un trait. Elle part à l'échelle du sabot : 77/96 = .80 (et non .74, qui mesurait un
+   sabot de 62 px pour une carte de 84).
+   Les trois images portent la MÊME liste de fonctions (translate·rotate·scale) : listes
+   dépareillées, le navigateur retombe sur une interpolation de matrices. */
 @keyframes donne-trajet{
-  0%{transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(calc(-16deg - var(--tilt, 0deg))) scale(.74)}
-  100%{transform:none}
+  0%{ transform:translate(var(--dx,240px),var(--dy,-200px)) rotate(calc(-16deg - var(--tilt, 0deg))) scale(.80);
+      animation-timing-function:cubic-bezier(.34,.6,.36,1) }
+  86%{ transform:translate(var(--ovx,0px),var(--ovy,0px)) rotate(0deg) scale(1);
+      animation-timing-function:cubic-bezier(.4,0,.3,1) }
+  100%{ transform:translate(0px,0px) rotate(0deg) scale(1) }
 }
-@keyframes donne-arc{ 0%,100%{translate:0 0} 50%{translate:0 -30px} }
+/* LA PORTANCE. Elle était FIXE (30 px) et atteinte à 57 % — la carte du croupier, à 165 px du
+   sabot, décollait autant que celle de Léa à 595 : elle VOLAIT au lieu de glisser. --leve est
+   maintenant proportionnel à la distance (animerDepuisSabot, plafonné à 9 px) ; 30 px reste le
+   repli des cartes qui ne le posent pas (les exercices, la concentration, l'accueil).
+   ⚠️ --dev (le décalage de pose, plus bas) est REPRIS dans les trois images : `translate` est
+   une propriété unique, et l'oublier ici ferait sauter la carte de 2 px à la fin du vol. */
+@keyframes donne-arc{
+  0%{ translate:var(--dev,0px) 0; animation-timing-function:ease-out }
+  46%{ translate:var(--dev,0px) calc(var(--leve,30px) * -1); animation-timing-function:ease-in }
+  100%{ translate:var(--dev,0px) 0 }
+}
+/* LA TRAÎNÉE — la seule chose qui règle vraiment le strobage : l'œil raccroche les images
+   entre elles au lieu de voir une carte se téléporter. Une bande chaude, derrière la carte,
+   qui n'existe qu'en vol.
+   🚨 JAMAIS filter:blur() ni drop-shadow() ici : un filter aplatit le preserve-3d de
+   .carte--pivot et la carte cachée du croupier cesserait de tourner (cf. plus bas). */
+/* 🚨 ELLE ÉTAIT ÉTEINTE PENDANT LE PIC DE VITESSE — l'exact contraire de sa raison d'être.
+   La rampe montait de 12 % à 30 % du TEMPS, et tenait .55 jusqu'à 62 %. Or le trajet part
+   sur cubic-bezier(.34,.6,.36,1) : à 12 % du temps la carte a déjà fait 19,5 % du chemin, et
+   à 30 % elle en est à la MOITIÉ. Autrement dit la traînée n'existait pas pendant les images
+   les plus rapides (mesuré au strobe : 54, 58, 59 px de déplacement par image pour une carte
+   large de 75 — jusqu'à 0,79 largeur de carte entre deux images — avec l'opacité à zéro), et
+   brillait à plein pendant la phase lente (0,5 à 0,7 × la vitesse moyenne), où l'œil n'a
+   besoin de rien : posée à côté d'une carte presque immobile, elle se lisait comme un second
+   objet. Vu à l'écran : à 6 % du vol la carte est déjà une largeur entière au-delà du sabot,
+   nette, avec RIEN entre elle et lui — elle a l'air distribuée à la main.
+   La nouvelle rampe suit la VITESSE : pleine de 9 % à 34 % du temps, c'est-à-dire de 19 % à
+   55 % du chemin, là où la carte va 1,55 à 1,76 × sa vitesse moyenne ; puis elle s'éteint
+   avec elle, à zéro dès 72 % (83 % du chemin, vitesse retombée à 0,28 ×).
+   ⚠️ Le départ garde une rampe (0 → 9 %) et n'est PAS instantané : à 0 % la carte est encore
+   dans la bouche du sabot et la traînée, poussée derrière elle par --toff, s'allumerait
+   par-dessus — un éclair au moment du départ. Neuf pour cent, c'est 14 % du chemin. */
+@keyframes donne-trainee{ 0%{opacity:0} 9%,34%{opacity:.55} 72%,100%{opacity:0} }
+/* L'OMBRE. Elle était identique du sabot au feutre : la carte glissait à plat sur une vitre.
+   En vol elle est haute, molle et décalée ; le contact dur de 2 px n'existe pas encore.
+   🚨 PAS d'image à 100 % — VOULU, et mieux qu'une copie : sans image finale, le navigateur
+   la synthétise depuis la valeur SOUS l'animation. L'ombre d'arrivée est donc, à la lettre,
+   celle que la cascade donne à CETTE carte — y compris le liseré d'or de tes propres cartes
+   (#v-table[data-phase] .siege.toi .carte), qu'une copie de l'ombre ordinaire aurait effacé
+   pendant tout le vol. Rien ne peut plus diverger de la règle de repos : il n'y a plus de copie. */
+@keyframes donne-ombre{
+  0%{ box-shadow:inset 0 0 0 1px rgba(60,40,20,.12), inset 0 1px 0 #fff,
+      0 0 0 .5px rgba(0,0,0,.26), 0 3px 0 rgba(0,0,0,0), 0 26px 30px -12px rgba(0,0,0,.62) }
+}
 /* LA ligne importante : la durée de la donne est une FRACTION de l'intervalle
    de l'exercice. À 250 ms par carte, une donne de 300 ms dure plus longtemps
    que l'exercice, et on compte une carte qu'on n'a jamais vue immobile. */
 .scene{--don:clamp(80ms, calc(var(--intervalle,1200ms) * .16), 165ms)}
 /* Sur la table, la carte VOLE (on ne compte pas une carte en vol dans un exercice,
-   mais ici on regarde une donne) : environ la moitié de la cadence, bornée. */
+   mais ici on regarde une donne) : environ la moitié de la cadence, bornée.
+   ⚠️ Sur la table c'est un REPLI : animerDepuisSabot écrase --don carte par carte avec la
+   durée RÉELLE du vol (elle suit la distance). Il reste la valeur des cartes que personne
+   n'anime en JS — et celle qui s'applique si le calcul n'a pas eu lieu. */
 .plateau{--don:clamp(150ms, calc(var(--intervalle,450ms) * .72), 420ms)}
 /* Durée et délai sont posés en ligne par table.js (animerDepuisSabot) : la main du croupier
-   suit la même horloge. La courbe (.4,0,.2,1) accélère depuis le sabot puis freine à l'arrivée. */
-.carte--entre{animation:donne-trajet var(--don,150ms) cubic-bezier(.4,0,.2,1) both, donne-arc var(--don,150ms) ease-in-out both}
+   suit la même horloge, et UNE valeur en ligne s'applique aux TROIS animations de la liste.
+   (La quatrième — la traînée — vit sur un ::after, où rien de tout cela n'arrive : elle lit
+   --don et --tdelai, que table.js pose sur la carte et qui, eux, descendent jusqu'à elle.)
+   Les courbes sont dans les images clés (voir plus haut) : `linear` ici ne sert qu'à ne mentir
+   à personne — c'est la valeur neutre pour les segments qui n'en déclarent pas. */
+/* 🚨 donne-trainee N'EST PAS dans cette liste : elle anime `opacity`, et posée sur la carte
+   elle-même elle rendait la CARTE translucide — vu à l'écran le 06/09, on voyait le feutre au
+   travers du 5♣ en vol. Elle ne vit que sur le ::after, plus bas. */
+.carte--entre{ animation:donne-trajet var(--don,150ms) linear both, donne-arc var(--don,150ms) linear both,
+  donne-ombre var(--don,150ms) ease-out both;
+  /* ⚠️ La largeur s'animait PENDANT le vol (l'éventail se resserre à chaque carte de plus) :
+     une propriété de MISE EN PAGE recalculée à chaque image, sur l'objet le plus rapide de
+     l'écran. Une carte en vol n'a pas de transition. */
+  transition:none }
+/* La carte cachée du croupier porte ses ombres sur ses FACES (.carte--pivot a box-shadow:none) :
+   lui en donner une seconde la ferait flotter deux fois. Deux noms au lieu de trois — les
+   durées et les courbes de la règle du dessus se réappliquent dans l'ordre. */
+.carte--pivot.carte--entre{ animation-name:donne-trajet, donne-arc }
+/* La traînée n'existe QUE sur la table (une main, un siège, le croupier) : les cartes des
+   exercices et de l'accueil partagent .carte--entre sans jamais poser --tbx/--tang. */
+/* ⚠️ Elle est ENTIÈREMENT DERRIÈRE la carte (--toff, posé par animerDepuisSabot), jamais
+   dessus : une carte en vol ne doit pas devenir translucide. C'est une ellipse, pour n'avoir
+   ni coin ni arête — sinon on lit une seconde carte fantôme et non un sillage. */
+.main .carte--entre::after{
+  content:""; position:absolute; inset:0; border-radius:50%; pointer-events:none;
+  translate:calc(var(--tbx,0) * var(--toff,0px)) calc(var(--tby,0) * var(--toff,0px));
+  background:linear-gradient(var(--tang,180deg), rgba(255,246,226,.62), rgba(255,246,226,.17) 46%, rgba(255,246,226,0) 88%);
+  opacity:0; animation:donne-trainee var(--don,150ms) linear var(--tdelai,0ms) both;
+}
 /* Une carte qui change de largeur (l'éventail se resserre) glisse, elle ne saute pas. */
 .carte{ transition:width .25s var(--sec) }
+/* LA POSE. Deux cartes d'une même main n'étaient jamais de travers : le tapis avait l'air
+   imprimé. ±1,6° et ±2 px, tirés de la carte elle-même (poseCarte, table.js).
+   🚨 C'est le REPOS qui la porte, pas le vol : écrite seulement dans .carte--entre, elle
+   disparaîtrait d'un coup à la fin de l'animation.
+   🚨 `rotate` et `translate`, jamais `transform` : ce sont des propriétés SÉPARÉES, qui se
+   composent par-dessus. Écrite dans `transform`, la pose serait écrasée par le vol
+   (donne-trajet) ET par le ramassage (ramasser() anime transform vers la défausse) — la
+   carte se redresserait au moment précis où on la ramasse.
+   🚨 Scopée à .main : .eventail .carte (l'accueil) a son propre transform-origin et son
+   animation d'ouverture. */
+.main .carte{ rotate:var(--pose,0deg); translate:var(--dev,0px) }
 @keyframes bascule{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .bascule{animation:bascule 120ms var(--sec)}
 
@@ -1475,7 +1758,8 @@ table.journal th{font-size:var(--t-micro);letter-spacing:.1em;text-transform:upp
 }
 
 /* ── Téléphone ─────────────────────────────────────────────────────── */
-/* Relevé le 06/09 : « Le Sabot » 107×34, les trois filtres du hall 34 px de haut, et les dix
+/* Relevé le 06/09, remesuré le 07/09 après le changement de nom : « Acewise21 » 116×34
+   (« Le Sabot » en faisait 107), les trois filtres du hall 34 px de haut, et les dix
    liens de crédit photo 14 px. Les crédits s'agrandissent par le padding — la marge négative
    annule le déplacement, la mise en page ne bouge pas d'un pixel. */
 @media (pointer:coarse){
@@ -1577,6 +1861,29 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   .zone-actions .btn{ padding:6px 4px }
   .zone-actions .btn kbd{ display:none }
   .rang-table{ margin-left:0; justify-content:center; width:100% }
+}
+
+/* 🚨 UNE RANGÉE DROITE SUR UN BORD COURBE PERD SES SIÈGES DU BOUT. Entre 760 et 1000 px,
+   les sièges défilent en ligne (la pellicule, juste dessous) mais le feutre garde l'arc
+   dessiné pour l'ordinateur : 46 % de rayon horizontal, 44 % de vertical. À 800 × 600 cela
+   fait un arc qui remonte de 66 px sur les côtés, sous une rangée parfaitement droite —
+   nom et tapis des sièges du bout tombent 62 px SOUS le bord et le clip les efface (c'est
+   l'échec « effacés par l'arc : Libre, Libre » du banc, mesuré à 800 × 600 et à 900 × 700).
+   La remontée de placerSieges() ne peut rien ici : elle ne tourne pas en pellicule, où
+   l'ordre des sièges est un défilement, pas une géométrie.
+   Le bord du feutre s'APLATIT donc là où la rangée est droite. Pas jusqu'au rectangle : à
+   1024 × 768 en portrait l'arc reste dessiné (rayon vertical 81 px), à 900 il vaut 44 au
+   lieu de 129 — la table garde sa silhouette, elle cesse seulement de mordre sur les
+   sièges. Mesuré aux quatre tailles de la bande, sur les sièges ENTIÈREMENT visibles dans
+   le défilement (un siège à cheval sur le bord n'est pas « effacé par l'arc », il est
+   simplement plus loin) : dépassement −2,6 px à 800 × 600, −35 à 900 × 700, −26,6 à
+   768 × 1024, et plus un seul nom retiré de la pile. Un arc plus généreux (34 % / 24 %)
+   remet un siège 2,5 px dehors à 800 × 600 : c'est la borne, elle a été cherchée.
+   Le téléphone (≤ 760 px) garde SON dessin, déjà droit en bas depuis toujours ;
+   l'ordinateur (≥ 1000 px) garde l'arc entier, et c'est là que placerSieges() le suit
+   siège par siège. */
+@media (min-width:760px) and (max-width:999.98px){
+  .tapis{ border-radius:26px 26px 22% 22% / 26px 26px 15% 15% }
 }
 
 /* ── La pellicule de sièges (téléphone) ───────────────────────────────────
@@ -1704,9 +2011,24 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
    ⚠️ Jamais d'overflow:hidden ni de filter sur .carte--pivot : ils aplatissent
    le preserve-3d et la carte cesse de tourner. */
 .carte--pivot{ background:none; box-shadow:none }
+/* La PERSPECTIVE : 700 px pour une carte de 95, c'était un rapport de 7,4 — une projection
+   quasi orthographique, où le bord proche ne grandit pas et où la carte s'ÉCRASE au lieu de
+   tourner. 420 px (rapport 4,4) donne enfin un bord qui vient vers l'œil. */
 .carte--pivot .pivot{ position:absolute; inset:0; border-radius:inherit; transform-style:preserve-3d;
-  transform:perspective(700px) rotateY(0deg); transition:transform 420ms cubic-bezier(.45,0,.2,1) }
-.carte--pivot.cachee .pivot{ transform:perspective(700px) rotateY(180deg) }
+  transform:perspective(420px) rotateY(0deg); transition:transform 420ms cubic-bezier(.45,0,.2,1) }
+.carte--pivot.cachee .pivot{ transform:perspective(420px) rotateY(180deg) }
+/* …et la carte se SOULÈVE du feutre le temps de tourner : un pouce la décolle, elle pivote,
+   elle retombe. 🚨 Le soulèvement est sur la CARTE, pas sur le pivot : `translate` est une
+   propriété séparée qui se compose, alors que toucher au transform du pivot casserait la
+   perspective. --dev est repris (cf. .main .carte) pour ne pas effacer la pose.
+   Le départ est celui de cartes.js : `.cachee` tombe à 240 ms, calé sur la main du croupier
+   (crRetourne) — cette animation n'a donc aucun retard à porter, elle commence avec elle. */
+@keyframes retourne-leve{
+  0%{ translate:var(--dev,0px) 0; box-shadow:none; animation-timing-function:cubic-bezier(.3,.7,.4,1) }
+  46%{ translate:var(--dev,0px) -9px; box-shadow:0 17px 22px -11px rgba(0,0,0,.66); animation-timing-function:cubic-bezier(.5,0,.4,1) }
+  100%{ translate:var(--dev,0px) 0; box-shadow:none }
+}
+#dMain .carte--pivot:not(.cachee){ animation:retourne-leve 520ms both }
 .carte .face{ position:absolute; inset:0; border-radius:inherit; backface-visibility:hidden; -webkit-backface-visibility:hidden }
 .carte .face.ar{ transform:rotateY(180deg) }
 
@@ -1808,16 +2130,13 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   border-radius:12px; padding:7px 12px; box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--or-matiere) 26%, transparent) }
 .note-table:empty{ display:none }
 .note-table b{ color:var(--or-lumiere); font-weight:600 }
-/* Le geste sur SA ligne : glissé dans le texte, une cible de 44 px déchirait l'interligne. */
-.note-table .lien{ display:flex; align-items:center; justify-content:center; min-height:44px; margin:8px 0 0; width:100%;
-  background:color-mix(in oklab, var(--or-matiere) 16%, transparent); border:1px solid color-mix(in oklab, var(--or-matiere) 45%, transparent);
-  border-radius:9px; padding:4px 12px; color:var(--or-lumiere); font-family:Archivo,sans-serif; font-size:var(--t-fin); font-weight:600; cursor:pointer }
-.note-table .lien:hover{ background:color-mix(in oklab, var(--or-matiere) 28%, transparent); color:var(--nacre) }
-/* Sur un écran étroit, une ligne compacte en haut de la salle — et SANS son bouton : sur
-   téléphone « Annoncer mon compte » est déjà dans la barre des coups, en toutes lettres. */
+/* La note n'a PLUS de bouton (table.js, noteTable) : « Annoncer mon compte » vit dans la barre,
+   en toutes lettres et sans jamais bouger — deux boutons au même libellé sur le même écran
+   faisaient douter qu'ils fassent la même chose. Le raisonnement était déjà écrit ici pour le
+   téléphone ; il vaut à toutes les largeurs. La note INVITE, la barre porte le geste. */
+/* Sur un écran étroit, une ligne compacte en haut de la salle. */
 @media (max-width:1023.98px){
   .note-table{ left:6px; right:6px; top:4px; max-width:none; font-size:var(--t-micro); padding:5px 9px }
-  .note-table .lien{ display:none }
   /* …et elle cède la place aux CARTES dès que la donne commence : sur un feutre de téléphone,
      le haut de la table est la rangée du croupier. Elle revient à la mise suivante. */
   #v-table[data-phase="jeu"] .note-table, #v-table[data-phase="reglement"] .note-table{ display:none }
@@ -1971,18 +2290,60 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 /* ── Les têtes des amis (visio.js) — `.visage`, parce que `.tete` est l'en-tête ──
    À plusieurs, chaque siège tenu par un humain porte une vignette vidéo, à côté de
    son cercle de mise : la tête au rail, les jetons devant, le nom dessous — l'ordre
-   d'une vraie table vue du croupier. Sur les sièges de gauche la vignette est à
-   l'extérieur (ordre inversé) : les visages regardent vers le centre. Une vignette
-   sans flux n'est JAMAIS un rectangle noir : une silhouette, et un mot qui dit
-   pourquoi (« caméra coupée », « connexion… », « vidéo bloquée »). */
-.siege .rangee-bas{ display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:3px }
+   d'une vraie table vue du croupier. Une vignette sans flux n'est JAMAIS un rectangle
+   noir : une silhouette, et un mot qui dit pourquoi (« caméra coupée », « on relie… »,
+   « son seul »). */
+.siege .rangee-bas{ display:flex; align-items:center; justify-content:center; gap:var(--rb-gap, 8px); flex-wrap:wrap; margin-top:3px }
 .siege .rangee-bas .cercle{ margin-top:0 }
-.siege.gauche .visage{ order:-1 }
+/* 🚨 À SEPT ET HUIT SIÈGES, LES DEUX PLANCHERS CÈDENT. Mesuré le 06/09 à 1280 × 800, table
+   entre amis : le siège fait 117 px, la rangée en demandait 56 (vignette) + 8 + 54 (cercle)
+   = 118. Elle passait à DEUX lignes, sa hauteur bondissait de 54 à 104 px, et ces 50 px
+   pris au feutre suffisaient à annuler la remontée de TOUT LE MONDE (--lift à 0) : les huit
+   sièges pendaient sous l'arc, noms et tapis effacés par le clip. Un plancher de vignette
+   posé pour cinq places décidait de la géométrie à huit.
+   44 px reste une tête reconnaissable ; deux lignes, non. Et le gouttière passe à 6 px : le
+   calcul de .visage retranche 20 px (12 de padding + 8 de gouttière), il garde donc deux
+   pixels d'avance sur la place réelle — c'est cette avance qui empêche l'arrondi de faire
+   repasser la rangée à la ligne. À 1512 et 1920 rien ne change : les planchers ne mordent
+   pas (vignette 58 et 83 px). */
+#v-table[data-sieges="7"], #v-table[data-sieges="8"]{ --visage-min:44px; --cercle-min:44px; --rb-gap:6px }
+/* Le mot d'état suit la vignette : à 44 px de large, « EN ATTENTE » à 9 px et .1em de
+   chasse ne montrait plus que « EN A… ». Deux points de moins et une chasse resserrée
+   rendent le mot lisible dans la même boîte. Et un point de gouttière latérale au lieu de
+   deux : « OCCUPÉE » demandait 46 px pour 44, « ENTENDU » 45 — ils rataient le créneau
+   d'un ou deux pixels, que ce padding leur rend sans toucher à la géométrie du siège. */
+#v-table[data-sieges="7"] .visage .visage-etat, #v-table[data-sieges="8"] .visage .visage-etat{
+  font-size:8px; letter-spacing:.03em; padding:8px 1px 2px }
+/* 🚨 LA VIGNETTE PASSE DEVANT LE CERCLE SUR TOUS LES SIÈGES. Elle ne le faisait que
+   sur la moitié GAUCHE (`.siege.gauche`, posée par visio.js quand --ecart < 0) pour que
+   « les visages regardent vers le centre ». Joli, mais ça mettait le CERCLE en dernier sur
+   la moitié droite — or `.cercle .jt-montant` est posé à `left:100%`, c'est-à-dire
+   exactement là où la vignette venait de s'installer. Mesuré à 1280 × 800, table à huit,
+   identique à 1512 et 1920 (donc pas un manque de place) : le montant de la mise était
+   peint À 94, 100, 100 et 100 % DANS la vignette des sièges 4 à 7 — « 25 » en ivoire par-
+   dessus la silhouette, à trois pixels de « EN ATTENTE ». Aujourd'hui la vignette est un
+   aplat sombre et ça se devine encore ; le jour où quelqu'un allume sa caméra, le montant
+   de sa mise est écrit sur son visage en mouvement, illisible dans les deux sens.
+   ⚠️ Le défaut est ANTÉRIEUR aux huit sièges (il frappait déjà 2 sièges sur 5), mais il en
+   frappe maintenant 4 sur 8, sur la fonctionnalité même qu'on vient de livrer.
+   Quatre autres places ont été mesurées et écartées, toutes par la mesure ou par l'image :
+   · montant miroité côté intérieur → les deux sièges du MILIEU visent le même trou de
+     26 px et leurs deux « 25 » se superposent (regardé : illisible) ;
+   · au-dessus du cercle → il chevauche le lettrage du feutre (« …17 SOUPLE ») et se lit
+     en paire avec le total de la main (« 25  20 ») ;
+   · dans le cercle → la pile de jetons le recouvre entièrement ;
+   · sous la vignette → il touche le nom du joueur.
+   Le prix payé, à savoir : la moitié droite perd le miroir, les huit sièges lisent tous
+   [visage][cercle][montant]. On y gagne un motif régulier d'un bout à l'autre de la
+   rangée ; on y perd la symétrie des têtes autour de l'arc. Vérifié sans AUCUN
+   chevauchement (nom, tapis, cartes, total, issue, voisins) en phase de mise ET après la
+   donne, et aucune étiquette hors de la rangée. */
+.siege .visage{ order:-1 }
 /* 96 × 72 quand le siège le permet ; sinon la vignette CÈDE (jusqu'à 56 px) plutôt que de
    passer sous le cercle — mesuré à 1024 × 768 : deux rangées doublaient la hauteur du siège
    et poussaient le cercle sous l'annonce. --siege-w est posé par visio.js (la largeur que
    cartes.js a donnée au siège), le cercle est la même expression qu'au-dessus. */
-.visage{ position:relative; width:clamp(56px, calc(var(--siege-w, 226px) - 20px - clamp(54px, calc(var(--w-table, 84px) * .82), 96px)), 96px);
+.visage{ position:relative; width:clamp(var(--visage-min, 56px), calc(var(--siege-w, 226px) - 20px - clamp(var(--cercle-min, 54px), calc(var(--w-table, 84px) * .82), 96px)), 96px);
   height:auto; aspect-ratio:4 / 3; flex:none; border-radius:10px; overflow:hidden; isolation:isolate;
   background:rgba(0,0,0,.42);
   box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 42%, transparent), 0 8px 16px -10px rgba(0,0,0,.9);
@@ -1990,9 +2351,22 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 .visage video{ display:block; width:100%; height:100%; object-fit:cover; background:#000 }
 .visage.moi video{ transform:scaleX(-1) }              /* la tienne en miroir, comme dans une glace */
 .visage .silhouette{ position:absolute; inset:0; width:100%; height:100%; display:block; color:color-mix(in oklab, var(--ivoire) 36%, transparent) }
+/* 🚨 LE MOT D'ÉTAT VA À LA LIGNE, IL NE SE COUPE PLUS. Il était en `nowrap` +
+   `text-overflow:ellipsis` : à huit sièges la vignette tombe à son plancher de 44 px et
+   HUIT libellés sur seize n'y tenaient plus. Mesuré à 1280 × 800, créneau 44 px :
+   « son seul » en demandait 46 et rendait « SON SE… », « sans caméra » 65, « en attente »
+   55, « ni voix ni vidéo » 73. Or « SON SE… » est justement l'état que la table à HUIT
+   vient d'inventer (l'image s'arrête aux six premiers assis) : le seul mot à l'écran
+   ressemblait à un bug d'affichage, et l'explication n'existait que dans le `title=`,
+   qu'on ne lit qu'en survolant. Un état tronqué ne dit RIEN — deux lignes disent tout,
+   et ne coûtent rien : ce bloc est en `position:absolute`, il ne pousse aucun voisin, et
+   il ne s'affiche que sur une vignette SANS image (`:empty` la retire dès que la vidéo
+   arrive). `break-word` est le filet du dernier recours pour un mot seul plus large que
+   la boîte ; les trois qui étaient dans ce cas ont été RÉÉCRITS dans visio.js plutôt que
+   cassés en deux (cf. « pas de visio », « ça coupe », « on relie… »). */
 .visage .visage-etat{ position:absolute; left:0; right:0; bottom:0; padding:10px 4px 3px; font-size:9px; line-height:1.1; letter-spacing:.1em;
   text-transform:uppercase; text-align:center; color:var(--ivoire); text-shadow:0 1px 2px rgba(0,0,0,.9);
-  background:linear-gradient(transparent, rgba(0,0,0,.66)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  background:linear-gradient(transparent, rgba(0,0,0,.66)); white-space:normal; overflow-wrap:break-word; overflow:hidden }
 .visage .visage-etat:empty{ display:none }
 .visage[data-etat="ok"]{ box-shadow:0 0 0 1px color-mix(in oklab, var(--or) 72%, transparent), 0 0 14px -4px var(--or), 0 8px 16px -10px rgba(0,0,0,.9) }
 .visage[data-etat="bloque"]{ box-shadow:0 0 0 1.5px var(--cinabre), 0 8px 16px -10px rgba(0,0,0,.9) }

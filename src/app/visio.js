@@ -215,7 +215,10 @@ function rvEtatMoi() {
   if (e === "refusee") return ["ko", "refusée", r];
   if (e === "absente") return ["ko", "pas de caméra", r];
   if (e === "occupee") return ["ko", "occupée", r];
-  if (e === "indisponible") return ["ko", "indisponible", r];
+  // « indisponible » : douze lettres, 63 px pour un créneau de 44 à huit sièges — un mot
+  // seul ne va pas à la ligne, il serait coupé en deux. Deux mots courts passent, et
+  // « pas de visio » répond mieux à la question posée (l'image, pas l'objet).
+  if (e === "indisponible") return ["ko", "pas de visio", r];
   if (e === "coupee") return ["ko", "coupée", r];
   return ["eteinte", "coupée", "Ta caméra est coupée : clique « Caméra » pour que tes amis te voient."];
 }
@@ -274,7 +277,7 @@ function rvEtatPair(id, st) {
   if (e === "refuse") return ["ko", "table pleine", rvPersonnesMax() + " personnes au plus autour de la table : au-delà, on n'est ni vu ni entendu."];
   if (e === "indisponible") return ["ko", "ni voix ni vidéo", "Ce navigateur n'a pas WebRTC : ni image ni voix."];
   if (e === "parti" || e === "closed") return ["parti", "parti", "Sa connexion est fermée."];
-  if (e === "disconnected") return ["connexion", "coupure…", "Sa connexion hoquette ; on réessaie. Ni image ni voix en attendant."];
+  if (e === "disconnected") return ["connexion", "ça coupe", "Sa connexion hoquette ; on réessaie. Ni image ni voix en attendant."];
   // Relié sans image : la silhouette reste, mais si sa VOIX arrive elle s'éclaire et le
   // dit — « sans caméra » sur quelqu'un qu'on est en train d'entendre serait faux.
   //
@@ -293,7 +296,7 @@ function rvEtatPair(id, st) {
       ? ["sanscam", "son seul", "L'image s'arrête aux " + rvPersonnesVideo() + " premières personnes assises — tu es en son seul avec " + qui + " : vous vous entendez et vous vous parlez normalement, mais aucun de vous deux ne voit l'autre."]
       : ["sanscam", "sans caméra", "Relié, mais sa caméra est coupée."];
   }
-  return ["connexion", "connexion…", "La visio se négocie avec " + (st.nom || "ce joueur") + "."];
+  return ["connexion", "on relie…", "La visio se négocie avec " + (st.nom || "ce joueur") + "."];
 }
 function rvRendreVignette(t, st) {
   const moi = !!st.toi, id = st.id;

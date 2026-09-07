@@ -1,6 +1,6 @@
 # Crédits des photos
 
-Les photos de casinos qui habillent Le Sabot sont de vraies photos, libres de droits, embarquées dans l'application. Chacune a été recadrée, redimensionnée et encodée en WebP ; l'original est chez son auteur.
+Les photos de casinos qui habillent Acewise21 sont de vraies photos, libres de droits, embarquées dans l'application. Chacune a été recadrée, redimensionnée et encodée en WebP ; l'original est chez son auteur.
 
 Les licences Creative Commons **exigent** ce crédit : nom de l'auteur, licence, lien vers la source, mention des modifications. Retirer une photo de l'application, c'est retirer sa ligne ici — jamais l'inverse.
 

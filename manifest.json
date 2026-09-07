@@ -1,12 +1,12 @@
 {
-  "name": "Le Sabot — comptage au blackjack",
-  "short_name": "Le Sabot",
+  "name": "Acewise21 — compter les cartes, pour de vrai",
+  "short_name": "Acewise21",
   "description": "Entraînement au comptage de cartes au blackjack : neuf tables réelles, stratégie et écarts calculés, hasard prouvable.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
-  "background_color": "#082b1e",
-  "theme_color": "#082b1e",
+  "background_color": "#070D0C",
+  "theme_color": "#070D0C",
   "lang": "fr",
   "icons": [
     {

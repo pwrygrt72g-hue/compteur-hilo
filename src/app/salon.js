@@ -38,6 +38,14 @@ function pucesCourtes(t, o) {
   if (csm && !garde.includes(csm) && !(o && o.sansMelangeuse)) garde.push(csm);
   return garde.map(p => p.outerHTML).join("");
 }
+// LA COURSE AU COMPTAGE N'A NI SIÈGE NI MISE. Sur son écran, la porte ne garde que ce qui
+// change le COMPTE : le nombre de jeux et le mélange (pénétration, ou mélangeuse continue).
+// « 0,58 % avantage maison · 10 – 1000 mises » sous un sabot qu'on regarde défiler promet
+// une partie qui n'aura pas lieu — et H17/3:2, qui décident d'une MAIN, n'y décident rien.
+function pucesCompte(t) {
+  const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
+  return [...tmp.children].filter(p => /jeux?$|mélangeuse|^pén\./.test(p.textContent.trim())).map(p => p.outerHTML).join("");
+}
 // L'indice de comptabilité : ce que la table laisse VRAIMENT à un compteur.
 // La pénétration domine, le paiement du blackjack peut tout annuler.
 function indiceComptable(t) {
@@ -57,6 +65,24 @@ function tableMorte(t) {
 }
 const tamponCourt = t => t.blackjackPays < 1.5 ? "À fuir · 6:5" : "À fuir · mélangeuse";
 const photoDe = cle => (window.PHOTOS || {})[cle] || "";
+/* Les photos font 1600 px de large ; une porte du hall en montre 468 au maximum (mesuré le
+   07/09 : 468 px à partir de 1440 px de fenêtre, 413 px à 1280, 526 px au maximum vers
+   1080 quand la grille tient encore deux colonnes). Sans srcset, le hall téléchargeait
+   2 530 Ko pour afficher des vignettes — dix fois les pixels montrés ; il en télécharge 913.
+   `sizes` déclare la largeur d'AFFICHAGE : le navigateur prend le 640 w sur un écran
+   normal, le 1600 w sur un Retina, et personne ne choisit à sa place.
+   ⚠️ Le seuil est à 730 px, pas 860 : la grille est intrinsèque (auto-fill, minmax 340px),
+   aucune media query ne la pilote, et elle ne passe à UNE colonne que sous ~730 px.
+   ⚠️ L'artefact n'a PAS window.PHOTOS_PETIT (build.mjs ne l'injecte qu'en mode « pages ») :
+   ses images sont déjà inlinées en data: URI et déjà réduites. Sans les deux tailles, on
+   ne pose aucun srcset et le src seul fait le travail — rien à choisir, rien à casser. */
+const SIZES_VIGNETTE = "(max-width:730px) 100vw, 530px";
+const photoPetiteDe = cle => (window.PHOTOS_PETIT || {})[cle] || "";
+const attributsPhoto = (cle, sizes) => {
+  const plein = photoDe(cle); if (!plein) return "";
+  const petit = photoPetiteDe(cle);
+  return `src="${plein}"` + (petit ? ` srcset="${petit} 640w, ${plein} 1600w" sizes="${sizes || SIZES_VIGNETTE}"` : "");
+};
 // Le point focal d'une photo qui n'est pas au centre : le Front de Mer, c'est 60 % de ciel
 // bleu plat en haut (source 1600 × 900) — cadrée au centre, la porte était un rectangle bleu
 // entre deux portes chaudes (les critiques, 05/09). La ville éclairée est en bas.
@@ -67,7 +93,8 @@ const sabotEntame = () => T.mains > 0 || T.enJeu;
 
 /* ── La porte d'une table : sa photo, son nom en serif, trois puces, deux chiffres.
    o.n = son numéro dans le catalogue · o.reprise = « Reprendre » · o.inerte = un
-   simple panneau (l'écran À plusieurs la montre sans qu'on puisse s'y asseoir en solo). */
+   simple panneau (l'écran À plusieurs la montre sans qu'on puisse s'y asseoir en solo)
+   · o.compte = la version COURSE AU COMPTAGE : ni argent ni règles de main (cf. pucesCompte). */
 function carteTableHtml(t, o) {
   o = o || {};
   const d = DONNEES.tables[t.id], mort = tableMorte(t), ph = photoDe(t.id);
@@ -75,13 +102,13 @@ function carteTableHtml(t, o) {
   const nomAccessible = (o.reprise ? "Reprendre ta place à " : "S'asseoir à ") + t.nom + ", " + t.lieu + (mort ? " — " + mort : "");
   return `<article class="salle-porte ${mort ? "brulee" : ""}" ${mort ? `data-tampon="${echap(mort)}"` : ""}>
     <${balise} class="salle-carte porte" ${o.inerte ? "" : `data-asseoir="${t.id}" aria-label="${echap(nomAccessible)}"`}>
-      ${ph ? `<img class="photo" src="${ph}" alt="" aria-hidden="true" loading="lazy" decoding="async"${PHOTO_POS[t.id] ? ` style="--pos:${PHOTO_POS[t.id]}"` : ""}>` : ""}<span class="voile"></span>
+      ${ph ? `<img class="photo" ${attributsPhoto(t.id)} alt="" aria-hidden="true" loading="lazy" decoding="async"${PHOTO_POS[t.id] ? ` style="--pos:${PHOTO_POS[t.id]}"` : ""}>` : ""}<span class="voile"></span>
       <span class="haut"><span class="num">${o.n ? "Table " + o.n : "Ta table"}</span>${o.reprise ? `<span class="etat">Reprendre</span>` : mort ? `<span class="tampon" title="${echap(mort)}">${tamponCourt(t)}</span>` : ""}</span>
       <span class="bas">
         <span class="lieu">${echap(t.lieu)}</span><span class="nom">${echap(t.nom)}</span>
         <span class="sous">« ${echap(t.lecon)} »</span>
-        <span class="regles">${pucesCourtes(t, { sansMelangeuse: true })}</span>
-        <span class="chiffres"><span title="Ce que la maison gagne en moyenne sur chaque mise, en stratégie parfaite — plus c'est bas, mieux c'est"><b>${fr2(d.avantage)} %</b>avantage maison</span><span title="Mise minimale et maximale à cette table, en jetons"><b>${fmtJ(t.mise_min)} – ${fmtJ(t.mise_max)}</b>mises</span></span>
+        <span class="regles">${o.compte ? pucesCompte(t) : pucesCourtes(t, { sansMelangeuse: true })}</span>
+        ${o.compte ? "" : `<span class="chiffres"><span title="Ce que la maison gagne en moyenne sur chaque mise, en stratégie parfaite — plus c'est bas, mieux c'est"><b>${fr2(d.avantage)} %</b>avantage maison</span><span title="Mise minimale et maximale à cette table, en jetons"><b>${fmtJ(t.mise_min)} – ${fmtJ(t.mise_max)}</b>mises</span></span>`}
       </span>
       ${o.inerte ? "" : `<span class="asseoir-cta" aria-hidden="true">${o.reprise ? "Reprendre" : "S'asseoir"} &rarr;</span>`}
     </${balise}>
@@ -134,11 +161,17 @@ $("filtreSalon").querySelectorAll("button").forEach(b => b.onclick = () => {
    window.PHOTOS (build.mjs), par la clé posée en data-photo. Sans photo, la porte
    garde son voile sombre et son titre — rien ne casse, rien ne charge. */
 function rendreHall() {
-  const P = window.PHOTOS || {};
+  const P = window.PHOTOS || {}, Pp = window.PHOTOS_PETIT || {};
   document.querySelectorAll("[data-photo]").forEach(e => {
-    const img = e.querySelector(":scope > img.photo"), src = P[e.dataset.photo];
+    const img = e.querySelector(":scope > img.photo"), cle = e.dataset.photo, src = P[cle], petit = Pp[cle];
     if (!img) return;
-    if (src) { if (img.getAttribute("src") !== src) img.src = src; } else img.remove();
+    if (!src) { img.remove(); return; }
+    // Le `sizes` est écrit dans le gabarit (corps.html), au plus près de la mise en page qui
+    // le justifie ; ici on ne pose que les sources. Le srcset EN PREMIER : posé après le src,
+    // il arrive quand le téléchargement du plein format est déjà lancé.
+    const jeu = petit ? `${petit} 640w, ${src} 1600w` : "";
+    if (img.getAttribute("srcset") !== jeu) { if (jeu) img.setAttribute("srcset", jeu); else img.removeAttribute("srcset"); }
+    if (img.getAttribute("src") !== src) img.src = src;
   });
   rendreCredits(); rendreSalut();
 }
@@ -153,7 +186,7 @@ function rendreCredits() {
   c.innerHTML = `<span class="grave">Photos</span><p>` + L.map(x =>
     `<span class="credit"><a href="${echap(x.source)}" target="_blank" rel="noopener" title="${echap(x.titre)}">${echap(x.auteur)}</a>`
     + ` <a class="lic" href="${echap(x.licence_url)}" target="_blank" rel="noopener">${echap(x.licence)}</a></span>`).join(" · ")
-    + `</p><p>Recadrées, redimensionnées et encodées en WebP ; les originaux sont chez leurs auteurs. Chaque photo modifiée reste sous la licence de son original — les CC BY-SA sont donc partagées à l'identique. Le reste de l'application ne l'est pas : elle les rassemble, elle n'en dérive pas. Le Sabot n'est affilié à aucun casino. Les noms de tables sont fictifs ; les photos montrent des lieux réels, sous licence libre.</p>`;
+    + `</p><p>Recadrées, redimensionnées et encodées en WebP ; les originaux sont chez leurs auteurs. Chaque photo modifiée reste sous la licence de son original — les CC BY-SA sont donc partagées à l'identique. Le reste de l'application ne l'est pas : elle les rassemble, elle n'en dérive pas. Acewise21 n'est affilié à aucun casino. Les noms de tables sont fictifs ; les photos montrent des lieux réels, sous licence libre.</p>`;
 }
 $("bHallReglages").onclick = () => $("bReglages").click();
 
@@ -162,6 +195,15 @@ $("bHallReglages").onclick = () => $("bReglages").click();
    du comptage était son dernier bloc (les critiques, 05/09). Tout vient du système sélectionné
    (sys().v) : la leçon est celle de Hi-Lo comme d'Omega II. ─────────────────────────────── */
 const LECON = { etape: 0, cartes: [], i: 0, rc: 0, bons: 0, dit: 0 };
+// Les touches des boutons de réponse, DITES par la leçon — puisque c'est là qu'on apprend
+// le geste, et que le clavier y répond depuis ce jour (clavier.js).
+// ⚠️ Jumelle de la ligne « Au clavier » de `consigneBoutons` (exercices.js) : les deux
+// écrans enseignent le MÊME geste, ils doivent annoncer les MÊMES touches. Le jour où l'on
+// touche à l'une, on relit l'autre — ou mieux, exercices.js appelle celle-ci (elle est
+// déclarée avant lui dans la table des matières de build.mjs).
+const toucheReponses = n => n === 3
+  ? `<kbd>←</kbd> −1 · <kbd>espace</kbd> 0 · <kbd>→</kbd> +1`
+  : `<kbd>1…${n}</kbd> les boutons de gauche à droite`;
 function leconRangs() {
   const v = sys().v, groupes = {};
   RANKS.forEach((r, i) => { const k = v[i >= 9 ? 9 : i]; (groupes[k] = groupes[k] || []).push(r); });
@@ -196,6 +238,7 @@ function leconHtml() {
       <p class="muet" style="font-size:var(--t-petit)">Carte ${LECON.i + 1} sur ${LECON.cartes.length} · ${S.nom} : ${leconRangs().map(([k, rs]) => sgn(k) + " pour " + (rs.length > 4 ? rs[0] + "–" + rs[rs.length - 1] : rs.join(", "))).join(" · ")}. Tiens le total de tête.</p>
       <div class="lecon-scene">${carteEl(c).outerHTML}<div class="lecon-compte"><span class="grave">Ton compte, de tête</span><b>?</b></div></div>
       <div class="reponses">${vals.map(x => `<button data-v="${x}" class="${x > 0 ? "plus" : x < 0 ? "moins" : ""}">${sgn(x)}<i>${RANKS.filter((r, i) => S.v[i >= 9 ? 9 : i] === x).join(" ")}</i></button>`).join("")}</div>
+      <p class="muet lecon-touches">Au clavier : ${toucheReponses(vals.length)}.</p>
       <p class="lecon-retour" id="leconRetour"></p></div>`;
   }
   if (LECON.dit === null) return tete + `<h2>Et le compte, alors ?</h2>
@@ -232,7 +275,10 @@ function rendreLecon() {
   const ex = b.querySelector("#leconExercices"); if (ex) ex.onclick = () => { fermer(); aller("exercices"); };
   const ta = b.querySelector("#leconTables"); if (ta) ta.onclick = () => { fermer(); allerHall("lesTables"); };
   const rj = b.querySelector("#leconRejouer"); if (rj) rj.onclick = () => { leconTirer(); rendreLecon(); };
-  if (suite) suite.focus();
+  // Sur l'écran des dix cartes, le focus va sur la BOÎTE et non sur « Fermer » : c'est là
+  // que la barre d'espace vaut « 0 » (clavier.js). Posée sur un bouton, elle l'aurait
+  // pressé — et le premier « 0 » annoncé aurait fermé la leçon.
+  if (suite) suite.focus(); else if (b.querySelector(".reponses")) b.focus();
 }
 function ouvrirLecon() { LECON.etape = 0; rendreLecon(); }
 if ($("hallApprendre")) $("hallApprendre").onclick = ouvrirLecon;
@@ -255,12 +301,75 @@ function rendreOutils() {
   const o = $("outils"); if (!o) return;
   o.hidden = true; document.querySelector(".tete").appendChild(o);
 }
+/* ── LA MODALE EST UNE BOÎTE DE DIALOGUE ───────────────────────────────────────
+   C'est elle qui porte « Apprendre à compter », les Réglages, « Ton compte », le reçu
+   du sabot et les règles de la table — et elle n'était qu'un `div` posé par-dessus la
+   page : aucun rôle, aucun piège de focus, aucun retour du focus, et la tabulation
+   continuait tranquillement dans les 66 boutons du hall derrière le voile. Le reste de
+   l'application est très soigné au clavier ; c'était le seul trou.
+
+   🚨 LA FERMETURE EST OBSERVÉE, PAS INTERCEPTÉE. `$("modale").hidden = true` est écrit à
+   NEUF endroits, dans cinq fichiers (jetons.js, reseau.js, ensemble.js, clavier.js, ici) :
+   router chacun vers un `fermerModale()` obligerait à toucher des fichiers qui ne sont pas
+   de ce lot, et surtout le DIXIÈME, écrit demain, retomberait dans le trou sans bruit. Un
+   MutationObserver sur l'attribut `hidden` attrape TOUTES les sorties — le bouton, le clic
+   sur le voile, Échap, et celles qu'on n'a pas encore écrites.
+   Une seule PORTE D'ENTRÉE en revanche (`ouvrirModale`, quinze appels) : c'est là qu'on
+   retient qui avait le focus. */
+const MODALE = { rendu: null, ouverte: false };
+// Ce qu'on peut atteindre à la tabulation. `getClientRects()` plutôt que `offsetParent`,
+// qui vaut null sur un élément en position fixe — le bloc des Réglages, prêté par l'en-tête.
+const MODALE_FOCUS = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const modaleAtteignables = () => [...$("modaleBoite").querySelectorAll(MODALE_FOCUS)].filter(e => e.getClientRects().length);
+/* L'arrière-plan devient INERTE : plus un seul arrêt de tabulation, plus un seul clic, et les
+   lecteurs d'écran ne le lisent plus. On inerte TOUS les enfants de <body> sauf les deux
+   voiles — et non « header, main » : mesuré le 07/09, il restait un arrêt de tabulation
+   derrière la modale, `#voixTemoin`, que visio.js pose directement sur le body. Un lot qui
+   posera demain son propre calque sur le body sera couvert sans y penser.
+   L'état est RECALCULÉ, jamais basculé : si les deux voiles étaient ouverts, la fermeture du
+   premier ne doit pas rendre la page au second. */
+function fondInerte() {
+  const oui = !$("modale").hidden || !$("pauseOnglet").hidden;
+  [...document.body.children].forEach(e => { if (e.id !== "modale" && e.id !== "pauseOnglet") e.inert = oui; });
+}
 function ouvrirModale(html) {
   rendreOutils();
-  $("modaleBoite").innerHTML = html + `<div class="rang-btn" style="margin-top:16px"><button class="btn creux" id="modaleFermer">Fermer</button></div>`;
+  // On ne retient le focus qu'à la PREMIÈRE ouverture : une modale qui en ouvre une autre
+  // (le hall → « Pourquoi cette table ? ») doit rendre le focus au hall, pas à un bouton
+  // qui n'existe plus.
+  if (!MODALE.ouverte) MODALE.rendu = document.activeElement;
+  MODALE.ouverte = true;
+  const b = $("modaleBoite");
+  b.innerHTML = html + `<div class="rang-btn" style="margin-top:16px"><button class="btn creux" id="modaleFermer">Fermer</button></div>`;
+  b.setAttribute("role", "dialog"); b.setAttribute("aria-modal", "true"); b.tabIndex = -1;
+  // Le titre de la boîte NOMME le dialogue : sans lui, un lecteur d'écran annonce
+  // « dialogue » et rien d'autre. Pas de <h2> (le rachat de jetons) → un nom générique.
+  const titre = b.querySelector("h2");
+  b.setAttribute("aria-label", (titre && titre.textContent.trim()) || "Boîte de dialogue");
   $("modale").hidden = false;
+  fondInerte();
   $("modaleFermer").onclick = () => { $("modale").hidden = true; };
   $("modaleFermer").focus();
 }
+// La tabulation TOURNE dans la boîte. Sans ce cycle, `inert` empêcherait bien d'atteindre
+// la page, mais le focus sortirait dans la barre du navigateur et n'en reviendrait pas.
+$("modale").addEventListener("keydown", e => {
+  if (e.key !== "Tab") return;
+  const l = modaleAtteignables();
+  if (!l.length) { $("modaleBoite").focus(); e.preventDefault(); return; }
+  const prem = l[0], der = l[l.length - 1];
+  if (e.shiftKey && (document.activeElement === prem || !$("modaleBoite").contains(document.activeElement))) { der.focus(); e.preventDefault(); }
+  else if (!e.shiftKey && document.activeElement === der) { prem.focus(); e.preventDefault(); }
+});
+new MutationObserver(() => {
+  if (!$("modale").hidden || !MODALE.ouverte) return;
+  MODALE.ouverte = false;
+  fondInerte();
+  rendreOutils();                          // le bloc ⚙ rentre chez lui, quelle que soit la sortie
+  // Le focus revient d'où il venait : sans ça, il repart au tout début de la page et il
+  // faut retraverser l'en-tête et le fil d'Ariane pour retrouver le bouton qu'on a pressé.
+  const r = MODALE.rendu; MODALE.rendu = null;
+  if (r && r.isConnected && typeof r.focus === "function" && !r.closest("#modale")) r.focus();
+}).observe($("modale"), { attributes: true, attributeFilter: ["hidden"] });
 $("modale").addEventListener("click", e => { if (e.target === $("modale")) { rendreOutils(); $("modale").hidden = true; } });
 addEventListener("keydown", e => { if (e.key === "Escape" && !$("modale").hidden) { rendreOutils(); $("modale").hidden = true; } });

@@ -104,7 +104,8 @@ $("coDetendu").onclick = detendre;
 // références : un seul voyant, une seule permission, et le détecteur continue de tourner
 // si tes amis te voient déjà. Rien ne lève : un refus se lit dans `etat` et `raison`.
 async function lancerCamera() {
-  arreterCamera(); $("coCamHors").hidden = false; $("coCamEtat").textContent = "";
+  arreterCamera(); $("coCamHors").hidden = false;
+  $("coCamEtat").textContent = ""; $("coCamEtat").removeAttribute("data-ton"); $("coCamEtat").title = "";
   if (!CO.cam) { $("coCamHors").textContent = "Caméra désactivée : seuls les signes de comportement comptent."; return; }
   const cam = M.camera.cameraPartagee(); CO.camRef = true;
   const { flux, etat, raison } = await cam.prendre();
@@ -135,23 +136,45 @@ function camTick(ts) {
   ox.strokeStyle = "rgba(244,135,108,.6)";
   ox.strokeRect(bouche.x0 * 5, bouche.y0 * 5, (bouche.x1 - bouche.x0) * 5, (bouche.y1 - bouche.y0) * 5);
   if (CO.prec) {
-    let visage = 0, nv = 0, bo = 0, nb = 0;
+    let visage = 0, nv = 0, bo = 0, nb = 0, lum = 0;
     for (let y = Math.round(LH * .1); y < Math.round(LH * .9); y++)
       for (let x = Math.round(LW * .25); x < Math.round(LW * .75); x++) {
         const df = Math.abs(g[y * LW + x] - CO.prec[y * LW + x]);
         const dedans = x >= bouche.x0 && x < bouche.x1 && y >= bouche.y0 && y < bouche.y1;
+        lum += g[y * LW + x];
         if (dedans) { bo += df; nb++; } else { visage += df; nv++; }
       }
-    visage /= nv; bo /= nb;
+    lum /= (nv + nb); visage /= nv; bo /= nb;
     const immobile = visage < 1.2 && bo < 1.2; CO.fige = immobile ? CO.fige + 80 : 0;
     const levres = bo > 7 && bo > visage * 2.6;
-    $("coCamEtat").textContent = `visage ${visage.toFixed(1)} · bouche ${bo.toFixed(1)}${levres ? " · LÈVRES" : ""}${CO.fige > 3000 ? " · figé " + Math.round(CO.fige / 1000) + " s" : ""}`;
+    direEtatCam(visage, bo, lum, levres);
     if (CO.encours) {
       if (levres) indice(niveau() === 3 ? 9 : 6, "Tes lèvres bougent. Tu comptes à voix basse ?");
       if (CO.fige > (niveau() === 3 ? 6000 : 9000)) { CO.fige = 0; indice(7, "Visage figé, regard vissé sur les cartes."); }
     }
   }
   CO.prec = g;
+}
+/* ── CE QUE LE DÉTECTEUR DIT DE LUI-MÊME ─────────────────────────────────────
+   Il écrivait « visage 1.4 · bouche 0.8 » sous la vignette : des moyennes de
+   différence de luminance sur une image de 64 × 48, dans une échelle que personne
+   ne connaît, mises à jour douze fois par seconde. Ça ne dit rien à qui joue, et ça
+   fait croire à un écran de débogage oublié en place. Les SEUILS ne bougent pas —
+   ce sont les mêmes que les pénalités juste au-dessus, à la ligne près : seule la
+   phrase change. Les nombres restent dans le `title`, pour qui veut vérifier.
+   ⚠️ « lum » est un ajout : sous un certain plancher de lumière, une différence entre
+   deux images ne veut plus rien dire — tout est noir, donc tout est « immobile ». Le
+   détecteur le dit, au lieu de laisser croire qu'il voit quelque chose. 22 sur 255,
+   c'est 8 % de l'échelle : en dessous, l'image est un aplat. */
+function direEtatCam(visage, bo, lum, levres) {
+  const e = $("coCamEtat"); if (!e) return;
+  const [txt, ton] = lum < 22 ? ["Approche-toi, on ne te voit pas", "alerte"]
+    : levres ? ["Tes lèvres bougent", "alerte"]
+    : CO.fige > 3000 ? [`Visage figé depuis ${Math.round(CO.fige / 1000)} s`, "attention"]
+    : ["Détecteur actif", ""];
+  if (e.textContent !== txt) e.textContent = txt;
+  if (ton) e.dataset.ton = ton; else e.removeAttribute("data-ton");
+  e.title = `visage ${visage.toFixed(1)} · bouche ${bo.toFixed(1)} · lumière ${Math.round(lum)} sur 255`;
 }
 function finConcentration(grille) {
   clearTimeout(CO.minuteur); clearTimeout(CO.minuteurBulle); CO.encours = false; CO.occupe = null;

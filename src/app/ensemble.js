@@ -1,6 +1,6 @@
 /* ══════════════════════ À PLUSIEURS ══════════════════════ */
 const MP = { api: null, code: "", moi: "", nom: "", pairs: new Map(), hote: false, url: "",
-  cartes: [], i: -1, rc: 0, encours: false, minuteur: null, annonces: new Map(), graine: null, empreinte: "" };
+  cartes: [], i: -1, rc: 0, encours: false, minuteur: null, annonces: new Map(), graine: null, empreinte: "", jeux: 6 };
 function messageMP(o) { if (MP.api) MP.api.publier(NET.sujet(MP.code), JSON.stringify(o)); }
 function rendrePairs() {
   const tous = [...MP.pairs.values()];
@@ -58,8 +58,23 @@ function recevoirMP(m) {
 /* ── Deux modes derrière les mêmes boutons : la TABLE (reseau.js) et la COURSE (ici).
    Le code est le même format partout — huit caractères, écrits A7K2-M9PQ. ── */
 MP.mode = "table";
+/* 🚨 LE NOMBRE DE PLACES SE DÉDUIT, IL NE SE RECOPIE PAS. Quatre phrases annonçaient
+   « jusqu'à cinq » — le titre de ce mode, le bandeau de l'écran, la porte du hall et le
+   commentaire — alors que la table en ouvre huit depuis que TR.NB_SIEGES est passé à 8.
+   La fiche posée JUSTE À CÔTÉ disait « Jusqu'à 8 places » : deux comptes contradictoires
+   à trois centimètres l'un de l'autre, sur le même écran (mesuré le 07/09).
+   Les prochains n'auront pas à être retrouvés un par un : ils lisent tous NB_SIEGES.
+   ⚠️ En toutes lettres, parce que c'est de la prose — « jusqu'à 8 » au milieu d'une
+   phrase se lit comme une étiquette. Au-delà de neuf on retombe sur le chiffre, ce qui
+   reste juste ; c'est le seul cas où la table de mots serait à rallonger. */
+const EN_LETTRES = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"];
+const nbSiegesMot = () => EN_LETTRES[TR.NB_SIEGES] || String(TR.NB_SIEGES);
+// Les deux phrases écrites en dur dans corps.html (le bandeau et la porte du hall) sont
+// réécrites ici, à la même source. Le gabarit garde un nombre lisible pour qui ouvre le
+// fichier ; c'est celui-ci qui fait foi à l'écran.
+document.querySelectorAll("[data-nb-sieges]").forEach(e => { e.textContent = nbSiegesMot(); });
 const MP_TEXTES = {
-  table: ["Une vraie table, jusqu'à cinq", "Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de 1 000 jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.", "Ouvrir une table", "Code de la table"],
+  table: [`Une vraie table, jusqu'à ${nbSiegesMot()}`, "Vous vous asseyez autour de la même table, chacun sur son siège, avec le même tapis de 1 000 jetons. Le croupier donne, chacun joue sa main à son tour, et les gains glissent vers qui les a mérités. Celui qui ouvre la table tient le sabot — scellé, vérifiable par tous.", "Ouvrir une table", "Code de la table"],
   course: ["Le même sabot, chacun son compte", "Les cartes sortent du même sabot, chacun compte en silence, et à la fin chacun annonce son compte. Celui qui tombe juste gagne — pas celui qui a le plus de chance.", "Ouvrir une course", "Code de la course"],
 };
 function rendreModeMP() {
@@ -70,7 +85,14 @@ function rendreModeMP() {
   $("mpModes").querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", b.dataset.mode === MP.mode ? "true" : "false"));
   $("mpEtat").textContent = "";
 }
-$("mpModes").querySelectorAll("button").forEach(b => b.onclick = () => { MP.mode = b.dataset.mode; rendreModeMP(); });
+// La fiche de table est PARTAGÉE par les deux modes et ne dit pas la même chose dans chacun :
+// la course n'a ni siège ni mise (reseau.js, rendreTableMP). On la redessine au CLIC, pas dans
+// rendreModeMP : celui-ci tourne aussi au chargement de ce fichier, et rendreTableMP lit deux
+// `const` de reseau.js — concaténé APRÈS — qui sont alors en zone morte temporelle. L'appel y
+// levait, et comme tout vit dans une seule IIFE, il emportait avec lui reseau.js, visio.js,
+// dons.js, progres.js et le clavier : la fiche ne disparaissait pas, la moitié de l'application
+// ne se chargeait plus. Au chargement, c'est reseau.js qui dessine la fiche lui-même.
+$("mpModes").querySelectorAll("button").forEach(b => b.onclick = () => { MP.mode = b.dataset.mode; rendreModeMP(); rendreTableMP(); });
 $("mpNom").value = prenom(); $("mpNom").oninput = () => { DB.prenom = $("mpNom").value; garder(); $("prenom").value = DB.prenom; };
 // Le code se tape comme on veut (minuscules, tiret, espaces) et s'affiche groupé.
 $("mpCode").addEventListener("input", () => { const p = $("mpCode").selectionStart; $("mpCode").value = TR.formaterCode($("mpCode").value); if (p !== null) $("mpCode").setSelectionRange(p, p); });
@@ -92,11 +114,18 @@ $("mpCopier").onclick = () => {
 };
 $("mpLancer").onclick = async () => {
   if (!MP.hote) return;
-  const s = await sabotProuvable(2);
+  // 🚨 LE SABOT EST CELUI DE LA TABLE AFFICHÉE. Il était de DEUX jeux en dur pendant que la
+  // fiche annonçait « Le Boulevard · 6 jeux » : celui qui croyait compter un huit-jeux du
+  // Front de Mer comptait deux jeux, et son compte VRAI — le compte courant divisé par les
+  // jeux restants — sortait faux d'un facteur quatre. Le nombre voyage avec le sabot : en
+  // KO le compte de départ vaut 4 − 4 × jeux, il doit être le même chez tout le monde.
+  const jeux = tableCourante().jeux;
+  const s = await sabotProuvable(jeux);
   MP.graine = s.graine; MP.empreinte = s.empreinte;
+  // Soixante cartes, ou le sabot entier s'il en a moins (les tables à un jeu en ont 52).
   const cartes = s.cartes.slice(0, 60);
-  messageMP({ t: "sabot", id: MP.moi, n: cartes.length, empreinte: s.empreinte });
-  demarrerSabotMP({ n: cartes.length, empreinte: s.empreinte });
+  messageMP({ t: "sabot", id: MP.moi, n: cartes.length, jeux, empreinte: s.empreinte });
+  demarrerSabotMP({ n: cartes.length, jeux, empreinte: s.empreinte });
   for (let k = 0; k < cartes.length; k++) {
     await dodo(1400);
     if (!MP.encours) break;
@@ -109,7 +138,10 @@ $("mpLancer").onclick = async () => {
     $("mpTitreDefi").textContent = "Sabot terminé — annonce ton compte"; rendrePairs(); }
 };
 function demarrerSabotMP(m) {
-  MP.cartes = []; MP.i = -1; MP.rc = CT.compteInitial(DB.sys, 2); MP.encours = true;
+  // Les jeux viennent de l'HÔTE, jamais de la table qu'on regarde soi-même : deux joueurs
+  // assis à des tables différentes doivent partir du même compte (en KO il dépend des jeux).
+  MP.jeux = m.jeux || tableCourante().jeux;
+  MP.cartes = []; MP.i = -1; MP.rc = CT.compteInitial(DB.sys, MP.jeux); MP.encours = true;
   MP.annonces = new Map(); MP.rcReel = null; MP.total = m.n;
   $("mpTitreDefi").textContent = "Sabot en cours"; $("mpAnnoncer").disabled = true;
   $("mpScene").innerHTML = ""; $("mpPos").textContent = `0 / ${m.n}`;

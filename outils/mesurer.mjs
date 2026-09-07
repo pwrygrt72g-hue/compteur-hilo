@@ -27,7 +27,12 @@ const TAILLES = [
   ["tablette paysage", 1024, 768], ["portable", 1280, 800], ["grand écran", 1920, 1080],
 ];
 const VUES = process.argv.slice(2).length ? process.argv.slice(2)
-  : ["accueil", "salon", "table", "exercices", "strategie", "concentration", "ensemble", "progres", "dons"];
+  // 🚨 « reseau » est DANS la liste par défaut, en DERNIER. L'en-tête ci-dessus la présente
+  // depuis toujours comme « soumise aux MÊMES assertions » — elle ne l'était pas : il fallait
+  // la nommer à la main, ce que la consigne des agents ne demande pas. La table à plusieurs
+  // (huit sièges, vignettes vidéo) n'était donc couverte par AUCUN banc dans le geste
+  // habituel : elle ne pouvait pas échouer, mais personne ne l'aurait su.
+  : ["accueil", "salon", "table", "exercices", "strategie", "concentration", "ensemble", "progres", "dons", "reseau"];
 
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
 const serveur = createServer((q, r) => {
@@ -112,11 +117,22 @@ const SONDE = `(() => {
   // pas atténués, absents, leur mise avec. Or c'est là que la voix pose son signal
   // principal (« qui parle » = le nom en jade). elementsFromPoint au PLURIEL : un bandeau
   // qui passe par-dessus ne compte pas, on cherche un nom RETIRÉ de la pile.
+  // ⚠️ « Hors fenêtre » ne suffit pas : sous 1000 px la rangée devient une PELLICULE qui
+  // défile (style.css), et ses sièges débordent LARGEMENT de leur boîte visible tout en
+  // restant dans la fenêtre. Mesuré à 375 × 667 : le défileur va de x=52 à x=323, or
+  // « Sonia » pose son nom à x=43 et « Karim » à x=332 — dehors des deux côtés, donc
+  // hors du clip, donc intouchables. Les compter « effacés par l'arc » était faux : ils
+  // sont simplement plus loin dans le défilement. On borne donc par la boîte du défileur,
+  // et SEULEMENT quand il clippe pour de vrai — au bureau (≥ 1000 px) #sieges ne clippe
+  // rien, le garde est inerte, et un nom vraiment mangé par la demi-lune sort toujours.
+  const rangee = q("#sieges"), boiteRangee = rangee ? rangee.getBoundingClientRect() : null;
+  const rangeeClippe = rangee ? getComputedStyle(rangee).overflowX !== "visible" : false;
   const nomsEffaces = [...document.querySelectorAll("#sieges .siege")].map(d => {
     const n = d.querySelector(".nom"); if (!n) return null;
     const r = n.getBoundingClientRect(); if (!r.width || !r.height) return null;
     const x = Math.round(r.left + r.width / 2), y = Math.round(r.top + r.height / 2);
     if (x < 2 || y < 2 || x > vw - 2 || y > vh - 2) return null;   // hors fenêtre : plus loin, pas effacé
+    if (rangeeClippe && (x < boiteRangee.left + 2 || x > boiteRangee.right - 2)) return null;  // hors du défilement
     return document.elementsFromPoint(x, y).some(e => d.contains(e)) ? null : ((n.textContent || "").trim() || "?");
   }).filter(Boolean);
   return { vw, vh, doc, defile: Math.max(0, doc - vh), ecrans: +(doc / vh).toFixed(2), ecartCroupier, wTable, nomsEffaces, lettrage: lettrage.replace(/\s+/g, " ").trim(), depasseBas, lettrageInfo,

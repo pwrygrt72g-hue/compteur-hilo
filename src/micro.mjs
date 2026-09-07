@@ -218,7 +218,7 @@ export function creerMicro() {
   };
   const demander = async () => {
     if (!navigator || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      poser("indisponible", "Pas de micro dans ce contexte : ouvre le site (GitHub Pages) plutôt que la page publiée.", "navigator.mediaDevices absent");
+      poser("indisponible", "Pas de micro dans ce contexte : ouvre le site plutôt que la page publiée.", "navigator.mediaDevices absent");
       return null;
     }
     poser("demande", "");

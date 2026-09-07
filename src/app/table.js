@@ -1,17 +1,23 @@
 /* ══════════════════════ LA TABLE ══════════════════════ */
 const T = { sabot: [], graine: null, empreinte: "", coupe: 0, rc: 0, vues: 0, mains: 0, defausse: 0,
   croupier: [], sieges: [], occupe: false, enJeu: false, toi: null, actif: null, revele: false, solde: 0 };
-const NOMS = ["Marc", "Sonia", "Karim", "Léa", "Paul", "Nadia"];
+// Les mêmes prénoms que NOMS_BOTS (src/table-reseau.mjs), dans le même ordre : une
+// table du catalogue monte à SEPT sièges (Le Front de Mer, Le Cercle, L'Aquarium) et la
+// table entre amis à huit. Une liste plus courte que le nombre de sièges ferait s'asseoir
+// deux « Marc » côte à côte — et le nom est le signal principal de « qui joue ».
+const NOMS = ["Marc", "Sonia", "Karim", "Léa", "Paul", "Nadia", "Hugo", "Inès"];
 const vitesse = () => DB.cadence;
 // La donne INITIALE va plus vite que les tirages : douze cartes à 900 ms font
 // onze secondes d'attente avant de pouvoir jouer (mesuré le 04/09), et à 400 ms
 // avec un vol de 180 ms les cartes « tombaient » (Léo). Mesuré à nouveau le 05/09
 // à la cadence par défaut : 5,4 s avant de voir sa main, et à 18 s le voisin
-// réfléchissait encore. Un vrai croupier distribue douze cartes en quatre
-// secondes. Ici 40 % de la cadence, entre 220 et 380 ms, et le vol remplit
-// l'intervalle (--don suit --intervalle). Les tirages, où l'on compte carte par
-// carte, gardent la cadence pleine. T.rythme > 0 = on est dans la donne initiale.
-const cadenceDonne = () => Math.max(220, Math.min(380, Math.round(vitesse() * .4)));
+// réfléchissait encore. Les tirages, où l'on compte carte par carte, gardent la
+// cadence pleine. T.rythme > 0 = on est dans la donne initiale.
+// Puis Léo, le 06/09 : « elles se distribuent trop vite ». Un croupier pose une carte
+// toutes les 0,45 à 0,55 s — 360 ms mesurés le 06/09, c'était une machine. 55 % de la
+// cadence, entre 260 et 620 ms : 495 ms au réglage par défaut, soit une donne de douze
+// cartes en 6,5 s battement compris. Le libellé du réglage se recalcule seul.
+const cadenceDonne = () => Math.max(260, Math.min(620, Math.round(vitesse() * .55)));
 // Le temps de réflexion d'un VOISIN : réglé à part (« rythme des voisins »), parce
 // qu'il n'a rien à voir avec la cadence à laquelle on compte les cartes.
 if (DB.voisins === undefined) DB.voisins = 450;
@@ -162,7 +168,11 @@ async function nouveauSabot(o) {
    puces — le nombre de jeux, H17/S17, 3:2 ou 6:5 — plus la mélangeuse quand
    il y en a une, parce que celle-là tue le comptage. */
 function poserLieu(t) {
-  $("v-table").dataset.lieu = t.id; $("v-table").dataset.sieges = Math.max(1, Math.min(t.sieges, 6));
+  // 🚨 `data-sieges` n'est PLUS posé ici : il porte le nombre RÉELLEMENT rendu, et
+  // rendreSieges() est le seul à le savoir. Au Salon Privé (3 places au catalogue) en
+  // réseau, cette ligne écrivait « 3 » sur une table de HUIT sièges — et [data-sieges="3"]
+  // (style.css) resserrait le tapis à 1267 px pour huit joueurs.
+  $("v-table").dataset.lieu = t.id;
   // Une mélangeuse continue n'a ni sabot à couper, ni défausse, ni compte de cartes : la
   // feuille de style remplace les deux meubles par la machine (les critiques, 05/09 : le
   // Cotai annonçait « mélangeuse » et montrait une carte de coupe et un compteur à 297).
@@ -217,11 +227,14 @@ function noteTable(t) {
   } else if (!DB.aAnnonce && (DB.mainsJouees || 0) < 30 && !$("v-table").dataset.reseau) {
     // Elle s'éteint à la première annonce, ou au bout de trente mains — comme l'aide à la
     // décision s'éteint à vingt. Elle ne s'adresse qu'à quelqu'un qui n'a encore jamais compté.
-    bouts.push(`<b>À toi de tenir le compte.</b> Personne ne te le demandera pendant la main.` +
-      `<button class="lien" id="bNoteCompte">Annoncer mon compte</button>`);
+    // SANS bouton : « Annoncer mon compte » est déjà dans la barre, en toutes lettres, et il ne
+    // bouge jamais — deux boutons au libellé identique qui appellent la même chose sur le même
+    // écran font douter qu'ils fassent la même chose. La phrase reste : c'est elle qui INVITE,
+    // le geste est là où on le cherchera toujours. (La feuille tenait déjà ce raisonnement sous
+    // 1024 px, où elle masquait ce bouton-ci : on l'applique désormais à toutes les largeurs.)
+    bouts.push(`<b>À toi de tenir le compte.</b> Personne ne te le demandera pendant la main.`);
   }
   n.innerHTML = bouts.join("");
-  const b = $("bNoteCompte"); if (b) b.onclick = () => demanderMonCompte(false);
 }
 /* Le lettrage doré en arc est DÉRIVÉ des règles : « 3 TO 2 » ou « 6 TO 5 »,
    « HIT SOFT 17 » ou « STAND ON ALL 17s », et l'assurance seulement là où le
@@ -302,6 +315,83 @@ function rendreLettrage() {
   ).filter(z => z.r > z.l && z.b > z.t);
   // 14 px de marge autour de chaque pièce (mesuré le 05/09 : à 8, le jeton de Marc se posait sur « MUST »).
   const touche = (x, y) => obstacles.some(z => x >= z.l - 14 && x <= z.r + 14 && y >= z.t - 8 && y <= z.b + 8);
+  /* 🚨 CES DEUX MESURES SONT POSÉES AVANT LE CACHE — elles ne dessinent rien.
+     Les deux `return` qui suivent (rendu identique, manche en cours) servent à ne pas
+     REDESSINER le lettrage. Mais le bloc ci-dessous ne dessine pas : il PUBLIE la
+     géométrie de la rangée des sièges, que la feuille de style lit pour poser l'annonce
+     et le conseil. Le laisser derrière les `return`, c'est le rendre dépendant du moment
+     où le lettrage a changé pour la dernière fois.
+     Le prix, mesuré le 07/09 : à 1920 × 1080, `--bas-noms` n'était JAMAIS posée (vide),
+     parce que le seul passage arrivé jusqu'ici avait trouvé des sièges pas encore mis en
+     page (`r.height` nul, donc `basNoms` à 0, donc rien d'écrit) — et tous les passages
+     suivants sortaient par le cache. La feuille retombait sur son repli `100% - 28px`,
+     qui tombe pile sur les tapis. Une variable qu'on ne pose jamais ne lève aucune erreur :
+     elle laisse simplement le repli mentir, en silence, à une seule taille d'écran. */
+  // La bande où vivent l'annonce et le conseil (style.css) : celle du grand arc, sous la
+  // main du croupier — jamais une hauteur codée en dur qui tomberait sur les cartes.
+  f.style.setProperty("--bande-haut", Math.round(basCentre + 2) + "px");
+  // …et la ligne du CONSEIL (« Stratégie : Rester ») se pose SOUS les noms des sièges, jamais
+  // dessus. Mesuré le 06/09 à 1280 × 800 : le nom de ton siège occupait 653→669 et #conseil
+  // 664→684 — l'étiquette « TOI » disparaissait au moment précis où c'était à toi de jouer,
+  // alors qu'elle est bien là en phase de mise. Le repère qui te dit où tu es assis.
+  // 🚨 SOUS LE NOM, IL Y A ENCORE LE TAPIS. La mesure ne prenait que `.nom` — or chaque siège
+  // écrit son solde (« 1 000 ») dans un `.tapis-siege` JUSTE EN DESSOUS. Le conseil se posait
+  // donc pile sur ces chiffres. Invisible à cinq sièges (le milieu de l'arc est creux, les
+  // sièges les plus bas sont sur les côtés) ; à HUIT, les sièges du milieu sont les plus bas
+  // ET ils sont centrés, exactement sous la pastille. Mesuré à 1512 × 945, table à huit :
+  //   « Stratégie : Tirer »                       120 px → ne touche rien
+  //   « Stratégie : Abandonner — écart… −1 »      357 px → efface le tapis de DEUX joueurs
+  //   une phrase de stratégie longue             513 px → celui de QUATRE
+  // C'est le même défaut que la bande « À X de jouer » corrigée juste au-dessus, une ligne
+  // plus bas : une pastille centrée, libre de grandir, dans un arc dont le milieu est plein.
+  let basNoms = 0;
+  sieges.forEach(sg => sg.querySelectorAll(".nom, .tapis-siege").forEach(el => {
+    const r = el.getBoundingClientRect(); if (r.height) basNoms = Math.max(basNoms, r.bottom - F.top);
+  }));
+  // Bornée au bord BAS du feutre — plus à « H − 25 ». Ce plafond-là était le vrai verrou :
+  // sous huit tapis il ne reste que 24 px à 1512 et 14 px à 1280, moins que les 21 px de la
+  // pastille, donc la borne la RAMENAIT sur les chiffres qu'on vient de dégager. Le feutre
+  // porte `overflow-clip-margin:46px` (les noms des sièges des deux bouts débordent déjà sur
+  // le rail, exprès) : la pastille peut donc s'asseoir sur ce rail sans être rognée, et elle
+  // y est à sa place — juste au-dessus des boutons qu'elle commente.
+  if (basNoms) f.style.setProperty("--bas-noms", Math.round(Math.min(basNoms + 3, H)) + "px");
+  /* …et le COIN HAUT-GAUCHE, où la pastille « À toi de jouer » va se ranger à sept et huit
+     sièges (cf. style.css), n'est libre que sur un feutre HAUT. Mesuré le 07/09, table à
+     huit, distance entre le haut du feutre et le haut de TES cartes :
+        1280 × 800  →   7 px      1366 × 768  →  26 px
+        1512 × 945  →  75 px      1920 × 1080 →  71 px
+     La pastille est posée à 8 px et fait 43 px de haut : sur les deux formats d'ordinateur
+     portable les plus courants, elle s'assied donc sur tes deux premières cartes — mesuré
+     81 × 43 px et 51 × 39 px à 1280, c'est-à-dire pile le coin qui porte la valeur et la
+     couleur. On la décale à DROITE de ces cartes plutôt que dessus : c'est la seule
+     direction libre (un balayage du feutre au pas de 6 px ne trouve AUCUNE position libre
+     dans le coin, et le coin haut-droit est le miroir du tien — il porte les cartes du
+     dernier siège dès qu'il est occupé). Les annonces LARGES (« En attente de joueurs… »,
+     « Connexion perdue… ») tombent, elles, dans des phases SANS carte : le décalage vaut
+     alors 0 et la pastille retrouve son coin. */
+  let gaucheAnnonce = 0;
+  sieges.forEach(sg => sg.querySelectorAll(".carte").forEach(el => {
+    const r = el.getBoundingClientRect(); if (!r.height) return;
+    if (r.top - F.top < 60 && r.left - F.left < W / 2) gaucheAnnonce = Math.max(gaucheAnnonce, r.right - F.left);
+  }));
+  // …et une fois décalée, elle a une LARGEUR maximale : celle du passage resté libre entre
+  // tes cartes et la pièce suivante de la bande (la défausse, puis le sabot). Sans cette
+  // borne, « À Sonia de jouer — 8 s » (199 px) et « Le croupier montre un as. Assurance ? »
+  // (316 px) traversaient la défausse à 1280 et 1366 — on aurait échangé un défaut contre
+  // un autre. Bornée, la phrase passe à la ligne DANS le passage et n'y touche rien : elle
+  // a de la place vers le bas (les cercles des sièges commencent 200 px plus bas), pas vers
+  // la droite. Sur un feutre haut, `gaucheAnnonce` vaut 0 et rien de tout ceci ne s'applique.
+  if (gaucheAnnonce) {
+    let butoir = W;
+    f.querySelectorAll(".defausse, .sabot, .rangee-haute .carte, .rangee-haute .croupier").forEach(el => {
+      const r = el.getBoundingClientRect(); if (!r.height) return;
+      const g = r.left - F.left;
+      if (r.top - F.top < 110 && g > gaucheAnnonce) butoir = Math.min(butoir, g);
+    });
+    f.style.setProperty("--annonce-large", Math.max(120, Math.round(butoir - gaucheAnnonce - 24)) + "px");
+  } else f.style.removeProperty("--annonce-large");
+  f.style.setProperty("--annonce-gauche", (gaucheAnnonce ? Math.round(gaucheAnnonce) + 12 : 16) + "px");
+
   const t = tableCourante(), tx = texteLettrage(t);
   const cle = [W, H, basHaut, basCentre, zones.map(z => z.l + ":" + z.r + ":" + z.haut).join(","), obstacles.map(z => Math.round(z.l) + ":" + Math.round(z.b)).join(","), t.id].join("|");
   if (cle === LETTRAGE.cle) return;
@@ -444,18 +534,6 @@ function rendreLettrage() {
     const [x3, y3] = p(90 + A2, rx2, ry2), [x4, y4] = p(90 - A2, rx2, ry2);
     ligne(empiles.join("  \u00b7  "), `M${x3.toFixed(1)} ${y3.toFixed(1)}A${rx2.toFixed(1)} ${ry2.toFixed(1)} 0 0 0 ${x4.toFixed(1)} ${y4.toFixed(1)}`, t2, "rail empile");
   }
-  // La bande où vivent l'annonce et le conseil (style.css) : celle du grand arc, sous la
-  // main du croupier — jamais une hauteur codée en dur qui tomberait sur les cartes.
-  f.style.setProperty("--bande-haut", Math.round(basCentre + 2) + "px");
-  // …et la ligne du CONSEIL (« Stratégie : Rester ») se pose SOUS les noms des sièges, jamais
-  // dessus. Mesuré le 06/09 à 1280 × 800 : le nom de ton siège occupait 653→669 et #conseil
-  // 664→684 — l'étiquette « TOI » disparaissait au moment précis où c'était à toi de jouer,
-  // alors qu'elle est bien là en phase de mise. Le repère qui te dit où tu es assis.
-  let basNoms = 0;
-  sieges.forEach(sg => { const n = sg.querySelector(".nom"); if (!n) return; const r = n.getBoundingClientRect(); if (r.height) basNoms = Math.max(basNoms, r.bottom - F.top); });
-  // Bornée à la hauteur RÉELLE de la ligne : sur un feutre bas (1280 × 800), la place sous les
-  // noms est de vingt-cinq pixels — on la colle au bord plutôt que de la laisser déborder.
-  if (basNoms) f.style.setProperty("--bas-noms", Math.round(Math.min(basNoms + 3, H - 25)) + "px");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = out;
   LETTRAGE.nu = !svg.textContent.trim();   // un rendu sans une lettre ne mérite pas d'être gardé
@@ -510,7 +588,10 @@ if (window.MutationObserver && $("annonce")) new MutationObserver(() => {
 // la vue apparaît (0 × 0 → sa vraie taille).
 if (window.ResizeObserver) new ResizeObserver(() => rendreLettrage()).observe($("feutre"));
 function construireSieges() {
-  const t = tableCourante(), n = Math.max(1, Math.min(t.sieges, 6));
+  // Sept, pas six : trois tables du catalogue en ont sept (Le Front de Mer, Le Cercle,
+  // L'Aquarium) et on leur en retirait un. La table entre amis, elle, en a huit
+  // (NB_SIEGES, src/table-reseau.mjs) — le catalogue ne la borne pas.
+  const t = tableCourante(), n = Math.max(1, Math.min(t.sieges, 7));
   const moi = Math.floor((n - 1) / 2);
   T.sieges = [];
   for (let k = 0; k < n; k++) {
@@ -530,9 +611,11 @@ function rendreSieges() {
       const w = document.createElement("div");
       w.className = "m" + (T.actif && T.actif.siege === si && T.actif.main === hi ? " encours" : "");
       const md = document.createElement("div"); md.className = "main"; md.id = `m_${si}_${hi}`;
-      if (!h.ramassee) h.cards.forEach(c => md.appendChild(carteEl(c)));
+      // La pose est REJOUÉE ici : `carteEl` ne fabrique qu'une carte droite, et sans ce
+      // rappel les mains des joueurs se redressaient à chaque redessin (cf. appliquerPose).
+      if (!h.ramassee) h.cards.forEach((c, ci) => { const e = carteEl(c); md.appendChild(e); appliquerPose(e, c, ci, 1); });
       const sc = document.createElement("div"); sc.className = "score";
-      sc.textContent = scoreTexte(h);
+      ecrireScore(sc, scoreTexte(h));   // même écriture qu'au tic : le premier rendu a déjà les deux corps
       const rs = document.createElement("div"); rs.className = "issue " + (ISSUE[h.result] || "");
       rs.textContent = h.result || ""; rs.style.setProperty("--rang", si);   // la pastille surgit quand ce siège est payé
       // La pastille bascule à sa PREMIÈRE apparition seulement : rendreSieges()
@@ -548,6 +631,14 @@ function rendreSieges() {
     if (st.mains.length && st.mains.every(h => h.ramassee)) d.classList.add("saute");
     d.append(hs, ce, nm); el.appendChild(d);
   });
+  // 🚨 LE NOMBRE DE SIÈGES QU'ON VIENT DE POSER, une seule source. Le catalogue ne le sait
+  // pas : la table entre amis en a huit (NB_SIEGES) quelle que soit la table choisie, et
+  // trois du catalogue en ont sept. En dépendent, dans style.css : la largeur du tapis
+  // ([data-sieges="3"], ="4"), le plancher des vignettes vidéo (="7", ="8") et la bascule
+  // en pellicule sous 1360 px (="8").
+  // ⚠️ AVANT dimensionnerCartes() : c'est cet attribut qui décide de la pellicule, et
+  // dimensionnerCartes lit `flex-wrap` pour savoir dans quel mode il mesure.
+  $("v-table").dataset.sieges = T.sieges.length;
   dimensionnerCartes();
   rendreLettrage();
   // Sur téléphone les sièges défilent horizontalement : sans ce recentrage, le
@@ -636,36 +727,145 @@ function boutons(o) {
 // lointain (595 px) filait à 1,84 px/ms et le plus proche (165 px) à 0,67 — trois fois moins,
 // avec un pic relevé à 80 px par image, soit une largeur de carte entière franchie entre deux
 // images. `dureeVol` n'étalait la durée que de 1,53 × pour un écart de distance de 3,6 ×.
+// 🚨 --don NE SE LIT PAS ICI. Une propriété personnalisée que personne n'a enregistrée par
+// @property n'est pas résolue à sa valeur calculée : getPropertyValue rend le jeton brut
+// « clamp(150ms, calc(900ms * .72), 420ms) » (sondé le 06/09), parseFloat en fait NaN, et le
+// `|| 300` transformait le terme `don * 1.5` en une CONSTANTE de 450 ms — un plafond qui
+// n'avait jamais rien à voir avec la cadence qu'il prétendait suivre. --intervalle, lui, est
+// posé en ligne par poserIntervalle() : il se parse (900 ms sondés). Le plafond ne s'écrit
+// donc plus qu'en fonction de lui. .80 (et non .95) laisse une centaine de millisecondes de
+// repos entre la pose d'une carte et le départ de la suivante : c'est ce silence qui fait
+// entendre douze gestes au lieu d'un roulement.
+// --don reste posé par .scene / .plateau (style.css) : les exercices s'en servent VRAIMENT,
+// par var() en CSS, où il est bien résolu. C'est le lire en JS qui ne marchait pas.
 function dureeVol(d) {
-  const cs = getComputedStyle($("plateau"));
-  const don = parseFloat(cs.getPropertyValue("--don")) || 300, slot = parseFloat(cs.getPropertyValue("--intervalle")) || 450;
-  // Le plafond reste l'intervalle entre deux cartes (sinon elles se rattrapent) et la cadence
-  // choisie (--don) : une donne rapide reste une donne rapide, elle est juste homogène.
-  return Math.round(Math.max(150, Math.min(slot * .95, don * 1.5, d / 1.2)));
+  const slot = parseFloat(getComputedStyle($("plateau")).getPropertyValue("--intervalle")) || 450;
+  return Math.round(Math.max(190, Math.min(slot * .80, d / 1.55)));
 }
 const DELAI_VOL = 40;   // ms : la main du croupier part en même temps que la carte (croupier.js)
-function animerDepuisSabot(e, cr) {
+/* `viser` (facultatif) = l'instant où la carte doit se POSER. Sans lui (un tirage isolé, une
+   carte rejouée par reseau.js), on garde le retard fixe d'avant.
+   ── Mesuré le 06/09 sur une donne complète : les DÉPARTS étaient métronomiques (367 ms ± 2)
+   mais les vols duraient de 150 à 342 ms, donc les POSES — la seule chose qu'on voie et qu'on
+   entende — s'espaçaient de 229 à 562 ms, et deux cartes se retrouvaient en l'air ensemble.
+   On cadence donc sur l'ARRIVÉE : chaque carte attend le temps qu'il faut avant de partir. */
+function animerDepuisSabot(e, cr, viser) {
   const s = $("sabot").getBoundingClientRect();
-  // Le CENTRE de la carte part du centre du sabot : à l'échelle .74, elle tient tout
+  // Le CENTRE de la carte part du centre du sabot : à l'échelle .80, elle tient tout
   // entière dans sa boîte et en SORT. Mesuré le 05/09 avec le haut de la carte à
   // sabot.top + 6 : centrée 20 px sous le milieu du sabot, elle dépassait de 18 px
   // sous lui — une carte entière posée sur le feutre avant de partir.
   let dx = s.left + s.width / 2 - (cr.left + cr.width / 2), dy = s.top + s.height * .5 - (cr.top + cr.height / 2);
+  /* …mais partir du CENTRE, c'est naître à l'intérieur de la boîte : sondé le 06/09,
+     chaque carte passait ses 8 premières images DERRIÈRE #sabot (128 ms), puis 6 autres
+     derrière .rangee-haute et les cartes du croupier — 65 % du vol invisible. On décale
+     donc le départ à la BOUCHE du sabot, dans le sens du trajet : le vecteur garde sa
+     direction et perd .42 de la plus petite dimension du sabot (24 px à 1280 × 800). */
+  const brut = Math.hypot(dx, dy) || 1, bouche = Math.min(s.width, s.height) * .42;
+  const recul = Math.max(0, 1 - bouche / brut); dx *= recul; dy *= recul;
+  // ⚠️ Les sièges du bord sont TOURNÉS (--tilt) : le vecteur, mesuré à l'écran, doit passer
+  // dans le repère du siège — sans quoi la carte de Marc naissait 88 px sous le sabot.
   const siege = e.closest(".siege");
   if (siege && window.DOMMatrixReadOnly) {
     try {
       const inv = new DOMMatrixReadOnly(getComputedStyle(siege).transform).inverse();
       const v = inv.transformPoint(new DOMPoint(dx, dy, 0, 0)); dx = v.x; dy = v.y;
-    } catch (err) {}
+    } catch (err) { log("repere-siege", err); }
   }
   e.style.setProperty("--dx", dx + "px"); e.style.setProperty("--dy", dy + "px");
-  const duree = dureeVol(Math.hypot(dx, dy));
-  e.style.animationDuration = duree + "ms"; e.style.animationDelay = DELAI_VOL + "ms";
-  e.addEventListener("animationend", () => { e.classList.remove("carte--entre"); e.style.animationDuration = ""; e.style.animationDelay = ""; }, { once: true });
+  const dist = Math.hypot(dx, dy) || 1, duree = dureeVol(dist);
+  // Le sens du trajet, dans le repère de la carte : le sabot est en (--dx, --dy), donc on
+  // va vers l'opposé. Trois choses en dépendent, et une seule les calcule.
+  const ux = -dx / dist, uy = -dy / dist;
+  // ① La PORTANCE suit la distance. Une portance fixe de 30 px faisait décoller la carte
+  //    du croupier, à 165 px du sabot, autant que celle de Léa à 595 : elle VOLAIT. Ici
+  //    8,7 px au plus loin, 2 px pour le croupier — elle SKIMME le feutre.
+  e.style.setProperty("--leve", Math.min(9, dist * .012).toFixed(1) + "px");
+  // ② Le DÉPASSEMENT : 4 px au-delà de sa place, dans le sens du trajet, avant de revenir.
+  e.style.setProperty("--ovx", (ux * 4).toFixed(2) + "px"); e.style.setProperty("--ovy", (uy * 4).toFixed(2) + "px");
+  // ③ La TRAÎNÉE part vers l'ARRIÈRE (le sabot). --tang est l'angle CSS du dégradé :
+  //    une direction (vx, vy) à l'écran s'écrit atan2(vx, −vy) en degrés de gradient.
+  //    --toff la pousse derrière la carte, TANGENTE à elle : le rayon du rectangle de la carte
+  //    dans la direction du trajet, plus celui de l'ellipse de la traînée. Vu à l'écran le
+  //    06/09 : à .62 largeur elle recouvrait la moitié de la carte et la lavait (on croyait la
+  //    carte transparente) ; à deux demi-diagonales elle s'en DÉTACHAIT — une flaque de lumière
+  //    posée sur le feutre à côté d'une carte. Une carte n'est pas un carré : c'est le rayon
+  //    dans LA direction du vol qu'il faut, pas une demi-largeur.
+  const hw = cr.width / 2 || 42, hh = cr.height / 2 || 59, pu = 1e-3;
+  const rCarte = Math.min(Math.abs(ux) > pu ? hw / Math.abs(ux) : 1e6, Math.abs(uy) > pu ? hh / Math.abs(uy) : 1e6);
+  const rTrainee = 1 / (Math.hypot(ux / hw, uy / hh) || 1 / hw);
+  e.style.setProperty("--tbx", (-ux).toFixed(3)); e.style.setProperty("--tby", (-uy).toFixed(3));
+  e.style.setProperty("--toff", (rCarte + rTrainee).toFixed(1) + "px");
+  e.style.setProperty("--tang", (Math.atan2(-ux, uy) * 180 / Math.PI).toFixed(1) + "deg");
+  const reduit = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  // Le retard ABSORBE l'écart de durée entre un vol court et un vol long. Sous turbo (un clic
+  // sur le feutre pendant la donne) la visée est dépassée d'office : on retombe sur le retard
+  // fixe plutôt que de laisser une carte attendre une horloge qu'on vient de bousculer.
+  let delai = DELAI_VOL;
+  if (reduit) delai = 0;
+  else if (viser && !T.turbo) delai = Math.max(0, Math.min(900, Math.round(viser - performance.now() - duree)));
+  e.style.animationDuration = duree + "ms"; e.style.animationDelay = delai + "ms";
+  // 🚨 …ET les MÊMES en propriétés personnalisées, pour la TRAÎNÉE. Elle vit sur un
+  // pseudo-élément, et `animation-duration` / `animation-delay` ne sont pas héritées : posées
+  // en ligne sur la carte elles ne l'atteignent JAMAIS. Elle tournait donc sur --don (356 ms
+  // pendant la donne) pendant que la carte volait 190, et démarrait à l'instant du clic —
+  // c'est-à-dire qu'elle brillait sur le feutre AVANT que la carte ne parte. Les propriétés
+  // personnalisées, elles, descendent jusqu'au ::after.
+  // ⚠️ Le geler dans une sonde ne le montre PAS : forcer les quatre animations au même
+  //    currentTime les remet en phase et masque exactement le décalage qu'on cherche.
+  e.style.setProperty("--don", duree + "ms"); e.style.setProperty("--tdelai", delai + "ms");
+  // Le groupe qui porte la carte ne passe au-dessus de la rangée haute que 55 ms après le
+  // DÉPART RÉEL (style.css, .sieges:has / .croupier:has). Sans ce report, une carte qui attend
+  // son tour restait posée SUR le sabot, à moitié dehors, jusqu'à 200 ms (sondé le 06/09) :
+  // elle ne sortait plus du sabot, elle flottait dessus.
+  const f = $("feutre"); if (f) f.style.setProperty("--sortie", (delai + 55) + "ms");
+  e.addEventListener("animationend", () => { e.classList.remove("carte--entre");
+    e.style.animationDuration = ""; e.style.animationDelay = ""; e.style.removeProperty("--don"); e.style.removeProperty("--tdelai"); }, { once: true });
   e.classList.add("carte--entre");
-  return { duree, delai: DELAI_VOL };
+  // ⚠️ En mouvement réduit, le CSS ramène l'animation à 1 ms par !important : annoncer 342 ms
+  //    au bus faisait arriver le clic de la pose (socle.js) 341 ms après la carte.
+  return { duree: reduit ? 1 : duree, delai };
 }
-async function tirer(main, hote, cachee, qui) {
+/* Deux cartes ne sont jamais posées EXACTEMENT pareil : un croupier n'aligne pas au réglet.
+   La pose est TIRÉE DE LA CARTE elle-même (rang, couleur) et de son rang dans la main — la
+   même main rejouée se repose à l'identique, ce n'est pas un générateur d'aléatoire qui
+   ferait frémir la table à chaque redessin. ±1,6° et ±2 px chez les joueurs ; le croupier,
+   qui pose devant lui à deux mains, est trois fois plus droit. */
+function poseCarte(c, i) {
+  let h = (i + 1) * 2654435761;
+  const s = String((c && c.r) || "") + String((c && c.suit) || "");
+  for (let k = 0; k < s.length; k++) h = (h * 31 + s.charCodeAt(k)) | 0;
+  h = Math.abs(h);
+  return { angle: ((h % 33) - 16) / 10, dev: ((h >> 5) % 5) - 2 };
+}
+// 🚨 POSER une carte, c'est le geste de croupier — et il doit être fait AUX DEUX ENDROITS
+// où une carte apparaît, sinon il ne survit pas au premier redessin. C'était le cas :
+// `tirer()` posait l'angle à la création, mais `rendreSieges()` reconstruit chaque main avec
+// `carteEl(c)` seul — donc au RÈGLEMENT, sondé le 07/09, toutes les cartes des joueurs
+// avaient `--pose` et `--dev` « absent » (rotate: 0) pendant que le croupier, dont la main
+// vit dans #dMain qu'on ne reconstruit pas, gardait −0,49° et 0,34°. Sur la seule image que
+// le joueur étudie vraiment, celle où il lit son résultat, les sept mains étaient alignées au
+// réglet, comme imprimées, à côté d'une main de croupier restée de travers.
+// ⚠️ Le calcul est DÉTERMINISTE (poseCarte hache la carte et son rang dans la main) et la
+// correction anti-parallèle lit la carte PRÉCÉDENTE : rejoué dans l'ordre sur une main
+// entière, il rend exactement les mêmes angles qu'à la donne. C'est ce qui permet de le
+// rappeler sans que le tapis bouge.
+function appliquerPose(e, c, i, droit) {
+  const ps = poseCarte(c, i);
+  // ⚠️ Deux cartes VOISINES parallèles, c'est exactement ce qu'on répare : le hachage seul
+  // les rapproche une fois sur trente-trois (mesuré le 06/09 — la main de Sonia, −0,7° et
+  // −0,7°). Trop près de sa voisine, la carte bascule de l'autre côté. Ça reste déterministe :
+  // la voisine l'est aussi, la même main rejouée se repose à l'identique.
+  let ang = ps.angle;
+  const prec = e.previousElementSibling;
+  if (prec) {
+    const a0 = parseFloat(prec.style.getPropertyValue("--pose")) || 0;
+    if (Math.abs(ang * droit - a0) < .5 * droit) ang = (a0 >= 0 ? -1 : 1) * Math.max(.5, Math.abs(ang));
+  }
+  e.style.setProperty("--pose", (ang * droit).toFixed(2) + "deg");
+  e.style.setProperty("--dev", (ps.dev * droit).toFixed(1) + "px");
+}
+async function tirer(main, hote, cachee, qui, viser) {
   // Filet de sécurité : plutôt remélanger que distribuer une carte inexistante.
   if (!T.sabot.length) { const t = tableCourante(); const s = await sabotProuvable(t.jeux);
     T.sabot = s.cartes; T.graine = s.graine; T.empreinte = s.empreinte; T.revele = false;
@@ -677,6 +877,9 @@ async function tirer(main, hote, cachee, qui) {
   // avant l'insertion, animées de leur ancienne place vers la nouvelle.
   const avant = [...hote.children].map(x => x.getBoundingClientRect().left);
   const e = carteEl(c, cachee); hote.appendChild(e);
+  // 🚨 La pose est posée À LA CRÉATION, et c'est le REPOS qui la porte (.main .carte, style.css) :
+  // écrite seulement pendant le vol, elle disparaîtrait d'un coup à la fin de l'animation.
+  appliquerPose(e, c, main.length - 1, qui && qui.siege === "croupier" ? .375 : 1);
   // Une carte de plus dans un siège : l'éventail se resserre pour qu'elle tienne.
   // Jamais pour le croupier : sa rangée a une géométrie fixée avant la première carte.
   if (qui && qui.siege !== "croupier") dimensionnerCartes();
@@ -690,14 +893,16 @@ async function tirer(main, hote, cachee, qui) {
     const dispo = bloc.clientWidth - (qui ? qui.offsetWidth : 0), w = e.offsetWidth || 84, k = hote.children.length;
     hote.style.setProperty("--pas", Math.max(w * .3, Math.min(w * .62, (dispo - w) / (k - 1))).toFixed(1) + "px");
   }
-  const vol = animerDepuisSabot(e, cr);
+  const vol = animerDepuisSabot(e, cr, viser);
   if (!matchMedia("(prefers-reduced-motion:reduce)").matches) {
     // Mesuré le 05/09 : la 1re carte glissait 150 ms AVANT que la 2e n'atterrisse. Elle
-    // attend les trois quarts du vol RÉEL de la carte : elle bouge quand on la touche.
+    // attend le vol RÉEL de la carte : elle bouge quand on la touche.
+    // .72 laissait encore 96 ms d'avance (mesuré le 06/09) — l'éventail s'écartait devant une
+    // carte qui n'était pas là. À .92, et en 170 ms, le geste EST la poussée de la carte.
     [...hote.children].slice(0, -1).forEach((x, i) => {
       const dx = avant[i] - x.getBoundingClientRect().left;
       if (Math.abs(dx) > .5) x.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }],
-        { duration: 200, delay: Math.round(vol.delai + vol.duree * .72), easing: "cubic-bezier(.3,0,.2,1)", fill: "backwards" });
+        { duration: 170, delay: Math.round(vol.delai + vol.duree * .92), easing: "cubic-bezier(.2,.7,.3,1)", fill: "backwards" });
     });
   }
   // La main du croupier part AVEC la carte (même retard, croupier.js lit `duree` et
@@ -706,7 +911,9 @@ async function tirer(main, hote, cachee, qui) {
     carte: c, cachee: !!cachee, el: e, duree: vol.duree, delai: vol.delai,
     depuis: { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 },
     vers: { x: cr.left + cr.width / 2, y: cr.top + cr.height / 2 } });
-  son("carte");
+  // Le chuintement du sabot part QUAND la carte en sort, pas 40 ms avant. (Le clic de la
+  // POSE, lui, est calé sur l'arrivée par socle.js, qui lit `duree` et `delai` du bus.)
+  son("carte", { apres: vol.delai / 1000 });
   if (!cachee) { T.rc += valeurCompte(c); T.vues++; }
   rafraichirBarre(); await pause(rythme()); return c;
 }
@@ -716,24 +923,43 @@ async function tirer(main, hote, cachee, qui) {
 // sous temps virtuel (la sonde) seule la première image est livrée, et un score resterait à
 // mi-chemin ; le dernier minuteur écrit toujours la valeur exacte.
 const SCORE_TICS = new WeakMap();
+/* Le NOMBRE et son QUALIFICATIF ne pèsent pas pareil : « 20 » porte la décision, « souple ·
+   doublé » la nuance. Séparés, le nombre peut être écrit GRAND (ton total, cf. .siege.toi
+   .score) sans que la ligne entière ne s'allonge. Mesuré le 06/09 à 1024 × 768, cinq sièges :
+   « 20 souple · doublé » d'un seul corps à 26 px faisait 328 px de large et s'écrivait SUR le
+   total de Sonia et sur celui de Karim ; en deux corps il en fait 218 — la largeur qu'il avait
+   AVANT (214 px), avec un chiffre pourtant une fois et demie plus gros, et plus aucune collision.
+   ⚠️ `textContent` reste EXACTEMENT la même chaîne (les deux morceaux se recollent) : la
+   comparaison d'égalité et le tic de comptage, plus bas, continuent de travailler dessus.
+   Le score du croupier n'a jamais de qualificatif — il ne change pas d'un pixel. */
+function ecrireScore(el, v) {
+  const m = /^(\d+)(.*)$/.exec(v);
+  if (!m) { el.textContent = v; return; }
+  el.textContent = "";
+  // ⚠️ Un <span>, PAS un <b> : #dScore EST déjà un <b>, et un <b> imbriqué y calculait un
+  // poids de 900 là où la ligne du croupier en demande 700 — le score du croupier changeait
+  // de graisse sans que personne ne l'ait demandé (mesuré le 06/09).
+  const b = document.createElement("span"); b.className = "chiffre"; b.textContent = m[1]; el.appendChild(b);
+  if (m[2]) { const q = document.createElement("span"); q.className = "qual"; q.textContent = m[2]; el.appendChild(q); }
+}
 function poserScore(el, v) {
   if (!el) return; v = String(v); if (el.textContent === v && !SCORE_TICS.has(el)) return;
   clearInterval(SCORE_TICS.get(el)); SCORE_TICS.delete(el);
   const m = /^(\d+)(.*)$/.exec(v), av = /^(\d+)/.exec(el.textContent || "");
   const reduit = matchMedia("(prefers-reduced-motion:reduce)").matches;
-  const fin = () => { el.textContent = v; el.classList.remove("bascule"); void el.offsetWidth; el.classList.add("bascule"); };
+  const fin = () => { ecrireScore(el, v); el.classList.remove("bascule"); void el.offsetWidth; el.classList.add("bascule"); };
   if (!m || reduit) return fin();
   const cible = +m[1], suffixe = m[2] || "", depart = av ? +av[1] : 0, n = Math.abs(cible - depart);
   if (!n) return fin();
   const sens = Math.sign(cible - depart), pas = Math.max(12, Math.round(250 / n)); let k = 0;
-  el.textContent = depart + suffixe; el.classList.add("compte");
-  const tic = setInterval(() => { k++; if (k >= n) { clearInterval(tic); SCORE_TICS.delete(el); el.classList.remove("compte"); fin(); return; } el.textContent = (depart + sens * k) + suffixe; }, pas);
+  ecrireScore(el, depart + suffixe); el.classList.add("compte");
+  const tic = setInterval(() => { k++; if (k >= n) { clearInterval(tic); SCORE_TICS.delete(el); el.classList.remove("compte"); fin(); return; } ecrireScore(el, (depart + sens * k) + suffixe); }, pas);
   SCORE_TICS.set(el, tic);
 }
-async function tirerSiege(si, hi) {
+async function tirerSiege(si, hi, viser) {
   const st = T.sieges[si], h = st && st.mains[hi], hote = $(`m_${si}_${hi}`);
   if (!h || !hote) return;
-  await tirer(h.cards, hote, false, { siege: si, main: hi });
+  await tirer(h.cards, hote, false, { siege: si, main: hi }, viser);
   const w = $(`m_${si}_${hi}`);
   if (w && w.parentNode) poserScore(w.parentNode.querySelector(".score"), scoreTexte(h));
 }
@@ -750,7 +976,7 @@ async function revelerCachee() {
   // quand la face devient lisible — pas avant que la carte ait bougé.
   emettre("croupier-revele", { carte: c, total: E.handTotal(T.croupier), el: e });
   await pause(reduit ? 30 : 460);
-  son("carte");
+  son("pose");   // une carte qu'on RETOURNE ne sort pas du sabot : elle claque sur le feutre.
   rafraichirBarre(); poserScore($("dScore"), E.handTotal(T.croupier));
   await pause(reduit ? 30 : 440);
 }
@@ -818,11 +1044,25 @@ async function distribuer() {
   // sorte : mesuré le 05/09 en rAF, elle partait 40 ms après le clic, la main encore à
   // 110 px du sabot — la carte voyageait seule, la main courait derrière.
   if (!matchMedia("(prefers-reduced-motion:reduce)").matches && matchMedia("(min-width:1000px)").matches) await pause(260);
+  /* LA DONNE SE CADENCE SUR LES ARRIVÉES. `vise` est l'instant où la PROCHAINE carte doit se
+     poser ; chaque vol retarde son départ d'autant qu'il faut pour tomber dessus. L'avance
+     initiale est le PLAFOND du vol (dureeVol ne dépasse jamais 80 % de l'intervalle) : plus
+     court, les cartes lointaines — les plus longues à voler — se feraient rattraper par le
+     plancher à zéro du retard, et on aurait remis la moitié de l'irrégularité qu'on retire.
+     C'est le seul écart au plan du 06/09, qui proposait une avance de 260 ms : sondé, elle
+     laisse tous les retards à 0 et ne cadence donc rien du tout. */
+  let vise = performance.now() + Math.max(190, Math.round(T.rythme * .80));
   for (let tour = 0; tour < 2; tour++) {
-    for (let si = 0; si < T.sieges.length; si++) await tirerSiege(si, 0);
+    for (let si = 0; si < T.sieges.length; si++) { await tirerSiege(si, 0, vise); vise += T.rythme; }
     // Sans carte cachée, le croupier ne prend qu'une carte : c'est toute la règle.
-    if (tour === 0) { await tirer(T.croupier, $("dMain"), false, CROUPIER); poserScoreCroupier(); }
-    else if (r.holeCard) await tirer(T.croupier, $("dMain"), true, CROUPIER);
+    if (tour === 0) {
+      await tirer(T.croupier, $("dMain"), false, CROUPIER, vise); vise += T.rythme; poserScoreCroupier();
+      // LE BATTEMENT. Un croupier marque un temps au bout du premier tour — il repart de la
+      // gauche. Sans lui, douze cartes font un seul roulement et on ne compte plus rien.
+      const battement = Math.round(rythme() * .55);
+      await pause(battement); vise += battement;
+    }
+    else if (r.holeCard) { await tirer(T.croupier, $("dMain"), true, CROUPIER, vise); vise += T.rythme; }
   }
   T.rythme = 0; poserIntervalle(vitesse());
   if (r.holeCard && E.cardValue(T.croupier[0]) === 11 && T.toi) {
@@ -1004,10 +1244,10 @@ $("bAbandon").onclick = monAction(async () => {
   const b = $("bAbandon");
   if ((DB.mainsJouees || 0) < 10 && !ABANDON_ARME) {
     b.innerHTML = "Rendre la moitié ?<kbd>A</kbd>"; b.classList.add("confirme");
-    ABANDON_ARME = setTimeout(() => { ABANDON_ARME = 0; b.innerHTML = "Abandon<kbd>A</kbd>"; b.classList.remove("confirme"); }, 3000);
+    ABANDON_ARME = setTimeout(() => { ABANDON_ARME = 0; b.innerHTML = "Abandonner<kbd>A</kbd>"; b.classList.remove("confirme"); }, 3000);
     return;
   }
-  clearTimeout(ABANDON_ARME); ABANDON_ARME = 0; b.innerHTML = "Abandon<kbd>A</kbd>"; b.classList.remove("confirme");
+  clearTimeout(ABANDON_ARME); ABANDON_ARME = 0; b.innerHTML = "Abandonner<kbd>A</kbd>"; b.classList.remove("confirme");
   abandonner(T.sieges.indexOf(T.toi), T.actif.main); son("alerte"); await mainSuivante();
 });
 async function jouerCroupier() {

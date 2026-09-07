@@ -194,7 +194,11 @@ for (const [nom, attendu] of refus) {
   const m = creerMicro();
   const r = await m.prendre();
   ok("sans mediaDevices : indisponible, sans lever", [m.etat, r.flux], ["indisponible", null]);
-  ok("sans mediaDevices : la phrase renvoie vers le site", /GitHub Pages/.test(m.raison), true);
+  ok("sans mediaDevices : la phrase renvoie vers le site", /ouvre le site/.test(m.raison), true);
+// ⚠️ Et elle ne NOMME aucun hébergeur : « GitHub Pages » écrit en toutes lettres deviendra
+// faux le jour du déménagement sous le nom de domaine propre, dans une phrase que personne
+// ne relit. Même garde que visio.test.mjs sur MESSAGE_ARTEFACT.
+ok("… sans nommer d'hébergeur", /github|pages|netlify|vercel/i.test(m.raison), false);
   navigateurNormal();
 }
 

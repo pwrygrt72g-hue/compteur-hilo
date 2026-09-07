@@ -104,7 +104,17 @@ const app = MORCEAUX.map(f => {
 }).join("\n");
 const tete = readFileSync("src/app/tete.html", "utf8");
 
-const out = `${tete}
+// ── L'adresse du site : UNE constante, dans src/visio.mjs ────────────────────────────
+// Le gabarit écrit `__LIEN_SITE__` ; c'est ici qu'il devient une URL. Sans ce détour, la
+// phrase « joue sur la version en ligne » du panneau À plusieurs portait l'adresse en dur,
+// et le jour du déménagement sous le nom de domaine propre il aurait fallu penser à ce
+// href-là — celui qu'on ne relit jamais, dans un paragraphe qu'on ne lit qu'en panne.
+// On échoue franchement plutôt que de livrer un lien mort : un href resté `__LIEN_SITE__`
+// ne se voit qu'en cliquant.
+const LIEN_SITE = (readFileSync("src/visio.mjs", "utf8").match(/export const LIEN_SITE = "([^"]+)"/) || [])[1];
+if (!LIEN_SITE) throw new Error("src/visio.mjs : LIEN_SITE introuvable — le gabarit ne peut plus être résolu");
+
+let out = `${tete}
 <style>
 ${css}
 </style>
@@ -119,11 +129,12 @@ ${app}
 </script>
 `;
 // Deux sorties depuis les mêmes pièces :
-//  · index.html  — document complet, pour GitHub Pages et le fichier local.
+//  · index.html  — document complet, pour l'hébergement statique et le fichier local.
 //    Sans <meta charset>, un serveur qui n'annonce pas l'encodage fait lire
 //    la page en latin-1 : tous les accents cassent. Vérifié, pas supposé.
 //  · artefact.html — le même corps SANS doctype ni <head>, parce que l'outil
 //    Artifact enveloppe le fichier lui-même et refuse ces balises.
+if (out.includes("__LIEN_SITE__")) out = out.split("__LIEN_SITE__").join(LIEN_SITE);
 writeFileSync("artefact.html", out);
 writeFileSync("index.html", `<!doctype html>
 <html lang="fr">
@@ -144,11 +155,17 @@ console.log(`\nindex.html écrit : ${ko} Ko, ${out.split("\n").length} lignes, e
 // `window.PHOTOS_CREDITS` (auteur, licence, source). Une CC BY sans crédit est
 // une violation : le crédit voyage donc avec les photos, dans la page.
 // Deux régimes, parce que les deux sorties ne vivent pas au même endroit :
-//  · index.html   — des URL relatives ; GitHub Pages sert static/photos/*.webp.
+//  · index.html   — des URL relatives, servies telles quelles. Il reçoit EN PLUS
+//    `window.PHOTOS_PETIT` (les mêmes clés vers les fichiers 640 px) : le hall en
+//    fait un srcset et n'affiche plus une photo de 1600 px dans une vignette de
+//    413 px. Mesuré le 07/09 : 2 530 Ko de photos avant, 913 Ko après sur un écran
+//    non-Retina, la même chose sur un écran Retina (qui reprend le plein format).
 //  · artefact.html — des data: URI, parce que la CSP de l'artefact bloque toute
 //    image externe SANS ERREUR : les versions -petit, et le plein format pour le
 //    hall seul. Le poids injecté est affiché et plafonné à 6 Mo — l'artefact
 //    entier doit rester sous 16 Mo, et personne ne le verrait grossir sinon.
+//    Il n'a PAS de PHOTOS_PETIT : les images y sont déjà inlinées et déjà réduites,
+//    un srcset n'aurait rien à choisir et doublerait le poids injecté.
 {
   const CREDITS = "static/photos/credits.json";
   if (!existsSync(CREDITS)) {
@@ -158,9 +175,12 @@ console.log(`\nindex.html écrit : ${ko} Ko, ${out.split("\n").length} lignes, e
     const dataUri = f => "data:image/webp;base64," + readFileSync(f).toString("base64");
     const photos = mode => Object.fromEntries(credits.map(c => [c.cle,
       mode === "pages" ? c.fichier : dataUri(c.cle === "hall" ? c.fichier : c.fichier_petit)]));
+    const petites = () => Object.fromEntries(credits.filter(c => c.fichier_petit).map(c => [c.cle, c.fichier_petit]));
     // `</` échappé : une balise fermante dans une chaîne JSON couperait le <script>.
     const js = v => JSON.stringify(v).replace(/<\//g, "<\\/");
-    const script = mode => `<script>window.PHOTOS=${js(photos(mode))};window.PHOTOS_CREDITS=${js(credits)};</script>\n`;
+    const script = mode => `<script>window.PHOTOS=${js(photos(mode))};`
+      + (mode === "pages" ? `window.PHOTOS_PETIT=${js(petites())};` : "")
+      + `window.PHOTOS_CREDITS=${js(credits)};</script>\n`;
     const injecter = (page, s) => {
       const i = page.indexOf("<script>");
       if (i < 0) throw new Error("photos : aucun <script> où s'accrocher dans la page");
@@ -172,5 +192,24 @@ console.log(`\nindex.html écrit : ${ko} Ko, ${out.split("\n").length} lignes, e
     writeFileSync("artefact.html", injecter(readFileSync("artefact.html", "utf8"), sArt));
     writeFileSync("index.html", injecter(readFileSync("index.html", "utf8"), sIdx));
     console.log(`photos : ${credits.length} clés · ${Math.round(sIdx.length / 1024)} Ko dans index.html · ${mo.toFixed(2)} Mo en data: URI dans artefact.html`);
+
+    // ── La liste du service worker ne peut pas dériver ────────────────────────
+    // sw.js précache les versions réduites pour que le hall garde ses photos hors ligne.
+    // Cette liste est écrite À LA MAIN là-bas (un service worker ne se construit pas) :
+    // rien n'empêcherait d'ajouter une photo ici et de l'oublier là, et le trou ne se
+    // verrait QUE dans un avion. On compare donc les deux ensembles, dans les deux sens.
+    const attendues = new Set(credits.filter(c => c.fichier_petit).map(c => c.fichier_petit));
+    const sw = readFileSync("sw.js", "utf8");
+    const bloc = sw.match(/const PHOTOS = \[([\s\S]*?)\]\s*\.map/);
+    if (!bloc) throw new Error("sw.js : le tableau PHOTOS est introuvable — la vérification ne peut plus se faire");
+    const listees = new Set([...bloc[1].matchAll(/"([^"]+)"/g)].map(m => `static/photos/${m[1]}-petit.webp`));
+    const manquantes = [...attendues].filter(p => !listees.has(p));
+    const fantomes = [...listees].filter(p => !attendues.has(p) || !existsSync(p));
+    if (manquantes.length || fantomes.length) throw new Error(
+      "sw.js : la liste des photos hors ligne ne correspond plus à credits.json.\n"
+      + (manquantes.length ? `  à AJOUTER dans sw.js : ${manquantes.join(", ")}\n` : "")
+      + (fantomes.length ? `  à RETIRER de sw.js (absentes du disque ou du catalogue) : ${fantomes.join(", ")}\n` : ""));
+    const poids = [...attendues].reduce((n, p) => n + readFileSync(p).length, 0);
+    console.log(`hors ligne : ${attendues.size} photos réduites précachées par sw.js · ${Math.round(poids / 1024)} Ko`);
   }
 }

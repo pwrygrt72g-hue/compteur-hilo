@@ -1,5 +1,5 @@
 <header><div class="tete">
-  <button class="marque" data-vue="accueil" title="Retour au hall"><span class="emb"></span><span class="nom">Le Sabot</span></button>
+  <button class="marque" data-vue="accueil" title="Retour au hall"><span class="emb"></span><span class="nom">Acewise21</span></button>
   <!-- Le hall EST le menu : on n'arrive à une salle qu'en poussant sa porte. Les huit
        vues restent adressables par ces boutons (raccourcis, sonde, banc, liens internes,
        modales « Changer de table ») — un DOM qui les perdrait casserait tout ça sans le dire. -->
@@ -75,8 +75,8 @@
      « Le salon » d'avant n'est plus une vue : c'est l'ancre #lesTables de ce hall. -->
 <section class="vue" id="v-accueil">
   <div class="hall-heros" id="hallHeros" data-photo="hall">
-    <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async">
-    <!-- Le titre est la PROMESSE, pas la marque : « Le Sabot » est déjà dans l'en-tête, 40 px
+    <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async" sizes="100vw">
+    <!-- Le titre est la PROMESSE, pas la marque : « Acewise21 » est déjà dans l'en-tête, 40 px
          plus haut (mesuré le 05/09 : le héros prenait 586 des 800 px pour répéter ce nom, et
          les tables tombaient sous le pli). Le prénom se donne en un clic sur la salutation,
          pas dans un formulaire qu'on remplit en rentrant de soirée. -->
@@ -125,17 +125,17 @@
       <div class="hall-entete"><div><span class="grave">Trois muscles, travaillés séparément</span><h2 id="hEntrainement">La salle d'entraînement</h2></div></div>
       <div class="hall-grille trois">
         <button class="salle-carte" data-vue="exercices" data-photo="entrainement">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
           <span class="bas"><span class="lieu">Le réflexe</span><span class="nom">Exercices</span>
             <span class="sous">Les cartes défilent à la vitesse que tu veux ; un sabot chronométré ; le coup d'œil sur le tas de défausse.</span></span>
         </button>
         <button class="salle-carte" data-vue="strategie" data-photo="strategie">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
           <span class="bas"><span class="lieu">La décision</span><span class="nom">Stratégie</span>
             <span class="sous">La stratégie de base main par main, puis les écarts au compte — calculés pour la table où tu es assis.</span></span>
         </button>
         <button class="salle-carte" data-vue="concentration" data-photo="concentration">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
           <span class="bas"><span class="lieu">Le sang-froid</span><span class="nom">Concentration</span>
             <span class="sous">Tu comptes en silence pendant que la table te parle et que le chef de table te fixe.</span></span>
         </button>
@@ -147,9 +147,9 @@
     <section class="hall-salle" id="prive" aria-labelledby="hPrive">
       <div class="hall-entete"><div><span class="grave">Sans serveur, avec vos caméras</span><h2 id="hPrive">Entre amis</h2></div></div>
       <button class="salle-carte grande" data-vue="ensemble" data-photo="prive">
-        <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+        <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="100vw"><span class="voile"></span>
         <span class="bas"><span class="lieu">Sans serveur, avec vos caméras</span><span class="nom">Jouer à plusieurs</span>
-          <span class="sous">Jusqu'à cinq autour d'une table : le même sabot, un croupier, chacun sa main — ou la course au comptage, où chacun annonce son compte.</span></span>
+          <span class="sous">Jusqu'à <span data-nb-sieges>huit</span> autour d'une table : le même sabot, un croupier, chacun sa main — ou la course au comptage, où chacun annonce son compte.</span></span>
       </button>
     </section>
 
@@ -158,17 +158,17 @@
       <div class="hall-entete"><div><span class="grave">Derrière la porte du fond</span><h2 id="hBureau">Le bureau</h2></div></div>
       <div class="hall-grille bureau">
         <button class="salle-carte" data-vue="progres" data-photo="jetons">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
           <span class="bas"><span class="lieu">Le registre</span><span class="nom">Progression</span>
             <span class="sous">Tes sessions, ton écart au compte réel, ton journal.</span></span>
         </button>
         <button class="salle-carte" id="bHallReglages" data-photo="cartes">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
           <span class="bas"><span class="lieu">Le tiroir</span><span class="nom">Réglages</span>
             <span class="sous">Le système de comptage, le thème, les sons.</span></span>
         </button>
         <button class="salle-carte" data-vue="dons" data-photo="macao">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="voile"></span>
+          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
           <span class="bas"><span class="lieu">La caisse</span><span class="nom">Soutenir</span>
             <span class="sous">Tout est ouvert et le restera. Ce que l'application coûte, et à quoi sert un don.</span></span>
         </button>
@@ -287,7 +287,7 @@
       <button class="btn verre" id="bReste" disabled title="Rester : je garde ma main telle quelle">Rester<kbd>R</kbd></button>
       <button class="btn verre" id="bDouble" disabled title="Doubler : je double ma mise et je reçois une seule carte, puis je reste">Doubler<kbd>D</kbd></button>
       <button class="btn verre" id="bSepare" disabled title="Séparer : je joue deux mains à partir de ma paire, une mise sur chacune">Séparer<kbd>S</kbd></button>
-      <button class="btn verre" id="bAbandon" disabled title="Abandon : je rends la main et je récupère la moitié de ma mise">Abandon<kbd>A</kbd></button>
+      <button class="btn verre" id="bAbandon" disabled title="Abandonner : je rends la main et je récupère la moitié de ma mise">Abandonner<kbd>A</kbd></button>
     </div>
     <!-- Les utilitaires de la table, en retrait derrière les coups : ils ne se jouent pas à chaque
          main. Le menu « Plus » existe à TOUTES les largeurs (mesuré le 06/09 : au-delà de 1400 px
@@ -334,9 +334,18 @@
 
 <!-- ════════════════════ EXERCICES ════════════════════ -->
 <section class="vue" id="v-exercices" hidden>
-  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
+  <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est.
+       ⚠️ Son `sizes` est celui de la VIGNETTE qui porte la même clé dans le hall, pas sa
+       largeur réelle : les deux doivent tomber dans la même case du srcset, sinon le
+       navigateur télécharge deux fois la même photo. La bande fait 136 px de haut,
+       assombrie à 58 % sous un dégradé — le 640 w y est indiscernable (vérifié en capture).
+       Le seuil vient d'un balayage de largeurs du 07/09, pas d'une intuition : la grille est
+       intrinsèque (auto-fill, minmax 340px), aucun @media ne la pilote. Elle passe à UNE
+       colonne sous ~730 px (mesuré : vignette de 709 px à 720, de 355 px à 740) et culmine
+       à 526 px en deux colonnes vers 1080. ⚠️ Un seuil à 860 px ferait redemander le plein
+       format entre 730 et 860, où la grille tient encore deux colonnes de 420 px. -->
   <div class="bandeau-salle" data-photo="entrainement">
-    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px">
     <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Exercices</h2><p>Le réflexe : les cartes défilent, tu tiens le compte.</p></div>
     <!-- Démarrage en UN clic, avec des réglages raisonnables : le bouton est ici, à côté du titre
          (les critiques, 05/09 : sept sélecteurs, un curseur et deux cases AVANT « Commencer »). -->
@@ -408,7 +417,11 @@
       <h2>Ton compte</h2>
       <div class="demande">
         <label class="ch"><span class="grave">Compte courant</span><input type="number" id="rCompte" placeholder="0"></label>
-        <label class="ch" id="boiteJeux"><span class="grave">Jeux restants</span><input type="number" id="rJeux" step="0.5" placeholder="4,5"></label>
+        <!-- ⚠️ PAS DE `placeholder` ICI, ET C'EST VOLONTAIRE. Il valait « 4,5 » : la bonne
+             réponse sous l'ancienne pénétration, écrite en gris dans la case même où on
+             demande de la trouver. Un exercice qui souffle sa solution ne mesure plus rien.
+             `step="0.5"` dit déjà qu'on répond au demi-jeu près, et le libellé dit le reste. -->
+        <label class="ch" id="boiteJeux"><span class="grave">Jeux restants</span><input type="number" id="rJeux" step="0.5"></label>
         <label class="ch" id="boiteTC"><span class="grave">Compte vrai</span><input type="number" id="rTC" placeholder="0"></label>
         <button class="btn" id="rVerifier">Vérifier</button>
       </div>
@@ -451,7 +464,7 @@
 <section class="vue" id="v-strategie" hidden>
   <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
   <div class="bandeau-salle" data-photo="strategie">
-    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px">
     <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Stratégie</h2><p>La décision : la bonne main, main par main, pour la table où tu es assis.</p></div>
   </div>
   <div class="onglets" id="ongletsStrat" role="tablist">
@@ -473,14 +486,18 @@
   <div class="laque pad" id="stratGrille" hidden>
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
       <div><span class="grave">Stratégie calculée pour</span><h3 id="grilleTable" style="margin:2px 0 0">—</h3></div>
-      <p class="muet" style="font-size:var(--t-fin);margin:0">Tirer · Rester · Doubler · Séparer · Abandonner</p>
+      <p class="muet legende-grille" style="font-size:var(--t-fin);margin:0"><span><b class="H">H</b>Tirer</span><span><b class="S">S</b>Rester</span><span><b class="D">D</b>Doubler</span><span><b class="P">P</b>Séparer</span><span><b class="U">U</b>Abandonner</span></p>
     </div>
     <div class="defile" id="grilleHote" style="margin-top:12px"></div>
     <p class="muet" style="font-size:var(--t-fin);margin-top:10px">Cette grille n'est copiée de nulle part : elle est résolue depuis les règles de la table, à la construction du fichier. Change de table dans le salon et elle change avec.</p>
   </div>
+  <!-- La fiche de référence qu'on relit ENTRE DEUX MAINS : un tableau, pas une phrase.
+       Elle tenait en une seule coulée de 22 écarts séparés par des points médians — cinq
+       lignes de prose où l'on cherchait « 16 contre 10 » à l'œil, sur l'écran fait pour ça. -->
   <div class="laque pad" id="stratListe" hidden style="margin-top:12px">
     <span class="grave">Les écarts de cette table</span>
-    <p class="muet" id="listeEcarts" style="font-size:var(--t-petit);margin-top:6px"></p>
+    <p class="muet" style="font-size:var(--t-fin);margin:6px 0 8px">Les vingt-deux plus proches de zéro — ceux qui tombent le plus souvent. <b>Dès</b> = le compte vrai à partir duquel on change d'avis ; en dessous, la stratégie de base.</p>
+    <div class="defile"><table class="grille ecarts" id="listeEcarts"></table></div>
   </div>
 </section>
 
@@ -488,7 +505,7 @@
 <section class="vue" id="v-concentration" hidden>
   <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
   <div class="bandeau-salle" data-photo="concentration">
-    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px">
     <div class="bandeau-texte"><span class="grave">Salle d'entraînement</span><h2>Concentration</h2><p>Le sang-froid : compte sans te faire griller.</p></div>
   </div>
   <div class="laque pad" id="coReglages">
@@ -515,16 +532,32 @@
         <div class="scene" id="coScene"></div>
         <div class="progres"><i id="coBarre"></i></div>
         <div class="meta"><span id="coPos">0 / 80</span><span id="coReste"></span></div>
+        <!-- 🚨 LA BULLE VIENT AVANT LES BOUTONS, ET SA PLACE EST RÉSERVÉE (style.css, #coBulle).
+             Posée en absolu au bas du panneau, elle recouvrait 58 % de « Rester détendu » — le
+             seul geste qui la fasse taire, à faire en 1,3 s — et 100 % de « Quitter la table »
+             (mesuré le 07/09 à 1280 × 800). Le créneau est toujours là, vide ou plein : une
+             place qui apparaît fait bouger le bouton au moment précis où on va le viser. -->
+        <div id="coBulle"></div>
         <button class="detendu" id="coDetendu">Rester détendu <kbd style="opacity:.6">espace</kbd></button>
         <div class="rang-btn" style="margin-top:10px"><button class="btn creux" id="coStop">Quitter la table</button></div>
-        <div id="coBulle"></div>
       </div>
       <div class="laque pad">
         <span class="grave">Détecteur</span>
-        <div class="cam" id="coCamBoite"><video id="coVideo" playsinline muted></video><canvas id="coCanvas"></canvas><div class="hors" id="coCamHors">Caméra désactivée</div></div>
+        <!-- 🚨 UNE VIGNETTE SANS FLUX N'EST JAMAIS UN RECTANGLE NOIR : une silhouette, et un mot
+             qui dit pourquoi. C'est la règle des têtes des amis (style.css, « .visage ») et la
+             case « Utiliser la caméra » étant décochée par défaut, c'est ici qu'elle manquait le
+             plus : 296 × 222 d'aplat mort pour l'immense majorité des joueurs. -->
+        <div class="cam" id="coCamBoite">
+          <svg class="silhouette" viewBox="0 0 96 72" aria-hidden="true" focusable="false"><circle cx="48" cy="26" r="12" fill="currentColor"/><path d="M18 72c0-18 12-27 30-27s30 9 30 27z" fill="currentColor"/></svg>
+          <video id="coVideo" playsinline muted></video><canvas id="coCanvas"></canvas><div class="hors" id="coCamHors">Caméra désactivée</div>
+        </div>
         <p class="cadran muet" id="coCamEtat" style="font-size:var(--t-fin);margin-top:7px"></p>
-        <span class="grave" style="margin-top:10px">Ce qui t'a trahi</span>
-        <ul class="indices" id="coIndices"></ul>
+        <!-- L'intertitre et la liste voyagent ENSEMBLE : « Ce qui t'a trahi » au-dessus de rien
+             promet un contenu qui n'existe pas encore (style.css, .trahi:has(.indices:empty)). -->
+        <div class="trahi">
+          <span class="grave" style="margin-top:10px">Ce qui t'a trahi</span>
+          <ul class="indices" id="coIndices"></ul>
+        </div>
       </div>
     </div>
   </div>
@@ -549,15 +582,17 @@
 <section class="vue" id="v-ensemble" hidden>
   <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
   <div class="bandeau-salle" data-photo="prive">
-    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
-    <div class="bandeau-texte"><span class="grave">Entre amis</span><h2>Jouer à plusieurs</h2><p>Une vraie table jusqu'à cinq, ou la course au comptage — le même sabot pour tout le monde.</p></div>
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="100vw">
+    <div class="bandeau-texte"><span class="grave">Entre amis</span><h2>Jouer à plusieurs</h2><p>Une vraie table jusqu'à <span data-nb-sieges>huit</span>, ou la course au comptage — le même sabot pour tout le monde.</p></div>
   </div>
-  <!-- Deux façons de jouer à plusieurs : une VRAIE table de blackjack (jusqu'à cinq, des
+  <!-- Deux façons de jouer à plusieurs : une VRAIE table de blackjack (jusqu'à TR.NB_SIEGES
+       places — huit aujourd'hui ; les phrases visibles portent data-nb-sieges et sont
+       réécrites par ensemble.js, elles ne se recopient pas à la main), des
        mises, un croupier, l'hôte tient le sabot) — et la course au comptage, le mode
        historique (le même sabot défile, chacun annonce son compte). Même code de huit
        caractères, mais un code de table et un code de course ne se croisent jamais. -->
   <div class="laque pad" id="mpAccueil">
-    <h2 style="margin:0 0 10px;font-size:var(--t-titre)" id="mpTitre">Une vraie table, jusqu'à cinq</h2>
+    <h2 style="margin:0 0 10px;font-size:var(--t-titre)" id="mpTitre">Une vraie table, jusqu'à huit</h2>
     <div class="onglets" id="mpModes" role="tablist">
       <button role="tab" aria-selected="true" data-mode="table">Table de blackjack</button>
       <button role="tab" aria-selected="false" data-mode="course">Course au comptage</button>
@@ -577,7 +612,7 @@
         </div>
         <p class="muet" id="mpEtat" style="font-size:var(--t-petit);margin-top:12px"></p>
         <details class="mp-comment"><summary>Comment ça marche ?</summary>
-          <p class="muet" style="font-size:var(--t-fin);margin:6px 0 0">Sans serveur : les messages transitent par un courtier public, en clair — n'y écris rien de personnel. Celui qui ouvre la table tient le sabot ; les autres jouent leur main depuis leur navigateur. Sur une page publiée dont la politique de sécurité bloque les WebSocket, la table à plusieurs ne se connecte pas : elle se joue sur la <a href="https://pwrygrt72g-hue.github.io/compteur-hilo/" target="_blank" rel="noopener">version en ligne</a> de l'application — le reste marche partout.</p>
+          <p class="muet" style="font-size:var(--t-fin);margin:6px 0 0">Sans serveur : les messages transitent par un courtier public, en clair — n'y écris rien de personnel. Celui qui ouvre la table tient le sabot ; les autres jouent leur main depuis leur navigateur. Sur une page publiée dont la politique de sécurité bloque les WebSocket, la table à plusieurs ne se connecte pas : elle se joue sur la <a href="__LIEN_SITE__" target="_blank" rel="noopener">version en ligne</a> de l'application — le reste marche partout.</p>
         </details>
       </div>
       <!-- La table où l'on va s'asseoir : la carte du salon, telle quelle (reseau.js la remplit). -->
@@ -618,7 +653,7 @@
 <section class="vue" id="v-progres" hidden>
   <!-- Le bandeau de salle : une bande de photo et un titre, pour savoir où l'on est. -->
   <div class="bandeau-salle" data-photo="jetons">
-    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px">
     <div class="bandeau-texte"><span class="grave">Le bureau</span><h2 id="progTitre">Tes sessions</h2><p>Ton écart au compte réel, session après session.</p></div>
   </div>
   <!-- Sans session : UN seul état vide (progres.js) — pas trois panneaux vides et un bouton
@@ -641,15 +676,15 @@
 </section>
 
 <!-- ════════════════════ LA CAISSE ════════════════════
-     La page qui dit pourquoi Le Sabot est gratuit. Elle ne compte rien : ni les
+     La page qui dit pourquoi Acewise21 est gratuit. Elle ne compte rien : ni les
      visiteurs, ni les dons, ni les donateurs. Un compteur ou une jauge
      contrediraient les deux phrases qui font toute sa valeur — « donner ne
      débloque rien » et « je ne sais pas que tu es là ».
      Deux états de la caisse sont écrits ici en clair ; dons.js en cache un. -->
 <section class="vue" id="v-dons" hidden>
   <div class="bandeau-salle" data-photo="macao">
-    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async">
-    <div class="bandeau-texte"><span class="grave">Le bureau</span><h2>La caisse</h2><p>Le Sabot est gratuit. Voilà ce que ça coûte, et à quoi sert un don.</p></div>
+    <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px">
+    <div class="bandeau-texte"><span class="grave">Le bureau</span><h2>La caisse</h2><p>Acewise21 est gratuit. Voilà ce que ça coûte, et à quoi sert un don.</p></div>
   </div>
 
   <div class="laque pad dons-bloc">
@@ -665,7 +700,7 @@
   <div class="laque pad dons-bloc">
     <h2>Ce que ça coûte, honnêtement.</h2>
     <div class="duo dons-duo">
-      <p><b>L'hébergement ne coûte rien.</b> Le Sabot est un seul fichier posé sur un hébergement statique gratuit : pas de serveur à louer, pas de base de données, rien qui tourne quand tu ne joues pas. Quand tu joues à plusieurs, les messages passent par des courtiers publics gratuits et la vidéo va d'un navigateur à l'autre &#8212; rien ne transite par une machine que je paierais. Un nom de domaine coûterait une douzaine d'euros par an : ce serait la seule ligne de dépense de tout le projet.</p>
+      <p><b>L'hébergement ne coûte rien.</b> Acewise21 est un seul fichier posé sur un hébergement statique gratuit : pas de serveur à louer, pas de base de données, rien qui tourne quand tu ne joues pas. Quand tu joues à plusieurs, les messages passent par des courtiers publics gratuits et la vidéo va d'un navigateur à l'autre &#8212; rien ne transite par une machine que je paierais. Un nom de domaine coûterait une douzaine d'euros par an : ce serait la seule ligne de dépense de tout le projet.</p>
       <p><b>Ce que ça coûte, c'est du temps.</b> Lire neuf règlements de casino, un par table, et les transcrire sans en arrondir un seul. Écrire un solveur qui retrouve tout seul la stratégie de base au lieu de recopier une image. Jouer trois millions de mains par table avant chaque publication pour <em>mesurer</em> l'avantage de chacune plutôt que de l'annoncer. Et refaire la mise en page jusqu'à ce qu'une table de blackjack tienne dans un écran.</p>
     </div>
     <p class="muet dons-chute">Ton don ne paie donc pas un serveur : il paie la prochaine table, le prochain exercice, le prochain défaut corrigé. Dans un casino, ça porte un nom &#8212; c'est un pourboire, pas une facture.</p>
@@ -679,7 +714,7 @@
       <div>
         <span class="grave">Si tu voulais laisser quelque chose</span>
         <h2>Il n'y a pas encore où donner.</h2>
-        <p class="muet">Aucune cagnotte n'est ouverte pour le moment. Autrement dit, rien de ce qui est écrit sur cette page ne t'attend au tournant : elle est là pour expliquer pourquoi Le Sabot est gratuit, pas pour te vendre quoi que ce soit.</p>
+        <p class="muet">Aucune cagnotte n'est ouverte pour le moment. Autrement dit, rien de ce qui est écrit sur cette page ne t'attend au tournant : elle est là pour expliquer pourquoi Acewise21 est gratuit, pas pour te vendre quoi que ce soit.</p>
       </div>
       <div class="dons-geste">
         <span class="muet dons-ou">Si une cagnotte s'ouvre un jour, elle apparaîtra exactement ici, et le reste de la page ne bougera pas d'une ligne. En attendant, la meilleure façon d'aider est juste en dessous : en parler, et jouer à plusieurs.</span>
@@ -697,7 +732,7 @@
       </div>
       <div class="dons-geste" id="donsGeste">
         <a class="btn" id="donsLien" href="#" target="_blank" rel="noopener">Laisser un pourboire</a>
-        <span class="muet dons-ou">La page de don s'ouvre chez un prestataire externe. Le Sabot ne voit ni ton nom ni ton moyen de paiement.</span>
+        <span class="muet dons-ou">La page de don s'ouvre chez un prestataire externe. Acewise21 ne voit ni ton nom ni ton moyen de paiement.</span>
       </div>
     </div>
   </div>
@@ -710,7 +745,7 @@
     </div>
     <div class="laque pad dons-bloc">
       <h2>Et si tu ne donnes rien.</h2>
-      <p>C'est le cas le plus fréquent, et c'est très bien ainsi. Le Sabot n'a pas été écrit pour les gens qui peuvent donner : il a été écrit pour qui veut apprendre à compter, et ça doit rester gratuit. Tu ne dois rien à personne en fermant cette page.</p>
+      <p>C'est le cas le plus fréquent, et c'est très bien ainsi. Acewise21 n'a pas été écrit pour les gens qui peuvent donner : il a été écrit pour qui veut apprendre à compter, et ça doit rester gratuit. Tu ne dois rien à personne en fermant cette page.</p>
       <p class="muet">Si tu veux quand même rendre service, il y a de quoi faire sans sortir un centime : parle-en à quelqu'un que ça intéresserait, ouvre une table entre amis &#8212; c'est le mode qui a le plus besoin d'être joué à plusieurs &#8212; et dis-moi ce qui ne va pas quand quelque chose ne va pas.</p>
       <div class="rang-btn dons-ailleurs"><button class="btn creux" id="donsAmis">Ouvrir une table entre amis</button></div>
     </div>
@@ -737,3 +772,18 @@
 <button class="voix-temoin" id="voixTemoin" hidden data-etat="ouvert"><span class="voix-txt">Micro ouvert</span></button>
 
 <div class="modale" id="modale" hidden><div class="laque boite" id="modaleBoite"></div></div>
+
+<!-- L'ONGLET QU'ON A QUITTÉ (clavier.js). Chrome bride les minuteurs à une seconde dans un
+     onglet caché : les cartes continuaient de défiler à un rythme faux, invisibles, et le
+     compte était détruit avant d'être revenu. On met en pause, et on ne redémarre JAMAIS
+     tout seul — il faut le temps de retrouver son compte. Frère de #modale, hors de <main>
+     (l'arrière-plan devient inerte quand une boîte de dialogue s'ouvre : celle-ci n'en est
+     pas une, mais elle doit rester atteignable pour les mêmes raisons). -->
+<div class="pause-onglet" id="pauseOnglet" hidden>
+  <div class="laque boite">
+    <span class="grave">En pause</span>
+    <h2 id="pauseTitre">Tu as quitté l'onglet.</h2>
+    <p class="muet" id="pauseTexte">Les cartes se sont arrêtées là où tu les as laissées. Reprends quand tu as retrouvé ton compte.</p>
+    <div class="rang-btn" style="justify-content:center"><button class="btn" id="pauseReprendre">Reprendre</button></div>
+  </div>
+</div>

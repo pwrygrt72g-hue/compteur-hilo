@@ -306,7 +306,14 @@ function dimensionnerCartes() {
   // les 12 % de plus faisaient toucher les cartes du croupier aux tiennes — bas de sa main à y = 135,
   // haut de la tienne à 136 (mesuré le 05/09 à 1280 × 800). À trois, ta main est déjà au centre :
   // pas besoin de la grossir ni de la soulever pour la trouver.
-  const K_TOI = pellicule || Hf < 430 || n <= 3 ? 1 : 1.12;
+  // …mais À SEPT ET HUIT SIÈGES, un feutre bas est précisément le moment où l'on cherche sa
+  // main le plus longtemps : huit éventails de 65 px sur une seule rangée, tous pareils. Les
+  // deux repères étaient éteints là où ils servent le plus (1280 × 800 : feutre de 401 px,
+  // donc K_TOI = 1 et 3 px de soulèvement). On rallume une version RÉDUITE — 8 % au lieu de
+  // 12, six pixels au lieu de trois — assez pour trouver sa main d'un coup d'œil, pas assez
+  // pour manger la bande du lettrage (vérifié : « BLACKJACK PAIE 3 CONTRE 2 » et
+  // « LE CROUPIER TIRE À 17 SOUPLE » restent dessinés à 1280 × 800 à huit sièges).
+  const K_TOI = pellicule || n <= 3 ? 1 : (Hf < 430 ? (n >= 7 ? 1.08 : 1) : 1.12);
   sieges.forEach(s => {
     // Une largeur FIXE par siège : un siège qui passe de 126 à 133 px à sa 2ᵉ carte
     // faisait reculer tous ses voisins de 3 px (mesuré le 04/09).
@@ -334,7 +341,7 @@ function dimensionnerCartes() {
     plateau.style.setProperty("--w-croupier", (pellicule ? wcHf : wc) + "px");
     plateau.style.setProperty("--k-toi", K_TOI);   // la réserve de tes cartes (style.css, .siege.toi .mains) suit
     // Ton siège se soulève au-dessus de l'arc des voisins, autant que la hauteur le permet.
-    plateau.style.setProperty("--surelev-toi", (pellicule || n <= 3 ? 0 : Hf >= 560 ? -12 : Hf >= 440 ? -7 : -3) + "px");
+    plateau.style.setProperty("--surelev-toi", (pellicule || n <= 3 ? 0 : Hf >= 560 ? -12 : Hf >= 440 ? -7 : (n >= 7 ? -6 : -3)) + "px");
     const avant = plateau.style.getPropertyValue("--w-table");
     plateau.style.setProperty("--w-table", wT + "px");
     // Les piles de jetons (jetons.js) suivent l'échelle de la table : elles ne sautent plus.
@@ -345,7 +352,8 @@ function dimensionnerCartes() {
 /* Les sièges sur l'ARC. Le rail bas est courbe : un siège du bord posé en rang
    aurait son coin extérieur hors du feutre. Chacun REMONTE (--lift) juste ce qu'il
    faut pour que le coin extérieur bas de son contenu reste sur le feutre, et
-   s'incline vers le centre (--tilt, 3,5° par rang, 7° au plus). Tout est mesuré
+   s'incline vers le centre (--tilt : 7° au bout, réparti d'après la POSITION sur
+   l'arc — un rang ne vaut donc pas le même angle à trois qu'à huit). Tout est mesuré
    HORS transformation (offsetTop/offsetLeft), sinon on mesurerait le résultat. */
 /* La largeur des CARTES d'un siège (l'union de ses éventails, plus 10 px entre deux mains
    séparées), mesurée hors transformation — et PAS celle de sa boîte .mains. Cette boîte
@@ -397,20 +405,55 @@ function placerSieges(box, sieges, feutre) {
     });
     return lift;
   });
-  // 🚨 La remontée ne fait JAMAIS monter un siège dans la rangée du croupier. Sur un feutre
+  // 🚨 La remontée ne fait JAMAIS monter un siège DANS LA RANGÉE DU CROUPIER. Sur un feutre
   // court (téléphone), la courbe du rail est si serrée que les sièges du bord grimpaient de
   // 80 px et leurs cartes recouvraient celles du croupier — mesuré le 06/09 à 360 × 640,
-  // « écart −75 px » pour un minimum de 17. Le plafond est le bas de la rangée haute plus
-  // trois dixièmes de carte, la même marge que le banc exige.
-  const rangee = document.querySelector(".feutre .rangee-haute");
-  const plafond = rangee ? rangee.offsetTop + rangee.offsetHeight + Math.round(wT * .3) : -Infinity;
+  // « écart −75 px » pour un minimum de 17.
+  // …mais « la rangée » n'est pas la BANDE : c'est le sabot, la défausse et le croupier,
+  // trois meubles groupés AU MILIEU. Mesuré le 06/09 à 1920 × 1080 : ils occupent
+  // x = 621 → 1147 d'un feutre de 1764, et le siège du bout vit entre 54 et 350 — au-dessus
+  // de lui il n'y a RIEN, et on lui interdisait pourtant de monter. À huit sièges le
+  // résultat était visible : remontée 0 px sur les HUIT, nom et tapis jusqu'à 78 px sous
+  // l'arc, donc effacés par le clip du feutre (« Libre, Libre » du banc).
+  // Chaque siège a donc SON plafond : le bas du meuble le plus bas qui le recouvre
+  // HORIZONTALEMENT, plus trois dixièmes de carte ; aucun meuble au-dessus de lui ⇒ le haut
+  // du feutre. C'est la philosophie déjà appliquée en bas — chaque pièce tenue au-dessus de
+  // la courbe SUR SA LARGEUR — appliquée en haut. Les sièges du centre gardent le plafond
+  // d'avant : à trois et à cinq, rien ne bouge. Et le garde-fou du téléphone tient toujours,
+  // parce que là-bas les trois meubles occupent presque toute la largeur du feutre.
+  const gaucheDans = el => { let x = 0; for (let e = el; e && e !== box; e = e.offsetParent) x += e.offsetLeft; return x; };
+  const dansFeutre = (el, p) => { let v = 0; for (let e = el; e && e !== feutre; e = e.offsetParent) v += e[p]; return v; };
+  const garde = Math.round(wT * .3);
+  const meubles = [...feutre.querySelectorAll(".rangee-haute > *")].filter(p => p.offsetWidth && p.offsetHeight)
+    .map(p => { const x = dansFeutre(p, "offsetLeft"); return { x1: x, x2: x + p.offsetWidth, bas: dansFeutre(p, "offsetTop") + p.offsetHeight }; });
+  // Les bornes du siège : sa boîte, ÉLARGIE à ses cartes quand l'éventail déborde (ce que
+  // cartes.js autorise plutôt que d'écraser les rangs). 4 px = le haut du feutre.
+  const plafonds = sieges.map(s => {
+    const m = s.querySelector(".mains");
+    let x1 = box.offsetLeft + s.offsetLeft, x2 = x1 + s.offsetWidth;
+    if (m && m.offsetWidth) { const g = box.offsetLeft + gaucheDans(m); x1 = Math.min(x1, g); x2 = Math.max(x2, g + m.offsetWidth); }
+    const dessus = meubles.filter(p => p.x2 > x1 && p.x1 < x2).map(p => p.bas);
+    return dessus.length ? Math.max(...dessus) + garde : 4;
+  });
   const hautMains = sieges.map(s => { const m = s.querySelector(".mains"); return m ? box.offsetTop + hautDans(m) : Infinity; });
+  // L'INCLINAISON SUIT LA POSITION SUR L'ARC, PAS LE RANG. Le siège du bout est au même
+  // endroit du feutre qu'on soit trois ou huit — la rangée occupe la même largeur — donc il
+  // penche pareil. Avec « 3,5° par rang, 7° au plus », les DEUX sièges du bout saturaient à
+  // 7° dès sept places : trois tables du catalogue (Le Front de Mer, Le Cercle, L'Aquarium)
+  // et toute table entre amis montraient deux voisins strictement parallèles au bord, là où
+  // l'arc, lui, continue de tourner. Normalisé par l'écart maximal, l'éventail est régulier
+  // quel que soit le nombre, et le bout est TOUJOURS à 7°.
+  // ⚠️ À cinq la valeur ne bouge pas d'un dixième (7 · 3,5 · 0) ; à trois, à quatre, à six
+  // et au-delà, elle change — c'est le correctif, pas un effet de bord.
+  const emax = Math.max(1, (n - 1) / 2);
   sieges.forEach((s, i) => {
     const ecart = i - (n - 1) / 2, j = n - 1 - i;
     const brut = Math.max(lifts[i], lifts[j]);
-    const marge2 = Math.min(hautMains[i], hautMains[j]) - plafond;
+    // Le plafond se prend PAR PAIRE lui aussi, au plus bas des deux (donc au plus sévère) :
+    // sinon deux sièges symétriques remonteraient de deux hauteurs différentes.
+    const marge2 = Math.min(hautMains[i], hautMains[j]) - Math.max(plafonds[i], plafonds[j]);
     s.style.setProperty("--lift", -Math.max(0, Math.min(brut, isFinite(marge2) ? marge2 : brut)) + "px");
-    s.style.setProperty("--tilt", (-Math.sign(ecart) * Math.min(7, Math.abs(ecart) * 3.5)).toFixed(1) + "deg");
+    s.style.setProperty("--tilt", (-Math.sign(ecart) * 7 * Math.abs(ecart) / emax).toFixed(1) + "deg");
   });
   // Les sièges viennent de bouger : l'arc doré se place dans le trou qu'ils laissent,
   // et l'observateur du feutre ne voit pas un siège qui remonte. Idempotent (clé).

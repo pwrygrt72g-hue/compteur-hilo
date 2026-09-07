@@ -19,15 +19,47 @@ import { newHand, handTotal, isSoft, isBust, isBlackjack, canSplit, canDouble, c
   cardValue, isAce, settleHand, settleNoHoleCard, settleInsurance, makeRules } from "./engine.mjs";
 
 export const TAPIS_DEPART = 1000;          // tout le monde s'assoit avec le même tapis
-export const MISE_DELAI = 20000;           // la phase de mise, bornée
-export const TOUR_DELAI = 30000;           // un joueur qui ne joue pas : il reste
+export const MISE_DELAI = 20000;           // la phase de mise, bornée — PARALLÈLE : tout le monde mise en même temps
+export const TOUR_DELAI = 30000;           // un joueur qui ne joue pas : il reste. Le PLAFOND d'un tour, jamais dépassé.
+
+/* ══ LE TEMPS DE JEU EST UN BUDGET DE TABLE, PAS UN DÉLAI PAR JOUEUR ══════════
+   Les tours, eux, sont SÉQUENTIELS : on attend chacun l'un après l'autre. Un délai
+   fixe par siège se multiplie donc par le nombre de joueurs, et c'est exactement ce
+   qui rendait huit places injouables. Mesuré le 6 septembre 2026 en faisant tourner
+   cette machine au tic de 200 ms de reseau.js, tous les sièges tenus par des humains
+   qui ne jouent JAMAIS (le pire cas : chaque tour va au bout de son délai) —
+       5 joueurs ... 3 min 08        7 joueurs ... 4 min 12
+       6 joueurs ... 3 min 40        8 joueurs ... 4 min 44   ← personne n'attend ça
+   soit, à huit, quatre minutes de mains mortes pour trente secondes de jeu réel.
+   On borne donc le TOTAL au lieu de l'unité : deux minutes trente d'attente pour la
+   table entière, partagées entre ceux qui jouent vraiment cette manche. */
+export const TOUR_BUDGET_MS = 150000;
+export const TOUR_DELAI_MIN = 18000;
+export const tourDelai = n => Math.max(TOUR_DELAI_MIN, Math.min(TOUR_DELAI, Math.round(TOUR_BUDGET_MS / Math.max(1, n))));
+/* Ce que ça donne, et pourquoi les deux bornes :
+     1 à 5 joueurs → 30 s    le plafond TOUR_DELAI. AUCUNE régression : les tables
+                             d'hier gardent leur temps de réflexion à la seconde près.
+     6 joueurs ..... 25 s      7 joueurs ... 21,4 s      8 joueurs ... 18,8 s
+   Le plancher de 18 s n'est pas décoratif. Sans lui, une table qui ouvrirait un jour
+   douze sièges laisserait 12,5 s pour choisir entre tirer, doubler, séparer et
+   abandonner : le joueur ne joue plus, il subit. Passé le plancher on rallonge la
+   manche plutôt que de raccourcir la décision — c'est le bon sens de l'arbitrage. */
 export const ASSURANCE_DELAI = 12000;      // sans réponse : pas d'assurance
 export const REGLEMENT_DELAI = 3200;       // les jetons glissent, puis on remet ça
 export const ABSENCE_DELAI = 15000;        // un siège dont le joueur a disparu reste tenu ce temps-là
 export const ELECTION_DELAI = 3000;        // un nouvel arrivant sans hôte connu attend avant d'en devenir un
-export const NB_SIEGES = 5;
+/* ⚠️ HUIT sièges, alors que le catalogue en compte SEPT au plus (Front de Mer, Le
+   Cercle, L'Aquarium). Ce n'est pas une incohérence, c'est un choix assumé, et deux
+   régimes : la table SOLO reste bornée au catalogue — elle imite un casino —, la
+   table ENTRE AMIS va à huit et le DIT sur la carte du salon (src/app/reseau.js),
+   conséquence comprise. Toute la géométrie des sièges part d'ici : la table réseau
+   ne lit pas le catalogue, elle construit ses sièges depuis cette constante. */
+export const NB_SIEGES = 8;
 export const ACTIONS = ["asseoir", "lever", "mise", "rachat", "clore", "bots", "tirer", "rester", "doubler", "separer", "abandon", "assurance"];
-export const NOMS_BOTS = ["Marc", "Sonia", "Karim", "Léa", "Paul"];
+// Un prénom par siège, tous DIFFÉRENTS : ils sont recyclés par modulo (completerBots),
+// donc une liste plus courte que NB_SIEGES fait asseoir deux « Marc » à la même table
+// et plus personne ne sait de qui on parle — ni à l'écran, ni dans le journal.
+export const NOMS_BOTS = ["Marc", "Sonia", "Karim", "Léa", "Paul", "Nadia", "Hugo", "Inès"];
 const arr = x => Math.round(x * 100) / 100;
 const carteTxt = c => c.r + c.suit;
 
@@ -44,6 +76,10 @@ export function creerPartie(o) {
     miseMin: o.miseMin || 10, miseMax: o.miseMax || 1000, par5: !!o.par5, tapisDepart: o.tapis || TAPIS_DEPART,
     miseFin: 0, tourFin: 0, assuranceFin: 0, reglementFin: 0, prochaineEtape: 0, cadence: o.cadence || 900,
     journal: [], sabots: [], besoinRemelange: false, regenere: false,
+    // Combien de sièges jouent VRAIMENT cette manche, et le temps qu'ils ont chacun.
+    // Figés à la clôture des mises (clore), pas recalculés en route : un compte à
+    // rebours qui change de longueur sous les yeux du joueur est pire que long.
+    joueurs: 0, tourDelai: TOUR_DELAI,
     donne: [],                // les cartes de la donne initiale qui restent à distribuer
   };
   const valeur = o.valeur || (() => 0), rcInitial = o.rcInitial || (() => 0);
@@ -153,6 +189,11 @@ export function creerPartie(o) {
     const joueurs = P.sieges.filter(st => st && st.mise >= P.miseMin && !st.absent);
     if (!joueurs.length) { P.miseFin = now + MISE_DELAI; P.message = "Personne n'a misé : les mises restent ouvertes."; return true; }
     P.sieges.forEach(st => { if (!st) return; st.passe = !(st.mise >= P.miseMin) || !!st.absent; st.mains = st.passe ? [] : [newHand([], st.mise)]; st.assurance = undefined; });
+    // Le budget de tours se partage entre CEUX QUI JOUENT : un siège qui n'a pas misé,
+    // ou dont le joueur est parti, ne prend pas de temps — il n'en retire donc pas aux
+    // autres. Deux voisins qui regardent ne raccourcissent le tour de personne.
+    P.joueurs = P.sieges.filter(st => st && !st.passe && !st.absent).length;
+    P.tourDelai = tourDelai(P.joueurs);
     P.phase = "donne"; P.manche++; P.message = ""; P.regenere = false;
     // L'ordre d'une vraie donne : un tour de table, la carte visible du croupier,
     // un second tour, puis la carte cachée (sauf table sans carte cachée).
@@ -167,6 +208,20 @@ export function creerPartie(o) {
   }
 
   /* ── La donne, carte par carte ── */
+  // La donne est séquentielle elle aussi : deux cartes par joueur plus deux au croupier,
+  // soit DIX-HUIT cartes à huit sièges contre douze à cinq. À la cadence par défaut
+  // (900 ms, arrondie à 1 s par le tic de 200 ms de reseau.js) cela fait 18 s pendant
+  // lesquelles personne ne peut rien faire — mesuré le 6 septembre 2026. À sept sièges
+  // et plus on distribue à 600 ms : 18 × 0,6 = 10,8 s, exactement l'attente d'aujourd'hui
+  // à cinq. La donne n'est pas un moment de décision, seulement un moment de patience :
+  // c'est le seul endroit du jeu qu'on peut presser sans rien retirer au joueur.
+  // ⚠️ 600 est un MULTIPLE de 200 : c'est le tic de reseau.js qui quantifie les pas, donc
+  // une valeur qui n'en est pas un est arrondie au tic supérieur et n'est jamais
+  // réellement obtenue. Ne pas descendre plus bas sans passer ce tic à 120 ms.
+  // ⚠️ Math.min, et surtout pas 600 sec : la cadence est un RÉGLAGE du joueur (curseur de
+  // 120 à 1400 ms, table.js). Imposer 600 à quelqu'un qui a choisi 300 RALENTIRAIT sa
+  // donne au lieu de l'accélérer. On plafonne, on n'impose pas.
+  const cadenceDonne = () => P.joueurs >= 7 ? Math.min(P.cadence, 600) : P.cadence;
   function etapeDonne(now) {
     const d = P.donne[0];
     if (d) {
@@ -175,7 +230,7 @@ export function creerPartie(o) {
       if (d.siege === "croupier") { c.cachee = !!d.cachee; P.croupier.push(c); P.cachee = P.cachee || !!d.cachee; if (!d.cachee) voir(c); }
       else { const st = P.sieges[d.siege]; if (st) { st.mains[d.main].cards.push(c); voir(c); } }
       P.evenement = { t: "carte", siege: d.siege, main: d.main || 0, cachee: !!d.cachee };
-      P.prochaineEtape = now + P.cadence;
+      P.prochaineEtape = now + cadenceDonne();
       return true;
     }
     // Donne finie : assurance si le croupier montre un as, puis il regarde sa carte.
@@ -221,7 +276,7 @@ export function creerPartie(o) {
         if (isBlackjack(h) && st.mains.length === 1) { h.result = "blackjack"; continue; }
         if (h.fromSplitAces && !regles.hitSplitAces && h.cards.length === 2) continue;
         if (handTotal(h.cards) >= 21) { if (isBust(h.cards)) sauter(h, k, hi); continue; }
-        P.actif = { siege: k, main: hi }; P.tourFin = now + TOUR_DELAI; P.prochaineEtape = now + P.cadence;
+        P.actif = { siege: k, main: hi }; P.tourFin = now + P.tourDelai; P.prochaineEtape = now + P.cadence;
         P.evenement = { t: "tour", siege: k, main: hi }; P.message = "";
         return;
       }
@@ -235,7 +290,7 @@ export function creerPartie(o) {
   function jouer(a, now) {
     const m = mainActive(); if (!m) return "Ce n'est le tour de personne.";
     const { st, h, k, hi } = m;
-    if (a === "tirer") { const c = piocher(); if (!c) return null; h.cards.push(c); voir(c); P.evenement = { t: "carte", siege: k, main: hi }; P.tourFin = now + TOUR_DELAI;
+    if (a === "tirer") { const c = piocher(); if (!c) return null; h.cards.push(c); voir(c); P.evenement = { t: "carte", siege: k, main: hi }; P.tourFin = now + P.tourDelai;
       if (isBust(h.cards)) { sauter(h, k, hi); avancer(now); } else if (handTotal(h.cards) >= 21) avancer(now); return null; }
     if (a === "rester") { avancer(now); return null; }
     if (a === "doubler") { if (!canDouble(h, st.mains, regles)) return "Tu ne peux pas doubler ici."; if (!peutPayer(st, h)) return "Il ne te reste pas de quoi doubler.";
@@ -247,7 +302,7 @@ export function creerPartie(o) {
       const nh = newHand([c2], h.bet, { fromSplit: true, fromSplitAces: as }); h.fromSplit = true; h.fromSplitAces = as;
       st.mains.splice(hi + 1, 0, nh);
       const a1 = piocher(), a2 = piocher(); if (!a1 || !a2) return null; h.cards.push(a1); nh.cards.push(a2); voir(a1); voir(a2);
-      P.evenement = { t: "separe", siege: k, main: hi }; P.tourFin = now + TOUR_DELAI;
+      P.evenement = { t: "separe", siege: k, main: hi }; P.tourFin = now + P.tourDelai;
       if (as && !regles.hitSplitAces) avancer(now); else if (handTotal(h.cards) >= 21) avancer(now);
       return null; }
     if (a === "abandon") { if (!canSurrender(h, st.mains, regles)) return "Pas d'abandon ici."; h.surrendered = true; h.result = "abandon"; h.emis = true;
@@ -368,7 +423,21 @@ export function creerPartie(o) {
           fromSplit: h.fromSplit, fromSplitAces: h.fromSplitAces, result: h.result, net: h.net, assurance: h.assurance || 0 })) }),
       croupier, cachee: P.cachee, actif: P.actif,
       sabot: { empreinte: P.empreinte, restantes: P.cartes.length, coupe: P.coupe, defausse: P.defausse, jeux: P.jeux, sabots: P.sabots.slice() },
-      rc: P.rc, vues: P.vues, journal: P.journal.slice(-30),
+      // ⚠️ DIX manches, pas trente. Mesuré le 6 septembre 2026, journal plein, huit
+      // sièges : l'état diffusé pèse 43,6 kio dont 39,0 kio de journal — QUATRE-VINGT-DIX
+      // POUR CENT d'un état republié 30 à 40 fois par manche (chaque carte, chaque mise,
+      // chaque tour), soit environ 1,5 Mo par manche, pour des lignes que personne ne lit
+      // en dehors d'une modale ouverte à la demande. À dix : 17,6 kio, soixante pour cent
+      // de moins, sans toucher à la doctrine — l'état reste COMPLET et IDEMPOTENT, il
+      // porte simplement moins d'HISTOIRE. La table garde ses quarante manches en mémoire
+      // (regler) : c'est la DIFFUSION qu'on allège, pas le journal lui-même.
+      // Dix n'est pas un chiffre rond tiré au sort : à huit joueurs un sabot dure 9,5 manches
+      // (mesuré au Boulevard), donc dix, c'est LE SABOT QU'ON VIENT DE JOUER — précisément
+      // ce qu'on rouvre le journal pour relire.
+      // ⚠️ Deux conséquences visibles, à connaître avant de toucher ce chiffre : la modale
+      // « Journal des manches » en montre dix au lieu de trente, et un nouvel hôte n'hérite
+      // que de ce qui a été diffusé (reprendre) — l'histoire d'avant reste chez l'ancien.
+      rc: P.rc, vues: P.vues, journal: P.journal.slice(-10),
     };
   }
   // Reprendre un état diffusé : nouvel hôte. La manche en cours est annulée (on ne connaît pas
@@ -387,6 +456,16 @@ export function creerPartie(o) {
         : (st.mise || 0);
       return { id: st.id, nom: st.nom, couleur: st.couleur, bot: false, tapis: arr(st.tapis + rendu), mise: 0, rachats: st.rachats || 0, mains: [], passe: false, absent: st.absent ? 1 : 0 };
     });
+    // Le nombre de sièges ne RÉTRÉCIT jamais à la reprise. `.map` ci-dessus conserve la
+    // longueur reçue — vérifié, et figé par un test —, donc un état qui portait dix
+    // sièges en garde dix : personne assis au siège 8 ne disparaît parce que le nouvel
+    // hôte tourne une version qui en compte huit. Il ne reste qu'à COMPLÉTER jusqu'à
+    // NB_SIEGES quand l'état venait d'une table plus petite.
+    // ⚠️ La consigne du 6 septembre 2026 demandait ici une condition supplémentaire
+    // (`P.sieges.length < (e.sieges||[]).length`). Mesurée avant d'être écrite : elle est
+    // FAUSSE dès la première évaluation, toujours, puisque les deux longueurs sont égales
+    // par construction. Une clause morte dans un fichier qui explique ses choix est pire
+    // qu'une clause absente — elle fait croire qu'un cas est traité.
     while (P.sieges.length < NB_SIEGES) P.sieges.push(null);
     P.croupier = []; P.cachee = false; P.actif = null; P.cartes = []; P.empreinte = ""; P.graine = null; P.prochain = null;
     P.phase = "sabot"; P.besoinRemelange = true; P.regenere = true;
@@ -401,7 +480,14 @@ export function creerPartie(o) {
     get besoinSabot() { return P.phase === "sabot" || !P.cartes.length || (P.besoinRemelange && (P.phase === "reglement" || P.phase === "attente")); },
     // Le sabot suivant, préparé d'avance, sert dès qu'il en faut un : pas d'attente à la table.
     remelangerAvecProchain() { if (!P.prochain) return false; const s = P.prochain; P.prochain = null; return remelanger(s, false); },
-    get prochainManque() { return !P.prochain && P.cartes.length > 0 && P.cartes.length <= P.coupe + 8; },
+    // Combien de cartes d'avance avant de réclamer le sabot suivant. Huit était la marge
+    // d'une table à cinq où l'on distribuait peu : mesuré le 6 septembre 2026 sur quarante
+    // sabots mélangés, une manche consomme 17,1 cartes à cinq sièges et 25,9 à huit, et
+    // jusqu'à 55 quand tout le monde sépare et double. Huit cartes d'avance à huit joueurs,
+    // c'est réclamer le sabot suivant un tiers de manche trop tard : le sabot se vide en
+    // pleine donne, la table s'arrête et attend. La marge suit donc le monde présent —
+    // quatre cartes pour le croupier, trois par siège tenu : 19 à cinq, 28 à huit.
+    get prochainManque() { return !P.prochain && P.cartes.length > 0 && P.cartes.length <= P.coupe + 4 + 3 * P.sieges.filter(Boolean).length; },
     set cadence(ms) { P.cadence = ms; }, get cadence() { return P.cadence; },
     set hote(id) { P.hote = id; }, get hote() { return P.hote; },
   };

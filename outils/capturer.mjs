@@ -9,6 +9,9 @@
 //   --reseau=attente : la même, avant de s'asseoir — la table qui attend des joueurs.
 //   --reseau=amis : la même, assis, avec deux amis fictifs poussés par le transport muet
 //                   (ils saluent l'hôte et s'assoient) — les vignettes vidéo en attente.
+//   --reseau=pleine : les HUIT sièges occupés (toi + sept invités). C'est le seul état
+//                   où se voient la bande « À X de jouer », le montant de la mise et le
+//                   mot d'état des vignettes serrées — trois sièges n'en montrent aucun.
 //   --puis=a,b  : plusieurs identifiants, cliqués dans l'ordre (ex. bReglages,relaisOuvrir).
 //   --jouer     : après la donne, joue la main jusqu'au règlement (Rester), puis attend --attendre2 ms.
 //
@@ -63,11 +66,27 @@ if (opt.reseau) {
   await evaluer(`(document.querySelector('nav [data-vue="ensemble"]')||{click(){}}).click()`); await dodo(300);
   await evaluer(`window.__reseauTransport = o => { window.__reseauEntrant = o.onMessage; return { publier() {}, fermer() {} }; }; document.getElementById("mpCreer").click()`); await dodo(1600);
   if (opt.reseau !== "attente") { await evaluer(`(document.querySelector("#sieges .siege.vide .asseoir")||{click(){}}).click()`); await dodo(500); }
-  if (opt.reseau === "amis") {
+  // 🚨 « amis » n'assied que DEUX invités : trois sièges sur huit. Or c'est la table
+  // PLEINE qui a coûté toute la vague C — le mot d'état des vignettes tronqué, le
+  // montant de la mise peint dans le visage, la bande « À X de jouer » posée sur deux
+  // mains n'existent QU'À sept et huit sièges. Une clôture qui regarde « amis » regarde
+  // donc exactement l'état où aucun de ces défauts ne se produit. D'où « pleine ».
+  // Les prénoms ne sont pas décoratifs : le plus long tenu par la mise en page
+  // (« Constance ») et le plus court (« Ana ») encadrent ce que la vignette doit absorber.
+  const INVITES = opt.reseau === "pleine"
+    ? [["jAmi1", "Sonia", "#c0392b"], ["jAmi2", "Karim", "#1f6f4a"], ["jAmi3", "Constance", "#8e44ad"],
+       ["jAmi4", "Ana", "#b7791f"], ["jAmi5", "Youssef", "#2c5282"], ["jAmi6", "Margot", "#a0522d"],
+       ["jAmi7", "Tin", "#00695c"]]
+    : opt.reseau === "amis" ? [["jAmi1", "Sonia", "#c0392b", 2], ["jAmi2", "Karim", "#1f6f4a", 4]] : null;
+  if (INVITES) {
+    // Sièges : « amis » garde ses places historiques (2 et 4, pour que les captures
+    // d'avant restent comparables) ; « pleine » remplit tout ce qui reste dans l'ordre.
+    const places = opt.reseau === "pleine" ? [1, 2, 3, 4, 5, 6, 7] : INVITES.map(a => a[3]);
     await evaluer(`(() => { const r = window.__reseauEntrant; if (!r) return;
-      for (const [id, nom, c, k] of [["jAmi1", "Sonia", "#c0392b", 2], ["jAmi2", "Karim", "#1f6f4a", 4]]) {
-        r({ t: "salut", id, nom, couleur: c }); r({ t: "action", id, a: "asseoir", v: k, nom, couleur: c }); } })()`);
-    await dodo(700);
+      const places = ${JSON.stringify(places)};
+      ${JSON.stringify(INVITES.map(a => a.slice(0, 3)))}.forEach(([id, nom, c], i) => {
+        r({ t: "salut", id, nom, couleur: c }); r({ t: "action", id, a: "asseoir", v: places[i], nom, couleur: c }); }); })()`);
+    await dodo(900);
   }
 }
 const MISER = `(async () => { const q = s => document.querySelector(s), dodo = ms => new Promise(r => setTimeout(r, ms));

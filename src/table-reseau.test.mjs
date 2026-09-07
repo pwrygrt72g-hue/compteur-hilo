@@ -3,7 +3,8 @@
 // d'avance, l'horloge est un nombre qu'on avance.
 //   node src/table-reseau.test.mjs
 import * as E from "./engine.mjs";
-import { creerPartie, creerSalle, codeSalon, formaterCode, normaliserCode, codeValide, MISE_DELAI, ELECTION_DELAI, TAPIS_DEPART } from "./table-reseau.mjs";
+import { creerPartie, creerSalle, codeSalon, formaterCode, normaliserCode, codeValide, MISE_DELAI, ELECTION_DELAI, TAPIS_DEPART,
+  NB_SIEGES, NOMS_BOTS, TOUR_DELAI, TOUR_DELAI_MIN, TOUR_BUDGET_MS, tourDelai } from "./table-reseau.mjs";
 
 let pass = 0, fail = 0;
 function ok(nom, a, b) {
@@ -72,7 +73,11 @@ async function avancer(salles, fil, t, jusqu, pas) {
   B.agir("asseoir", 0, { nom: "Bea", couleur: "#0f0" }, t.now); C.agir("asseoir", 4, { nom: "Cyril", couleur: "#00f" }, t.now);
   fil.livrer(t.now);
   ok("les mises s'ouvrent dès le premier assis", dernier(C).phase, "mise");
-  ok("trois sièges tenus, deux vides", dernier(C).sieges.map(s => s ? s.nom : null), ["Bea", null, "Hugo", null, "Cyril"]);
+  // Écrite en fonction de NB_SIEGES : ce test parle de QUI est assis où, pas du nombre de
+  // places. Le figer à cinq le faisait tomber le jour où la table en a ouvert huit — un
+  // échec qui ne désigne aucun défaut est un échec qu'on finit par ignorer.
+  ok("trois sièges tenus, les autres vides", dernier(C).sieges.map(s => s ? s.nom : null),
+    ["Bea", null, "Hugo", null, "Cyril"].concat(Array(NB_SIEGES - 5).fill(null)));
   ok("tout le monde part avec le même tapis", dernier(C).sieges.filter(Boolean).map(s => s.tapis), [1000, 1000, 1000]);
   B.agir("mise", 5, null, t.now); fil.livrer(t.now);
   ok("une mise sous le minimum est refusée, et dite", B.infos.some(i => /minimum/.test(i)), true);
@@ -186,7 +191,8 @@ async function avancer(salles, fil, t, jusqu, pas) {
   await avancer([S], fil, t, t.now + ELECTION_DELAI + 500, 250);
   ok("seul sur un code : il devient l'hôte", S.estHote(), true);
   S.agir("bots", true, null, t.now); S.agir("asseoir", 2, { nom: "Zoé" }, t.now); fil.livrer(t.now);
-  ok("les bots complètent les sièges vides quand l'hôte le demande", dernier(S).sieges.map(s => s && s.bot), [true, true, false, true, true]);
+  ok("les bots complètent les sièges vides quand l'hôte le demande", dernier(S).sieges.map(s => s && s.bot),
+    [true, true, false].concat(Array(NB_SIEGES - 3).fill(true)));
   ok("les bots ont misé", dernier(S).sieges.filter(s => s && s.bot).every(s => s.mise >= 10), true);
   S.agir("mise", 10, null, t.now); S.agir("clore", null, null, t.now); fil.livrer(t.now);
   await avancer([S], fil, t, t.now + 15000, 250);
@@ -243,6 +249,132 @@ async function avancer(salles, fil, t, jusqu, pas) {
     ok("... et une seule manche de trop, pas un sabot entier", jouees < 234 + 60, true);
     ok("... il reste alors moins de cartes que la carte de coupe", p.etat.cartes.length <= p.etat.coupe, true);
     ok("... et la table a joué plus de dix manches, pas cinq", p.etat.manche >= 10, true);
+  }
+}
+
+/* ── 9. HUIT JOUEURS ──────────────────────────────────────────────────────────
+   La table entre amis ouvre huit places, une de plus que la plus grande table du
+   catalogue. Ce n'est pas le nombre qui est difficile — c'est le TEMPS : les mises
+   sont parallèles, mais la donne et les tours sont SÉQUENTIELS, donc tout ce qui est
+   « par joueur » se multiplie par huit. Ces tests figent les trois arbitrages qui
+   rendent huit places jouables, et surtout la NON-RÉGRESSION à cinq. */
+{
+  const REGLES8 = { decks: 6, h17: true, blackjackPays: 1.5, das: true, surrender: "late",
+    doubleOn: "any", maxHands: 4, holeCard: true, peek: true, penetration: .75 };
+  // Un sabot de « 6 » uniquement : aucune main de deux cartes ne vaut 21, personne n'a
+  // de blackjack, donc CHAQUE siège consomme réellement son tour. C'est le pire cas.
+  const sabotPlat = n => ({ cartes: Array.from({ length: n }, () => c("6")), empreinte: "plat", graine: null });
+
+  ok("huit sièges, et la table les construit vraiment", [NB_SIEGES, creerPartie({ regles: REGLES8 }).etat.sieges.length], [8, 8]);
+  // Les prénoms sont recyclés par modulo : moins de prénoms que de sièges, et deux
+  // « Marc » s'assoient à la même table sans que rien ne le signale.
+  ok("un prénom de bot par siège, tous différents", [NOMS_BOTS.length >= NB_SIEGES, new Set(NOMS_BOTS).size === NOMS_BOTS.length], [true, true]);
+  {
+    const p = creerPartie({ regles: REGLES8, bots: true, cartes: [c("2"), c("3")], empreinte: "x" });
+    p.action({ id: "moi", a: "asseoir", v: 3, nom: "Moi" }, 0);
+    const noms = p.etat.sieges.map(st => st.nom);
+    ok("huit bots à table, huit noms distincts", new Set(noms).size, NB_SIEGES);
+  }
+
+  /* ── Le budget de tour : on borne le TOTAL, pas l'unité ── */
+  ok("jusqu'à cinq joueurs, le tour ne bouge pas d'une milliseconde", [1, 2, 3, 4, 5].map(tourDelai), [1, 2, 3, 4, 5].map(() => TOUR_DELAI));
+  ok("au-delà, le tour se resserre : 6, 7, 8 joueurs", [6, 7, 8].map(tourDelai), [25000, 21429, 18750]);
+  ok("le budget de la table est tenu (8 × le tour ≈ deux minutes trente)", Math.abs(8 * tourDelai(8) - TOUR_BUDGET_MS) <= 8, true);
+  ok("un plancher, pour qu'une table de douze ne fasse jamais subir le jeu", [tourDelai(12), tourDelai(40)], [TOUR_DELAI_MIN, TOUR_DELAI_MIN]);
+  ok("le tour ne dépasse jamais le plafond, même à un seul joueur", tourDelai(1) <= TOUR_DELAI && tourDelai(0) <= TOUR_DELAI, true);
+
+  /* ── La manche pire cas, chronométrée sur la vraie machine à étapes ──
+     On la fait tourner au tic de 200 ms de reseau.js (RS.ticker), tous les sièges tenus
+     par des humains qui ne jouent jamais. Mesuré le 6 septembre 2026 AVANT ce lot :
+     5 joueurs 3 min 08 · 6 joueurs 3 min 40 · 7 joueurs 4 min 12 · 8 joueurs 4 min 44.
+     Quatre minutes de mains mortes pour trente secondes de jeu : personne n'attend ça. */
+  function pireCas(n) {
+    const p = creerPartie({ regles: REGLES8, jeux: 6, penetration: .75, miseMin: 10, miseMax: 1000,
+      tapis: 100000, cadence: 900, nbSieges: Math.max(n, NB_SIEGES) });
+    p.remelanger(sabotPlat(312), false);
+    for (let k = 0; k < n; k++) p.action({ id: "h" + k, a: "asseoir", v: k, nom: "J" + k }, 0);
+    let now = 0, garde = 0;
+    for (let k = 0; k < n; k++) p.action({ id: "h" + k, a: "mise", v: 10 }, now);
+    const jalons = {}, tic = () => { p.etape(now); now += 200; };
+    const jusqua = (test, nom) => { while (test() && garde++ < 40000) tic(); jalons[nom] = now; };
+    jusqua(() => p.etat.manche === 0, "mise");
+    jusqua(() => p.etat.phase === "donne", "donne");
+    jusqua(() => p.etat.phase === "jeu" || p.etat.phase === "assurance", "jeu");
+    jusqua(() => p.etat.phase === "croupier" || p.etat.phase === "reglement", "fin");
+    return { total: jalons.fin, donne: jalons.donne - jalons.mise, jeu: jalons.jeu - jalons.donne };
+  }
+  const m5 = pireCas(5), m8 = pireCas(8);
+  ok("à cinq, la manche pire cas n'a pas bougé : toujours 3 min 08", m5.total, 188200);
+  ok("à huit, elle tombe sous 3 min 15 (elle faisait 4 min 44)", m8.total < 195000, true);
+  ok("... et le gain est réel : plus d'une minute vingt de moins", 284200 - m8.total > 80000, true);
+  // La donne est le seul moment sans décision : c'est le seul qu'on peut presser.
+  ok("la donne à huit ne dure pas plus longtemps qu'à cinq aujourd'hui", m8.donne <= m5.donne, true);
+  ok("le jeu à huit tient dans le budget de table", m8.jeu <= TOUR_BUDGET_MS + 2000, true);
+
+  /* ── La cadence de donne est un PLAFOND, pas une consigne ──
+     Le curseur du joueur va de 120 à 1400 ms (table.js). Imposer 600 ms à huit sièges
+     ralentirait celui qui a choisi 300 : on plafonne, on n'impose jamais. */
+  function dureeDonne(n, cadence) {
+    const p = creerPartie({ regles: REGLES8, jeux: 6, penetration: .75, miseMin: 10, miseMax: 1000,
+      tapis: 100000, cadence, nbSieges: Math.max(n, NB_SIEGES) });
+    p.remelanger(sabotPlat(312), false);
+    for (let k = 0; k < n; k++) { p.action({ id: "h" + k, a: "asseoir", v: k, nom: "J" + k }, 0); p.action({ id: "h" + k, a: "mise", v: 10 }, 0); }
+    let now = 0, garde = 0;
+    while (p.etat.manche === 0 && garde++ < 40000) { p.etape(now); now += 200; }
+    const t0 = now;
+    while (p.etat.phase === "donne" && garde++ < 40000) { p.etape(now); now += 200; }
+    return now - t0;
+  }
+  ok("à huit et cadence par défaut, la donne tombe de 18,2 s à 11 s", dureeDonne(8, 900), 11000);
+  ok("à cinq, la cadence choisie est respectée à la lettre", [dureeDonne(5, 900), dureeDonne(5, 1400)], [12200, 17000]);
+  // Le plafond ne doit jamais RALLONGER la donne de celui qui a choisi vite : à 200 ms,
+  // huit sièges distribuent en 3,8 s, pas en 11 s. C'est tout l'écart entre plafonner et imposer.
+  ok("une cadence RAPIDE n'est jamais ralentie par le plafond", [dureeDonne(8, 200), dureeDonne(8, 200) < dureeDonne(8, 600)], [3800, true]);
+
+  /* ── La marge de sabot suit le monde présent ──
+     Elle dit quand réclamer le sabot SUIVANT. Mesuré le 6 septembre 2026 sur quarante
+     sabots mélangés : une manche consomme 17,1 cartes à cinq sièges et 25,9 à huit.
+     Huit cartes d'avance — la valeur d'avant — c'était un tiers de manche à huit
+     joueurs : le sabot se vidait en pleine donne et la table s'arrêtait. */
+  {
+    const marge = nAssis => {
+      const p = creerPartie({ regles: REGLES8, jeux: 6, penetration: .75, miseMin: 10, miseMax: 1000, tapis: 100000 });
+      p.remelanger({ cartes: Array.from({ length: 312 }, () => c("6")), empreinte: "m", graine: null }, false);
+      for (let k = 0; k < nAssis; k++) p.action({ id: "h" + k, a: "asseoir", v: k, nom: "J" + k }, 0);
+      // On vide le sabot à la main jusqu'au premier « il m'en faut un autre ».
+      while (!p.prochainManque && p.etat.cartes.length > 1) p.etat.cartes.pop();
+      return p.etat.cartes.length - p.etat.coupe;
+    };
+    ok("cinq assis : dix-neuf cartes d'avance", marge(5), 19);
+    ok("huit assis : vingt-huit, soit plus qu'une manche entière", marge(8), 28);
+    ok("... la marge couvre la manche moyenne à huit (25,9 cartes mesurées)", marge(8) >= 26, true);
+  }
+
+  /* ── L'état diffusé porte moins d'HISTOIRE, pas moins d'ÉTAT ──
+     Mesuré le 6 septembre 2026, journal plein, huit sièges : l'état pesait 43,6 kio dont
+     39,0 de journal — 90 % d'un objet republié 30 à 40 fois par manche, pour des lignes
+     lues seulement dans une modale ouverte à la demande. */
+  {
+    const p = creerPartie({ regles: REGLES8, cartes: [c("2")], empreinte: "x" });
+    for (let k = 0; k < 25; k++) p.etat.journal.push({ manche: k, empreinte: "x", croupier: ["6♠"], total: 6, sieges: [] });
+    const e = p.etatPublic(0);
+    ok("la diffusion ne publie que les dix dernières manches", e.journal.length, 10);
+    ok("... les plus RÉCENTES, pas les plus vieilles", [e.journal[0].manche, e.journal[9].manche], [15, 24]);
+    ok("... et la table, elle, garde tout son journal en mémoire", p.etat.journal.length, 25);
+    // L'état reste COMPLET : tout ce qui sert à afficher la table est toujours là.
+    ok("l'état reste complet et idempotent", ["v", "phase", "sieges", "croupier", "sabot", "rc", "vues"].every(k => e[k] !== undefined), true);
+  }
+
+  /* ── La reprise ne fait JAMAIS disparaître un joueur ──
+     Un nouvel hôte peut tourner une autre version que l'ancien. Le nombre de sièges reçu
+     fait alors autorité vers le HAUT : compléter jusqu'à NB_SIEGES, jamais tronquer. */
+  {
+    const etatDe = n => ({ v: 3, table: "boulevard", manche: 2, journal: [], sabot: { sabots: [] },
+      sieges: Array.from({ length: n }, (_, k) => ({ id: "j" + k, nom: "J" + k, tapis: 900, mise: 0, mains: [], rachats: 0 })) });
+    const repris = n => { const p = creerPartie({ regles: REGLES8 }); p.reprendre(etatDe(n), "neuf"); return p.etat.sieges; };
+    ok("un état plus petit est COMPLÉTÉ jusqu'à huit", [repris(3).length, repris(5).length], [NB_SIEGES, NB_SIEGES]);
+    ok("un état PLUS GRAND garde ses sièges : personne ne disparaît", [repris(10).length, repris(10).filter(Boolean).length], [10, 10]);
+    ok("et les joueurs assis sont tous là", repris(8).filter(Boolean).map(st => st.nom).join(","), "J0,J1,J2,J3,J4,J5,J6,J7");
   }
 }
 

@@ -67,7 +67,7 @@ export function cameraPartagee() {
   };
   const demander = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      poser("indisponible", "Pas de caméra dans ce contexte : ouvre le site (GitHub Pages) plutôt que la page publiée.", "navigator.mediaDevices absent");
+      poser("indisponible", "Pas de caméra dans ce contexte : ouvre le site plutôt que la page publiée.", "navigator.mediaDevices absent");
       return null;
     }
     poser("demande", "");

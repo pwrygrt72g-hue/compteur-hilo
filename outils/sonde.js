@@ -279,14 +279,22 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   clic('#mpModes [data-mode="table"]'); await dodo(80);
   ok("multijoueur : le code se tape groupé", (q("#mpCode").value = "a7k2m9pq", q("#mpCode").dispatchEvent(new Event("input")), q("#mpCode").value === "A7K2-M9PQ"), q("#mpCode").value);
   // ── L'ARTEFACT : WebSocket bloqué SANS erreur visible. L'écran doit le dire en moins de
-  // trois secondes, avec le lien GitHub Pages, ne pas ouvrir la table — et ne jamais
+  // trois secondes, avec le lien DU SITE, ne pas ouvrir la table — et ne jamais
   // demander la caméra pour rien (visio.js ne démarre qu'une fois le courtier relié).
+  // ⚠️ On compare à `window.__lienSite` (posé par reseau.js depuis l'unique LIEN_SITE de
+  // visio.mjs), PAS à un domaine écrit ici. La version d'avant testait
+  // /github\.io\/compteur-hilo/ : elle ne passait que tant que l'application vivait chez
+  // cet hébergeur-là, et serait tombée le jour du déménagement alors que le code aurait
+  // été juste — un test rouge qui accuse le code d'une faute qu'il n'a pas commise.
+  // La seconde moitié dit l'autre moitié de la règle : le message ne NOMME pas d'hébergeur.
   { const WS = window.WebSocket; let gum = 0;
     const md = navigator.mediaDevices, gumOrig = md && md.getUserMedia;
     if (md) md.getUserMedia = function () { gum++; return Promise.reject(Object.assign(new Error("sonde"), { name: "NotAllowedError" })); };
     window.WebSocket = class { constructor() { setTimeout(() => this.onerror && this.onerror(new Event("error")), 2); } close() {} send() {} };
     clic("#mpCreer"); await dodo(3200);
-    ok("artefact : sans WebSocket, l'écran À plusieurs le dit en < 3 s, avec le lien GitHub Pages", /github\.io\/compteur-hilo/.test(q("#mpEtat").innerHTML) && q("#v-table").hidden && !q("#mpCreer").disabled, "mpEtat = " + txt("#mpEtat").slice(0, 80) + " · table hidden=" + q("#v-table").hidden);
+    const lien = window.__lienSite || "";
+    ok("artefact : sans WebSocket, l'écran À plusieurs le dit en < 3 s, avec le lien du site", !!lien && q("#mpEtat").innerHTML.includes(lien) && q("#v-table").hidden && !q("#mpCreer").disabled, "lienSite = " + lien + " · mpEtat = " + txt("#mpEtat").slice(0, 80) + " · table hidden=" + q("#v-table").hidden);
+    ok("artefact : … et le message ne nomme aucun hébergeur", !/github|netlify|vercel|pages\.dev/i.test(txt("#mpEtat")), txt("#mpEtat").slice(0, 120));
     ok("artefact : la caméra n'a pas été demandée pour rien", gum === 0, gum + " appel(s) getUserMedia");
     window.WebSocket = WS; if (md) md.getUserMedia = gumOrig; }
   // ── La table réseau, sans courtier : un transport muet injecté par la sonde. L'hôte
@@ -295,7 +303,11 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   window.__reseauTransport = o => { window.__reseauEntrant = o.onMessage; return { publier() {}, fermer() {} }; };
   clic("#mpCreer"); await dodo(1500);
   ok("table réseau : ouverte sur la scène, en attente", !q("#v-table").hidden && q("#v-table").dataset.reseau === "1" && /attente|code/i.test(txt("#annonce")), "hidden=" + q("#v-table").hidden + " reseau=" + q("#v-table").dataset.reseau + " annonce=" + txt("#annonce"));
-  ok("table réseau : cinq sièges libres, un code de huit", qa("#sieges .siege.vide").length === 5 && /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(txt("#tCode")), qa("#sieges .siege.vide").length + " libres · " + txt("#tCode"));
+  // HUIT sièges depuis le 6 septembre 2026 (NB_SIEGES, table-reseau.mjs) : la table entre
+  // amis va plus loin que le catalogue, qui plafonne à sept. C'est ICI que ça se vérifie
+  // à l'écran — la table réseau construit ses sièges depuis cette constante, donc un
+  // huitième siège manquant est une géométrie cassée, pas un réglage.
+  ok("table réseau : huit sièges libres, un code de huit", qa("#sieges .siege.vide").length === 8 && /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(txt("#tCode")), qa("#sieges .siege.vide").length + " libres · " + txt("#tCode"));
   clic("#sieges .siege.vide .asseoir"); await dodo(600);
   ok("table réseau : assis, les mises s'ouvrent", !!q("#sieges .siege.toi") && phase() === "mise" && q("#rackJetons").classList.contains("ouvert"), "toi=" + !!q("#sieges .siege.toi") + " phase=" + phase());
   // ── Les têtes des amis (visio.js) : une vignette par siège humain, jamais un rectangle noir.
@@ -319,10 +331,23 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   // ⚠️ On ne juge que les sièges RÉELLEMENT dans la fenêtre : sous 1000 px la rangée des
   // sièges devient une pellicule qui défile (style.css), et un siège hors défilement
   // n'est pas « effacé par l'arc », il est simplement plus loin.
-  { const rates = qa("#sieges .siege").filter(d => { const n = d.querySelector(".nom"); if (!n) return false;
+  // 🚨 « Dans la fenêtre » NE SUFFIT PAS, et c'est ce qui rendait cette ligne rouge en
+  // permanence. verifier.sh tourne en headless à 756 px de large : #sieges devient alors
+  // une pellicule (scrollWidth 761 > clientWidth 455) qui S'ARRÊTE À x=503, alors que les
+  // sièges 6 et 7 posent leur nom à x=585 et x=674 — au-delà du défileur, mais toujours
+  // dans la fenêtre. Le garde ne les écartait donc pas, elementsFromPoint ne rendait rien
+  // (ils sont hors du clip du défileur), et le banc concluait « effacés par l'arc ». Ce
+  // n'est pas l'arc : c'est le défilement, exactement le cas que le paragraphe ci-dessus
+  // dit vouloir exclure. On borne donc aussi par la BOÎTE du défileur — et seulement
+  // quand il défile pour de vrai (overflow-x clippant), sinon on excuserait au bureau
+  // (≥ 1000 px, où #sieges ne clippe rien) un nom que l'arc aurait vraiment effacé.
+  { const rangee = q("#sieges"), boite = rangee.getBoundingClientRect();
+    const clippe = getComputedStyle(rangee).overflowX !== "visible";
+    const rates = qa("#sieges .siege").filter(d => { const n = d.querySelector(".nom"); if (!n) return false;
       const r = n.getBoundingClientRect(); if (!r.width) return false;
       const x = Math.round(r.left + r.width / 2), y = Math.round(r.top + r.height / 2);
       if (x < 4 || y < 4 || x > innerWidth - 4 || y > innerHeight - 4) return false;
+      if (clippe && (x < boite.left + 4 || x > boite.right - 4)) return false;
       // `elementsFromPoint` (au pluriel) : un bandeau qui passe par-dessus ne compte pas —
       // ce qu'on cherche, c'est un nom RETIRÉ de la pile par le clip du feutre.
       return !document.elementsFromPoint(x, y).some(e => d.contains(e)); })

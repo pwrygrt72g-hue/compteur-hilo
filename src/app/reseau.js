@@ -1,6 +1,6 @@
 /* ══════════════════════ À PLUSIEURS — LA TABLE ══════════════════════
    LA TABLE DE BLACKJACK À PLUSIEURS (lot Réseau). Concaténé après ensemble.js.
-   Jusqu'à cinq humains autour de LA scène (#v-table), pas d'un écran à part :
+   Jusqu'à TR.NB_SIEGES humains (huit) autour de LA scène (#v-table), pas d'un écran à part :
    ton siège est `.toi`, les autres sont nommés, et tout ce qui existe déjà —
    cartes.js, jetons.js (le règlement animé), croupier.js (les humeurs), le bus
    « sabot:* » — sert tel quel.
@@ -35,6 +35,10 @@ const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, 
 // un joueur sur une page morte, et une phrase oubliée lui donne un nom d'hébergeur
 // qui n'est plus le nôtre. Une seule constante, dans visio.mjs.
 const PAGES_URL = M.visio.LIEN_SITE;
+// Offerte à la sonde (outils/sonde.js), qui vit hors de cette portée et ne peut pas lire M.
+// Elle vérifie que le message d'échec porte CETTE adresse — pas un domaine écrit en dur
+// dans le test, qui deviendrait faux le jour du déménagement sans que le code soit fautif.
+window.__lienSite = PAGES_URL;
 // Ta couleur à la table = un JETON du rack (jetons.js), pas une pastille arc-en-ciel :
 // la pastille devant ton nom en prend la face. Une ancienne couleur enregistrée
 // qui n'est plus dans la liste retombe sur un jeton tiré au sort.
@@ -59,14 +63,58 @@ function rendreCouleurs() {
   });
   rendreTableMP();
 }
+/* ── HUIT PLACES, ET ON LE DIT ────────────────────────────────────────────────
+   La table À PLUSIEURS ouvre TR.NB_SIEGES places (huit), alors que la plus grande
+   table du catalogue en compte sept. Deux régimes assumés : la table solo imite un
+   casino et reste bornée au catalogue, la table entre amis va plus loin — mais elle
+   ne le fait pas en douce, elle l'annonce avec sa conséquence.
+   Et la conséquence, c'est la leçon du Front de Mer : ce qui compte n'est pas la
+   profondeur du sabot mais le nombre de MANCHES qu'on y joue. Plus on est nombreux,
+   plus une manche mange de cartes, moins il en reste à compter.
+
+   ⚠️ Le chiffre est CALCULÉ pour la table affichée, jamais écrit en dur : la carte
+   montre `tableCourante()`, et une constante de Boulevard serait fausse sur huit
+   tables du catalogue sur neuf — au Néon (un jeu, 50 %) on tombe à UNE manche par
+   sabot à huit joueurs, ce qu'aucun chiffre figé n'aurait dit.
+
+   Les deux constantes viennent d'une MESURE, le 6 septembre 2026 : quarante sabots
+   vraiment mélangés par table, des bots qui jouent la stratégie, cartes consommées
+   divisées par manches jouées. On obtient 17,1 cartes/manche à cinq sièges et 25,9 à
+   huit — soit une droite très nette : 2,9 cartes par joueur, 2,6 pour le croupier.
+   Le demi-point ajouté est la manche qui DÉBORDE la carte de coupe (on la finit
+   toujours) ; sans lui le modèle sous-estime les petits sabots d'un tiers. Écart au
+   réel sur les neuf tables, à cinq comme à huit : 0,3 manche au pire.
+   Pour re-mesurer, faire tourner creerPartie avec `bots: true` et compter
+   `manche` jusqu'à `besoinRemelange`. */
+const CARTES_PAR_JOUEUR = 2.9, CARTES_CROUPIER = 2.6, MANCHE_DEBORDANTE = .5;
+const manchesParSabot = (t, joueurs) =>
+  52 * t.jeux * t.penetration / (CARTES_PAR_JOUEUR * joueurs + CARTES_CROUPIER) + MANCHE_DEBORDANTE;
+// Sept aujourd'hui — lu dans le catalogue et non recopié, pour que la phrase reste
+// vraie le jour où une table de huit y entrerait.
+const siegesMaxCasino = () => Math.max(...DONNEES.catalogue.map(x => x.sieges));
+
 // La table où l'on va s'asseoir, à droite du formulaire : la carte du salon, telle
 // quelle (mêmes règles, même avantage maison), avec ses sièges — on voit ce qu'on ouvre.
 function rendreTableMP() {
   const boite = $("mpTable"); if (!boite) return;
   const t = tableCourante(), n = DONNEES.catalogue.indexOf(t) + 1;
-  boite.innerHTML = carteTableHtml(t, { n, inerte: true })
-    + `<p class="muet mp-sieges" style="font-size:var(--t-fin);margin:8px 0 0">${Math.min(t.sieges, 5)} sièges · mise minimale ${fmtJ(t.mise_min)}</p>
-       <div class="rang-btn" style="margin-top:8px;justify-content:flex-start"><button class="btn creux" data-vue="salon">Changer de table</button></div>`;
+  // 🚨 LA COURSE AU COMPTAGE N'A NI SIÈGE NI MISE — et depuis ce jour son sabot est bien
+  // celui de cette table (ensemble.js : sabotProuvable(tableCourante().jeux), plus « 2 » en
+  // dur). La fiche disait donc trois choses fausses à la fois : des places qu'on ne prend
+  // pas, une mise minimale qu'on ne pose pas, et un nombre de jeux qui n'était pas celui
+  // du sabot. Ne restent que les jeux et le mélange — ce qui décide du compte.
+  // `MP.mode` vit dans ensemble.js, concaténé juste avant : on le LIT, on ne le pose pas.
+  const course = MP.mode === "course";
+  // Une mélangeuse continue n'a pas de sabot : la phrase n'aurait rien à diviser.
+  const manches = t.penetration
+    ? ` À ${TR.NB_SIEGES} joueurs on ne compte plus qu'environ ${nbFr(manchesParSabot(t, TR.NB_SIEGES))} manches par sabot, contre ${nbFr(manchesParSabot(t, 5))} à cinq.`
+    : "";
+  const sous = course
+    ? `<p class="muet mp-sieges" style="font-size:var(--t-fin);margin:8px 0 0">Le sabot de la course est celui de cette table : ${t.jeux} jeu${t.jeux > 1 ? "x" : ""} de 52 cartes, mélangés et scellés. Personne ne s'assied, personne ne mise — on compte.</p>`
+    : `<p class="muet mp-sieges" style="font-size:var(--t-fin);margin:8px 0 0">Jusqu'à ${TR.NB_SIEGES} places · mise minimale ${fmtJ(t.mise_min)}</p>
+       <p class="muet mp-places" style="font-size:var(--t-fin);margin:4px 0 0">Table entre amis : une vraie table de casino en a ${siegesMaxCasino()} au plus.${manches}</p>`;
+  boite.innerHTML = carteTableHtml(t, { n, inerte: true, compte: course }) + sous
+    + `<div class="rang-btn" style="margin-top:8px;justify-content:flex-start"><button class="btn creux" data-vue="salon">Changer de table</button></div>`;
   boite.querySelector("[data-vue]").onclick = () => aller("salon");
 }
 rendreCouleurs();

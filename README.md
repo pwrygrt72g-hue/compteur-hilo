@@ -1,8 +1,8 @@
-# Le Sabot
+# Acewise21 — compter les cartes, pour de vrai
 
 Entraînement au comptage de cartes au blackjack, dans le navigateur. Des jetons, mais aucun argent : tout le monde s'assoit avec le même tapis de 1 000, et c'est un outil pour s'entraîner.
 
-**→ [pwrygrt72g-hue.github.io/compteur-hilo](https://pwrygrt72g-hue.github.io/compteur-hilo/)**
+**→ [Jouer en ligne](https://pwrygrt72g-hue.github.io/compteur-hilo/)**
 
 Installable sur téléphone depuis le menu du navigateur, et utilisable hors ligne.
 
@@ -42,7 +42,7 @@ Chaque table est un règlement réel et une leçon. Deux d'entre elles sont imba
 | **Table** | Croupier, jusqu'à six autres joueurs en stratégie de base, carte brûlée, carte cachée, assurance, doubler, séparer, abandon, carte de coupe. Le compte est masqué : c'est à toi de le tenir, et la carte de coupe te le demande. |
 | **Stratégie** | La stratégie de base main par main, puis les écarts au compte, calculés pour la table où tu es assis. Les mains ratées reviennent plus souvent. |
 | **Concentration** | Le chef de table te surveille pendant que tu comptes. Questions des voisins, calculs, regards. Détecteur caméra optionnel pour les lèvres qui bougent et le regard figé. |
-| **À plusieurs** | Deux modes. **La table** : jusqu'à cinq joueurs sur la même table de blackjack, chacun sur son siège avec 1 000 jetons, des mises, un croupier qui donne pour tous et règle tout le monde. **La course** : tes amis voient les mêmes cartes et annoncent leur compte à la fin. |
+| **À plusieurs** | Deux modes. **La table** : jusqu'à huit joueurs sur la même table de blackjack, chacun sur son siège avec 1 000 jetons, des mises, un croupier qui donne pour tous et règle tout le monde. **La course** : tes amis voient les mêmes cartes et annoncent leur compte à la fin. |
 | **Progression** | Historique, courbe de l'écart au compte réel, taux de réussite par exercice. |
 
 Quatre systèmes de comptage : Hi-Lo, KO, Hi-Opt I et Omega II. Le KO est déséquilibré, donc sans compte vrai à tenir — l'application ajuste son point de départ et masque la division.
@@ -67,7 +67,7 @@ Autour de la table à plusieurs, chaque siège tenu par un humain porte une vign
 
 **Ce qui ne l'est pas** : deux amis derrière des réseaux stricts (4G, NAT symétrique, box d'entreprise) ne se voient qu'à travers un **relais TURN**. Le relais public « Open Relay » qui était inscrit dans le code est mort (`node outils/tester-relais.mjs` le mesure : aucun candidat relay, erreur 701) ; il est retiré, parce qu'un relais mort ralentit la collecte de tout le monde sans rien relayer. Le relais se configure dans ⚙ (« Relais vidéo (TURN) ») avec un bouton **Tester le relais** — metered.ca en fournit un gratuit avec un quota mensuel. Sans identifiants, on part en STUN seul et l'application le dit ; quand la connexion directe échoue, la vignette l'écrit en toutes lettres.
 
-À la table de blackjack, celui qui ouvre la table est l'**hôte** : il tient le sabot scellé, distribue et règle ; les autres n'envoient que leurs gestes (miser, tirer, rester, doubler, séparer, abandonner, s'assurer) et affichent l'état qu'il diffuse — personne ne calcule une issue de son côté. Chacun peut vérifier le sabot (empreinte publiée avant la première carte, graine révélée quand le sabot est remplacé) et relire le journal des manches. Si l'hôte disparaît, le plus petit identifiant restant prend le relais : la manche en cours est annulée, les mises rendues, et un sabot neuf est scellé — l'écran le dit. Dans un Artifact publié, les WebSockets sont bloquées : la table se joue sur la version GitHub Pages.
+À la table de blackjack, celui qui ouvre la table est l'**hôte** : il tient le sabot scellé, distribue et règle ; les autres n'envoient que leurs gestes (miser, tirer, rester, doubler, séparer, abandonner, s'assurer) et affichent l'état qu'il diffuse — personne ne calcule une issue de son côté. Chacun peut vérifier le sabot (empreinte publiée avant la première carte, graine révélée quand le sabot est remplacé) et relire le journal des manches. Si l'hôte disparaît, le plus petit identifiant restant prend le relais : la manche en cours est annulée, les mises rendues, et un sabot neuf est scellé — l'écran le dit. Dans un Artifact publié, les WebSockets sont bloquées : la table se joue sur la version en ligne.
 
 ⚠️ Les messages passent en clair par un courtier public. C'est un jeu d'entraînement, pas un canal privé.
 
@@ -92,4 +92,4 @@ Le code est sous **MIT** ; les dix-sept photos ne le sont pas — chacune reste 
 
 Le partage à l'identique s'arrête à la photo : une application qui affiche des images ne dérive pas d'elles, elle les rassemble. Le détail est dans [`LICENSE`](LICENSE), photo par photo dans [`static/photos/CREDITS.md`](static/photos/CREDITS.md).
 
-Le Sabot n'est affilié à aucun casino : les noms de tables sont inventés, les lieux photographiés existent.
+Acewise21 n'est affilié à aucun casino : les noms de tables sont inventés, les lieux photographiés existent.
