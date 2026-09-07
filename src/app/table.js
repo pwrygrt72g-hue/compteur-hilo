@@ -674,12 +674,7 @@ function rendreSieges() {
   $("v-table").dataset.sieges = T.sieges.length;
   dimensionnerCartes();
   rendreLettrage();
-  // Sur téléphone les sièges défilent horizontalement : sans ce recentrage, le
-  // siège qui joue peut être hors écran au moment précis où c'est son tour.
-  const vedette = el.querySelector(".siege.actif") || el.querySelector(".siege.toi");
-  if (vedette && el.scrollWidth > el.clientWidth + 4) vedette.scrollIntoView({
-    inline: "center", block: "nearest",
-    behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" });
+  centrerVedette();
   // Les cercles de mise viennent d'être recréés : les piles de jetons (jetons.js) s'y reposent.
   emettre("sieges", { sieges: T.sieges });
 }
@@ -692,10 +687,32 @@ function marquerActif() {
     d.classList.toggle("actif", !!(T.actif && T.actif.siege === si));
     d.querySelectorAll(".m").forEach((w, hi) => w.classList.toggle("encours", !!(T.actif && T.actif.siege === si && T.actif.main === hi)));
   });
-  const vedette = el.querySelector(".siege.actif") || el.querySelector(".siege.toi");
-  if (vedette && el.scrollWidth > el.clientWidth + 4) vedette.scrollIntoView({
-    inline: "center", block: "nearest", behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" });
+  centrerVedette();
 }
+/* ── LE RECENTRAGE DE LA PELLICULE ────────────────────────────────────────
+   Sur téléphone les sièges défilent horizontalement : sans recentrage, le siège qui joue —
+   ou LE TIEN — se retrouve hors écran.
+   🚨 IL NE SE FAISAIT JAMAIS. rendreSieges() tourne aussi pendant que la vue est encore
+   MASQUÉE (aller() la dévoile ensuite) : tous les rectangles valent alors 0, le garde
+   `scrollWidth > clientWidth` est faux, et l'appel ne fait rien — définitivement, puisque
+   personne ne repasse. Mesuré le 07/09 à 375 px en phase de mise : scrollLeft = 0 et TON
+   cercle à 349-379 dans une fenêtre de 375, hors champ au moment précis où l'on pose ses
+   jetons — le jeton volait vers un point invisible. Forcé à la main, scrollLeft passe à 177
+   et le cercle revient à 172-202, centré.
+   On réessaie donc à l'image suivante quand la mesure n'était pas possible, et on repasse à
+   chaque changement de vue et de taille. `encore` borne la récursion : un seul rattrapage. */
+function centrerVedette(encore) {
+  const el = $("sieges"); if (!el) return;
+  const vedette = el.querySelector(".siege.actif") || el.querySelector(".siege.toi");
+  if (!vedette) return;
+  if (el.scrollWidth > el.clientWidth + 4) vedette.scrollIntoView({
+    inline: "center", block: "nearest",
+    behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth" });
+  else if (encore !== false) requestAnimationFrame(() => centrerVedette(false));
+}
+document.addEventListener("sabot:vue", e => { if ((e.detail || {}).vue === "table") centrerVedette(); });
+addEventListener("resize", () => centrerVedette());
+addEventListener("orientationchange", () => setTimeout(() => centrerVedette(), 160));
 function rafraichirBarre() {
   const t = tableCourante(), total = t.jeux * 52;
   // Le sabot montre ses cartes et sa carte de coupe ; la défausse, son tas.
