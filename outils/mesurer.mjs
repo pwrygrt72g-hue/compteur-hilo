@@ -201,6 +201,16 @@ for (const [nom, L, H] of TAILLES) {
     }
     await evaluer(`(document.querySelector('nav [data-vue="${v}"]')||{click(){}}).click()`);
     await dodo(v === "table" ? 900 : 350);
+    // 🚨 Depuis le 08/09 les dix portes de tables, les trois onglets de filtre et les dix
+    // « Pourquoi ? » vivent dans un <details>. Replié, leur rect est NUL : ils sortent
+    // purement et simplement du banc (la récolte filtre sur `r.width > 0`), et la mesure
+    // annonce « tout passe » sans les avoir regardés. On l'ouvre INCONDITIONNELLEMENT —
+    // pas en s'appuyant sur l'ouverture « pour qui revient », qui dépend de DB et
+    // rendrait le banc non déterministe d'une taille d'écran à l'autre.
+    if (v === "accueil" || v === "salon") {
+      await evaluer(`{ const d = document.getElementById("lesTables"); if (d) d.open = true; }`);
+      await dodo(250);
+    }
     // La donne exige une mise (lot Jetons) : on tape un jeton qui couvre le minimum avant de distribuer.
     if (v === "table") { await evaluer(MISER); await dodo(300); await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(2600); }
     const m = (await evaluer(POSE), await evaluer(SONDE));
@@ -209,11 +219,13 @@ for (const [nom, L, H] of TAILLES) {
     // croupier touchaient les tiennes (les critiques, 05/09). On y va par le hall, on en revient pareil.
     if (v === "table") {
       await evaluer(`(document.querySelector('nav [data-vue="salon"]')||{click(){}}).click()`); await dodo(300);
+      await evaluer(`{ const d = document.getElementById("lesTables"); if (d) d.open = true; }`); await dodo(200);
       await evaluer(`(document.querySelector('#salon [data-asseoir="salonprive"]')||{click(){}}).click()`); await dodo(900);
       await evaluer(MISER); await dodo(300); await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(2600);
       const m3 = (await evaluer(POSE), await evaluer(SONDE));
       if (m3 && !m3.erreur) rapport.push({ taille: nom, L, H, vue: "table3", ...m3 });
       await evaluer(`(document.querySelector('nav [data-vue="salon"]')||{click(){}}).click()`); await dodo(300);
+      await evaluer(`{ const d = document.getElementById("lesTables"); if (d) d.open = true; }`); await dodo(200);
       await evaluer(`(document.querySelector('#salon [data-asseoir="boulevard"]')||{click(){}}).click()`); await dodo(600);
     }
   }

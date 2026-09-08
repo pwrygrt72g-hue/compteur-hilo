@@ -279,7 +279,7 @@ body.au-hall main{ max-width:none; padding:0 0 56px; margin-top:calc(var(--h-tet
 body.au-hall .hall-heros{ padding-top:calc(clamp(36px,5vh,56px) + var(--h-tete)) }
 /* Le conteneur du hall, consommé par l'en-tête AUSSI : mesuré le 05/09 à 1280, la marque était à
    x = 80 et le titre du héros à x = 20, et la marque sautait de 60 px en passant à la table. */
-.hall-int, body.au-hall .tete{ max-width:min(1400px, 100% - 2*max(var(--gap), var(--sg), var(--sd))); margin:0 auto }
+.hall-int, body.au-hall .tete{ max-width:var(--colonne); margin:0 auto }
 /* Le hall est TOUJOURS la nuit, quel que soit le thème de la page : en clair (mesuré le 05/09)
    c'était une page beige avec un héros noir dedans et des cartons noirs sur fond crème. Le
    clair reste aux écrans « papier » (exercices, réglages, à plusieurs). */
@@ -348,24 +348,244 @@ body.au-hall.revient .hall-heros{ min-height:clamp(280px, 36vh, 400px) }
 .eventail .carte{ position:absolute; left:50%; top:16px; --w:118px; transform-origin:50% 132%; animation:eventer .6s var(--ressort) both }
 @keyframes eventer{from{transform:translateX(-50%) rotate(0) translateY(50px);opacity:0}}
 
-/* ── Les salles du hall ────────────────────────────────────────────────── */
-.hall-salle{ margin-top:clamp(36px, 5vh, 60px); scroll-margin-top:calc(var(--h-entete, 64px) + 16px) }
-.hall-entete{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px }
-.hall-entete h2{ font-size:clamp(30px, 2.6vw, 40px); margin-top:4px }
-.hall-entete .onglets{ margin-bottom:4px }
-/* Trois portes par rangée, à 1280 comme à 1920. Essayé à quatre (les critiques, 05/09) : à
-   288 px de large (216 de haut) la carte perdait son nom et son lieu, et à 336 px (1920) le
-   bloc du bas remontait sur le tampon « À fuir » et le bouton « Pourquoi ? ». Ce qui ramène
-   les tables au-dessus du pli, c'est le héros plus court — et « Reprendre » pour qui revient. */
-.salon, .hall-grille{ display:grid; gap:18px; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)) }
-.hall-grille.bureau{ grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)) }
-.hall-systeme{ display:flex; align-items:center; gap:14px 28px; flex-wrap:wrap; margin-top:22px; padding:14px 22px }
-.hall-systeme-nom{ display:flex; flex-direction:column; gap:2px; min-width:150px }
-.hall-systeme-nom h3{ font-size:var(--t-titre); margin:0 }
-.hall-systeme-nom .muet{ font-size:var(--t-fin); margin:0; max-width:34ch }
-.hall-systeme .regles{ flex:none }
-.hall-systeme .regle{ font-size:var(--t-fin); padding:5px 11px }
-.hall-systeme-quoi{ flex:1 1 320px; font-size:var(--t-petit); margin:0; max-width:64ch; line-height:1.45 }
+/* ── Les étages du hall ────────────────────────────────────────────────── */
+/* Ce qui commande la page est le NOMBRE MESURÉ, pas la photo. Trois règles
+   d'écriture, valables pour tout ce qu'on ajoutera ici :
+     · la MONO dit « simulé » — tout chiffre issu d'une simulation est en Martian
+       Mono ; le serif dit « écrit », donc opinion. Un lecteur apprend cette règle
+       en deux secondes et ne se trompe plus jamais.
+     · --or-lumiere est RÉSERVÉ aux chiffres mesurés. Il servait à six choses
+       (salutation, appels, liserés, pastilles) : une couleur qui sert à six
+       choses ne signale plus rien.
+     · six tailles de police, pas seize. Mesuré avant : quatre valeurs entre 17 et
+       19,44 px et deux entre 11 et 12 px — des écarts de 0,84 px. Ce n'étaient pas
+       des niveaux, c'était du bruit.
+
+   🚨 AUCUN CHIFFRE N'EST ÉCRIT ICI NI DANS LE GABARIT. Tout vient de DONNEES par
+   salon.js (rendreMesures) : « Neuf tables » pour dix a survécu trois jours parce
+   qu'il était écrit à la main.
+
+   ⚠️ RIEN NE PROMET DE GAIN. Aucun montant, aucun « gagnez », aucun jeton qui
+   saute : les seuls chiffres affichés sont l'avantage de la maison et l'indice de
+   comptage — c'est-à-dire ce que le casino prend et où ne pas s'asseoir. Ce n'est
+   pas de la pudeur : c'est ce qui garde le site hors du classement « jeu d'argent »
+   chez les moteurs, les magasins d'applications et les régies. */
+:root{
+  /* 🚨 CES JETONS SONT SUR :root, PAS sur body.au-hall. Cette classe-là est posée par le
+     JS (socle.js, aller()) : avant l'exécution du script — et le fichier fait 1,1 Mo, le
+     navigateur peut peindre avant — `max-width:var(--colonne)` serait une déclaration
+     invalide, le hall partirait bord à bord puis se recentrerait. Et si le script meurt,
+     le hall resterait sans marge ni rythme. Seule la PALETTE sombre reste au hall.
+     --t-mesure sert aussi HORS du hall : carteTableHtml rend la même ligne .mesure dans
+     la vignette .mp-table de l'écran « À plusieurs », où body.au-hall n'existe pas.
+
+     La ligne gravée de l'instrument : elle sépare les étages, porte leur numéro,
+     et c'est la seule chose qui se DESSINE à l'arrivée. Un trait, pas une couleur. */
+  --trait: color-mix(in oklab, var(--bord) 42%, transparent);
+  /* Deux tailles de mesure. Le rapport au voisin ne descend jamais sous 1,25. */
+  --t-mesure-geant: clamp(34px, 3.6vw, 52px);
+  --t-mesure: clamp(22px, 2vw, 30px);
+  /* Les titres d'étage DESCENDENT : c'est la structure de Léo, rendue visible de
+     loin sans lire. Avant, les quatre faisaient 37,44 px. */
+  --t-etage-1: clamp(30px, 3.4vw, 52px);
+  --t-etage-2: clamp(26px, 2.7vw, 42px);
+  --t-etage-3: clamp(24px, 2.3vw, 34px);
+  --t-etage-4: clamp(20px, 1.6vw, 26px);
+  /* Le rythme vertical. Avant : UNE seule valeur (45 px), plus petite que la hauteur
+     d'un entête de section (62 px) — aucune respiration ne disait qu'on changeait de
+     sujet. Rapport externe/interne : 5,3:1 en haut, 3,3:1 en bas. Le blanc INTÉRIEUR
+     doit toujours rester sous la moitié du plus petit blanc ENTRE étages — c'est la
+     règle à vérifier au prochain bloc ajouté, pas une valeur à recopier. */
+  --air-1: clamp(72px, 9vh, 128px);
+  --air-2: clamp(64px, 8vh, 112px);
+  --air-3: clamp(56px, 7vh, 96px);
+  --air-4: clamp(48px, 6vh, 80px);
+  --air-int: 24px;
+
+  /* La colonne cesse de toucher les bords : à 1280 et 1440 la gouttière faisait 20 px
+     (96,9 % de l'écran), tout était bord à bord. Trois colonnes de table tiennent
+     toujours — 363 px de carte à 1280, au-dessus du seuil de 340. */
+  --colonne: min(1240px, 100% - 2*clamp(24px, 6vw, 96px));
+}
+/* ⚠️ .etage porte l'ANCRE (#lesTables, #entrainement, #prive, #bureau) : c'est elle
+   que allerHall() fait défiler. Rien ici ne doit la déplacer — le mouvement de la
+   révélation va sur ses ENFANTS, jamais sur elle. */
+.etage{ margin-top:var(--air-2); scroll-margin-top:calc(var(--h-entete, 64px) + 16px) }
+.etage-1{ margin-top:var(--air-1) }
+.etage-3{ margin-top:var(--air-3) }
+.etage-4{ margin-top:var(--air-4); max-width:1120px }
+.etage-entete{ display:flex; flex-direction:column; gap:6px; margin-bottom:var(--air-int) }
+.etage-1 h2{ font-size:var(--t-etage-1); line-height:1.02; letter-spacing:-.015em; margin:0 }
+.etage-2 h2{ font-size:var(--t-etage-2); line-height:1.05; letter-spacing:-.009em; margin:0 }
+.etage-3 h2{ font-size:var(--t-etage-3); line-height:1.06; letter-spacing:-.006em; margin:0 }
+.etage-4 h2{ font-size:var(--t-etage-4); line-height:1.12; margin:0 }
+.etage-chapo{ font-family:"Instrument Serif",Georgia,serif; font-style:italic;
+  font-size:var(--t-fort); color:var(--os-eteint); margin:0 }
+/* La borne de MESURE du texte courant. La colonne fait 1240 px : sans elle, une ligne
+   de prose fait 1240 px de large et l'œil perd la ligne au retour chariot. */
+.gb-sous, .etage-chapo, .plaque-quoi, .tuile-col .sous, .rang span{ max-width:68ch }
+
+/* La barre gravée : « 01 ──────── 10 TABLES · 6 BATTABLES ». Elle remplace les quatre
+   sur-titres .grave des sections — un seul idiome au lieu de deux, et il porte un
+   CHIFFRE au lieu d'une formule. */
+.etage-barre{ display:flex; align-items:center; gap:14px; width:100% }
+.etage-no{ font-family:"Martian Mono",ui-monospace,monospace; font-style:normal; font-weight:600;
+  font-size:var(--t-micro); letter-spacing:.1em; color:var(--os-eteint); flex:none }
+.etage-barre .trait{ flex:1 1 auto; height:1px; background:var(--trait) }
+.etage-compte{ flex:none; display:inline; color:var(--os-eteint) }
+
+/* ── LA PLAQUE DE MESURE ──────────────────────────────────────────────── */
+/* Une plaque, pas un panneau : fond plat, deux traits, AUCUNE ombre portée et aucun
+   dégradé. C'est ce qui la distingue des dix-sept cartons d'avant. */
+.plaque{ margin-top:var(--air-2); background:var(--laque); border-radius:14px;
+  border-top:1px solid var(--trait); border-bottom:1px solid var(--trait);
+  padding:clamp(20px, 2.4vw, 30px) clamp(20px, 2.6vw, 34px);
+  display:grid; grid-template-columns:minmax(300px, 1fr) minmax(280px, 1fr); gap:clamp(20px,3vw,44px) }
+.plaque-chiffres{ display:flex; flex-direction:column; justify-content:center; gap:16px }
+.plaque-chiffres b{ display:block; font-size:var(--t-mesure-geant); line-height:1; color:var(--or-lumiere) }
+.plaque-chiffres .grave{ margin-top:4px; display:block }
+.plaque-legende{ grid-column:1 / -1; margin:0; padding-top:16px; border-top:1px solid var(--trait);
+  display:flex; align-items:baseline; flex-wrap:wrap; gap:6px 14px;
+  font-size:var(--t-petit); line-height:1.5; color:var(--os-eteint) }
+.plaque-legende > b{ color:var(--os); font-family:"Instrument Serif",Georgia,serif; font-size:var(--t-fort); font-weight:400 }
+.plaque-legende .regles{ display:inline-flex; flex:none }
+.plaque-legende .regle{ font-size:var(--t-fin); padding:5px 11px }
+.plaque-quoi{ flex:1 1 320px }
+.plaque-quoi b{ font-weight:600; color:var(--os) }
+.plaque-quoi em{ font-style:italic }
+/* La signature : c'est elle qui fait de ces trois nombres une MESURE et non une
+   affirmation. Sans date ni empreinte, « trois millions de mains » est un slogan. */
+.plaque-signature{ flex:1 1 100%; font-size:var(--t-fin); font-family:"Martian Mono",ui-monospace,monospace;
+  font-stretch:87.5%; letter-spacing:-.01em; color:color-mix(in oklab, var(--os-eteint) 78%, transparent) }
+
+/* La démonstration : six vraies cartes, et le compte qui les suit. La légende ÉNONCE
+   la règle, la démonstration la MONTRE. Au repos elle est à son état FINAL (les six
+   cartes posées, le compte à sa valeur d'arrivée) : rien n'est jamais parqué en
+   attente de quoi que ce soit — cf. le motif d'apparition en bas de bloc. */
+.plaque-demo{ display:flex; flex-direction:column; justify-content:center; gap:12px }
+.demo-cartes{ display:flex; gap:6px; --w:clamp(40px, 4.2vw, 64px) }
+.demo-cartes .carte{ flex:none }
+.demo-compte{ position:relative; height:calc(var(--t-mesure-geant) * 1.06); font-size:var(--t-mesure-geant);
+  line-height:1.06; color:var(--or-lumiere) }
+.demo-compte b{ position:absolute; inset:0; display:block; font-weight:600; opacity:0 }
+.demo-compte b:last-child{ opacity:1 }
+.demo-lgd{ color:var(--os-eteint) }
+
+/* ── LE GRAND BOUTON ──────────────────────────────────────────────────── */
+/* Une PLAQUE, pas un bouton en relief : pas d'ombre portée, pas de dégradé, un seul
+   trait en haut.
+   🚨 ON NE DORE PAS LA BANDE ENTIÈRE. Le mur est sombre, seule la poignée est en or —
+   ici, le seul or est la fourchette d'avantage maison. Un panneau doré de 460 px n'est
+   pas une porte, c'est un panneau publicitaire : c'est le geste qui ferait dire « vibe
+   codé » une seconde fois.
+   ⚠️ Au survol on ne SOULÈVE PAS (pas de translateY comme les portes photo) : une
+   plaque de mesure ne lévite pas. C'est la différence de matière qui sépare cet objet
+   des dix cartes-photos qu'il contient. */
+.grand-bouton{ list-style:none; cursor:pointer; position:relative; display:grid; align-items:end;
+  grid-template-columns:1fr auto; grid-template-areas:"barre barre" "titre mesure" "sous chevron";
+  gap:10px clamp(16px, 3vw, 40px);
+  min-height:clamp(120px, 16vh, 168px); padding:clamp(16px,2vw,24px) clamp(18px,2.4vw,30px);
+  background:var(--laque); border-radius:14px; border-top:1px solid var(--trait);
+  transition:background .2s, border-color .2s }
+.grand-bouton::-webkit-details-marker{ display:none }
+.grand-bouton::marker{ content:"" }
+.grand-bouton .etage-barre{ grid-area:barre }
+.grand-bouton h2{ grid-area:titre }
+.gb-sous{ grid-area:sous; font-size:var(--t-corps); color:var(--os-eteint); line-height:1.45 }
+.gb-mesure{ grid-area:mesure; text-align:right }
+.gb-mesure b{ display:block; font-size:var(--t-mesure); line-height:1; color:var(--or-lumiere) }
+.gb-mesure .grave{ margin-top:4px; display:block }
+.gb-chevron{ grid-area:chevron; justify-self:end; align-self:center; width:20px; height:20px;
+  border-right:2px solid var(--os-eteint); border-bottom:2px solid var(--os-eteint);
+  rotate:45deg; transition:rotate .3s var(--ressort), border-color .2s }
+.grand-bouton:hover{ background:var(--relief); border-top-color:color-mix(in oklab, var(--or-lumiere) 55%, transparent) }
+.grand-bouton:hover .gb-chevron{ border-color:var(--os) }
+/* Le chevron est le SEUL mouvement de l'objet. On n'anime JAMAIS la hauteur du
+   <details> : `height` recalcule la mise en page à chaque image, c'est le moyen le plus
+   sûr de faire tomber la page sous 30 fps sur un portable — l'exact contraire de ce que
+   Léo demande. */
+details[open] > .grand-bouton .gb-chevron{ rotate:225deg }
+details[open] > .grand-bouton{ border-bottom:1px solid var(--trait); border-radius:14px 14px 0 0 }
+.etage-1 > .contenu{ padding-top:var(--air-int) }
+/* Les trois onglets de filtre : 44 px. Mesurés à 33,5 px, ils ne passaient le banc que
+   par la tolérance `BUTTON \d+×3[3-9]` de mesurer.mjs. Ils déménagent dans le <details>,
+   c'est le moment de les réparer.
+   ⚠️ Scopé à #filtreSalon, PAS à .onglets : la classe sert aussi aux onglets des
+   exercices, de la stratégie et du multijoueur, dont les mises en page sont réglées. */
+#filtreSalon{ margin-bottom:var(--air-int) }
+#filtreSalon button{ min-height:44px; display:inline-flex; align-items:center; padding:0 15px }
+
+/* ── LES PORTES DE TABLES ─────────────────────────────────────────────── */
+/* Trois portes par rangée, à 1280 comme à 1920. Essayé à quatre (les critiques, 05/09) :
+   à 288 px de large la carte perdait son nom et son lieu. */
+.salon{ display:grid; gap:18px; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)) }
+/* LA RÈGLE DE L'ORPHELIN. La grille est intrinsèque : à dix tables, la dixième se
+   retrouve SEULE sur une rangée de trois avec 946 px de vide à sa droite. Comme c'est
+   précisément la table « à fuir », la dernière porte devient celle qu'on ne pousse pas.
+   ⚠️ Le seuil est 1200 px : c'est la largeur À PARTIR DE LAQUELLE la grille tient
+   exactement trois colonnes. Sous 1200 elle passe à deux et la 10ᵉ carte n'est PAS
+   orpheline — la règle l'étirerait à tort. */
+@media (min-width:1200px){
+  .salon > .salle-porte:last-child:nth-child(3n+1){ grid-column:1 / -1 }
+}
+/* LA MESURE EN TÊTE DE CARTE. Elle remplace la ligne .chiffres du bas (avantage en
+   serif 21 px + fourchette de mises, qui descend dans « Pourquoi ? »). Une carte de hall
+   répond à « est-ce que je m'assieds ici ? », pas à « combien je mise ».
+   🚨 Le second nombre est une information NEUVE : indiceComptable() existe depuis
+   toujours, il DÉCIDE du filtre « Où compter rapporte » (≥ 25) — et il n'était visible
+   nulle part. Un filtre dont le critère est caché est un filtre auquel personne n'a de
+   raison de croire. Affiché, Le Cotai devient auto-explicatif : 0,46 % d'avantage maison
+   (excellent) et 0/100 au comptage (mort). */
+.salle-carte .mesure{ display:flex; align-items:baseline; gap:4px 14px; flex-wrap:wrap;
+  margin-bottom:2px; font-variant-numeric:tabular-nums }
+/* Le nombre et son étiquette sont INSÉCABLES : c'est le groupe qui passe à la ligne, jamais
+   l'étiquette toute seule. */
+.salle-carte .mesure .m{ display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap }
+.salle-carte .mesure b{ font-family:"Martian Mono",ui-monospace,monospace; font-weight:600;
+  font-size:clamp(17px, 1.35vw, 21px); line-height:1; letter-spacing:-.03em; color:var(--or-lumiere) }
+.salle-carte .mesure b.jade{ color:#5FE0C6 }
+.salle-carte .mesure b.cinabre{ color:#FF9B7A }
+.salle-carte .mesure i{ font-style:normal; font-size:var(--t-micro); letter-spacing:.12em;
+  text-transform:uppercase; font-weight:600; color:rgba(246,242,232,.72) }
+/* 🚨 La grande tuile ne coupe plus sa phrase : mesuré, 59 px de texte pour 39 px de
+   boîte — « …chacun sa main — ou la course au… ». Les deux lignes réservées valent pour
+   les dix cartes d'une même rangée, pas pour une tuile seule. */
+.salle-carte.grande .sous{ min-height:0; display:block; -webkit-line-clamp:none; overflow:visible; max-width:62ch }
+
+/* ── LA TUILE À TROIS COLONNES (étage 02) ─────────────────────────────── */
+/* Trois portes dans UN objet, séparées par deux traits gravés. Les trois entraînements
+   sont un même geste décliné ; les dix tables sont dix destinations. La forme doit dire
+   lequel est lequel. */
+.tuile{ position:relative; isolation:isolate; overflow:hidden; border-radius:14px;
+  background:#0B1211; color:#F6F2E8;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(0,0,0,.65), 0 16px 32px -20px rgba(0,0,0,.85) }
+.tuile-trois{ display:grid; grid-template-columns:repeat(3, 1fr); min-height:clamp(300px, 40vh, 420px) }
+.tuile-col{ display:flex; flex-direction:column; align-items:flex-start; gap:6px;
+  justify-content:flex-end; padding:clamp(18px,2vw,26px); text-align:left; color:inherit;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+  text-shadow:0 1px 2px rgba(0,0,0,.7); transition:background .25s }
+.tuile-col + .tuile-col{ border-left:1px solid var(--trait) }
+.tuile-col:hover, .tuile-col:focus-visible{ background:rgba(255,255,255,.05) }
+.tuile-col .lieu{ font-size:var(--t-micro); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:600; color:rgba(246,242,232,.92) }
+.tuile-col .nom{ font-family:"Instrument Serif",Georgia,serif; font-size:clamp(26px, 2.1vw, 34px); line-height:1.02 }
+.tuile-col .sous{ font-family:"Instrument Serif",Georgia,serif; font-style:italic;
+  font-size:var(--t-corps); line-height:1.35; color:rgba(246,242,232,.9) }
+.tuile-mes{ margin-top:6px; color:rgba(246,242,232,.66) }
+
+/* ── LES RANGÉES DU BUREAU (étage 04) ─────────────────────────────────── */
+/* Le bureau se resserre aussi par la LARGEUR (1120, la colonne standard de
+   l'application) et pas seulement par la taille de son titre : les deux ensemble disent
+   « on quitte l'étage » sans un mot, et ça ne coûte qu'un max-width. */
+.rangs{ display:flex; flex-direction:column; border-top:1px solid var(--trait) }
+.rang{ display:flex; align-items:baseline; gap:8px 18px; flex-wrap:wrap;
+  min-height:44px; padding:13px 4px; text-align:left; color:var(--os);
+  border-bottom:1px solid var(--trait); cursor:pointer; transition:color .15s, padding-left .2s var(--ressort) }
+.rang b{ font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:var(--t-fort); flex:none }
+.rang span{ font-size:var(--t-petit); color:var(--os-eteint) }
+.rang:hover{ color:var(--or-lumiere); padding-left:10px }
+.rang:hover span{ color:var(--os) }
+
 .hall-apprendre{ min-height:48px; padding:0 18px; border-color:rgba(255,255,255,.3); color:#F6F2E8; background:rgba(0,0,0,.34); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px) }
 .hall-apprendre:hover{ border-color:var(--or-lumiere); background:rgba(0,0,0,.5) }
 /* La leçon (salon.js, ouvrirLecon) : trois écrans dans la modale. */
@@ -400,7 +620,7 @@ div.salle-carte{ cursor:default }
 .salle-carte:hover, .salle-porte:hover .salle-carte, .salle-carte:focus-visible{ transform:translateY(-4px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px color-mix(in oklab, var(--laiton) 60%, transparent), 0 28px 44px -20px rgba(0,0,0,.9) }
 .salle-carte:focus-visible{ outline:2px solid var(--laiton); outline-offset:3px }
-.salle-carte>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:var(--pos, 50% 50%); z-index:-2; transform:scale(1.03);
+.salle-carte>.photo, .tuile>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:var(--pos, 50% 50%); z-index:-2; transform:scale(1.03);
   filter:brightness(.78) saturate(1.05); transition:transform .7s var(--sec), filter .3s }
 .salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo, .salle-carte:focus-visible>.photo{ transform:scale(1.08); filter:brightness(.98) saturate(1.12) }
 /* Le voile ne tombe plus à 6 % à 30 % de hauteur — c'est là que vit le kicker de lieu, sur
@@ -408,7 +628,7 @@ div.salle-carte{ cursor:default }
 /* …et il ne descend plus sous .55 : « LAS VEGAS STRIP » posé sur l'enseigne « planet » faisait 1,2:1 au
    p98, la citation du Vieux Reno sur le néon 1,15:1 (mesuré le 05/09). Une PLAQUE locale derrière le
    bloc bas (un dégradé qui part du coin bas-gauche) porte le texte quoi que montre la photo. */
-.salle-carte>.voile{ position:absolute; inset:0; z-index:-1; pointer-events:none;
+.salle-carte>.voile, .tuile>.voile{ position:absolute; inset:0; z-index:-1; pointer-events:none;
   background:
     radial-gradient(130% 100% at 0% 100%, rgba(7,13,12,.9) 0%, rgba(7,13,12,.62) 42%, transparent 74%),
     linear-gradient(180deg, rgba(7,13,12,.66) 0%, rgba(7,13,12,.5) 24%, rgba(7,13,12,.58) 44%, rgba(7,13,12,.8) 66%, rgba(7,13,12,.95) 100%) }
@@ -429,15 +649,12 @@ div.salle-carte{ cursor:default }
 .salle-carte .nom{ font-family:"Instrument Serif",Georgia,serif; font-size:clamp(26px, 2.1vw, 34px); line-height:1.02; text-wrap:balance }
 /* Deux lignes réservées partout : dans une même rangée, les noms de tables sont sur la même ligne
    (mesuré le 05/09 : « Le Front de Mer » 30 px plus haut parce que sa citation en prenait deux). */
-.salle-carte .sous{ font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:clamp(15px, 1.1vw, 17px); line-height:1.3; color:rgba(246,242,232,.9); max-width:40ch; text-wrap:pretty;
+.salle-carte .sous{ font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:var(--t-corps); line-height:1.3; color:rgba(246,242,232,.9); max-width:40ch; text-wrap:pretty;
   min-height:2.6em; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
 .salle-carte .regles{ margin-top:2px }
-.salle-carte .regle{ border-color:rgba(255,255,255,.32); color:rgba(246,242,232,.92); background:rgba(0,0,0,.36);
-  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px) }
+.salle-carte .regle{ border-color:rgba(255,255,255,.32); color:rgba(246,242,232,.92); background:rgba(0,0,0,.36) }
 .salle-carte .regle.bien{ color:#5FE0C6; border-color:rgba(95,224,198,.62) }
 .salle-carte .regle.mal{ color:#FF9B7A; border-color:rgba(255,155,122,.62) }
-.salle-carte .chiffres{ display:flex; gap:14px; flex-wrap:nowrap; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:var(--t-fin); color:rgba(246,242,232,.74); margin-top:2px }
-.salle-carte .chiffres b{ font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:clamp(18px, 1.3vw, 21px); color:#F6F2E8; margin-right:6px; letter-spacing:0 }
 .salle-carte .etat, .salle-carte .tampon{ font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; font-weight:700;
   padding:5px 10px; border-radius:999px; white-space:nowrap; text-shadow:none }
 .salle-carte .etat{ background:var(--btn-or); color:var(--btn-encre); box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 6px 14px -8px #000 }
@@ -468,7 +685,7 @@ div.salle-carte{ cursor:default }
 .mp-table .salle-carte .haut{ right:20px; gap:8px }
 .mp-table .salle-carte .bas{ right:20px }
 .mp-table .salle-carte .sous{ display:none }
-.mp-table .salle-carte .chiffres{ gap:2px 14px; margin-top:6px }
+.mp-table .salle-carte .mesure{ gap:2px 10px; margin-top:6px }
 /* Le choix de table en place (reseau.js, rendreTableMP). C'est de la PROSE — des noms de
    casinos —, pas un champ de chiffres : la mono de 13 px des autres <select> avance à
    ~7,8 px par signe, et « Le Front de Mer · min 15 · cave 1 000 » (33 signes ≈ 257 px,
@@ -482,7 +699,7 @@ div.salle-carte{ cursor:default }
 .mp-choix select{ font-family:inherit; font-size:var(--t-petit); width:100%; max-width:100%; text-overflow:ellipsis }
 
 /* ── Les crédits : discrets, présents ──────────────────────────────────── */
-.hall-credits{ margin-top:clamp(40px, 6vh, 72px); padding-top:18px; border-top:1px solid var(--ardoise);
+.hall-credits{ margin-top:var(--air-4); padding-top:18px; border-top:1px solid var(--ardoise);
   font-size:var(--t-fin); color:var(--os-eteint); line-height:1.75 }
 .hall-credits p{ margin:6px 0 0 }
 .hall-credits a{ color:var(--os-eteint); text-decoration-color:color-mix(in oklab, var(--os-eteint) 40%, transparent); text-underline-offset:2px }
@@ -515,12 +732,128 @@ div.salle-carte{ cursor:default }
   .salle-carte:hover, .salle-porte:hover .salle-carte{ transform:none }
   .salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo{ transform:scale(1.03) }
 }
+@media (max-width:560px){
+  /* Deux colonnes coupent « 0,36 – 2,07 % » en son milieu, et son étiquette en trois lignes :
+     un nombre cassé ne se lit plus comme un nombre. Une colonne, et il tient. */
+  .plaque-chiffres{ grid-template-columns:1fr }
+  .plaque-chiffres > :last-child{ grid-column:auto }
+}
 @media (max-width:860px){
   .hall-heros{ min-height:min(60vh, 480px) }
   .hall-titre{ font-size:clamp(40px, 11vw, 72px) }
   .eventail{ display:none }
   .salle-carte.grande{ min-height:220px }
+  .plaque{ grid-template-columns:1fr }
+  .plaque-chiffres{ display:grid; grid-template-columns:1fr 1fr; gap:14px 18px }
+  .plaque-chiffres > :last-child{ grid-column:1 / -1 }
+  .plaque-legende{ gap:6px 10px }
+  /* Le chevron sort de la grille : à une colonne il se retrouverait sous la phrase,
+     à 40 px du titre qu'il commande. */
+  .grand-bouton{ grid-template-columns:1fr; grid-template-areas:"barre" "titre" "mesure" "sous";
+    align-items:start; gap:8px; padding-right:52px }
+  .gb-mesure{ text-align:left }
+  .gb-chevron{ position:absolute; right:18px; top:26px }
+  /* Les trois colonnes s'empilent, les traits verticaux passent en horizontaux : une
+     bordure gauche entre deux blocs empilés ne sépare plus rien. */
+  .tuile-trois{ grid-template-columns:1fr; min-height:0 }
+  .tuile-col + .tuile-col{ border-left:0; border-top:1px solid var(--trait) }
+  /* Empilées, les trois colonnes couvrent TOUTE la photo, pas seulement son bas : le voile
+     dégradé du bas ne protège plus que la dernière, et « Stratégie » se lit sur le feutre
+     vert en pleine lumière. Un aplat uniforme rend les trois également lisibles. */
+  .tuile-trois > .voile{ background:linear-gradient(180deg, rgba(7,13,12,.72) 0%, rgba(7,13,12,.80) 100%) }
 }
+
+
+/* ══════════════════════ L'ARRIVÉE AU DÉFILEMENT ══════════════════════
+   Le progrès est lié à la POSITION, pas au temps : on remonte de 20 px, le bloc recule de
+   20 px. C'est la différence entre une page qui glisse et une page qui déclenche des
+   transitions — et c'est ce que Léo appelle « de l'animation quand on glisse ».
+
+   🚨 LA PAGE EST ENTIÈREMENT LISIBLE À L'ARRÊT. Rien ici ne pose d'état caché : ces règles
+   n'EXISTENT que sous trois conditions cumulées, et l'état par défaut de chaque élément est
+   son état FINAL.
+     1. @supports (animation-timeline: view()) — un moteur qui l'ignore ne crée jamais ces
+        animations et voit la page nue, complète.
+     2. @media (prefers-reduced-motion: no-preference) — plus fort qu'un bloc `reduce` qui
+        annulerait : il n'y a rien à penser à annuler.
+     3. html.anime, posé par demarrage.js APRÈS la première image — script mort, artefact au
+        script coupé, erreur en amont : la page reste nue.
+
+   🚨 LA PORTÉE FINIT AU PLUS TARD À `entry 100%`. Toute portée qui finit sur un jalon
+   `cover` laisse le bas d'une page NON DÉFILABLE éteint pour toujours — grande fenêtre,
+   zoom arrière, impression : ça arrive pour de vrai.
+
+   🚨 ON N'ANIME JAMAIS LE NŒUD QUI PORTE L'ANCRE (.etage, #lesTables…) : scrollIntoView
+   calcule sa cible une fois, sur la boîte translatée, et « Voir les tables » atterrirait
+   sous l'en-tête collant au moment précis où l'on vient de cliquer. Le mouvement va sur ses
+   ENFANTS, sans exception.
+
+   ⚠️ `translate:`, jamais `transform:` — c'est la convention posée par la caméra, et
+   .salle-carte:hover occupe déjà `transform`. Les animer tous les deux ferait s'écraser le
+   soulèvement au survol ; séparés, ils se composent.
+   ⚠️ Amplitude 18 px. Un bon reveal est presque fini quand on le remarque : si un relecteur
+   peut décrire le mouvement, il est trop grand. Aucun `scale`, aucun `blur` (chaque flou
+   ré-échantillonne son fond à chaque image), aucun élément épinglé — un sticky scrubé est le
+   seul motif dont l'échec ne ressemble pas à une animation ratée mais à une PAGE BLOQUÉE, et
+   il se comporte différemment à la molette, au pavé tactile et au pouce. Léo a dit que la
+   fluidité primait. */
+@keyframes hall-arrive{ from{ opacity:0; translate:0 18px } to{ opacity:1; translate:0 0 } }
+@keyframes hall-trait { from{ transform:scaleX(0) } to{ transform:scaleX(1) } }
+@keyframes demo-pose  { from{ opacity:0; translate:0 -22px; rotate:-9deg } to{ opacity:1; translate:0 0; rotate:0deg } }
+/* Un état du compte s'allume à son moment et s'éteint au suivant. `both` tient la première
+   image avant la portée (opacité 0) et la dernière après (opacité 0). */
+@keyframes demo-etat    { 0%{ opacity:0 } 1%,99%{ opacity:1 } 100%{ opacity:0 } }
+@keyframes demo-etat-fin{ 0%{ opacity:0 } 1%,100%{ opacity:1 } }
+
+@supports (animation-timeline: view()){
+@media (prefers-reduced-motion: no-preference){
+  html.anime .etage > .etage-entete,
+  html.anime .etage > .grand-bouton,
+  html.anime .etage > .contenu > .onglets,
+  html.anime .etage > .tuile,
+  html.anime .etage > .salle-carte,
+  html.anime .etage > .rangs > *,
+  html.anime .salon > *,
+  html.anime .plaque > *,
+  html.anime .hall-credits{
+    animation: hall-arrive linear both;
+    animation-timeline: view();
+    animation-range: entry 8% entry 52%;
+  }
+  /* Le trait se GRAVE, il n'arrive pas : c'est la seule chose qui se dessine. */
+  html.anime .etage-barre > .trait{
+    animation: hall-trait linear both; animation-timeline: view();
+    animation-range: entry 0% entry 30%; transform-origin:0 50%;
+  }
+  /* 🚨 L'escalier se fait au `animation-range-start`, PAS à l'`animation-delay` : un délai
+     est une DURÉE, une timeline de défilement n'a pas de temps, elle a un progrès. Mesuré au
+     même point : témoin 0,406 — avec animation-delay:900ms, 0,406 (aucun effet, et personne
+     ne voit d'erreur) — avec animation-range-start:entry 22%, 0,140. */
+  html.anime .etage > .rangs > *:nth-child(2), html.anime .plaque > *:nth-child(2){ animation-range-start: entry 14% }
+  html.anime .etage > .rangs > *:nth-child(3), html.anime .plaque > *:nth-child(3){ animation-range-start: entry 20% }
+  /* ⚠️ Le conteneur OU les enfants, jamais les deux : animer .salon ET .salon > *
+     multiplierait les opacités (0,4 × 0,4 = 0,16) — double fondu, arrivée tardive. */
+  html.anime .salon > *:nth-child(3n+2){ animation-range-start: entry 12% }
+  html.anime .salon > *:nth-child(3n){   animation-range-start: entry 18% }
+
+  /* La démonstration : six cartes posées l'une après l'autre, et le compte qui les suit.
+     Elle n'est PAS scrubée non plus — chaque carte a sa fenêtre, la dernière est finie à
+     `entry 72 %`. Les six --k viennent de rendreMesures(). */
+  html.anime .demo-carte{
+    animation: demo-pose linear both; animation-timeline: view();
+    animation-range: entry calc(10% + var(--k, 0) * 9%) entry calc(22% + var(--k, 0) * 9%);
+  }
+  html.anime .demo-compte b{ animation: demo-etat linear both; animation-timeline: view() }
+  html.anime .demo-compte b:nth-child(1){ animation-range: entry 0%  entry 19% }
+  html.anime .demo-compte b:nth-child(2){ animation-range: entry 19% entry 28% }
+  html.anime .demo-compte b:nth-child(3){ animation-range: entry 28% entry 37% }
+  html.anime .demo-compte b:nth-child(4){ animation-range: entry 37% entry 46% }
+  html.anime .demo-compte b:nth-child(5){ animation-range: entry 46% entry 55% }
+  html.anime .demo-compte b:nth-child(6){ animation-range: entry 55% entry 64% }
+  /* Le dernier RESTE allumé : c'est l'état au repos, celui que la page montre sans animation
+     du tout. Les deux chemins tombent sur la même image. */
+  html.anime .demo-compte b:last-child{ animation-name: demo-etat-fin; animation-range: entry 64% entry 72% }
+}}
 
 /* ══════════════════════════════════════════════════════════════════════
    LA SCÈNE DE TABLE — un casino la nuit

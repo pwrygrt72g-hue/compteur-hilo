@@ -33,7 +33,10 @@ function chipsReglesTexte(t) {
 // en plus ajoutait une rangée et poussait « MACAO, COTAI STRIP » sur « TABLE 4 » (les critiques, 05/09).
 function pucesCourtes(t, o) {
   const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
-  const puces = [...tmp.children], garde = puces.slice(0, 3);
+  // o.deux : la ligne de mesure prend la place que prenait .chiffres, deux puces suffisent
+  // à décrire la table — la troisième poussait le bloc bas vers .haut. ⚠️ table.js appelle
+  // pucesCourtes SANS second argument : le `o &&` est ce qui l'en protège.
+  const puces = [...tmp.children], garde = puces.slice(0, o && o.deux ? 2 : 3);
   const csm = puces.find(p => /mélangeuse/.test(p.textContent));
   if (csm && !garde.includes(csm) && !(o && o.sansMelangeuse)) garde.push(csm);
   return garde.map(p => p.outerHTML).join("");
@@ -95,6 +98,24 @@ const sabotEntame = () => T.mains > 0 || T.enJeu;
    o.n = son numéro dans le catalogue · o.reprise = « Reprendre » · o.inerte = un
    simple panneau (l'écran À plusieurs la montre sans qu'on puisse s'y asseoir en solo)
    · o.compte = la version COURSE AU COMPTAGE : ni argent ni règles de main (cf. pucesCompte). */
+/* La MESURE, en tête du bloc bas. Elle remplace la ligne « avantage maison · mises » qui
+   vivait tout en bas : une porte du hall répond à « est-ce que je m'assieds ici ? », pas à
+   « combien je mise » — la fourchette de mises descend dans la modale « Pourquoi ? », avec
+   le reste des règles.
+   🚨 Le second nombre est une information NEUVE. indiceComptable() existe depuis toujours et
+   DÉCIDE du filtre « Où compter rapporte » (≥ 25) — il n'était visible nulle part. Un filtre
+   dont le critère est caché est un filtre auquel personne n'a de raison de croire. Affiché,
+   Le Cotai devient auto-explicatif : excellent avantage maison, et 0/100 au comptage.
+   ⚠️ Sur l'écran COURSE AU COMPTAGE (o.compte) on ne garde QUE l'indice : l'avantage maison
+   n'y décide de rien — on ne mise pas —, mais la rentabilité du comptage y est tout le sujet. */
+function ligneMesure(t, d, compte) {
+  const i = indiceComptable(t), teinte = i >= 25 ? "jade" : "cinabre";
+  // ⚠️ Chaque nombre et SON étiquette dans un même <span> : à plat dans le flex, « comptage »
+  // se retrouvait seul sur la ligne suivante, sous « 0,58 % avantage 36/100 » — une étiquette
+  // orpheline ne désigne plus rien (le défaut déjà corrigé sur la barre de filtres le 27/08).
+  const av = compte ? "" : `<span class="m"><b class="cadran" title="Ce que la maison gagne en moyenne sur chaque mise, en stratégie parfaite — plus c'est bas, mieux c'est">${fr2(d.avantage)} %</b><i>avantage</i></span>`;
+  return `<span class="mesure">${av}<span class="m"><b class="cadran ${teinte}" title="Ce que cette table laisse vraiment à un compteur, sur 100">${i}/100</b><i>comptage</i></span></span>`;
+}
 function carteTableHtml(t, o) {
   o = o || {};
   const d = DONNEES.tables[t.id], mort = tableMorte(t), ph = photoDe(t.id);
@@ -105,10 +126,10 @@ function carteTableHtml(t, o) {
       ${ph ? `<img class="photo" ${attributsPhoto(t.id)} alt="" aria-hidden="true" loading="lazy" decoding="async"${PHOTO_POS[t.id] ? ` style="--pos:${PHOTO_POS[t.id]}"` : ""}>` : ""}<span class="voile"></span>
       <span class="haut"><span class="num">${o.n ? "Table " + o.n : "Ta table"}</span>${o.reprise ? `<span class="etat">Reprendre</span>` : mort ? `<span class="tampon" title="${echap(mort)}">${tamponCourt(t)}</span>` : ""}</span>
       <span class="bas">
+        ${ligneMesure(t, d, o.compte)}
         <span class="lieu">${echap(t.lieu)}</span><span class="nom">${echap(t.nom)}</span>
         <span class="sous">« ${echap(t.lecon)} »</span>
-        <span class="regles">${o.compte ? pucesCompte(t) : pucesCourtes(t, { sansMelangeuse: true })}</span>
-        ${o.compte ? "" : `<span class="chiffres"><span title="Ce que la maison gagne en moyenne sur chaque mise, en stratégie parfaite — plus c'est bas, mieux c'est"><b>${fr2(d.avantage)} %</b>avantage maison</span><span title="Mise minimale et maximale à cette table, en jetons"><b>${fmtJ(t.mise_min)} – ${fmtJ(t.mise_max)}</b>mises</span></span>`}
+        <span class="regles">${o.compte ? pucesCompte(t) : pucesCourtes(t, { sansMelangeuse: true, deux: true })}</span>
       </span>
       ${o.inerte ? "" : `<span class="asseoir-cta" aria-hidden="true">${o.reprise ? "Reprendre" : "S'asseoir"} &rarr;</span>`}
     </${balise}>
@@ -145,6 +166,10 @@ function rendreSalon() {
   if (rep) {
     const t = tableCourante(), revient = entame || DB.tapis !== 1000 || DB.rachats > 0 || (DB.sessions || []).length > 0;
     document.body.classList.toggle("revient", revient); rep.hidden = !revient;
+    // Celui qui revient veut changer de table, pas relire quatre étages. L'état « revient »
+    // est celui qui raccourcit déjà le héros : une seule définition pour les deux gestes,
+    // aucune clé nouvelle en base, aucune migration.
+    const det = $("lesTables"); if (det && revient) det.open = true;
     const tapis = String(Math.round(DB.tapis)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
     rep.innerHTML = `${entame ? "Reprendre ta place" : "Reprendre"} — <b>${echap(t.nom)}</b><small>tapis ${tapis}</small>`;
     rep.onclick = () => { if (!sabotEntame()) nouveauSabot(); aller("table"); bandeau("Tu reprends ta place à « " + t.nom + " »"); };
@@ -163,6 +188,99 @@ $("filtreSalon").querySelectorAll("button").forEach(b => b.onclick = () => {
   rendreSalon();
 });
 
+/* ── LA PLAQUE DE MESURE ────────────────────────────────────────────────────────
+   Trois nombres qui n'existent nulle part ailleurs sur le web, recalculés à chaque
+   construction, DATÉS et signés d'une empreinte. C'est ce qui fait de cette page une
+   planche de mesure et non une page de marketing — et c'est, accessoirement, le seul
+   contenu citable de la seule page indexable du site.
+
+   🚨 AUCUN de ces nombres n'est écrit à la main. « Neuf tables » a survécu trois jours
+   dans le héros pour dix tables réelles, en se contredisant avec le JSON-LD de la même
+   page : tout compte affiché se dérive de DONNEES, sans exception.
+
+   🚨 CETTE FONCTION EST APPELÉE DEPUIS socle.js (rendreSysteme), qui est le PREMIER
+   morceau de l'IIFE alors que salon.js est le quatrième. Ça ne marche que parce que
+   c'est une `function` DÉCLARÉE, donc hoistée dans toute la portée. La passer en `const`
+   la mettrait en zone morte temporelle et tuerait le démarrage. */
+const EN_TOUTES_LETTRES = ["zéro", "une", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze"];
+// L'espace fine insécable est celui de la ligne « tapis 975 » du bouton Reprendre.
+const grouper = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
+// Les six cartes de la démonstration : une histoire, pas un tirage. Le compte monte, un
+// roi le fait retomber, un sept ne fait rien, puis il remonte — c'est exactement ce que la
+// légende énonce en une phrase, montré en six images.
+// ⚠️ Le ROI s'écrit "R" ici (RANKS est français : A 2…10 V D R). Écrire "K" fait rendre
+// `undefined` à `find`, la carte disparaît en silence et le compte affiché devient faux.
+const DEMO_RANGS = ["5", "3", "R", "7", "6", "4"];
+
+function rendreMesures() {
+  const cat = DONNEES.catalogue, tables = DONNEES.tables;
+  const mot = n => EN_TOUTES_LETTRES[n] || String(n);
+  // ⚠️ data-nb-tables="cap" pour les occurrences qui OUVRENT une phrase : « dix règlements »
+  // après un point se lit comme une faute, et corriger la phrase à la main nous ramènerait
+  // au compte écrit en dur qu'on vient précisément de retirer.
+  document.querySelectorAll("[data-nb-tables]").forEach(e => {
+    const m = mot(cat.length);
+    e.textContent = e.dataset.nbTables === "cap" ? m.charAt(0).toUpperCase() + m.slice(1) : m;
+  });
+
+  const av = cat.map(t => tables[t.id].avantage);
+  const fourchette = fr2(Math.min(...av)) + " – " + fr2(Math.max(...av)) + " %";
+  // ⚠️ La mélangeuse continue n'a PAS de pénétration (0 par convention dans le catalogue) :
+  // la faire entrer dans la fourchette annoncerait « 0 – 85 % », c'est-à-dire une table
+  // qu'on ne joue jamais du tout. On ne mesure que ce qui se mesure.
+  const pen = cat.filter(t => t.melange !== "melangeuse_continue").map(t => Math.round(t.penetration * 100));
+  const battables = cat.filter(t => indiceComptable(t) >= 25).length;
+
+  const poser = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+  poser("mesAvantage", fourchette);
+  poser("mesPenetration", Math.min(...pen) + " – " + Math.max(...pen) + " %");
+  // DONNEES.mains × le nombre de tables : la simulation tourne table par table.
+  poser("mesMains", DONNEES.mains ? grouper(DONNEES.mains * cat.length) : "—");
+  poser("tablesAvantage", fourchette);
+  poser("tablesCompte", cat.length + " tables · " + battables + " battables");
+
+  // La SIGNATURE. Sans date ni empreinte, « trente millions de mains » est un slogan ; avec
+  // elles, c'est une calibration qu'on peut nous opposer.
+  // ⚠️ DONNEES.genere vient du CACHE de précalcul : c'est la date du dernier VRAI calcul,
+  // pas celle de la construction. C'est bien ce que « recalculé le … » veut dire.
+  const sig = $("mesSignature");
+  if (sig) {
+    let quand = DONNEES.genere || "";
+    try { quand = new Date(DONNEES.genere + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }); }
+    catch (e) { /* une date illisible reste affichée telle quelle : mieux qu'un blanc */ }
+    sig.textContent = (quand ? "Recalculé le " + quand : "") + (DONNEES.empreinte ? " · empreinte " + DONNEES.empreinte : "");
+  }
+
+  // ── La démonstration. Elle est REBÂTIE à chaque appel : les six valeurs changent avec le
+  // système de comptage, et un compte laissé sur les valeurs de Hi-Lo sous un titre
+  // « Omega II » serait faux au moment précis où l'on explique la règle.
+  const boite = $("demoCartes"), compte = $("demoCompte");
+  if (!boite || !compte) return;
+  const jeu = sabotNeuf(1);
+  boite.innerHTML = "";
+  const pris = [];
+  let rc = 0;
+  // Sept ÉTATS superposés — le départ, puis un par carte —, dont un seul est visible. Aucune
+  // interpolation numérique, donc aucun JS pendant le défilement : c'est le CSS qui allume le
+  // bon état, et AU REPOS c'est le DERNIER qui reste (l'état fini). Rien n'est jamais parqué
+  // en attente de quoi que ce soit.
+  const etats = ['<b class="cadran">' + sgn(0) + "</b>"];
+  DEMO_RANGS.forEach((r, k) => {
+    // `find` sur le rang seul rend six fois le PIQUE (sabotNeuf empile couleur par couleur) :
+    // un sabot d'une seule couleur n'est pas un sabot. On demande une couleur par carte, avec
+    // repli sur le rang seul si elle manque.
+    const suit = SUITS[k % SUITS.length][0];
+    const c = jeu.find(x => x.r === r && x.suit === suit) || jeu.find(x => x.r === r);
+    if (!c || pris.indexOf(c) >= 0) { if (!c) return; }
+    pris.push(c);
+    const e = carteEl(c); e.classList.add("demo-carte"); e.style.setProperty("--k", k);
+    boite.appendChild(e);
+    rc += valeurCompte(c);
+    etats.push('<b class="cadran">' + sgn(rc) + "</b>");
+  });
+  compte.innerHTML = etats.join("");
+}
+
 /* ── Les portes fixes du hall et les bandeaux de salle : la photo vient de
    window.PHOTOS (build.mjs), par la clé posée en data-photo. Sans photo, la porte
    garde son voile sombre et son titre — rien ne casse, rien ne charge. */
@@ -179,7 +297,7 @@ function rendreHall() {
     if (img.getAttribute("srcset") !== jeu) { if (jeu) img.setAttribute("srcset", jeu); else img.removeAttribute("srcset"); }
     if (img.getAttribute("src") !== src) img.src = src;
   });
-  rendreCredits(); rendreSalut();
+  rendreCredits(); rendreSalut(); rendreMesures();
 }
 // Une CC BY sans crédit est une violation : auteur, licence, source, pour chaque photo.
 // Le pied de page porte aussi la PORTÉE du partage à l'identique (les BY-SA obligent la photo,

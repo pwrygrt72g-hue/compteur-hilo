@@ -528,6 +528,11 @@ function aller(v) {
 function allerHall(ancre) {
   aller("accueil");
   const e = ancre && $(ancre); if (!e) return;
+  // Le grand bouton des tables est un <details> : « Voir les tables » doit les FAIRE
+  // APPARAÎTRE, pas défiler vers un bloc replié. Cette ligne couvre d'un coup TOUS les
+  // chemins existants — aller("salon"), le rachat de jetons, « Changer de table », la fin
+  // de la leçon, le fil d'Ariane, le lien profond #lesTables.
+  if (e.tagName === "DETAILS") e.open = true;
   // Après le scrollTo(0) de aller() : la salle glisse sous l'en-tête collant (scroll-margin-top en CSS).
   setTimeout(() => e.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }), 30);
 }
@@ -617,6 +622,14 @@ function rendreSysteme() {
     .map(k => `<span class="regle ${+k > 0 ? "bien" : +k < 0 ? "mal" : ""}"><b class="cadran">${sgn(+k)}</b>&nbsp; ${groupes[k].join(" ")}</span>`).join("")
     + (s.equilibre ? "" : `<span class="regle">déséquilibré · départ à ${sgn(CT.compteInitial(DB.sys, +($("eJeux").value || 6)))}</span>`);
   $("cCible").textContent = sgn(CT.compteInitial(DB.sys, +$("cJeux").value) + (s.equilibre ? 0 : 4 * +$("cJeux").value));
+  // La démonstration de la plaque compte SES six cartes avec le système sélectionné : ses
+  // valeurs sont celles de Hi-Lo comme d'Omega II, jamais un « +1 » écrit en dur. C'est
+  // donc ICI qu'elle se rejoue — rendreSysteme() est déjà appelée au démarrage ET à chaque
+  // changement dans ⚙, ce qui fait exactement les deux occasions.
+  // ⚠️ rendreMesures vit dans salon.js, TROIS morceaux plus bas. C'est une `function`, donc
+  // hoistée dans toute l'IIFE — exactement comme rendreSalon(), appelée depuis aller() une
+  // centaine de lignes plus haut. Un `const` ne l'aurait pas été.
+  rendreMesures();
 }
 // L'éventail du hall, à 250 px : quatre cartes chiffrées au hasard et l'AS DE PIQUE devant,
 // jamais une figure (à cette taille le sprite des figures, pensé pour 60 px, fait dessin

@@ -56,6 +56,14 @@ if (!donnees) {
   donnees.catalogue = TABLES;
   writeFileSync(CACHE, JSON.stringify({ empreinte, donnees }));
 }
+// Ce que la plaque de mesure du hall AFFICHE doit voyager AVEC les données, jamais être
+// réécrit à la main dans le gabarit : c'est exactement comme ça que « Neuf tables » a
+// survécu trois jours pour dix tables réelles, en se contredisant avec le JSON-LD de la
+// MÊME page. Posé HORS du bloc `if (!donnees)`, sinon un cache chaud les perdrait.
+// ⚠️ `donnees.genere` vient du cache : c'est la date du dernier VRAI calcul, pas celle de
+// la construction. C'est bien ce qu'on veut dire par « recalculé le … ».
+donnees.mains = MAINS;
+donnees.empreinte = empreinte;
 
 // ---- 2. mini-empaqueteur : des modules ES vers une seule portée ----
 // table-reseau (la table à plusieurs, hôte autoritaire) dépend d'engine : il vient après.

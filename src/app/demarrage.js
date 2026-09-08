@@ -6,6 +6,21 @@ nouveauSabot();
 // Le hall : photos sur les portes, crédits, salut — puis on y entre, sauf si un lien
 // (#table=CODE, #course=CODE, traités plus haut) a déjà emmené ailleurs.
 rendreHall(); if (vue === "accueil") aller("accueil");
+/* ── L'ARRIVÉE AU DÉFILEMENT : le drapeau ─────────────────────────────────────
+   Léo, 08/09 : « qu'elles apparaissent quand on défile, avec de l'animation quand on
+   glisse ». Le mouvement est fait par le CSS (animation-timeline: view()) — pas une ligne
+   de JS ne tourne pendant le défilement, et il n'y a aucun observateur à ré-abonner quand
+   rendreSalon() recrée les dix cartes à chaque clic de filtre.
+
+   🚨 CE DRAPEAU EST LE TROISIÈME VERROU, pas le premier. Les règles d'animation vivent
+   DANS un @supports ET dans un @media (prefers-reduced-motion: no-preference) ET sous
+   html.anime : un moteur qui ne connaît pas les timelines de défilement, un visiteur qui a
+   coupé les animations, ou un script mort AVANT cette ligne voient tous la page NUE —
+   c'est-à-dire complète, à son état final. Un bloc ne peut donc jamais rester invisible.
+
+   ⚠️ Posé après la PREMIÈRE IMAGE, pas au chargement : si quoi que ce soit lève entre ici
+   et le premier rendu, la page reste nue au lieu de se figer à moitié transparente. */
+requestAnimationFrame(() => document.documentElement.classList.add("anime"));
 // La fenêtre de dons, en DERNIER et après un souffle : elle ne doit jamais recouvrir un
 // hall encore en train de se peindre — on verrait la demande avant l'application, ce qui
 // est exactement l'inverse de ce qu'on veut faire lire. Elle décide seule si elle

@@ -320,7 +320,7 @@ body.au-hall main{ max-width:none; padding:0 0 56px; margin-top:calc(var(--h-tet
 body.au-hall .hall-heros{ padding-top:calc(clamp(36px,5vh,56px) + var(--h-tete)) }
 /* Le conteneur du hall, consommé par l'en-tête AUSSI : mesuré le 05/09 à 1280, la marque était à
    x = 80 et le titre du héros à x = 20, et la marque sautait de 60 px en passant à la table. */
-.hall-int, body.au-hall .tete{ max-width:min(1400px, 100% - 2*max(var(--gap), var(--sg), var(--sd))); margin:0 auto }
+.hall-int, body.au-hall .tete{ max-width:var(--colonne); margin:0 auto }
 /* Le hall est TOUJOURS la nuit, quel que soit le thème de la page : en clair (mesuré le 05/09)
    c'était une page beige avec un héros noir dedans et des cartons noirs sur fond crème. Le
    clair reste aux écrans « papier » (exercices, réglages, à plusieurs). */
@@ -389,24 +389,244 @@ body.au-hall.revient .hall-heros{ min-height:clamp(280px, 36vh, 400px) }
 .eventail .carte{ position:absolute; left:50%; top:16px; --w:118px; transform-origin:50% 132%; animation:eventer .6s var(--ressort) both }
 @keyframes eventer{from{transform:translateX(-50%) rotate(0) translateY(50px);opacity:0}}
 
-/* ── Les salles du hall ────────────────────────────────────────────────── */
-.hall-salle{ margin-top:clamp(36px, 5vh, 60px); scroll-margin-top:calc(var(--h-entete, 64px) + 16px) }
-.hall-entete{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px }
-.hall-entete h2{ font-size:clamp(30px, 2.6vw, 40px); margin-top:4px }
-.hall-entete .onglets{ margin-bottom:4px }
-/* Trois portes par rangée, à 1280 comme à 1920. Essayé à quatre (les critiques, 05/09) : à
-   288 px de large (216 de haut) la carte perdait son nom et son lieu, et à 336 px (1920) le
-   bloc du bas remontait sur le tampon « À fuir » et le bouton « Pourquoi ? ». Ce qui ramène
-   les tables au-dessus du pli, c'est le héros plus court — et « Reprendre » pour qui revient. */
-.salon, .hall-grille{ display:grid; gap:18px; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)) }
-.hall-grille.bureau{ grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)) }
-.hall-systeme{ display:flex; align-items:center; gap:14px 28px; flex-wrap:wrap; margin-top:22px; padding:14px 22px }
-.hall-systeme-nom{ display:flex; flex-direction:column; gap:2px; min-width:150px }
-.hall-systeme-nom h3{ font-size:var(--t-titre); margin:0 }
-.hall-systeme-nom .muet{ font-size:var(--t-fin); margin:0; max-width:34ch }
-.hall-systeme .regles{ flex:none }
-.hall-systeme .regle{ font-size:var(--t-fin); padding:5px 11px }
-.hall-systeme-quoi{ flex:1 1 320px; font-size:var(--t-petit); margin:0; max-width:64ch; line-height:1.45 }
+/* ── Les étages du hall ────────────────────────────────────────────────── */
+/* Ce qui commande la page est le NOMBRE MESURÉ, pas la photo. Trois règles
+   d'écriture, valables pour tout ce qu'on ajoutera ici :
+     · la MONO dit « simulé » — tout chiffre issu d'une simulation est en Martian
+       Mono ; le serif dit « écrit », donc opinion. Un lecteur apprend cette règle
+       en deux secondes et ne se trompe plus jamais.
+     · --or-lumiere est RÉSERVÉ aux chiffres mesurés. Il servait à six choses
+       (salutation, appels, liserés, pastilles) : une couleur qui sert à six
+       choses ne signale plus rien.
+     · six tailles de police, pas seize. Mesuré avant : quatre valeurs entre 17 et
+       19,44 px et deux entre 11 et 12 px — des écarts de 0,84 px. Ce n'étaient pas
+       des niveaux, c'était du bruit.
+
+   🚨 AUCUN CHIFFRE N'EST ÉCRIT ICI NI DANS LE GABARIT. Tout vient de DONNEES par
+   salon.js (rendreMesures) : « Neuf tables » pour dix a survécu trois jours parce
+   qu'il était écrit à la main.
+
+   ⚠️ RIEN NE PROMET DE GAIN. Aucun montant, aucun « gagnez », aucun jeton qui
+   saute : les seuls chiffres affichés sont l'avantage de la maison et l'indice de
+   comptage — c'est-à-dire ce que le casino prend et où ne pas s'asseoir. Ce n'est
+   pas de la pudeur : c'est ce qui garde le site hors du classement « jeu d'argent »
+   chez les moteurs, les magasins d'applications et les régies. */
+:root{
+  /* 🚨 CES JETONS SONT SUR :root, PAS sur body.au-hall. Cette classe-là est posée par le
+     JS (socle.js, aller()) : avant l'exécution du script — et le fichier fait 1,1 Mo, le
+     navigateur peut peindre avant — `max-width:var(--colonne)` serait une déclaration
+     invalide, le hall partirait bord à bord puis se recentrerait. Et si le script meurt,
+     le hall resterait sans marge ni rythme. Seule la PALETTE sombre reste au hall.
+     --t-mesure sert aussi HORS du hall : carteTableHtml rend la même ligne .mesure dans
+     la vignette .mp-table de l'écran « À plusieurs », où body.au-hall n'existe pas.
+
+     La ligne gravée de l'instrument : elle sépare les étages, porte leur numéro,
+     et c'est la seule chose qui se DESSINE à l'arrivée. Un trait, pas une couleur. */
+  --trait: color-mix(in oklab, var(--bord) 42%, transparent);
+  /* Deux tailles de mesure. Le rapport au voisin ne descend jamais sous 1,25. */
+  --t-mesure-geant: clamp(34px, 3.6vw, 52px);
+  --t-mesure: clamp(22px, 2vw, 30px);
+  /* Les titres d'étage DESCENDENT : c'est la structure de Léo, rendue visible de
+     loin sans lire. Avant, les quatre faisaient 37,44 px. */
+  --t-etage-1: clamp(30px, 3.4vw, 52px);
+  --t-etage-2: clamp(26px, 2.7vw, 42px);
+  --t-etage-3: clamp(24px, 2.3vw, 34px);
+  --t-etage-4: clamp(20px, 1.6vw, 26px);
+  /* Le rythme vertical. Avant : UNE seule valeur (45 px), plus petite que la hauteur
+     d'un entête de section (62 px) — aucune respiration ne disait qu'on changeait de
+     sujet. Rapport externe/interne : 5,3:1 en haut, 3,3:1 en bas. Le blanc INTÉRIEUR
+     doit toujours rester sous la moitié du plus petit blanc ENTRE étages — c'est la
+     règle à vérifier au prochain bloc ajouté, pas une valeur à recopier. */
+  --air-1: clamp(72px, 9vh, 128px);
+  --air-2: clamp(64px, 8vh, 112px);
+  --air-3: clamp(56px, 7vh, 96px);
+  --air-4: clamp(48px, 6vh, 80px);
+  --air-int: 24px;
+
+  /* La colonne cesse de toucher les bords : à 1280 et 1440 la gouttière faisait 20 px
+     (96,9 % de l'écran), tout était bord à bord. Trois colonnes de table tiennent
+     toujours — 363 px de carte à 1280, au-dessus du seuil de 340. */
+  --colonne: min(1240px, 100% - 2*clamp(24px, 6vw, 96px));
+}
+/* ⚠️ .etage porte l'ANCRE (#lesTables, #entrainement, #prive, #bureau) : c'est elle
+   que allerHall() fait défiler. Rien ici ne doit la déplacer — le mouvement de la
+   révélation va sur ses ENFANTS, jamais sur elle. */
+.etage{ margin-top:var(--air-2); scroll-margin-top:calc(var(--h-entete, 64px) + 16px) }
+.etage-1{ margin-top:var(--air-1) }
+.etage-3{ margin-top:var(--air-3) }
+.etage-4{ margin-top:var(--air-4); max-width:1120px }
+.etage-entete{ display:flex; flex-direction:column; gap:6px; margin-bottom:var(--air-int) }
+.etage-1 h2{ font-size:var(--t-etage-1); line-height:1.02; letter-spacing:-.015em; margin:0 }
+.etage-2 h2{ font-size:var(--t-etage-2); line-height:1.05; letter-spacing:-.009em; margin:0 }
+.etage-3 h2{ font-size:var(--t-etage-3); line-height:1.06; letter-spacing:-.006em; margin:0 }
+.etage-4 h2{ font-size:var(--t-etage-4); line-height:1.12; margin:0 }
+.etage-chapo{ font-family:"Instrument Serif",Georgia,serif; font-style:italic;
+  font-size:var(--t-fort); color:var(--os-eteint); margin:0 }
+/* La borne de MESURE du texte courant. La colonne fait 1240 px : sans elle, une ligne
+   de prose fait 1240 px de large et l'œil perd la ligne au retour chariot. */
+.gb-sous, .etage-chapo, .plaque-quoi, .tuile-col .sous, .rang span{ max-width:68ch }
+
+/* La barre gravée : « 01 ──────── 10 TABLES · 6 BATTABLES ». Elle remplace les quatre
+   sur-titres .grave des sections — un seul idiome au lieu de deux, et il porte un
+   CHIFFRE au lieu d'une formule. */
+.etage-barre{ display:flex; align-items:center; gap:14px; width:100% }
+.etage-no{ font-family:"Martian Mono",ui-monospace,monospace; font-style:normal; font-weight:600;
+  font-size:var(--t-micro); letter-spacing:.1em; color:var(--os-eteint); flex:none }
+.etage-barre .trait{ flex:1 1 auto; height:1px; background:var(--trait) }
+.etage-compte{ flex:none; display:inline; color:var(--os-eteint) }
+
+/* ── LA PLAQUE DE MESURE ──────────────────────────────────────────────── */
+/* Une plaque, pas un panneau : fond plat, deux traits, AUCUNE ombre portée et aucun
+   dégradé. C'est ce qui la distingue des dix-sept cartons d'avant. */
+.plaque{ margin-top:var(--air-2); background:var(--laque); border-radius:14px;
+  border-top:1px solid var(--trait); border-bottom:1px solid var(--trait);
+  padding:clamp(20px, 2.4vw, 30px) clamp(20px, 2.6vw, 34px);
+  display:grid; grid-template-columns:minmax(300px, 1fr) minmax(280px, 1fr); gap:clamp(20px,3vw,44px) }
+.plaque-chiffres{ display:flex; flex-direction:column; justify-content:center; gap:16px }
+.plaque-chiffres b{ display:block; font-size:var(--t-mesure-geant); line-height:1; color:var(--or-lumiere) }
+.plaque-chiffres .grave{ margin-top:4px; display:block }
+.plaque-legende{ grid-column:1 / -1; margin:0; padding-top:16px; border-top:1px solid var(--trait);
+  display:flex; align-items:baseline; flex-wrap:wrap; gap:6px 14px;
+  font-size:var(--t-petit); line-height:1.5; color:var(--os-eteint) }
+.plaque-legende > b{ color:var(--os); font-family:"Instrument Serif",Georgia,serif; font-size:var(--t-fort); font-weight:400 }
+.plaque-legende .regles{ display:inline-flex; flex:none }
+.plaque-legende .regle{ font-size:var(--t-fin); padding:5px 11px }
+.plaque-quoi{ flex:1 1 320px }
+.plaque-quoi b{ font-weight:600; color:var(--os) }
+.plaque-quoi em{ font-style:italic }
+/* La signature : c'est elle qui fait de ces trois nombres une MESURE et non une
+   affirmation. Sans date ni empreinte, « trois millions de mains » est un slogan. */
+.plaque-signature{ flex:1 1 100%; font-size:var(--t-fin); font-family:"Martian Mono",ui-monospace,monospace;
+  font-stretch:87.5%; letter-spacing:-.01em; color:color-mix(in oklab, var(--os-eteint) 78%, transparent) }
+
+/* La démonstration : six vraies cartes, et le compte qui les suit. La légende ÉNONCE
+   la règle, la démonstration la MONTRE. Au repos elle est à son état FINAL (les six
+   cartes posées, le compte à sa valeur d'arrivée) : rien n'est jamais parqué en
+   attente de quoi que ce soit — cf. le motif d'apparition en bas de bloc. */
+.plaque-demo{ display:flex; flex-direction:column; justify-content:center; gap:12px }
+.demo-cartes{ display:flex; gap:6px; --w:clamp(40px, 4.2vw, 64px) }
+.demo-cartes .carte{ flex:none }
+.demo-compte{ position:relative; height:calc(var(--t-mesure-geant) * 1.06); font-size:var(--t-mesure-geant);
+  line-height:1.06; color:var(--or-lumiere) }
+.demo-compte b{ position:absolute; inset:0; display:block; font-weight:600; opacity:0 }
+.demo-compte b:last-child{ opacity:1 }
+.demo-lgd{ color:var(--os-eteint) }
+
+/* ── LE GRAND BOUTON ──────────────────────────────────────────────────── */
+/* Une PLAQUE, pas un bouton en relief : pas d'ombre portée, pas de dégradé, un seul
+   trait en haut.
+   🚨 ON NE DORE PAS LA BANDE ENTIÈRE. Le mur est sombre, seule la poignée est en or —
+   ici, le seul or est la fourchette d'avantage maison. Un panneau doré de 460 px n'est
+   pas une porte, c'est un panneau publicitaire : c'est le geste qui ferait dire « vibe
+   codé » une seconde fois.
+   ⚠️ Au survol on ne SOULÈVE PAS (pas de translateY comme les portes photo) : une
+   plaque de mesure ne lévite pas. C'est la différence de matière qui sépare cet objet
+   des dix cartes-photos qu'il contient. */
+.grand-bouton{ list-style:none; cursor:pointer; position:relative; display:grid; align-items:end;
+  grid-template-columns:1fr auto; grid-template-areas:"barre barre" "titre mesure" "sous chevron";
+  gap:10px clamp(16px, 3vw, 40px);
+  min-height:clamp(120px, 16vh, 168px); padding:clamp(16px,2vw,24px) clamp(18px,2.4vw,30px);
+  background:var(--laque); border-radius:14px; border-top:1px solid var(--trait);
+  transition:background .2s, border-color .2s }
+.grand-bouton::-webkit-details-marker{ display:none }
+.grand-bouton::marker{ content:"" }
+.grand-bouton .etage-barre{ grid-area:barre }
+.grand-bouton h2{ grid-area:titre }
+.gb-sous{ grid-area:sous; font-size:var(--t-corps); color:var(--os-eteint); line-height:1.45 }
+.gb-mesure{ grid-area:mesure; text-align:right }
+.gb-mesure b{ display:block; font-size:var(--t-mesure); line-height:1; color:var(--or-lumiere) }
+.gb-mesure .grave{ margin-top:4px; display:block }
+.gb-chevron{ grid-area:chevron; justify-self:end; align-self:center; width:20px; height:20px;
+  border-right:2px solid var(--os-eteint); border-bottom:2px solid var(--os-eteint);
+  rotate:45deg; transition:rotate .3s var(--ressort), border-color .2s }
+.grand-bouton:hover{ background:var(--relief); border-top-color:color-mix(in oklab, var(--or-lumiere) 55%, transparent) }
+.grand-bouton:hover .gb-chevron{ border-color:var(--os) }
+/* Le chevron est le SEUL mouvement de l'objet. On n'anime JAMAIS la hauteur du
+   <details> : `height` recalcule la mise en page à chaque image, c'est le moyen le plus
+   sûr de faire tomber la page sous 30 fps sur un portable — l'exact contraire de ce que
+   Léo demande. */
+details[open] > .grand-bouton .gb-chevron{ rotate:225deg }
+details[open] > .grand-bouton{ border-bottom:1px solid var(--trait); border-radius:14px 14px 0 0 }
+.etage-1 > .contenu{ padding-top:var(--air-int) }
+/* Les trois onglets de filtre : 44 px. Mesurés à 33,5 px, ils ne passaient le banc que
+   par la tolérance `BUTTON \d+×3[3-9]` de mesurer.mjs. Ils déménagent dans le <details>,
+   c'est le moment de les réparer.
+   ⚠️ Scopé à #filtreSalon, PAS à .onglets : la classe sert aussi aux onglets des
+   exercices, de la stratégie et du multijoueur, dont les mises en page sont réglées. */
+#filtreSalon{ margin-bottom:var(--air-int) }
+#filtreSalon button{ min-height:44px; display:inline-flex; align-items:center; padding:0 15px }
+
+/* ── LES PORTES DE TABLES ─────────────────────────────────────────────── */
+/* Trois portes par rangée, à 1280 comme à 1920. Essayé à quatre (les critiques, 05/09) :
+   à 288 px de large la carte perdait son nom et son lieu. */
+.salon{ display:grid; gap:18px; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)) }
+/* LA RÈGLE DE L'ORPHELIN. La grille est intrinsèque : à dix tables, la dixième se
+   retrouve SEULE sur une rangée de trois avec 946 px de vide à sa droite. Comme c'est
+   précisément la table « à fuir », la dernière porte devient celle qu'on ne pousse pas.
+   ⚠️ Le seuil est 1200 px : c'est la largeur À PARTIR DE LAQUELLE la grille tient
+   exactement trois colonnes. Sous 1200 elle passe à deux et la 10ᵉ carte n'est PAS
+   orpheline — la règle l'étirerait à tort. */
+@media (min-width:1200px){
+  .salon > .salle-porte:last-child:nth-child(3n+1){ grid-column:1 / -1 }
+}
+/* LA MESURE EN TÊTE DE CARTE. Elle remplace la ligne .chiffres du bas (avantage en
+   serif 21 px + fourchette de mises, qui descend dans « Pourquoi ? »). Une carte de hall
+   répond à « est-ce que je m'assieds ici ? », pas à « combien je mise ».
+   🚨 Le second nombre est une information NEUVE : indiceComptable() existe depuis
+   toujours, il DÉCIDE du filtre « Où compter rapporte » (≥ 25) — et il n'était visible
+   nulle part. Un filtre dont le critère est caché est un filtre auquel personne n'a de
+   raison de croire. Affiché, Le Cotai devient auto-explicatif : 0,46 % d'avantage maison
+   (excellent) et 0/100 au comptage (mort). */
+.salle-carte .mesure{ display:flex; align-items:baseline; gap:4px 14px; flex-wrap:wrap;
+  margin-bottom:2px; font-variant-numeric:tabular-nums }
+/* Le nombre et son étiquette sont INSÉCABLES : c'est le groupe qui passe à la ligne, jamais
+   l'étiquette toute seule. */
+.salle-carte .mesure .m{ display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap }
+.salle-carte .mesure b{ font-family:"Martian Mono",ui-monospace,monospace; font-weight:600;
+  font-size:clamp(17px, 1.35vw, 21px); line-height:1; letter-spacing:-.03em; color:var(--or-lumiere) }
+.salle-carte .mesure b.jade{ color:#5FE0C6 }
+.salle-carte .mesure b.cinabre{ color:#FF9B7A }
+.salle-carte .mesure i{ font-style:normal; font-size:var(--t-micro); letter-spacing:.12em;
+  text-transform:uppercase; font-weight:600; color:rgba(246,242,232,.72) }
+/* 🚨 La grande tuile ne coupe plus sa phrase : mesuré, 59 px de texte pour 39 px de
+   boîte — « …chacun sa main — ou la course au… ». Les deux lignes réservées valent pour
+   les dix cartes d'une même rangée, pas pour une tuile seule. */
+.salle-carte.grande .sous{ min-height:0; display:block; -webkit-line-clamp:none; overflow:visible; max-width:62ch }
+
+/* ── LA TUILE À TROIS COLONNES (étage 02) ─────────────────────────────── */
+/* Trois portes dans UN objet, séparées par deux traits gravés. Les trois entraînements
+   sont un même geste décliné ; les dix tables sont dix destinations. La forme doit dire
+   lequel est lequel. */
+.tuile{ position:relative; isolation:isolate; overflow:hidden; border-radius:14px;
+  background:#0B1211; color:#F6F2E8;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(0,0,0,.65), 0 16px 32px -20px rgba(0,0,0,.85) }
+.tuile-trois{ display:grid; grid-template-columns:repeat(3, 1fr); min-height:clamp(300px, 40vh, 420px) }
+.tuile-col{ display:flex; flex-direction:column; align-items:flex-start; gap:6px;
+  justify-content:flex-end; padding:clamp(18px,2vw,26px); text-align:left; color:inherit;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+  text-shadow:0 1px 2px rgba(0,0,0,.7); transition:background .25s }
+.tuile-col + .tuile-col{ border-left:1px solid var(--trait) }
+.tuile-col:hover, .tuile-col:focus-visible{ background:rgba(255,255,255,.05) }
+.tuile-col .lieu{ font-size:var(--t-micro); letter-spacing:.14em; text-transform:uppercase;
+  font-weight:600; color:rgba(246,242,232,.92) }
+.tuile-col .nom{ font-family:"Instrument Serif",Georgia,serif; font-size:clamp(26px, 2.1vw, 34px); line-height:1.02 }
+.tuile-col .sous{ font-family:"Instrument Serif",Georgia,serif; font-style:italic;
+  font-size:var(--t-corps); line-height:1.35; color:rgba(246,242,232,.9) }
+.tuile-mes{ margin-top:6px; color:rgba(246,242,232,.66) }
+
+/* ── LES RANGÉES DU BUREAU (étage 04) ─────────────────────────────────── */
+/* Le bureau se resserre aussi par la LARGEUR (1120, la colonne standard de
+   l'application) et pas seulement par la taille de son titre : les deux ensemble disent
+   « on quitte l'étage » sans un mot, et ça ne coûte qu'un max-width. */
+.rangs{ display:flex; flex-direction:column; border-top:1px solid var(--trait) }
+.rang{ display:flex; align-items:baseline; gap:8px 18px; flex-wrap:wrap;
+  min-height:44px; padding:13px 4px; text-align:left; color:var(--os);
+  border-bottom:1px solid var(--trait); cursor:pointer; transition:color .15s, padding-left .2s var(--ressort) }
+.rang b{ font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:var(--t-fort); flex:none }
+.rang span{ font-size:var(--t-petit); color:var(--os-eteint) }
+.rang:hover{ color:var(--or-lumiere); padding-left:10px }
+.rang:hover span{ color:var(--os) }
+
 .hall-apprendre{ min-height:48px; padding:0 18px; border-color:rgba(255,255,255,.3); color:#F6F2E8; background:rgba(0,0,0,.34); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px) }
 .hall-apprendre:hover{ border-color:var(--or-lumiere); background:rgba(0,0,0,.5) }
 /* La leçon (salon.js, ouvrirLecon) : trois écrans dans la modale. */
@@ -441,7 +661,7 @@ div.salle-carte{ cursor:default }
 .salle-carte:hover, .salle-porte:hover .salle-carte, .salle-carte:focus-visible{ transform:translateY(-4px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px color-mix(in oklab, var(--laiton) 60%, transparent), 0 28px 44px -20px rgba(0,0,0,.9) }
 .salle-carte:focus-visible{ outline:2px solid var(--laiton); outline-offset:3px }
-.salle-carte>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:var(--pos, 50% 50%); z-index:-2; transform:scale(1.03);
+.salle-carte>.photo, .tuile>.photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:var(--pos, 50% 50%); z-index:-2; transform:scale(1.03);
   filter:brightness(.78) saturate(1.05); transition:transform .7s var(--sec), filter .3s }
 .salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo, .salle-carte:focus-visible>.photo{ transform:scale(1.08); filter:brightness(.98) saturate(1.12) }
 /* Le voile ne tombe plus à 6 % à 30 % de hauteur — c'est là que vit le kicker de lieu, sur
@@ -449,7 +669,7 @@ div.salle-carte{ cursor:default }
 /* …et il ne descend plus sous .55 : « LAS VEGAS STRIP » posé sur l'enseigne « planet » faisait 1,2:1 au
    p98, la citation du Vieux Reno sur le néon 1,15:1 (mesuré le 05/09). Une PLAQUE locale derrière le
    bloc bas (un dégradé qui part du coin bas-gauche) porte le texte quoi que montre la photo. */
-.salle-carte>.voile{ position:absolute; inset:0; z-index:-1; pointer-events:none;
+.salle-carte>.voile, .tuile>.voile{ position:absolute; inset:0; z-index:-1; pointer-events:none;
   background:
     radial-gradient(130% 100% at 0% 100%, rgba(7,13,12,.9) 0%, rgba(7,13,12,.62) 42%, transparent 74%),
     linear-gradient(180deg, rgba(7,13,12,.66) 0%, rgba(7,13,12,.5) 24%, rgba(7,13,12,.58) 44%, rgba(7,13,12,.8) 66%, rgba(7,13,12,.95) 100%) }
@@ -470,15 +690,12 @@ div.salle-carte{ cursor:default }
 .salle-carte .nom{ font-family:"Instrument Serif",Georgia,serif; font-size:clamp(26px, 2.1vw, 34px); line-height:1.02; text-wrap:balance }
 /* Deux lignes réservées partout : dans une même rangée, les noms de tables sont sur la même ligne
    (mesuré le 05/09 : « Le Front de Mer » 30 px plus haut parce que sa citation en prenait deux). */
-.salle-carte .sous{ font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:clamp(15px, 1.1vw, 17px); line-height:1.3; color:rgba(246,242,232,.9); max-width:40ch; text-wrap:pretty;
+.salle-carte .sous{ font-family:"Instrument Serif",Georgia,serif; font-style:italic; font-size:var(--t-corps); line-height:1.3; color:rgba(246,242,232,.9); max-width:40ch; text-wrap:pretty;
   min-height:2.6em; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
 .salle-carte .regles{ margin-top:2px }
-.salle-carte .regle{ border-color:rgba(255,255,255,.32); color:rgba(246,242,232,.92); background:rgba(0,0,0,.36);
-  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px) }
+.salle-carte .regle{ border-color:rgba(255,255,255,.32); color:rgba(246,242,232,.92); background:rgba(0,0,0,.36) }
 .salle-carte .regle.bien{ color:#5FE0C6; border-color:rgba(95,224,198,.62) }
 .salle-carte .regle.mal{ color:#FF9B7A; border-color:rgba(255,155,122,.62) }
-.salle-carte .chiffres{ display:flex; gap:14px; flex-wrap:nowrap; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:var(--t-fin); color:rgba(246,242,232,.74); margin-top:2px }
-.salle-carte .chiffres b{ font-family:"Instrument Serif",Georgia,serif; font-weight:400; font-size:clamp(18px, 1.3vw, 21px); color:#F6F2E8; margin-right:6px; letter-spacing:0 }
 .salle-carte .etat, .salle-carte .tampon{ font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; font-weight:700;
   padding:5px 10px; border-radius:999px; white-space:nowrap; text-shadow:none }
 .salle-carte .etat{ background:var(--btn-or); color:var(--btn-encre); box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 6px 14px -8px #000 }
@@ -509,7 +726,7 @@ div.salle-carte{ cursor:default }
 .mp-table .salle-carte .haut{ right:20px; gap:8px }
 .mp-table .salle-carte .bas{ right:20px }
 .mp-table .salle-carte .sous{ display:none }
-.mp-table .salle-carte .chiffres{ gap:2px 14px; margin-top:6px }
+.mp-table .salle-carte .mesure{ gap:2px 10px; margin-top:6px }
 /* Le choix de table en place (reseau.js, rendreTableMP). C'est de la PROSE — des noms de
    casinos —, pas un champ de chiffres : la mono de 13 px des autres <select> avance à
    ~7,8 px par signe, et « Le Front de Mer · min 15 · cave 1 000 » (33 signes ≈ 257 px,
@@ -523,7 +740,7 @@ div.salle-carte{ cursor:default }
 .mp-choix select{ font-family:inherit; font-size:var(--t-petit); width:100%; max-width:100%; text-overflow:ellipsis }
 
 /* ── Les crédits : discrets, présents ──────────────────────────────────── */
-.hall-credits{ margin-top:clamp(40px, 6vh, 72px); padding-top:18px; border-top:1px solid var(--ardoise);
+.hall-credits{ margin-top:var(--air-4); padding-top:18px; border-top:1px solid var(--ardoise);
   font-size:var(--t-fin); color:var(--os-eteint); line-height:1.75 }
 .hall-credits p{ margin:6px 0 0 }
 .hall-credits a{ color:var(--os-eteint); text-decoration-color:color-mix(in oklab, var(--os-eteint) 40%, transparent); text-underline-offset:2px }
@@ -556,12 +773,128 @@ div.salle-carte{ cursor:default }
   .salle-carte:hover, .salle-porte:hover .salle-carte{ transform:none }
   .salle-carte:hover>.photo, .salle-porte:hover .salle-carte>.photo{ transform:scale(1.03) }
 }
+@media (max-width:560px){
+  /* Deux colonnes coupent « 0,36 – 2,07 % » en son milieu, et son étiquette en trois lignes :
+     un nombre cassé ne se lit plus comme un nombre. Une colonne, et il tient. */
+  .plaque-chiffres{ grid-template-columns:1fr }
+  .plaque-chiffres > :last-child{ grid-column:auto }
+}
 @media (max-width:860px){
   .hall-heros{ min-height:min(60vh, 480px) }
   .hall-titre{ font-size:clamp(40px, 11vw, 72px) }
   .eventail{ display:none }
   .salle-carte.grande{ min-height:220px }
+  .plaque{ grid-template-columns:1fr }
+  .plaque-chiffres{ display:grid; grid-template-columns:1fr 1fr; gap:14px 18px }
+  .plaque-chiffres > :last-child{ grid-column:1 / -1 }
+  .plaque-legende{ gap:6px 10px }
+  /* Le chevron sort de la grille : à une colonne il se retrouverait sous la phrase,
+     à 40 px du titre qu'il commande. */
+  .grand-bouton{ grid-template-columns:1fr; grid-template-areas:"barre" "titre" "mesure" "sous";
+    align-items:start; gap:8px; padding-right:52px }
+  .gb-mesure{ text-align:left }
+  .gb-chevron{ position:absolute; right:18px; top:26px }
+  /* Les trois colonnes s'empilent, les traits verticaux passent en horizontaux : une
+     bordure gauche entre deux blocs empilés ne sépare plus rien. */
+  .tuile-trois{ grid-template-columns:1fr; min-height:0 }
+  .tuile-col + .tuile-col{ border-left:0; border-top:1px solid var(--trait) }
+  /* Empilées, les trois colonnes couvrent TOUTE la photo, pas seulement son bas : le voile
+     dégradé du bas ne protège plus que la dernière, et « Stratégie » se lit sur le feutre
+     vert en pleine lumière. Un aplat uniforme rend les trois également lisibles. */
+  .tuile-trois > .voile{ background:linear-gradient(180deg, rgba(7,13,12,.72) 0%, rgba(7,13,12,.80) 100%) }
 }
+
+
+/* ══════════════════════ L'ARRIVÉE AU DÉFILEMENT ══════════════════════
+   Le progrès est lié à la POSITION, pas au temps : on remonte de 20 px, le bloc recule de
+   20 px. C'est la différence entre une page qui glisse et une page qui déclenche des
+   transitions — et c'est ce que Léo appelle « de l'animation quand on glisse ».
+
+   🚨 LA PAGE EST ENTIÈREMENT LISIBLE À L'ARRÊT. Rien ici ne pose d'état caché : ces règles
+   n'EXISTENT que sous trois conditions cumulées, et l'état par défaut de chaque élément est
+   son état FINAL.
+     1. @supports (animation-timeline: view()) — un moteur qui l'ignore ne crée jamais ces
+        animations et voit la page nue, complète.
+     2. @media (prefers-reduced-motion: no-preference) — plus fort qu'un bloc `reduce` qui
+        annulerait : il n'y a rien à penser à annuler.
+     3. html.anime, posé par demarrage.js APRÈS la première image — script mort, artefact au
+        script coupé, erreur en amont : la page reste nue.
+
+   🚨 LA PORTÉE FINIT AU PLUS TARD À `entry 100%`. Toute portée qui finit sur un jalon
+   `cover` laisse le bas d'une page NON DÉFILABLE éteint pour toujours — grande fenêtre,
+   zoom arrière, impression : ça arrive pour de vrai.
+
+   🚨 ON N'ANIME JAMAIS LE NŒUD QUI PORTE L'ANCRE (.etage, #lesTables…) : scrollIntoView
+   calcule sa cible une fois, sur la boîte translatée, et « Voir les tables » atterrirait
+   sous l'en-tête collant au moment précis où l'on vient de cliquer. Le mouvement va sur ses
+   ENFANTS, sans exception.
+
+   ⚠️ `translate:`, jamais `transform:` — c'est la convention posée par la caméra, et
+   .salle-carte:hover occupe déjà `transform`. Les animer tous les deux ferait s'écraser le
+   soulèvement au survol ; séparés, ils se composent.
+   ⚠️ Amplitude 18 px. Un bon reveal est presque fini quand on le remarque : si un relecteur
+   peut décrire le mouvement, il est trop grand. Aucun `scale`, aucun `blur` (chaque flou
+   ré-échantillonne son fond à chaque image), aucun élément épinglé — un sticky scrubé est le
+   seul motif dont l'échec ne ressemble pas à une animation ratée mais à une PAGE BLOQUÉE, et
+   il se comporte différemment à la molette, au pavé tactile et au pouce. Léo a dit que la
+   fluidité primait. */
+@keyframes hall-arrive{ from{ opacity:0; translate:0 18px } to{ opacity:1; translate:0 0 } }
+@keyframes hall-trait { from{ transform:scaleX(0) } to{ transform:scaleX(1) } }
+@keyframes demo-pose  { from{ opacity:0; translate:0 -22px; rotate:-9deg } to{ opacity:1; translate:0 0; rotate:0deg } }
+/* Un état du compte s'allume à son moment et s'éteint au suivant. `both` tient la première
+   image avant la portée (opacité 0) et la dernière après (opacité 0). */
+@keyframes demo-etat    { 0%{ opacity:0 } 1%,99%{ opacity:1 } 100%{ opacity:0 } }
+@keyframes demo-etat-fin{ 0%{ opacity:0 } 1%,100%{ opacity:1 } }
+
+@supports (animation-timeline: view()){
+@media (prefers-reduced-motion: no-preference){
+  html.anime .etage > .etage-entete,
+  html.anime .etage > .grand-bouton,
+  html.anime .etage > .contenu > .onglets,
+  html.anime .etage > .tuile,
+  html.anime .etage > .salle-carte,
+  html.anime .etage > .rangs > *,
+  html.anime .salon > *,
+  html.anime .plaque > *,
+  html.anime .hall-credits{
+    animation: hall-arrive linear both;
+    animation-timeline: view();
+    animation-range: entry 8% entry 52%;
+  }
+  /* Le trait se GRAVE, il n'arrive pas : c'est la seule chose qui se dessine. */
+  html.anime .etage-barre > .trait{
+    animation: hall-trait linear both; animation-timeline: view();
+    animation-range: entry 0% entry 30%; transform-origin:0 50%;
+  }
+  /* 🚨 L'escalier se fait au `animation-range-start`, PAS à l'`animation-delay` : un délai
+     est une DURÉE, une timeline de défilement n'a pas de temps, elle a un progrès. Mesuré au
+     même point : témoin 0,406 — avec animation-delay:900ms, 0,406 (aucun effet, et personne
+     ne voit d'erreur) — avec animation-range-start:entry 22%, 0,140. */
+  html.anime .etage > .rangs > *:nth-child(2), html.anime .plaque > *:nth-child(2){ animation-range-start: entry 14% }
+  html.anime .etage > .rangs > *:nth-child(3), html.anime .plaque > *:nth-child(3){ animation-range-start: entry 20% }
+  /* ⚠️ Le conteneur OU les enfants, jamais les deux : animer .salon ET .salon > *
+     multiplierait les opacités (0,4 × 0,4 = 0,16) — double fondu, arrivée tardive. */
+  html.anime .salon > *:nth-child(3n+2){ animation-range-start: entry 12% }
+  html.anime .salon > *:nth-child(3n){   animation-range-start: entry 18% }
+
+  /* La démonstration : six cartes posées l'une après l'autre, et le compte qui les suit.
+     Elle n'est PAS scrubée non plus — chaque carte a sa fenêtre, la dernière est finie à
+     `entry 72 %`. Les six --k viennent de rendreMesures(). */
+  html.anime .demo-carte{
+    animation: demo-pose linear both; animation-timeline: view();
+    animation-range: entry calc(10% + var(--k, 0) * 9%) entry calc(22% + var(--k, 0) * 9%);
+  }
+  html.anime .demo-compte b{ animation: demo-etat linear both; animation-timeline: view() }
+  html.anime .demo-compte b:nth-child(1){ animation-range: entry 0%  entry 19% }
+  html.anime .demo-compte b:nth-child(2){ animation-range: entry 19% entry 28% }
+  html.anime .demo-compte b:nth-child(3){ animation-range: entry 28% entry 37% }
+  html.anime .demo-compte b:nth-child(4){ animation-range: entry 37% entry 46% }
+  html.anime .demo-compte b:nth-child(5){ animation-range: entry 46% entry 55% }
+  html.anime .demo-compte b:nth-child(6){ animation-range: entry 55% entry 64% }
+  /* Le dernier RESTE allumé : c'est l'état au repos, celui que la page montre sans animation
+     du tout. Les deux chemins tombent sur la même image. */
+  html.anime .demo-compte b:last-child{ animation-name: demo-etat-fin; animation-range: entry 64% entry 72% }
+}}
 
 /* ══════════════════════════════════════════════════════════════════════
    LA SCÈNE DE TABLE — un casino la nuit
@@ -3041,30 +3374,46 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 
 <main>
 
-<!-- ════════════════════ LE HALL ════════════════════
-     Le menu est un casino. On entre par le hall (la photo du Strip, le nom en serif),
-     puis on choisit une PORTE : une des dix tables, une salle d'entraînement, le salon
-     privé, le bureau. Chaque porte est une photo — une vraie, créditée en bas de page.
-     « Le salon » d'avant n'est plus une vue : c'est l'ancre #lesTables de ce hall. -->
+<!-- ════════════════════ LE HALL — LA PLANCHE DE MESURE ════════════════════
+     Léo, 08/09 : « ça fait vraiment vibe coder ». Ce n'était pas l'ordre des blocs —
+     c'était que DIX-SEPT objets identiques (455 × 256, même rayon, même ombre) portaient
+     une table de casino, un exercice et un tiroir de réglages. Un `map()` sur un tableau
+     se reconnaît à ça. On ne réordonne donc pas seulement : on rend les blocs DIFFÉRENTS
+     parce que leur contenu l'est, et on laisse le CHIFFRE MESURÉ commander la page — la
+     photo n'est plus que la preuve que la table existe.
+
+     Quatre étages, dans l'ordre imposé par Léo, et leurs titres DESCENDENT (64 → 48 → 40
+     → 26) : c'est la traduction typographique de cet ordre. Avant, les quatre faisaient
+     37,44 px et rien ne disait que « Les tables » (dix destinations) pesait plus que
+     « Le bureau » (un tiroir).
+
+     ⚠️ #sysNom / #sysNote / #sysTable / #bHallReglages / #filtreSalon / #prenom / #eventail
+     sont écrits SANS GARDE par socle.js et salon.js, au chargement. Ils ont déménagé, ils
+     n'ont pas disparu : les retirer ne dégraderait pas le hall, ça empêcherait
+     l'application de démarrer. -->
 <section class="vue" id="v-accueil">
+
+  <!-- ── LE HÉROS ────────────────────────────────────────────────────────────
+       Le titre est la PROMESSE, pas la marque : le nom de l'application vit dans l'onglet
+       du navigateur. Le prénom se donne en un clic sur la salutation, pas dans un
+       formulaire qu'on remplit en rentrant de soirée. -->
   <div class="hall-heros" id="hallHeros" data-photo="hall">
     <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async" sizes="100vw">
-    <!-- Le titre est la PROMESSE, pas la marque : le nom de l'application vit dans l'onglet
-         du navigateur, il n'a pas à être redit ici (mesuré le 05/09 : le héros prenait 586 des
-         800 px pour répéter ce nom, et les tables tombaient sous le pli). ⚠️ Depuis le 07/09 le
-         mot-marque de l'en-tête est masqué — écrire « il est déjà 40 px plus haut » serait faux.
-         Le prénom se donne en un clic sur la salutation, pas dans un formulaire qu'on remplit
-         en rentrant de soirée. -->
     <div class="hall-int hall-heros-int">
       <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
       <h1 class="hall-titre">Le compte est masqué.<br>À toi de le tenir.</h1>
-      <!-- La phrase dit ce qu'EST le compte avant de lister les salles : un novice lisait « Le compte est
-           masqué » sans savoir de quoi on parlait (les critiques, 05/09), et la seule explication vivait
-           ~1 900 px plus bas, sous « Le bureau ». « Première fois ? » ouvre la leçon (salon.js, ouvrirLecon). -->
-      <p class="hall-phrase">Chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. Neuf tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
+      <!-- « Neuf tables » pour dix, et « Neuf salles » juste en dessous, pendant que le
+           JSON-LD de la MÊME page annonçait « Dix » : un moteur qui trouve deux chiffres
+           contradictoires ne cite ni l'un ni l'autre, et c'est la seule page indexable du
+           site. Le correctif n'est pas d'écrire « Dix » — c'est de ne plus jamais écrire
+           un compte à la main. [data-nb-tables] est rempli depuis DONNEES.catalogue.length,
+           comme [data-nb-sieges] l'est depuis TR.NB_SIEGES. -->
+      <p class="hall-phrase">Chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. <span data-nb-tables="cap">Dix</span> tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
       <div class="hall-entree">
+        <!-- Mesuré : primaire 153 px, secondaire 331 px — le bouton qu'on veut voir pressé
+             était 2,16 × plus petit que celui d'à côté. Le libellé long descend dans title=. -->
         <button class="btn" data-hall="lesTables">Voir les tables</button>
-        <button class="btn creux hall-apprendre" id="hallApprendre" title="Le but du jeu, les trois valeurs, dix cartes à compter — trois minutes">Première fois ? Apprendre à compter</button>
+        <button class="btn creux hall-apprendre" id="hallApprendre" title="Le but du jeu, les trois valeurs, dix cartes à compter — trois minutes">Première fois&nbsp;?</button>
         <!-- Celui qui revient veut sa table, pas un slogan : « Reprendre — Le Boulevard · tapis 975 » (salon.js). -->
         <button class="btn creux hall-reprendre" id="hallReprendre" hidden></button>
         <button class="hall-qui" id="hallQui" aria-expanded="false" aria-controls="hallPrenom" title="Changer de prénom"><span class="hall-salut" id="hallSalut"></span><span class="hall-crayon" aria-hidden="true">modifier</span></button>
@@ -3075,78 +3424,152 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   </div>
 
   <div class="hall-int">
-    <!-- LE SYSTÈME SÉLECTIONNÉ : la légende du comptage, juste sous le héros — c'est la première chose
-         qu'un novice doit lire, pas la dernière (elle était le DERNIER bloc du hall, les critiques, 05/09). -->
-    <div class="laque pad hall-systeme" id="hallSysteme">
-      <div class="hall-systeme-nom"><span class="grave">Le système sélectionné</span><h3 id="sysNom">Hi-Lo</h3><p class="muet" id="sysNote"></p></div>
-      <div class="regles" id="sysTable" aria-label="Valeur des cartes"></div>
-      <p class="muet hall-systeme-quoi">Le <b>compte courant</b> additionne la valeur de chaque carte sortie. Le <b>compte vrai</b> le divise par les jeux qui restent : c'est lui seul qui dit si la table t'est favorable — et donc quand miser plus.</p>
-    </div>
-    <!-- LES TABLES : neuf cartes-photos, rendues par salon.js (rendreSalon). -->
-    <section class="hall-salle" id="lesTables" aria-labelledby="hTables">
-      <div class="hall-entete">
-        <div><span class="grave">Neuf salles, neuf règlements — clique une table pour t'y asseoir</span><h2 id="hTables">Les tables</h2></div>
+
+    <!-- ── LA PLAQUE DE MESURE ───────────────────────────────────────────────
+         Elle prend la place de #hallSysteme, dont elle absorbe le contenu : un relevé de
+         réglage n'a pas à occuper la deuxième place de la page, mais la légende du
+         comptage doit rester la première chose qu'un novice lise.
+
+         C'est ce bloc qui porte l'angle : trois nombres qui n'existent nulle part ailleurs
+         sur le web, recalculés à chaque construction, DATÉS et SIGNÉS d'une empreinte. Un
+         instrument annonce sa précision et sa dernière calibration — c'est ce qui le
+         distingue d'une page de marketing.
+
+         🚨 Aucun de ces nombres n'est écrit ici : « — » est la valeur au repos, la même
+         convention que #tRC dans la barre de table. Un tiret dit « je ne sais pas » ; un
+         chiffre en dur redevient faux le jour où l'on ajoute une table. -->
+    <section class="plaque" aria-labelledby="hMesure">
+      <h2 class="visually-hidden" id="hMesure">Ce que l'application mesure</h2>
+
+      <!-- La démonstration : six vraies cartes tirées d'un sabot, et le compte qui les
+           suit. Elle MONTRE la règle que la légende ÉNONCE. Elle est rendue par salon.js
+           (rendreMesures) et rejouée quand le système de comptage change : les six valeurs
+           sont celles de Hi-Lo comme d'Omega II, jamais un « +1 » écrit en dur. -->
+      <div class="plaque-demo" aria-hidden="true">
+        <div class="demo-cartes" id="demoCartes"></div>
+        <div class="demo-compte" id="demoCompte"></div>
+        <span class="grave demo-lgd">Le compte, carte après carte</span>
+      </div>
+
+      <div class="plaque-chiffres">
+        <div><b class="cadran" id="mesAvantage">—</b><span class="grave">Avantage maison, des <span data-nb-tables>dix</span> règlements</span></div>
+        <div><b class="cadran" id="mesPenetration">—</b><span class="grave">Pénétration du sabot</span></div>
+        <div><b class="cadran" id="mesMains">—</b><span class="grave">Mains simulées pour les mesurer</span></div>
+      </div>
+
+      <!-- La légende : l'ancien #hallSysteme, en une ligne. #sysNom / #sysTable / #sysNote
+           gardent leurs identifiants — c'est rendreSysteme() (socle.js) qui les écrit. -->
+      <p class="plaque-legende">Système <b id="sysNom">Hi-Lo</b> <span class="regles" id="sysTable" aria-label="Valeur des cartes"></span>
+        <span class="plaque-quoi">Le <b>compte courant</b> additionne&nbsp;; le <b>compte vrai</b> divise par les jeux qui restent — c'est lui seul qui dit quand miser plus. <em class="muet" id="sysNote"></em></span>
+        <span class="plaque-signature" id="mesSignature"></span></p>
+    </section>
+
+    <!-- ══ ÉTAGE 01 — LE GRAND BOUTON ══════════════════════════════════════
+         Léo : « un grand bouton "les tables d'entraînement contre les IA", on clique
+         dessus et on a toutes les tables ». Le clic doit PRODUIRE les tables — avant,
+         data-hall défilait vers un bloc déjà visible : on cliquait, rien n'apparaissait,
+         et c'est exactement la sensation qu'il appelle « vibe codé ».
+
+         🚨 <details> NATIF, pas un repli en JS : ça marche dans l'artefact (dont la CSP
+         coupe tout), ça marche si le script meurt, c'est accessible au clavier
+         gratuitement (Entrée et Espace sur <summary>, aria-expanded posé par le
+         navigateur), et le contenu RESTE DANS LE DOM donc reste indexable. Un repli maison
+         aurait précisément le mode de panne qu'on cherche à éviter.
+
+         ⚠️ « contre les IA » est le libellé de Léo, et il est VRAI en solo — vérifié le
+         08/09 : ouvrirMises() (jetons.js:529) appelle profilerSieges(), qui distribue cinq
+         profils de mise aux sièges voisins (« plat », « superstitieux », « chaud »,
+         « large » et AU PLUS UN « compteur » tiré au sort), et jouerSieges() (table.js:1226)
+         les fait jouer par jouerAuto(). Deux relecteurs ont affirmé le contraire ;
+         le code dit qu'ils avaient tort.
+
+         ⚠️ #lesTables reste l'ANCRE : c'est le <details> lui-même que allerHall() cherche,
+         ouvre et fait défiler. Le scroll-margin-top vit donc sur lui.
+         ⚠️ Le contenu du <summary> est du contenu phrasé plus UN titre, conformément au
+         modèle de contenu de l'élément : d'où des <span>, jamais un <div>. -->
+    <details class="etage etage-1" id="lesTables">
+      <summary class="grand-bouton">
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">01</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte" id="tablesCompte">—</span></span>
+        <h2 id="hTables">Les tables d'entraînement contre les IA</h2>
+        <span class="gb-sous"><span data-nb-tables="cap">Dix</span> règlements de casino réels, mesurés un par un. Des voisins qui misent — dont un compteur que rien ne signale. Zéro argent.</span>
+        <span class="gb-mesure"><b class="cadran" id="tablesAvantage">—</b><span class="grave">Avantage maison</span></span>
+        <span class="gb-chevron" aria-hidden="true"></span>
+      </summary>
+      <div class="contenu">
         <div class="onglets" id="filtreSalon" role="tablist" aria-label="Filtrer les tables">
           <button role="tab" aria-selected="true" data-f="tout">Toutes</button>
           <button role="tab" aria-selected="false" data-f="battable" title="Les tables où tenir le compte rapporte">Où compter rapporte</button>
           <button role="tab" aria-selected="false" data-f="fuir" title="Blackjack payé 6:5 ou mélangeuse continue : le compte n'y sert à rien">Où compter ne sert à rien</button>
         </div>
+        <div class="salon" id="salon"></div>
       </div>
-      <div class="salon" id="salon"></div>
+    </details>
+
+    <!-- ══ ÉTAGE 02 — UNE TUILE, TROIS COLONNES ═══════════════════════════
+         Trois portes dans UN SEUL objet, séparées par deux traits gravés — pas trois
+         cartes de plus. Les trois entraînements sont un même geste décliné ; les dix
+         tables sont dix destinations distinctes. C'est à la FORME de dire lequel est
+         lequel : c'est tout le défaut qu'on répare ici.
+         ⚠️ Une seule photo, donc deux téléchargements de moins ; rendreHall() la pose par
+         data-photo comme sur les autres portes (il cherche `:scope > img.photo`, un <div>
+         lui va aussi bien qu'un <button>). -->
+    <section class="etage etage-2" id="entrainement" aria-labelledby="hEntrainement">
+      <div class="etage-entete">
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">02</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte">3 salles</span></span>
+        <h2 id="hEntrainement">Les autres entraînements</h2>
+        <p class="etage-chapo">Le jeu est le seul endroit où l'on ne s'entraîne pas.</p>
+      </div>
+      <div class="tuile tuile-trois" data-photo="entrainement">
+        <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 1240px"><span class="voile"></span>
+        <button class="tuile-col" data-vue="exercices">
+          <span class="lieu">Le réflexe</span><span class="nom">Exercices</span>
+          <span class="sous">Les cartes défilent à la vitesse que tu veux. Un sabot chronométré. Le coup d'œil sur la défausse.</span>
+          <span class="grave tuile-mes">3 modes</span></button>
+        <button class="tuile-col" data-vue="strategie">
+          <span class="lieu">La décision</span><span class="nom">Stratégie</span>
+          <span class="sous">La stratégie de base main par main, puis les écarts au compte — calculés pour ta table.</span>
+          <span class="grave tuile-mes">3 modes</span></button>
+        <button class="tuile-col" data-vue="concentration">
+          <span class="lieu">Le sang-froid</span><span class="nom">Concentration</span>
+          <span class="sous">Tu comptes en silence pendant que la table te parle et que le chef de table te fixe.</span>
+          <span class="grave tuile-mes">1 épreuve</span></button>
+      </div>
     </section>
 
-    <!-- LA SALLE D'ENTRAÎNEMENT : trois portes. -->
-    <section class="hall-salle" id="entrainement" aria-labelledby="hEntrainement">
-      <div class="hall-entete"><div><span class="grave">Trois muscles, travaillés séparément</span><h2 id="hEntrainement">La salle d'entraînement</h2></div></div>
-      <div class="hall-grille trois">
-        <button class="salle-carte" data-vue="exercices" data-photo="entrainement">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">Le réflexe</span><span class="nom">Exercices</span>
-            <span class="sous">Les cartes défilent à la vitesse que tu veux ; un sabot chronométré ; le coup d'œil sur le tas de défausse.</span></span>
-        </button>
-        <button class="salle-carte" data-vue="strategie" data-photo="strategie">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">La décision</span><span class="nom">Stratégie</span>
-            <span class="sous">La stratégie de base main par main, puis les écarts au compte — calculés pour la table où tu es assis.</span></span>
-        </button>
-        <button class="salle-carte" data-vue="concentration" data-photo="concentration">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">Le sang-froid</span><span class="nom">Concentration</span>
-            <span class="sous">Tu comptes en silence pendant que la table te parle et que le chef de table te fixe.</span></span>
-        </button>
+    <!-- ══ ÉTAGE 03 — LE MULTIJOUEUR ══════════════════════════════════════
+         (« Le Salon Privé » est le nom de la TABLE 7, high limit — deux écrans sous le
+         même nom dans la même barre, les critiques du 05/09.)
+         🚨 Le -webkit-line-clamp:2 est retiré de .grande dans la feuille : mesuré,
+         scrollHeight 59 contre clientHeight 39 — la seule grande tuile du hall, celle que
+         Léo veut promouvoir, affichait sa phrase COUPÉE sur « …ou la course au… ». -->
+    <section class="etage etage-3" id="prive" aria-labelledby="hPrive">
+      <div class="etage-entete">
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">03</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte">Sans serveur · pair à pair</span></span>
+        <h2 id="hPrive">Entre amis</h2>
       </div>
-    </section>
-
-    <!-- ENTRE AMIS : une grande porte. (« Le Salon Privé » est le nom de la TABLE 7, high limit —
-         deux écrans sous le même nom dans la même barre, les critiques, 05/09.) -->
-    <section class="hall-salle" id="prive" aria-labelledby="hPrive">
-      <div class="hall-entete"><div><span class="grave">Sans serveur, avec vos caméras</span><h2 id="hPrive">Entre amis</h2></div></div>
       <button class="salle-carte grande" data-vue="ensemble" data-photo="prive">
         <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="100vw"><span class="voile"></span>
         <span class="bas"><span class="lieu">Sans serveur, avec vos caméras</span><span class="nom">Jouer à plusieurs</span>
-          <span class="sous">Jusqu'à <span data-nb-sieges>huit</span> autour d'une table : le même sabot, un croupier, chacun sa main — ou la course au comptage, où chacun annonce son compte.</span></span>
+          <span class="sous">Jusqu'à <span data-nb-sieges>huit</span> autour d'une table : le même sabot, un croupier, chacun sa main — ou la course au comptage, où chacun annonce son compte. Les sièges que personne n'occupe se remplissent de joueurs machine.</span></span>
+        <span class="asseoir-cta" aria-hidden="true">Ouvrir une table &rarr;</span>
       </button>
     </section>
 
-    <!-- LE BUREAU : la progression, les réglages, le système de comptage. -->
-    <section class="hall-salle" id="bureau" aria-labelledby="hBureau">
-      <div class="hall-entete"><div><span class="grave">Derrière la porte du fond</span><h2 id="hBureau">Le bureau</h2></div></div>
-      <div class="hall-grille bureau">
-        <button class="salle-carte" data-vue="progres" data-photo="jetons">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">Le registre</span><span class="nom">Progression</span>
-            <span class="sous">Tes sessions, ton écart au compte réel, ton journal.</span></span>
-        </button>
-        <button class="salle-carte" id="bHallReglages" data-photo="cartes">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">Le tiroir</span><span class="nom">Réglages</span>
-            <span class="sous">Le système de comptage, le thème, les sons.</span></span>
-        </button>
-        <button class="salle-carte" data-vue="dons" data-photo="macao">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">La caisse</span><span class="nom">Soutenir</span>
-            <span class="sous">Tout est ouvert et le restera. Ce que l'application coûte, et à quoi sert un don.</span></span>
-        </button>
+    <!-- ══ ÉTAGE 04 — LE RESTE ════════════════════════════════════════════
+         Trois rangées réglées, sans photo, sans carte : ~130 px au lieu de 333. Un tiroir
+         de réglages n'a pas à ressembler à une table de casino de 455 × 256, et le dire
+         par la FORME est plus fort que par la place. Trois photos de moins à charger, et
+         surtout trois silhouettes identiques de moins.
+         ⚠️ #bHallReglages garde son identifiant : salon.js lui pose son clic SANS garde. -->
+    <section class="etage etage-4" id="bureau" aria-labelledby="hBureau">
+      <div class="etage-entete">
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">04</i><span class="trait" aria-hidden="true"></span></span>
+        <h2 id="hBureau">Le bureau</h2>
+      </div>
+      <div class="rangs">
+        <button class="rang" data-vue="progres"><b>Progression</b><span>Tes sessions, ton écart au compte réel, ton journal.</span></button>
+        <button class="rang" id="bHallReglages"><b>Réglages</b><span>Le système de comptage, le thème, les sons.</span></button>
+        <button class="rang" data-vue="dons"><b>Soutenir</b><span>Tout est ouvert et le restera. Ce que l'application coûte.</span></button>
       </div>
     </section>
 
@@ -3815,7 +4238,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 <script>
 (function(){
 "use strict";
-const DONNEES = {"tables":{"boulevard":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["U","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["U","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","D","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","D","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["U","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,2,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,-1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-4,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-5,"S"],["hard",13,4,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,5,"S"],["hard",15,9,4,"S"],["hard",16,0,3,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["hard",17,0,-5,"S"],["soft",13,2,6,"D"],["soft",13,3,2,"D"],["soft",13,4,-1,"D"],["soft",13,5,-4,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,1,-1,"D"],["soft",18,2,-4,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,-1,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,3,"D"],["pair",1,1,-4,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-5,"P"],["pair",2,7,3,"P"],["pair",3,2,6,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-5,"P"],["pair",4,0,2,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",7,0,-2,"P"],["pair",8,0,1,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,4],["hard",14,8,6],["hard",14,9,3],["hard",15,0,-1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-6],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-3],["pair",6,0,3],["pair",6,8,5],["pair",6,9,2],["pair",7,0,-5],["pair",7,9,2]],"assurance":3,"avantage":0.583},"neon":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","D","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","H","H","H","H","H"],"14":["H","H","H","H","H","H","H","H","H","H"],"15":["H","H","H","H","H","H","H","H","H","H"],"16":["H","H","H","H","H","H","H","H","H","H"],"17":["H","H","H","H","H","H","H","H","H","H"],"18":["H","S","S","S","S","S","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","H","H","P","P","P","P","H","H","H"],"2":["H","H","H","P","P","P","P","H","H","H"],"3":["H","H","H","H","H","H","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",9,1,-2,"D"],["hard",9,2,-4,"D"],["hard",9,3,-6,"D"],["hard",9,6,1,"D"],["hard",9,7,5,"D"],["hard",10,0,2,"D"],["hard",10,7,-6,"D"],["hard",10,8,-3,"D"],["hard",10,9,2,"D"],["hard",11,0,-3,"D"],["hard",11,8,-5,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-2,"S"],["hard",12,4,-3,"S"],["hard",12,5,-5,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,4,"S"],["hard",15,9,4,"S"],["hard",16,0,4,"S"],["hard",16,9,4,"S"],["hard",17,0,-5,"S"],["pair",1,1,5,"P"],["pair",1,2,2,"P"],["pair",1,3,-4,"P"],["pair",2,1,5,"P"],["pair",2,2,0,"P"],["pair",2,3,-5,"P"],["pair",3,4,4,"P"],["pair",3,5,4,"P"],["pair",4,0,1,"D"],["pair",4,8,-4,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-5,"P"],["pair",5,6,-5,"H"],["pair",6,0,3,"S"],["pair",6,9,0,"S"],["pair",7,0,-3,"P"],["pair",7,9,6,"S"],["pair",8,0,0,"P"],["pair",8,1,-3,"P"],["pair",8,2,-3,"P"],["pair",8,3,-4,"P"],["pair",8,4,-6,"P"],["pair",8,6,5,"P"],["pair",9,4,5,"P"],["pair",9,5,5,"P"]],"abandons":[],"assurance":3,"avantage":1.85},"frontdemer":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,3,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,4,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,0,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-2,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,1,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,3,"P"],["pair",2,1,-1,"P"],["pair",2,2,-5,"P"],["pair",2,7,4,"P"],["pair",3,3,2,"P"],["pair",3,4,-1,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-2,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-5,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,6],["hard",14,8,6],["hard",14,9,3],["hard",15,0,1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-2],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-4],["pair",6,0,5],["pair",6,8,5],["pair",6,9,2],["pair",7,9,1]],"assurance":3,"avantage":0.379},"cotai":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,-1,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":0.463},"cercle":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","H"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","H","H","H","H","H"],"14":["H","H","H","H","H","H","H","H","H","H"],"15":["H","H","H","H","H","H","H","H","H","H"],"16":["H","H","H","H","H","H","H","H","H","H"],"17":["H","H","H","H","H","H","H","H","H","H"],"18":["H","S","S","S","S","S","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["H","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["H","P","P","P","P","P","P","P","P","H"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",11,8,-6,"D"],["hard",11,9,0,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,5,"S"],["hard",16,8,5,"S"],["hard",16,9,1,"S"],["hard",17,0,-4,"S"],["pair",0,0,0,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",7,9,1,"S"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":0.601},"mainchaude":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","D","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","D","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","D","D","D","D","D","H","H","H","H"],"18":["H","D","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","D","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,4,"D"],["hard",8,4,1,"D"],["hard",8,5,0,"D"],["hard",9,1,-1,"D"],["hard",9,2,-3,"D"],["hard",9,3,-5,"D"],["hard",9,4,-6,"D"],["hard",9,6,2,"D"],["hard",9,7,6,"D"],["hard",10,0,2,"D"],["hard",10,7,-5,"D"],["hard",10,8,-3,"D"],["hard",10,9,3,"D"],["hard",11,0,-2,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-1,"S"],["hard",12,4,-3,"S"],["hard",12,5,-5,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-5,"S"],["hard",13,4,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,5,"S"],["hard",15,9,4,"S"],["hard",16,0,4,"S"],["hard",16,8,6,"S"],["hard",16,9,2,"S"],["hard",17,0,-5,"S"],["soft",13,2,5,"D"],["soft",13,3,1,"D"],["soft",13,4,-2,"D"],["soft",13,5,-5,"D"],["soft",14,2,5,"D"],["soft",14,3,-1,"D"],["soft",14,4,-4,"D"],["soft",15,2,5,"D"],["soft",15,3,-3,"D"],["soft",16,2,3,"D"],["soft",16,3,-5,"D"],["soft",17,1,-1,"D"],["soft",17,2,-6,"D"],["soft",18,1,-1,"D"],["soft",18,2,-3,"D"],["soft",19,2,4,"D"],["soft",19,3,2,"D"],["soft",19,4,0,"D"],["soft",19,5,-1,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",1,1,-5,"P"],["pair",1,7,5,"P"],["pair",2,1,-2,"P"],["pair",2,7,1,"P"],["pair",3,2,5,"P"],["pair",3,3,0,"P"],["pair",3,4,-3,"P"],["pair",3,5,-6,"P"],["pair",4,0,2,"D"],["pair",4,7,-6,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-5,"P"],["pair",6,0,6,"S"],["pair",6,7,1,"P"],["pair",6,9,5,"S"],["pair",7,0,-2,"P"],["pair",8,0,1,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,5,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":0.381},"salonprive":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,-1,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,6],["hard",14,8,6],["hard",14,9,3],["hard",15,0,1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-2],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-3],["pair",6,0,5],["pair",6,8,5],["pair",6,9,2],["pair",7,9,2]],"assurance":3,"avantage":0.384},"reno":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","H","H","H","H","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","H","H","H","H","H"],"14":["H","H","H","H","H","H","H","H","H","H"],"15":["H","H","H","H","H","H","H","H","H","H"],"16":["H","H","H","H","H","H","H","H","H","H"],"17":["H","H","H","H","H","H","H","H","H","H"],"18":["H","S","S","S","S","S","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","H","H","P","P","P","P","H","H","H"],"2":["H","H","H","P","P","P","P","H","H","H"],"3":["H","H","H","H","H","H","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",10,0,2,"D"],["hard",10,7,-6,"D"],["hard",10,8,-3,"D"],["hard",10,9,2,"D"],["hard",11,0,-3,"D"],["hard",11,8,-5,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-2,"S"],["hard",12,4,-3,"S"],["hard",12,5,-5,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,4,"S"],["hard",15,9,4,"S"],["hard",16,0,4,"S"],["hard",16,9,4,"S"],["hard",17,0,-5,"S"],["pair",1,1,5,"P"],["pair",1,2,2,"P"],["pair",1,3,-4,"P"],["pair",2,1,5,"P"],["pair",2,2,0,"P"],["pair",2,3,-5,"P"],["pair",3,4,4,"P"],["pair",3,5,4,"P"],["pair",4,0,1,"D"],["pair",4,8,-4,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-5,"P"],["pair",5,6,-5,"H"],["pair",6,0,3,"S"],["pair",6,9,0,"S"],["pair",7,0,-3,"P"],["pair",7,9,6,"S"],["pair",8,0,0,"P"],["pair",8,1,-3,"P"],["pair",8,2,-3,"P"],["pair",8,3,-4,"P"],["pair",8,4,-6,"P"],["pair",8,6,5,"P"],["pair",9,4,5,"P"],["pair",9,5,5,"P"]],"abandons":[],"assurance":3,"avantage":0.631},"marina":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,-1,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,6],["hard",14,8,6],["hard",14,9,3],["hard",15,0,1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-2],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-3],["pair",6,0,5],["pair",6,8,5],["pair",6,9,2],["pair",7,9,2]],"assurance":3,"avantage":0.359},"aquarium":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","D","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","D","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,3,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,2,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,-1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-4,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-5,"S"],["hard",13,4,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,5,"S"],["hard",15,9,4,"S"],["hard",16,0,3,"S"],["hard",16,8,4,"S"],["hard",16,9,0,"S"],["hard",17,0,-5,"S"],["soft",13,3,2,"D"],["soft",13,4,0,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-2,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,1,"D"],["soft",17,2,-5,"D"],["soft",18,1,-1,"D"],["soft",18,2,-4,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,-1,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,3,"D"],["pair",1,1,-4,"P"],["pair",1,7,3,"P"],["pair",2,1,-1,"P"],["pair",2,2,-5,"P"],["pair",2,7,4,"P"],["pair",3,2,6,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-5,"P"],["pair",4,0,2,"D"],["pair",4,7,-5,"D"],["pair",4,8,-2,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",7,0,-2,"P"],["pair",8,0,1,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":2.073}},"systemes":{"hilo":{"nom":"Hi-Lo","equilibre":true,"niveau":1,"v":[-1,1,1,1,1,1,0,0,0,-1],"note":"Le standard. Un seul niveau, équilibré, et c'est celui pour lequel tous les écarts publiés existent."},"ko":{"nom":"KO","equilibre":false,"niveau":1,"v":[-1,1,1,1,1,1,1,0,0,-1],"note":"Déséquilibré : pas de division par les sabots restants, donc pas de compte vrai à tenir. On perd un peu de précision, on gagne beaucoup de charge mentale."},"hiopt1":{"nom":"Hi-Opt I","equilibre":true,"niveau":1,"v":[0,0,1,1,1,1,0,0,0,-1],"note":"L'as est neutre : plus précis pour les décisions de jeu, mais il faut compter les as à part pour la mise."},"omega2":{"nom":"Omega II","equilibre":true,"niveau":2,"v":[0,1,1,2,2,2,1,0,-1,-2],"note":"Deux niveaux. Nettement plus précis, nettement plus fatigant. À ne prendre que quand Hi-Lo est devenu automatique."}},"genere":"2026-09-07","catalogue":[{"id":"boulevard","nom":"Le Boulevard","lieu":"Las Vegas Strip","jeux":6,"h17":true,"blackjackPays":1.5,"penetration":0.75,"sieges":5,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":70,"mise_min":10,"mise_max":1000,"lecon":"Voilà à quoi ressemble un travail.","detail":"La table étalon. Un demi-point d'avantage par heure de jeu parfait : une session de trois heures qui finit en dessous de zéro est parfaitement normale. Toutes les autres tables se lisent par rapport à celle-ci."},{"id":"neon","nom":"Le Néon","lieu":"Downtown, Fremont Street","jeux":1,"h17":true,"blackjackPays":1.2,"penetration":0.5,"sieges":5,"das":false,"surrender":"none","doubleOn":[9,10,11],"maxHands":2,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"main","cadence":209,"mise_min":5,"mise_max":500,"piege":"6:5","lecon":"Peu de jeux ne veut pas dire bon jeu.","detail":"Un seul jeu donne les meilleures fréquences de comptes forts du catalogue. Et pourtant tu perds : le blackjack payé 6:5 repousse ton point d'équilibre bien au-delà de ce que le compte atteint jamais. Le paiement du blackjack se lit AVANT le nombre de jeux."},{"id":"frontdemer","nom":"Le Front de Mer","lieu":"Atlantic City","jeux":8,"h17":false,"blackjackPays":1.5,"penetration":0.7,"sieges":7,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":52,"mise_min":15,"mise_max":1500,"lecon":"Les meilleures règles ne compensent pas la lenteur.","detail":"Le meilleur jeu à sabot du catalogue pour la stratégie de base. Mais huit jeux coupés à 70 %, et sept joueurs autour de la table, ne produisent presque jamais de compte fort. Le rendement d'un compteur, c'est l'espérance multipliée par la cadence."},{"id":"cotai","nom":"Le Cotai","lieu":"Macao, Cotai Strip","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0,"sieges":6,"das":true,"surrender":"none","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"melangeuse_continue","cadence":84,"mise_min":25,"mise_max":2500,"piege":"csm","lecon":"La mélangeuse continue tue le comptage, pas les règles.","detail":"Objectivement le meilleur jeu du catalogue : un joueur de stratégie de base doit s'y précipiter. Un compteur n'a rien à y faire. Les cartes jouées retournent dans le sabot, le compte vrai reste collé à zéro, et la machine te fait perdre ton désavantage plus vite. Une bonne table et une table battable sont deux questions différentes."},{"id":"cercle","nom":"Le Cercle","lieu":"Londres · Monte-Carlo","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0.75,"sieges":7,"das":true,"surrender":"none","doubleOn":[9,10,11],"maxHands":4,"hitSplitAces":false,"holeCard":false,"peek":false,"enhcLosesAll":true,"melange":"sabot","cadence":60,"mise_min":20,"mise_max":2000,"piege":"enhc","lecon":"Sans carte cachée, tu perds aussi tes doublements.","detail":"Le croupier ne prend qu'une carte. Tu doubles ton 11 contre son 10, il retourne un valet à la fin : tu perds deux unités, pas une. Ta table de stratégie appartient à la table de jeu, pas à toi."},{"id":"mainchaude","nom":"La Main Chaude","lieu":"double jeu, Vegas","jeux":2,"h17":true,"blackjackPays":1.5,"penetration":0.65,"sieges":5,"das":true,"surrender":"none","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":95,"mise_min":25,"mise_max":1000,"lecon":"La géométrie bat les règles.","detail":"Avantage maison moins bon que Le Front de Mer, et pourtant bien plus rentable à compter : deux jeux, ça bouge. Le compte vrai grimpe et redescend sans arrêt. Pour un compteur, la variance du compte vaut plus qu'un dixième de point d'avantage maison."},{"id":"salonprive","nom":"Le Salon Privé","lieu":"high limit","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0.85,"sieges":3,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":104,"mise_min":100,"mise_max":10000,"lecon":"La carte de coupe est le seul chiffre qui compte.","detail":"Les mêmes six jeux que Le Boulevard, presque les mêmes règles. Une seule différence décisive : la coupe est plantée à 85 % au lieu de 75 %. C'est la seule information qu'aucun panneau n'affiche, et elle vaut plus que toutes les autres réunies."},{"id":"reno","nom":"Le Vieux Reno","lieu":"jeu unique, bridé","jeux":1,"h17":true,"blackjackPays":1.5,"penetration":0.6,"sieges":4,"das":false,"surrender":"none","doubleOn":[10,11],"maxHands":2,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"main","cadence":150,"mise_min":5,"mise_max":200,"lecon":"Une table bridée peut être excellente.","detail":"Pas d'abandon, pas de doublement après séparation, doubler seulement sur 10 et 11 : sur le papier c'est mesquin. Et pourtant c'est l'une des meilleures tables du catalogue à compter, et celle qui demande la plus petite caisse. Les restrictions coûtent des dixièmes, la géométrie du sabot rapporte des unités."},{"id":"marina","nom":"La Marina","lieu":"Marina Bay, Singapour","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0.78,"sieges":7,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":88,"mise_min":100,"mise_max":25000,"tapis_depart":5000,"rachats_max":2,"lecon":"Ta caisse décide avant ta stratégie.","detail":"Les neuf autres tables t'apprennent à reconnaître un bon jeu. Celle-ci t'apprend ce qui arrive une fois que tu en as trouvé un. Le minimum est à 100, et à plusieurs on s'y assied avec 5 000 jetons — cinquante mises — et deux recaves, pas une de plus. Un compteur qui monte à cinq unités sur les comptes forts engage sa caisse entière en dix manches favorables. Avoir raison sur chaque décision et finir à zéro n'est pas de la malchance — c'est l'issue la plus fréquente quand la caisse est trop courte pour la variance."},{"id":"aquarium","nom":"L'Aquarium","lieu":"zone touristes","jeux":8,"h17":true,"blackjackPays":1.2,"penetration":0.65,"sieges":7,"das":true,"surrender":"none","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":60,"mise_min":10,"mise_max":500,"piege":"6:5","lecon":"Il y a des tables qu'on ne bat pas.","detail":"Huit jeux et un blackjack payé 6:5. Le point d'équilibre est si haut que la rampe de mise ne s'ouvre jamais, quel que soit l'écart. Cette table existe pour qu'on apprenne à la refuser, pas pour qu'on la joue. Savoir se lever est la compétence la moins spectaculaire et la plus rentable."}]};
+const DONNEES = {"tables":{"boulevard":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["U","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["U","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","D","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","D","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["U","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,2,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,-1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-4,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-5,"S"],["hard",13,4,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,5,"S"],["hard",15,9,4,"S"],["hard",16,0,3,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["hard",17,0,-5,"S"],["soft",13,2,6,"D"],["soft",13,3,2,"D"],["soft",13,4,-1,"D"],["soft",13,5,-4,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,1,-1,"D"],["soft",18,2,-4,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,-1,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,3,"D"],["pair",1,1,-4,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-5,"P"],["pair",2,7,3,"P"],["pair",3,2,6,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-5,"P"],["pair",4,0,2,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",7,0,-2,"P"],["pair",8,0,1,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,4],["hard",14,8,6],["hard",14,9,3],["hard",15,0,-1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-6],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-3],["pair",6,0,3],["pair",6,8,5],["pair",6,9,2],["pair",7,0,-5],["pair",7,9,2]],"assurance":3,"avantage":0.583},"neon":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","D","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","H","H","H","H","H"],"14":["H","H","H","H","H","H","H","H","H","H"],"15":["H","H","H","H","H","H","H","H","H","H"],"16":["H","H","H","H","H","H","H","H","H","H"],"17":["H","H","H","H","H","H","H","H","H","H"],"18":["H","S","S","S","S","S","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","H","H","P","P","P","P","H","H","H"],"2":["H","H","H","P","P","P","P","H","H","H"],"3":["H","H","H","H","H","H","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",9,1,-2,"D"],["hard",9,2,-4,"D"],["hard",9,3,-6,"D"],["hard",9,6,1,"D"],["hard",9,7,5,"D"],["hard",10,0,2,"D"],["hard",10,7,-6,"D"],["hard",10,8,-3,"D"],["hard",10,9,2,"D"],["hard",11,0,-3,"D"],["hard",11,8,-5,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-2,"S"],["hard",12,4,-3,"S"],["hard",12,5,-5,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,4,"S"],["hard",15,9,4,"S"],["hard",16,0,4,"S"],["hard",16,9,4,"S"],["hard",17,0,-5,"S"],["pair",1,1,5,"P"],["pair",1,2,2,"P"],["pair",1,3,-4,"P"],["pair",2,1,5,"P"],["pair",2,2,0,"P"],["pair",2,3,-5,"P"],["pair",3,4,4,"P"],["pair",3,5,4,"P"],["pair",4,0,1,"D"],["pair",4,8,-4,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-5,"P"],["pair",5,6,-5,"H"],["pair",6,0,3,"S"],["pair",6,9,0,"S"],["pair",7,0,-3,"P"],["pair",7,9,6,"S"],["pair",8,0,0,"P"],["pair",8,1,-3,"P"],["pair",8,2,-3,"P"],["pair",8,3,-4,"P"],["pair",8,4,-6,"P"],["pair",8,6,5,"P"],["pair",9,4,5,"P"],["pair",9,5,5,"P"]],"abandons":[],"assurance":3,"avantage":1.85},"frontdemer":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,3,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,4,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,0,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-2,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,1,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,3,"P"],["pair",2,1,-1,"P"],["pair",2,2,-5,"P"],["pair",2,7,4,"P"],["pair",3,3,2,"P"],["pair",3,4,-1,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-2,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-5,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,6],["hard",14,8,6],["hard",14,9,3],["hard",15,0,1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-2],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-4],["pair",6,0,5],["pair",6,8,5],["pair",6,9,2],["pair",7,9,1]],"assurance":3,"avantage":0.379},"cotai":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,-1,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":0.463},"cercle":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","H"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","H","H","H","H","H"],"14":["H","H","H","H","H","H","H","H","H","H"],"15":["H","H","H","H","H","H","H","H","H","H"],"16":["H","H","H","H","H","H","H","H","H","H"],"17":["H","H","H","H","H","H","H","H","H","H"],"18":["H","S","S","S","S","S","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["H","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["H","P","P","P","P","P","P","P","P","H"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",11,8,-6,"D"],["hard",11,9,0,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,5,"S"],["hard",16,8,5,"S"],["hard",16,9,1,"S"],["hard",17,0,-4,"S"],["pair",0,0,0,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",7,9,1,"S"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":0.601},"mainchaude":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","D","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","D","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","D","D","D","D","D","H","H","H","H"],"18":["H","D","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","D","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,4,"D"],["hard",8,4,1,"D"],["hard",8,5,0,"D"],["hard",9,1,-1,"D"],["hard",9,2,-3,"D"],["hard",9,3,-5,"D"],["hard",9,4,-6,"D"],["hard",9,6,2,"D"],["hard",9,7,6,"D"],["hard",10,0,2,"D"],["hard",10,7,-5,"D"],["hard",10,8,-3,"D"],["hard",10,9,3,"D"],["hard",11,0,-2,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-1,"S"],["hard",12,4,-3,"S"],["hard",12,5,-5,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-5,"S"],["hard",13,4,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,5,"S"],["hard",15,9,4,"S"],["hard",16,0,4,"S"],["hard",16,8,6,"S"],["hard",16,9,2,"S"],["hard",17,0,-5,"S"],["soft",13,2,5,"D"],["soft",13,3,1,"D"],["soft",13,4,-2,"D"],["soft",13,5,-5,"D"],["soft",14,2,5,"D"],["soft",14,3,-1,"D"],["soft",14,4,-4,"D"],["soft",15,2,5,"D"],["soft",15,3,-3,"D"],["soft",16,2,3,"D"],["soft",16,3,-5,"D"],["soft",17,1,-1,"D"],["soft",17,2,-6,"D"],["soft",18,1,-1,"D"],["soft",18,2,-3,"D"],["soft",19,2,4,"D"],["soft",19,3,2,"D"],["soft",19,4,0,"D"],["soft",19,5,-1,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",1,1,-5,"P"],["pair",1,7,5,"P"],["pair",2,1,-2,"P"],["pair",2,7,1,"P"],["pair",3,2,5,"P"],["pair",3,3,0,"P"],["pair",3,4,-3,"P"],["pair",3,5,-6,"P"],["pair",4,0,2,"D"],["pair",4,7,-6,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-5,"P"],["pair",6,0,6,"S"],["pair",6,7,1,"P"],["pair",6,9,5,"S"],["pair",7,0,-2,"P"],["pair",8,0,1,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,5,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":0.381},"salonprive":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,-1,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,6],["hard",14,8,6],["hard",14,9,3],["hard",15,0,1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-2],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-3],["pair",6,0,5],["pair",6,8,5],["pair",6,9,2],["pair",7,9,2]],"assurance":3,"avantage":0.384},"reno":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","H","H","H","H","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","H","H","H","H","H","H"],"14":["H","H","H","H","H","H","H","H","H","H"],"15":["H","H","H","H","H","H","H","H","H","H"],"16":["H","H","H","H","H","H","H","H","H","H"],"17":["H","H","H","H","H","H","H","H","H","H"],"18":["H","S","S","S","S","S","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","H","H","P","P","P","P","H","H","H"],"2":["H","H","H","P","P","P","P","H","H","H"],"3":["H","H","H","H","H","H","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",10,0,2,"D"],["hard",10,7,-6,"D"],["hard",10,8,-3,"D"],["hard",10,9,2,"D"],["hard",11,0,-3,"D"],["hard",11,8,-5,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-2,"S"],["hard",12,4,-3,"S"],["hard",12,5,-5,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,4,"S"],["hard",15,9,4,"S"],["hard",16,0,4,"S"],["hard",16,9,4,"S"],["hard",17,0,-5,"S"],["pair",1,1,5,"P"],["pair",1,2,2,"P"],["pair",1,3,-4,"P"],["pair",2,1,5,"P"],["pair",2,2,0,"P"],["pair",2,3,-5,"P"],["pair",3,4,4,"P"],["pair",3,5,4,"P"],["pair",4,0,1,"D"],["pair",4,8,-4,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-5,"P"],["pair",5,6,-5,"H"],["pair",6,0,3,"S"],["pair",6,9,0,"S"],["pair",7,0,-3,"P"],["pair",7,9,6,"S"],["pair",8,0,0,"P"],["pair",8,1,-3,"P"],["pair",8,2,-3,"P"],["pair",8,3,-4,"P"],["pair",8,4,-6,"P"],["pair",8,6,5,"P"],["pair",9,4,5,"P"],["pair",9,5,5,"P"]],"abandons":[],"assurance":3,"avantage":0.631},"marina":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["H","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","U"],"16":["U","S","S","S","S","S","H","H","U","U"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","S","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,2,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,3,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,3,"S"],["hard",12,2,1,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-2,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-4,"S"],["hard",13,4,-6,"S"],["hard",13,5,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,9,4,"S"],["hard",16,8,5,"S"],["hard",16,9,0,"S"],["soft",13,3,3,"D"],["soft",13,4,-1,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-3,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,0,"D"],["soft",17,2,-5,"D"],["soft",18,0,1,"S"],["soft",18,1,0,"D"],["soft",18,2,-3,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,0,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,4,"D"],["pair",0,0,-6,"P"],["pair",1,1,-5,"P"],["pair",1,7,4,"P"],["pair",2,1,-1,"P"],["pair",2,2,-6,"P"],["pair",2,7,3,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-3,"P"],["pair",4,0,3,"D"],["pair",4,7,-5,"D"],["pair",4,8,-3,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",8,0,3,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,3,-6,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[["hard",14,0,6],["hard",14,8,6],["hard",14,9,3],["hard",15,0,1],["hard",15,7,6],["hard",15,8,2],["hard",15,9,-1],["hard",16,0,-2],["hard",16,7,4],["hard",16,8,-1],["hard",16,9,-3],["pair",6,0,5],["pair",6,8,5],["pair",6,9,2],["pair",7,9,2]],"assurance":3,"avantage":0.359},"aquarium":{"chart":{"hard":{"5":["H","H","H","H","H","H","H","H","H","H"],"6":["H","H","H","H","H","H","H","H","H","H"],"7":["H","H","H","H","H","H","H","H","H","H"],"8":["H","H","H","H","H","H","H","H","H","H"],"9":["H","H","D","D","D","D","H","H","H","H"],"10":["H","D","D","D","D","D","D","D","D","H"],"11":["D","D","D","D","D","D","D","D","D","D"],"12":["H","H","H","S","S","S","H","H","H","H"],"13":["H","S","S","S","S","S","H","H","H","H"],"14":["H","S","S","S","S","S","H","H","H","H"],"15":["H","S","S","S","S","S","H","H","H","H"],"16":["H","S","S","S","S","S","H","H","H","H"],"17":["S","S","S","S","S","S","S","S","S","S"],"18":["S","S","S","S","S","S","S","S","S","S"],"19":["S","S","S","S","S","S","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"soft":{"13":["H","H","H","H","D","D","H","H","H","H"],"14":["H","H","H","H","D","D","H","H","H","H"],"15":["H","H","H","D","D","D","H","H","H","H"],"16":["H","H","H","D","D","D","H","H","H","H"],"17":["H","H","D","D","D","D","H","H","H","H"],"18":["H","D","D","D","D","D","S","S","H","H"],"19":["S","S","S","S","S","D","S","S","S","S"],"20":["S","S","S","S","S","S","S","S","S","S"]},"pair":{"0":["P","P","P","P","P","P","P","P","P","P"],"1":["H","P","P","P","P","P","P","H","H","H"],"2":["H","P","P","P","P","P","P","H","H","H"],"3":["H","H","H","H","P","P","H","H","H","H"],"4":["H","D","D","D","D","D","D","D","D","H"],"5":["H","P","P","P","P","P","H","H","H","H"],"6":["H","P","P","P","P","P","P","H","H","H"],"7":["P","P","P","P","P","P","P","P","P","P"],"8":["S","P","P","P","P","P","S","P","P","S"],"9":["S","S","S","S","S","S","S","S","S","S"]}},"ecarts":[["hard",8,3,5,"D"],["hard",8,4,3,"D"],["hard",8,5,1,"D"],["hard",9,1,0,"D"],["hard",9,2,-2,"D"],["hard",9,3,-4,"D"],["hard",9,4,-5,"D"],["hard",9,6,3,"D"],["hard",10,0,2,"D"],["hard",10,7,-5,"D"],["hard",10,8,-2,"D"],["hard",10,9,3,"D"],["hard",11,0,-1,"D"],["hard",11,8,-6,"D"],["hard",11,9,-5,"D"],["hard",12,1,2,"S"],["hard",12,2,0,"S"],["hard",12,3,-1,"S"],["hard",12,4,-2,"S"],["hard",12,5,-4,"S"],["hard",13,1,-2,"S"],["hard",13,2,-3,"S"],["hard",13,3,-5,"S"],["hard",13,4,-6,"S"],["hard",14,1,-5,"S"],["hard",14,2,-6,"S"],["hard",15,0,5,"S"],["hard",15,9,4,"S"],["hard",16,0,3,"S"],["hard",16,8,4,"S"],["hard",16,9,0,"S"],["hard",17,0,-5,"S"],["soft",13,3,2,"D"],["soft",13,4,0,"D"],["soft",13,5,-3,"D"],["soft",14,2,6,"D"],["soft",14,3,1,"D"],["soft",14,4,-2,"D"],["soft",14,5,-6,"D"],["soft",15,2,6,"D"],["soft",15,3,-1,"D"],["soft",15,4,-6,"D"],["soft",16,2,3,"D"],["soft",16,3,-4,"D"],["soft",17,1,1,"D"],["soft",17,2,-5,"D"],["soft",18,1,-1,"D"],["soft",18,2,-4,"D"],["soft",19,2,5,"D"],["soft",19,3,3,"D"],["soft",19,4,1,"D"],["soft",19,5,-1,"D"],["soft",20,3,6,"D"],["soft",20,4,4,"D"],["soft",20,5,3,"D"],["pair",1,1,-4,"P"],["pair",1,7,3,"P"],["pair",2,1,-1,"P"],["pair",2,2,-5,"P"],["pair",2,7,4,"P"],["pair",3,2,6,"P"],["pair",3,3,2,"P"],["pair",3,4,-2,"P"],["pair",3,5,-5,"P"],["pair",4,0,2,"D"],["pair",4,7,-5,"D"],["pair",4,8,-2,"D"],["pair",4,9,3,"D"],["pair",5,1,-3,"P"],["pair",5,2,-6,"P"],["pair",7,0,-2,"P"],["pair",8,0,1,"P"],["pair",8,1,-4,"P"],["pair",8,2,-5,"P"],["pair",8,6,3,"P"],["pair",9,3,6,"P"],["pair",9,4,4,"P"],["pair",9,5,4,"P"]],"abandons":[],"assurance":3,"avantage":2.073}},"systemes":{"hilo":{"nom":"Hi-Lo","equilibre":true,"niveau":1,"v":[-1,1,1,1,1,1,0,0,0,-1],"note":"Le standard. Un seul niveau, équilibré, et c'est celui pour lequel tous les écarts publiés existent."},"ko":{"nom":"KO","equilibre":false,"niveau":1,"v":[-1,1,1,1,1,1,1,0,0,-1],"note":"Déséquilibré : pas de division par les sabots restants, donc pas de compte vrai à tenir. On perd un peu de précision, on gagne beaucoup de charge mentale."},"hiopt1":{"nom":"Hi-Opt I","equilibre":true,"niveau":1,"v":[0,0,1,1,1,1,0,0,0,-1],"note":"L'as est neutre : plus précis pour les décisions de jeu, mais il faut compter les as à part pour la mise."},"omega2":{"nom":"Omega II","equilibre":true,"niveau":2,"v":[0,1,1,2,2,2,1,0,-1,-2],"note":"Deux niveaux. Nettement plus précis, nettement plus fatigant. À ne prendre que quand Hi-Lo est devenu automatique."}},"genere":"2026-09-07","catalogue":[{"id":"boulevard","nom":"Le Boulevard","lieu":"Las Vegas Strip","jeux":6,"h17":true,"blackjackPays":1.5,"penetration":0.75,"sieges":5,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":70,"mise_min":10,"mise_max":1000,"lecon":"Voilà à quoi ressemble un travail.","detail":"La table étalon. Un demi-point d'avantage par heure de jeu parfait : une session de trois heures qui finit en dessous de zéro est parfaitement normale. Toutes les autres tables se lisent par rapport à celle-ci."},{"id":"neon","nom":"Le Néon","lieu":"Downtown, Fremont Street","jeux":1,"h17":true,"blackjackPays":1.2,"penetration":0.5,"sieges":5,"das":false,"surrender":"none","doubleOn":[9,10,11],"maxHands":2,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"main","cadence":209,"mise_min":5,"mise_max":500,"piege":"6:5","lecon":"Peu de jeux ne veut pas dire bon jeu.","detail":"Un seul jeu donne les meilleures fréquences de comptes forts du catalogue. Et pourtant tu perds : le blackjack payé 6:5 repousse ton point d'équilibre bien au-delà de ce que le compte atteint jamais. Le paiement du blackjack se lit AVANT le nombre de jeux."},{"id":"frontdemer","nom":"Le Front de Mer","lieu":"Atlantic City","jeux":8,"h17":false,"blackjackPays":1.5,"penetration":0.7,"sieges":7,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":52,"mise_min":15,"mise_max":1500,"lecon":"Les meilleures règles ne compensent pas la lenteur.","detail":"Le meilleur jeu à sabot du catalogue pour la stratégie de base. Mais huit jeux coupés à 70 %, et sept joueurs autour de la table, ne produisent presque jamais de compte fort. Le rendement d'un compteur, c'est l'espérance multipliée par la cadence."},{"id":"cotai","nom":"Le Cotai","lieu":"Macao, Cotai Strip","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0,"sieges":6,"das":true,"surrender":"none","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"melangeuse_continue","cadence":84,"mise_min":25,"mise_max":2500,"piege":"csm","lecon":"La mélangeuse continue tue le comptage, pas les règles.","detail":"Objectivement le meilleur jeu du catalogue : un joueur de stratégie de base doit s'y précipiter. Un compteur n'a rien à y faire. Les cartes jouées retournent dans le sabot, le compte vrai reste collé à zéro, et la machine te fait perdre ton désavantage plus vite. Une bonne table et une table battable sont deux questions différentes."},{"id":"cercle","nom":"Le Cercle","lieu":"Londres · Monte-Carlo","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0.75,"sieges":7,"das":true,"surrender":"none","doubleOn":[9,10,11],"maxHands":4,"hitSplitAces":false,"holeCard":false,"peek":false,"enhcLosesAll":true,"melange":"sabot","cadence":60,"mise_min":20,"mise_max":2000,"piege":"enhc","lecon":"Sans carte cachée, tu perds aussi tes doublements.","detail":"Le croupier ne prend qu'une carte. Tu doubles ton 11 contre son 10, il retourne un valet à la fin : tu perds deux unités, pas une. Ta table de stratégie appartient à la table de jeu, pas à toi."},{"id":"mainchaude","nom":"La Main Chaude","lieu":"double jeu, Vegas","jeux":2,"h17":true,"blackjackPays":1.5,"penetration":0.65,"sieges":5,"das":true,"surrender":"none","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":95,"mise_min":25,"mise_max":1000,"lecon":"La géométrie bat les règles.","detail":"Avantage maison moins bon que Le Front de Mer, et pourtant bien plus rentable à compter : deux jeux, ça bouge. Le compte vrai grimpe et redescend sans arrêt. Pour un compteur, la variance du compte vaut plus qu'un dixième de point d'avantage maison."},{"id":"salonprive","nom":"Le Salon Privé","lieu":"high limit","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0.85,"sieges":3,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":104,"mise_min":100,"mise_max":10000,"lecon":"La carte de coupe est le seul chiffre qui compte.","detail":"Les mêmes six jeux que Le Boulevard, presque les mêmes règles. Une seule différence décisive : la coupe est plantée à 85 % au lieu de 75 %. C'est la seule information qu'aucun panneau n'affiche, et elle vaut plus que toutes les autres réunies."},{"id":"reno","nom":"Le Vieux Reno","lieu":"jeu unique, bridé","jeux":1,"h17":true,"blackjackPays":1.5,"penetration":0.6,"sieges":4,"das":false,"surrender":"none","doubleOn":[10,11],"maxHands":2,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"main","cadence":150,"mise_min":5,"mise_max":200,"lecon":"Une table bridée peut être excellente.","detail":"Pas d'abandon, pas de doublement après séparation, doubler seulement sur 10 et 11 : sur le papier c'est mesquin. Et pourtant c'est l'une des meilleures tables du catalogue à compter, et celle qui demande la plus petite caisse. Les restrictions coûtent des dixièmes, la géométrie du sabot rapporte des unités."},{"id":"marina","nom":"La Marina","lieu":"Marina Bay, Singapour","jeux":6,"h17":false,"blackjackPays":1.5,"penetration":0.78,"sieges":7,"das":true,"surrender":"late","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":88,"mise_min":100,"mise_max":25000,"tapis_depart":5000,"rachats_max":2,"lecon":"Ta caisse décide avant ta stratégie.","detail":"Les neuf autres tables t'apprennent à reconnaître un bon jeu. Celle-ci t'apprend ce qui arrive une fois que tu en as trouvé un. Le minimum est à 100, et à plusieurs on s'y assied avec 5 000 jetons — cinquante mises — et deux recaves, pas une de plus. Un compteur qui monte à cinq unités sur les comptes forts engage sa caisse entière en dix manches favorables. Avoir raison sur chaque décision et finir à zéro n'est pas de la malchance — c'est l'issue la plus fréquente quand la caisse est trop courte pour la variance."},{"id":"aquarium","nom":"L'Aquarium","lieu":"zone touristes","jeux":8,"h17":true,"blackjackPays":1.2,"penetration":0.65,"sieges":7,"das":true,"surrender":"none","doubleOn":"any","maxHands":4,"hitSplitAces":false,"holeCard":true,"peek":true,"melange":"sabot","cadence":60,"mise_min":10,"mise_max":500,"piege":"6:5","lecon":"Il y a des tables qu'on ne bat pas.","detail":"Huit jeux et un blackjack payé 6:5. Le point d'équilibre est si haut que la rampe de mise ne s'ouvre jamais, quel que soit l'écart. Cette table existe pour qu'on apprenne à la refuser, pas pour qu'on la joue. Savoir se lever est la compétence la moins spectaculaire et la plus rentable."}],"mains":3000000,"empreinte":"8e7176e63d7f14b3"};
 const M={};
 M["engine"] = (function(){
 // Moteur de blackjack pur : aucune dépendance au DOM, entièrement piloté par les règles de la table.
@@ -7007,6 +7430,11 @@ function aller(v) {
 function allerHall(ancre) {
   aller("accueil");
   const e = ancre && $(ancre); if (!e) return;
+  // Le grand bouton des tables est un <details> : « Voir les tables » doit les FAIRE
+  // APPARAÎTRE, pas défiler vers un bloc replié. Cette ligne couvre d'un coup TOUS les
+  // chemins existants — aller("salon"), le rachat de jetons, « Changer de table », la fin
+  // de la leçon, le fil d'Ariane, le lien profond #lesTables.
+  if (e.tagName === "DETAILS") e.open = true;
   // Après le scrollTo(0) de aller() : la salle glisse sous l'en-tête collant (scroll-margin-top en CSS).
   setTimeout(() => e.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }), 30);
 }
@@ -7096,6 +7524,14 @@ function rendreSysteme() {
     .map(k => `<span class="regle ${+k > 0 ? "bien" : +k < 0 ? "mal" : ""}"><b class="cadran">${sgn(+k)}</b>&nbsp; ${groupes[k].join(" ")}</span>`).join("")
     + (s.equilibre ? "" : `<span class="regle">déséquilibré · départ à ${sgn(CT.compteInitial(DB.sys, +($("eJeux").value || 6)))}</span>`);
   $("cCible").textContent = sgn(CT.compteInitial(DB.sys, +$("cJeux").value) + (s.equilibre ? 0 : 4 * +$("cJeux").value));
+  // La démonstration de la plaque compte SES six cartes avec le système sélectionné : ses
+  // valeurs sont celles de Hi-Lo comme d'Omega II, jamais un « +1 » écrit en dur. C'est
+  // donc ICI qu'elle se rejoue — rendreSysteme() est déjà appelée au démarrage ET à chaque
+  // changement dans ⚙, ce qui fait exactement les deux occasions.
+  // ⚠️ rendreMesures vit dans salon.js, TROIS morceaux plus bas. C'est une `function`, donc
+  // hoistée dans toute l'IIFE — exactement comme rendreSalon(), appelée depuis aller() une
+  // centaine de lignes plus haut. Un `const` ne l'aurait pas été.
+  rendreMesures();
 }
 // L'éventail du hall, à 250 px : quatre cartes chiffrées au hasard et l'AS DE PIQUE devant,
 // jamais une figure (à cette taille le sprite des figures, pensé pour 60 px, fait dessin
@@ -7690,7 +8126,10 @@ function chipsReglesTexte(t) {
 // en plus ajoutait une rangée et poussait « MACAO, COTAI STRIP » sur « TABLE 4 » (les critiques, 05/09).
 function pucesCourtes(t, o) {
   const tmp = document.createElement("div"); tmp.innerHTML = chipsRegles(t);
-  const puces = [...tmp.children], garde = puces.slice(0, 3);
+  // o.deux : la ligne de mesure prend la place que prenait .chiffres, deux puces suffisent
+  // à décrire la table — la troisième poussait le bloc bas vers .haut. ⚠️ table.js appelle
+  // pucesCourtes SANS second argument : le `o &&` est ce qui l'en protège.
+  const puces = [...tmp.children], garde = puces.slice(0, o && o.deux ? 2 : 3);
   const csm = puces.find(p => /mélangeuse/.test(p.textContent));
   if (csm && !garde.includes(csm) && !(o && o.sansMelangeuse)) garde.push(csm);
   return garde.map(p => p.outerHTML).join("");
@@ -7752,6 +8191,24 @@ const sabotEntame = () => T.mains > 0 || T.enJeu;
    o.n = son numéro dans le catalogue · o.reprise = « Reprendre » · o.inerte = un
    simple panneau (l'écran À plusieurs la montre sans qu'on puisse s'y asseoir en solo)
    · o.compte = la version COURSE AU COMPTAGE : ni argent ni règles de main (cf. pucesCompte). */
+/* La MESURE, en tête du bloc bas. Elle remplace la ligne « avantage maison · mises » qui
+   vivait tout en bas : une porte du hall répond à « est-ce que je m'assieds ici ? », pas à
+   « combien je mise » — la fourchette de mises descend dans la modale « Pourquoi ? », avec
+   le reste des règles.
+   🚨 Le second nombre est une information NEUVE. indiceComptable() existe depuis toujours et
+   DÉCIDE du filtre « Où compter rapporte » (≥ 25) — il n'était visible nulle part. Un filtre
+   dont le critère est caché est un filtre auquel personne n'a de raison de croire. Affiché,
+   Le Cotai devient auto-explicatif : excellent avantage maison, et 0/100 au comptage.
+   ⚠️ Sur l'écran COURSE AU COMPTAGE (o.compte) on ne garde QUE l'indice : l'avantage maison
+   n'y décide de rien — on ne mise pas —, mais la rentabilité du comptage y est tout le sujet. */
+function ligneMesure(t, d, compte) {
+  const i = indiceComptable(t), teinte = i >= 25 ? "jade" : "cinabre";
+  // ⚠️ Chaque nombre et SON étiquette dans un même <span> : à plat dans le flex, « comptage »
+  // se retrouvait seul sur la ligne suivante, sous « 0,58 % avantage 36/100 » — une étiquette
+  // orpheline ne désigne plus rien (le défaut déjà corrigé sur la barre de filtres le 27/08).
+  const av = compte ? "" : `<span class="m"><b class="cadran" title="Ce que la maison gagne en moyenne sur chaque mise, en stratégie parfaite — plus c'est bas, mieux c'est">${fr2(d.avantage)} %</b><i>avantage</i></span>`;
+  return `<span class="mesure">${av}<span class="m"><b class="cadran ${teinte}" title="Ce que cette table laisse vraiment à un compteur, sur 100">${i}/100</b><i>comptage</i></span></span>`;
+}
 function carteTableHtml(t, o) {
   o = o || {};
   const d = DONNEES.tables[t.id], mort = tableMorte(t), ph = photoDe(t.id);
@@ -7762,10 +8219,10 @@ function carteTableHtml(t, o) {
       ${ph ? `<img class="photo" ${attributsPhoto(t.id)} alt="" aria-hidden="true" loading="lazy" decoding="async"${PHOTO_POS[t.id] ? ` style="--pos:${PHOTO_POS[t.id]}"` : ""}>` : ""}<span class="voile"></span>
       <span class="haut"><span class="num">${o.n ? "Table " + o.n : "Ta table"}</span>${o.reprise ? `<span class="etat">Reprendre</span>` : mort ? `<span class="tampon" title="${echap(mort)}">${tamponCourt(t)}</span>` : ""}</span>
       <span class="bas">
+        ${ligneMesure(t, d, o.compte)}
         <span class="lieu">${echap(t.lieu)}</span><span class="nom">${echap(t.nom)}</span>
         <span class="sous">« ${echap(t.lecon)} »</span>
-        <span class="regles">${o.compte ? pucesCompte(t) : pucesCourtes(t, { sansMelangeuse: true })}</span>
-        ${o.compte ? "" : `<span class="chiffres"><span title="Ce que la maison gagne en moyenne sur chaque mise, en stratégie parfaite — plus c'est bas, mieux c'est"><b>${fr2(d.avantage)} %</b>avantage maison</span><span title="Mise minimale et maximale à cette table, en jetons"><b>${fmtJ(t.mise_min)} – ${fmtJ(t.mise_max)}</b>mises</span></span>`}
+        <span class="regles">${o.compte ? pucesCompte(t) : pucesCourtes(t, { sansMelangeuse: true, deux: true })}</span>
       </span>
       ${o.inerte ? "" : `<span class="asseoir-cta" aria-hidden="true">${o.reprise ? "Reprendre" : "S'asseoir"} &rarr;</span>`}
     </${balise}>
@@ -7802,6 +8259,10 @@ function rendreSalon() {
   if (rep) {
     const t = tableCourante(), revient = entame || DB.tapis !== 1000 || DB.rachats > 0 || (DB.sessions || []).length > 0;
     document.body.classList.toggle("revient", revient); rep.hidden = !revient;
+    // Celui qui revient veut changer de table, pas relire quatre étages. L'état « revient »
+    // est celui qui raccourcit déjà le héros : une seule définition pour les deux gestes,
+    // aucune clé nouvelle en base, aucune migration.
+    const det = $("lesTables"); if (det && revient) det.open = true;
     const tapis = String(Math.round(DB.tapis)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
     rep.innerHTML = `${entame ? "Reprendre ta place" : "Reprendre"} — <b>${echap(t.nom)}</b><small>tapis ${tapis}</small>`;
     rep.onclick = () => { if (!sabotEntame()) nouveauSabot(); aller("table"); bandeau("Tu reprends ta place à « " + t.nom + " »"); };
@@ -7820,6 +8281,99 @@ $("filtreSalon").querySelectorAll("button").forEach(b => b.onclick = () => {
   rendreSalon();
 });
 
+/* ── LA PLAQUE DE MESURE ────────────────────────────────────────────────────────
+   Trois nombres qui n'existent nulle part ailleurs sur le web, recalculés à chaque
+   construction, DATÉS et signés d'une empreinte. C'est ce qui fait de cette page une
+   planche de mesure et non une page de marketing — et c'est, accessoirement, le seul
+   contenu citable de la seule page indexable du site.
+
+   🚨 AUCUN de ces nombres n'est écrit à la main. « Neuf tables » a survécu trois jours
+   dans le héros pour dix tables réelles, en se contredisant avec le JSON-LD de la même
+   page : tout compte affiché se dérive de DONNEES, sans exception.
+
+   🚨 CETTE FONCTION EST APPELÉE DEPUIS socle.js (rendreSysteme), qui est le PREMIER
+   morceau de l'IIFE alors que salon.js est le quatrième. Ça ne marche que parce que
+   c'est une `function` DÉCLARÉE, donc hoistée dans toute la portée. La passer en `const`
+   la mettrait en zone morte temporelle et tuerait le démarrage. */
+const EN_TOUTES_LETTRES = ["zéro", "une", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze"];
+// L'espace fine insécable est celui de la ligne « tapis 975 » du bouton Reprendre.
+const grouper = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
+// Les six cartes de la démonstration : une histoire, pas un tirage. Le compte monte, un
+// roi le fait retomber, un sept ne fait rien, puis il remonte — c'est exactement ce que la
+// légende énonce en une phrase, montré en six images.
+// ⚠️ Le ROI s'écrit "R" ici (RANKS est français : A 2…10 V D R). Écrire "K" fait rendre
+// `undefined` à `find`, la carte disparaît en silence et le compte affiché devient faux.
+const DEMO_RANGS = ["5", "3", "R", "7", "6", "4"];
+
+function rendreMesures() {
+  const cat = DONNEES.catalogue, tables = DONNEES.tables;
+  const mot = n => EN_TOUTES_LETTRES[n] || String(n);
+  // ⚠️ data-nb-tables="cap" pour les occurrences qui OUVRENT une phrase : « dix règlements »
+  // après un point se lit comme une faute, et corriger la phrase à la main nous ramènerait
+  // au compte écrit en dur qu'on vient précisément de retirer.
+  document.querySelectorAll("[data-nb-tables]").forEach(e => {
+    const m = mot(cat.length);
+    e.textContent = e.dataset.nbTables === "cap" ? m.charAt(0).toUpperCase() + m.slice(1) : m;
+  });
+
+  const av = cat.map(t => tables[t.id].avantage);
+  const fourchette = fr2(Math.min(...av)) + " – " + fr2(Math.max(...av)) + " %";
+  // ⚠️ La mélangeuse continue n'a PAS de pénétration (0 par convention dans le catalogue) :
+  // la faire entrer dans la fourchette annoncerait « 0 – 85 % », c'est-à-dire une table
+  // qu'on ne joue jamais du tout. On ne mesure que ce qui se mesure.
+  const pen = cat.filter(t => t.melange !== "melangeuse_continue").map(t => Math.round(t.penetration * 100));
+  const battables = cat.filter(t => indiceComptable(t) >= 25).length;
+
+  const poser = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+  poser("mesAvantage", fourchette);
+  poser("mesPenetration", Math.min(...pen) + " – " + Math.max(...pen) + " %");
+  // DONNEES.mains × le nombre de tables : la simulation tourne table par table.
+  poser("mesMains", DONNEES.mains ? grouper(DONNEES.mains * cat.length) : "—");
+  poser("tablesAvantage", fourchette);
+  poser("tablesCompte", cat.length + " tables · " + battables + " battables");
+
+  // La SIGNATURE. Sans date ni empreinte, « trente millions de mains » est un slogan ; avec
+  // elles, c'est une calibration qu'on peut nous opposer.
+  // ⚠️ DONNEES.genere vient du CACHE de précalcul : c'est la date du dernier VRAI calcul,
+  // pas celle de la construction. C'est bien ce que « recalculé le … » veut dire.
+  const sig = $("mesSignature");
+  if (sig) {
+    let quand = DONNEES.genere || "";
+    try { quand = new Date(DONNEES.genere + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }); }
+    catch (e) { /* une date illisible reste affichée telle quelle : mieux qu'un blanc */ }
+    sig.textContent = (quand ? "Recalculé le " + quand : "") + (DONNEES.empreinte ? " · empreinte " + DONNEES.empreinte : "");
+  }
+
+  // ── La démonstration. Elle est REBÂTIE à chaque appel : les six valeurs changent avec le
+  // système de comptage, et un compte laissé sur les valeurs de Hi-Lo sous un titre
+  // « Omega II » serait faux au moment précis où l'on explique la règle.
+  const boite = $("demoCartes"), compte = $("demoCompte");
+  if (!boite || !compte) return;
+  const jeu = sabotNeuf(1);
+  boite.innerHTML = "";
+  const pris = [];
+  let rc = 0;
+  // Sept ÉTATS superposés — le départ, puis un par carte —, dont un seul est visible. Aucune
+  // interpolation numérique, donc aucun JS pendant le défilement : c'est le CSS qui allume le
+  // bon état, et AU REPOS c'est le DERNIER qui reste (l'état fini). Rien n'est jamais parqué
+  // en attente de quoi que ce soit.
+  const etats = ['<b class="cadran">' + sgn(0) + "</b>"];
+  DEMO_RANGS.forEach((r, k) => {
+    // `find` sur le rang seul rend six fois le PIQUE (sabotNeuf empile couleur par couleur) :
+    // un sabot d'une seule couleur n'est pas un sabot. On demande une couleur par carte, avec
+    // repli sur le rang seul si elle manque.
+    const suit = SUITS[k % SUITS.length][0];
+    const c = jeu.find(x => x.r === r && x.suit === suit) || jeu.find(x => x.r === r);
+    if (!c || pris.indexOf(c) >= 0) { if (!c) return; }
+    pris.push(c);
+    const e = carteEl(c); e.classList.add("demo-carte"); e.style.setProperty("--k", k);
+    boite.appendChild(e);
+    rc += valeurCompte(c);
+    etats.push('<b class="cadran">' + sgn(rc) + "</b>");
+  });
+  compte.innerHTML = etats.join("");
+}
+
 /* ── Les portes fixes du hall et les bandeaux de salle : la photo vient de
    window.PHOTOS (build.mjs), par la clé posée en data-photo. Sans photo, la porte
    garde son voile sombre et son titre — rien ne casse, rien ne charge. */
@@ -7836,7 +8390,7 @@ function rendreHall() {
     if (img.getAttribute("srcset") !== jeu) { if (jeu) img.setAttribute("srcset", jeu); else img.removeAttribute("srcset"); }
     if (img.getAttribute("src") !== src) img.src = src;
   });
-  rendreCredits(); rendreSalut();
+  rendreCredits(); rendreSalut(); rendreMesures();
 }
 // Une CC BY sans crédit est une violation : auteur, licence, source, pour chaque photo.
 // Le pied de page porte aussi la PORTÉE du partage à l'identique (les BY-SA obligent la photo,
@@ -15198,6 +15752,21 @@ nouveauSabot();
 // Le hall : photos sur les portes, crédits, salut — puis on y entre, sauf si un lien
 // (#table=CODE, #course=CODE, traités plus haut) a déjà emmené ailleurs.
 rendreHall(); if (vue === "accueil") aller("accueil");
+/* ── L'ARRIVÉE AU DÉFILEMENT : le drapeau ─────────────────────────────────────
+   Léo, 08/09 : « qu'elles apparaissent quand on défile, avec de l'animation quand on
+   glisse ». Le mouvement est fait par le CSS (animation-timeline: view()) — pas une ligne
+   de JS ne tourne pendant le défilement, et il n'y a aucun observateur à ré-abonner quand
+   rendreSalon() recrée les dix cartes à chaque clic de filtre.
+
+   🚨 CE DRAPEAU EST LE TROISIÈME VERROU, pas le premier. Les règles d'animation vivent
+   DANS un @supports ET dans un @media (prefers-reduced-motion: no-preference) ET sous
+   html.anime : un moteur qui ne connaît pas les timelines de défilement, un visiteur qui a
+   coupé les animations, ou un script mort AVANT cette ligne voient tous la page NUE —
+   c'est-à-dire complète, à son état final. Un bloc ne peut donc jamais rester invisible.
+
+   ⚠️ Posé après la PREMIÈRE IMAGE, pas au chargement : si quoi que ce soit lève entre ici
+   et le premier rendu, la page reste nue au lieu de se figer à moitié transparente. */
+requestAnimationFrame(() => document.documentElement.classList.add("anime"));
 // La fenêtre de dons, en DERNIER et après un souffle : elle ne doit jamais recouvrir un
 // hall encore en train de se peindre — on verrait la demande avant l'application, ce qui
 // est exactement l'inverse de ce qu'on veut faire lire. Elle décide seule si elle

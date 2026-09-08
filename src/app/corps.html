@@ -68,30 +68,46 @@
 
 <main>
 
-<!-- ════════════════════ LE HALL ════════════════════
-     Le menu est un casino. On entre par le hall (la photo du Strip, le nom en serif),
-     puis on choisit une PORTE : une des dix tables, une salle d'entraînement, le salon
-     privé, le bureau. Chaque porte est une photo — une vraie, créditée en bas de page.
-     « Le salon » d'avant n'est plus une vue : c'est l'ancre #lesTables de ce hall. -->
+<!-- ════════════════════ LE HALL — LA PLANCHE DE MESURE ════════════════════
+     Léo, 08/09 : « ça fait vraiment vibe coder ». Ce n'était pas l'ordre des blocs —
+     c'était que DIX-SEPT objets identiques (455 × 256, même rayon, même ombre) portaient
+     une table de casino, un exercice et un tiroir de réglages. Un `map()` sur un tableau
+     se reconnaît à ça. On ne réordonne donc pas seulement : on rend les blocs DIFFÉRENTS
+     parce que leur contenu l'est, et on laisse le CHIFFRE MESURÉ commander la page — la
+     photo n'est plus que la preuve que la table existe.
+
+     Quatre étages, dans l'ordre imposé par Léo, et leurs titres DESCENDENT (64 → 48 → 40
+     → 26) : c'est la traduction typographique de cet ordre. Avant, les quatre faisaient
+     37,44 px et rien ne disait que « Les tables » (dix destinations) pesait plus que
+     « Le bureau » (un tiroir).
+
+     ⚠️ #sysNom / #sysNote / #sysTable / #bHallReglages / #filtreSalon / #prenom / #eventail
+     sont écrits SANS GARDE par socle.js et salon.js, au chargement. Ils ont déménagé, ils
+     n'ont pas disparu : les retirer ne dégraderait pas le hall, ça empêcherait
+     l'application de démarrer. -->
 <section class="vue" id="v-accueil">
+
+  <!-- ── LE HÉROS ────────────────────────────────────────────────────────────
+       Le titre est la PROMESSE, pas la marque : le nom de l'application vit dans l'onglet
+       du navigateur. Le prénom se donne en un clic sur la salutation, pas dans un
+       formulaire qu'on remplit en rentrant de soirée. -->
   <div class="hall-heros" id="hallHeros" data-photo="hall">
     <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async" sizes="100vw">
-    <!-- Le titre est la PROMESSE, pas la marque : le nom de l'application vit dans l'onglet
-         du navigateur, il n'a pas à être redit ici (mesuré le 05/09 : le héros prenait 586 des
-         800 px pour répéter ce nom, et les tables tombaient sous le pli). ⚠️ Depuis le 07/09 le
-         mot-marque de l'en-tête est masqué — écrire « il est déjà 40 px plus haut » serait faux.
-         Le prénom se donne en un clic sur la salutation, pas dans un formulaire qu'on remplit
-         en rentrant de soirée. -->
     <div class="hall-int hall-heros-int">
       <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
       <h1 class="hall-titre">Le compte est masqué.<br>À toi de le tenir.</h1>
-      <!-- La phrase dit ce qu'EST le compte avant de lister les salles : un novice lisait « Le compte est
-           masqué » sans savoir de quoi on parlait (les critiques, 05/09), et la seule explication vivait
-           ~1 900 px plus bas, sous « Le bureau ». « Première fois ? » ouvre la leçon (salon.js, ouvrirLecon). -->
-      <p class="hall-phrase">Chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. Neuf tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
+      <!-- « Neuf tables » pour dix, et « Neuf salles » juste en dessous, pendant que le
+           JSON-LD de la MÊME page annonçait « Dix » : un moteur qui trouve deux chiffres
+           contradictoires ne cite ni l'un ni l'autre, et c'est la seule page indexable du
+           site. Le correctif n'est pas d'écrire « Dix » — c'est de ne plus jamais écrire
+           un compte à la main. [data-nb-tables] est rempli depuis DONNEES.catalogue.length,
+           comme [data-nb-sieges] l'est depuis TR.NB_SIEGES. -->
+      <p class="hall-phrase">Chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. <span data-nb-tables="cap">Dix</span> tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
       <div class="hall-entree">
+        <!-- Mesuré : primaire 153 px, secondaire 331 px — le bouton qu'on veut voir pressé
+             était 2,16 × plus petit que celui d'à côté. Le libellé long descend dans title=. -->
         <button class="btn" data-hall="lesTables">Voir les tables</button>
-        <button class="btn creux hall-apprendre" id="hallApprendre" title="Le but du jeu, les trois valeurs, dix cartes à compter — trois minutes">Première fois ? Apprendre à compter</button>
+        <button class="btn creux hall-apprendre" id="hallApprendre" title="Le but du jeu, les trois valeurs, dix cartes à compter — trois minutes">Première fois&nbsp;?</button>
         <!-- Celui qui revient veut sa table, pas un slogan : « Reprendre — Le Boulevard · tapis 975 » (salon.js). -->
         <button class="btn creux hall-reprendre" id="hallReprendre" hidden></button>
         <button class="hall-qui" id="hallQui" aria-expanded="false" aria-controls="hallPrenom" title="Changer de prénom"><span class="hall-salut" id="hallSalut"></span><span class="hall-crayon" aria-hidden="true">modifier</span></button>
@@ -102,78 +118,152 @@
   </div>
 
   <div class="hall-int">
-    <!-- LE SYSTÈME SÉLECTIONNÉ : la légende du comptage, juste sous le héros — c'est la première chose
-         qu'un novice doit lire, pas la dernière (elle était le DERNIER bloc du hall, les critiques, 05/09). -->
-    <div class="laque pad hall-systeme" id="hallSysteme">
-      <div class="hall-systeme-nom"><span class="grave">Le système sélectionné</span><h3 id="sysNom">Hi-Lo</h3><p class="muet" id="sysNote"></p></div>
-      <div class="regles" id="sysTable" aria-label="Valeur des cartes"></div>
-      <p class="muet hall-systeme-quoi">Le <b>compte courant</b> additionne la valeur de chaque carte sortie. Le <b>compte vrai</b> le divise par les jeux qui restent : c'est lui seul qui dit si la table t'est favorable — et donc quand miser plus.</p>
-    </div>
-    <!-- LES TABLES : neuf cartes-photos, rendues par salon.js (rendreSalon). -->
-    <section class="hall-salle" id="lesTables" aria-labelledby="hTables">
-      <div class="hall-entete">
-        <div><span class="grave">Neuf salles, neuf règlements — clique une table pour t'y asseoir</span><h2 id="hTables">Les tables</h2></div>
+
+    <!-- ── LA PLAQUE DE MESURE ───────────────────────────────────────────────
+         Elle prend la place de #hallSysteme, dont elle absorbe le contenu : un relevé de
+         réglage n'a pas à occuper la deuxième place de la page, mais la légende du
+         comptage doit rester la première chose qu'un novice lise.
+
+         C'est ce bloc qui porte l'angle : trois nombres qui n'existent nulle part ailleurs
+         sur le web, recalculés à chaque construction, DATÉS et SIGNÉS d'une empreinte. Un
+         instrument annonce sa précision et sa dernière calibration — c'est ce qui le
+         distingue d'une page de marketing.
+
+         🚨 Aucun de ces nombres n'est écrit ici : « — » est la valeur au repos, la même
+         convention que #tRC dans la barre de table. Un tiret dit « je ne sais pas » ; un
+         chiffre en dur redevient faux le jour où l'on ajoute une table. -->
+    <section class="plaque" aria-labelledby="hMesure">
+      <h2 class="visually-hidden" id="hMesure">Ce que l'application mesure</h2>
+
+      <!-- La démonstration : six vraies cartes tirées d'un sabot, et le compte qui les
+           suit. Elle MONTRE la règle que la légende ÉNONCE. Elle est rendue par salon.js
+           (rendreMesures) et rejouée quand le système de comptage change : les six valeurs
+           sont celles de Hi-Lo comme d'Omega II, jamais un « +1 » écrit en dur. -->
+      <div class="plaque-demo" aria-hidden="true">
+        <div class="demo-cartes" id="demoCartes"></div>
+        <div class="demo-compte" id="demoCompte"></div>
+        <span class="grave demo-lgd">Le compte, carte après carte</span>
+      </div>
+
+      <div class="plaque-chiffres">
+        <div><b class="cadran" id="mesAvantage">—</b><span class="grave">Avantage maison, des <span data-nb-tables>dix</span> règlements</span></div>
+        <div><b class="cadran" id="mesPenetration">—</b><span class="grave">Pénétration du sabot</span></div>
+        <div><b class="cadran" id="mesMains">—</b><span class="grave">Mains simulées pour les mesurer</span></div>
+      </div>
+
+      <!-- La légende : l'ancien #hallSysteme, en une ligne. #sysNom / #sysTable / #sysNote
+           gardent leurs identifiants — c'est rendreSysteme() (socle.js) qui les écrit. -->
+      <p class="plaque-legende">Système <b id="sysNom">Hi-Lo</b> <span class="regles" id="sysTable" aria-label="Valeur des cartes"></span>
+        <span class="plaque-quoi">Le <b>compte courant</b> additionne&nbsp;; le <b>compte vrai</b> divise par les jeux qui restent — c'est lui seul qui dit quand miser plus. <em class="muet" id="sysNote"></em></span>
+        <span class="plaque-signature" id="mesSignature"></span></p>
+    </section>
+
+    <!-- ══ ÉTAGE 01 — LE GRAND BOUTON ══════════════════════════════════════
+         Léo : « un grand bouton "les tables d'entraînement contre les IA", on clique
+         dessus et on a toutes les tables ». Le clic doit PRODUIRE les tables — avant,
+         data-hall défilait vers un bloc déjà visible : on cliquait, rien n'apparaissait,
+         et c'est exactement la sensation qu'il appelle « vibe codé ».
+
+         🚨 <details> NATIF, pas un repli en JS : ça marche dans l'artefact (dont la CSP
+         coupe tout), ça marche si le script meurt, c'est accessible au clavier
+         gratuitement (Entrée et Espace sur <summary>, aria-expanded posé par le
+         navigateur), et le contenu RESTE DANS LE DOM donc reste indexable. Un repli maison
+         aurait précisément le mode de panne qu'on cherche à éviter.
+
+         ⚠️ « contre les IA » est le libellé de Léo, et il est VRAI en solo — vérifié le
+         08/09 : ouvrirMises() (jetons.js:529) appelle profilerSieges(), qui distribue cinq
+         profils de mise aux sièges voisins (« plat », « superstitieux », « chaud »,
+         « large » et AU PLUS UN « compteur » tiré au sort), et jouerSieges() (table.js:1226)
+         les fait jouer par jouerAuto(). Deux relecteurs ont affirmé le contraire ;
+         le code dit qu'ils avaient tort.
+
+         ⚠️ #lesTables reste l'ANCRE : c'est le <details> lui-même que allerHall() cherche,
+         ouvre et fait défiler. Le scroll-margin-top vit donc sur lui.
+         ⚠️ Le contenu du <summary> est du contenu phrasé plus UN titre, conformément au
+         modèle de contenu de l'élément : d'où des <span>, jamais un <div>. -->
+    <details class="etage etage-1" id="lesTables">
+      <summary class="grand-bouton">
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">01</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte" id="tablesCompte">—</span></span>
+        <h2 id="hTables">Les tables d'entraînement contre les IA</h2>
+        <span class="gb-sous"><span data-nb-tables="cap">Dix</span> règlements de casino réels, mesurés un par un. Des voisins qui misent — dont un compteur que rien ne signale. Zéro argent.</span>
+        <span class="gb-mesure"><b class="cadran" id="tablesAvantage">—</b><span class="grave">Avantage maison</span></span>
+        <span class="gb-chevron" aria-hidden="true"></span>
+      </summary>
+      <div class="contenu">
         <div class="onglets" id="filtreSalon" role="tablist" aria-label="Filtrer les tables">
           <button role="tab" aria-selected="true" data-f="tout">Toutes</button>
           <button role="tab" aria-selected="false" data-f="battable" title="Les tables où tenir le compte rapporte">Où compter rapporte</button>
           <button role="tab" aria-selected="false" data-f="fuir" title="Blackjack payé 6:5 ou mélangeuse continue : le compte n'y sert à rien">Où compter ne sert à rien</button>
         </div>
+        <div class="salon" id="salon"></div>
       </div>
-      <div class="salon" id="salon"></div>
+    </details>
+
+    <!-- ══ ÉTAGE 02 — UNE TUILE, TROIS COLONNES ═══════════════════════════
+         Trois portes dans UN SEUL objet, séparées par deux traits gravés — pas trois
+         cartes de plus. Les trois entraînements sont un même geste décliné ; les dix
+         tables sont dix destinations distinctes. C'est à la FORME de dire lequel est
+         lequel : c'est tout le défaut qu'on répare ici.
+         ⚠️ Une seule photo, donc deux téléchargements de moins ; rendreHall() la pose par
+         data-photo comme sur les autres portes (il cherche `:scope > img.photo`, un <div>
+         lui va aussi bien qu'un <button>). -->
+    <section class="etage etage-2" id="entrainement" aria-labelledby="hEntrainement">
+      <div class="etage-entete">
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">02</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte">3 salles</span></span>
+        <h2 id="hEntrainement">Les autres entraînements</h2>
+        <p class="etage-chapo">Le jeu est le seul endroit où l'on ne s'entraîne pas.</p>
+      </div>
+      <div class="tuile tuile-trois" data-photo="entrainement">
+        <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 1240px"><span class="voile"></span>
+        <button class="tuile-col" data-vue="exercices">
+          <span class="lieu">Le réflexe</span><span class="nom">Exercices</span>
+          <span class="sous">Les cartes défilent à la vitesse que tu veux. Un sabot chronométré. Le coup d'œil sur la défausse.</span>
+          <span class="grave tuile-mes">3 modes</span></button>
+        <button class="tuile-col" data-vue="strategie">
+          <span class="lieu">La décision</span><span class="nom">Stratégie</span>
+          <span class="sous">La stratégie de base main par main, puis les écarts au compte — calculés pour ta table.</span>
+          <span class="grave tuile-mes">3 modes</span></button>
+        <button class="tuile-col" data-vue="concentration">
+          <span class="lieu">Le sang-froid</span><span class="nom">Concentration</span>
+          <span class="sous">Tu comptes en silence pendant que la table te parle et que le chef de table te fixe.</span>
+          <span class="grave tuile-mes">1 épreuve</span></button>
+      </div>
     </section>
 
-    <!-- LA SALLE D'ENTRAÎNEMENT : trois portes. -->
-    <section class="hall-salle" id="entrainement" aria-labelledby="hEntrainement">
-      <div class="hall-entete"><div><span class="grave">Trois muscles, travaillés séparément</span><h2 id="hEntrainement">La salle d'entraînement</h2></div></div>
-      <div class="hall-grille trois">
-        <button class="salle-carte" data-vue="exercices" data-photo="entrainement">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">Le réflexe</span><span class="nom">Exercices</span>
-            <span class="sous">Les cartes défilent à la vitesse que tu veux ; un sabot chronométré ; le coup d'œil sur le tas de défausse.</span></span>
-        </button>
-        <button class="salle-carte" data-vue="strategie" data-photo="strategie">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">La décision</span><span class="nom">Stratégie</span>
-            <span class="sous">La stratégie de base main par main, puis les écarts au compte — calculés pour la table où tu es assis.</span></span>
-        </button>
-        <button class="salle-carte" data-vue="concentration" data-photo="concentration">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">Le sang-froid</span><span class="nom">Concentration</span>
-            <span class="sous">Tu comptes en silence pendant que la table te parle et que le chef de table te fixe.</span></span>
-        </button>
+    <!-- ══ ÉTAGE 03 — LE MULTIJOUEUR ══════════════════════════════════════
+         (« Le Salon Privé » est le nom de la TABLE 7, high limit — deux écrans sous le
+         même nom dans la même barre, les critiques du 05/09.)
+         🚨 Le -webkit-line-clamp:2 est retiré de .grande dans la feuille : mesuré,
+         scrollHeight 59 contre clientHeight 39 — la seule grande tuile du hall, celle que
+         Léo veut promouvoir, affichait sa phrase COUPÉE sur « …ou la course au… ». -->
+    <section class="etage etage-3" id="prive" aria-labelledby="hPrive">
+      <div class="etage-entete">
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">03</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte">Sans serveur · pair à pair</span></span>
+        <h2 id="hPrive">Entre amis</h2>
       </div>
-    </section>
-
-    <!-- ENTRE AMIS : une grande porte. (« Le Salon Privé » est le nom de la TABLE 7, high limit —
-         deux écrans sous le même nom dans la même barre, les critiques, 05/09.) -->
-    <section class="hall-salle" id="prive" aria-labelledby="hPrive">
-      <div class="hall-entete"><div><span class="grave">Sans serveur, avec vos caméras</span><h2 id="hPrive">Entre amis</h2></div></div>
       <button class="salle-carte grande" data-vue="ensemble" data-photo="prive">
         <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="100vw"><span class="voile"></span>
         <span class="bas"><span class="lieu">Sans serveur, avec vos caméras</span><span class="nom">Jouer à plusieurs</span>
-          <span class="sous">Jusqu'à <span data-nb-sieges>huit</span> autour d'une table : le même sabot, un croupier, chacun sa main — ou la course au comptage, où chacun annonce son compte.</span></span>
+          <span class="sous">Jusqu'à <span data-nb-sieges>huit</span> autour d'une table : le même sabot, un croupier, chacun sa main — ou la course au comptage, où chacun annonce son compte. Les sièges que personne n'occupe se remplissent de joueurs machine.</span></span>
+        <span class="asseoir-cta" aria-hidden="true">Ouvrir une table &rarr;</span>
       </button>
     </section>
 
-    <!-- LE BUREAU : la progression, les réglages, le système de comptage. -->
-    <section class="hall-salle" id="bureau" aria-labelledby="hBureau">
-      <div class="hall-entete"><div><span class="grave">Derrière la porte du fond</span><h2 id="hBureau">Le bureau</h2></div></div>
-      <div class="hall-grille bureau">
-        <button class="salle-carte" data-vue="progres" data-photo="jetons">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">Le registre</span><span class="nom">Progression</span>
-            <span class="sous">Tes sessions, ton écart au compte réel, ton journal.</span></span>
-        </button>
-        <button class="salle-carte" id="bHallReglages" data-photo="cartes">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">Le tiroir</span><span class="nom">Réglages</span>
-            <span class="sous">Le système de comptage, le thème, les sons.</span></span>
-        </button>
-        <button class="salle-carte" data-vue="dons" data-photo="macao">
-          <img class="photo" alt="" aria-hidden="true" loading="lazy" decoding="async" sizes="(max-width:730px) 100vw, 530px"><span class="voile"></span>
-          <span class="bas"><span class="lieu">La caisse</span><span class="nom">Soutenir</span>
-            <span class="sous">Tout est ouvert et le restera. Ce que l'application coûte, et à quoi sert un don.</span></span>
-        </button>
+    <!-- ══ ÉTAGE 04 — LE RESTE ════════════════════════════════════════════
+         Trois rangées réglées, sans photo, sans carte : ~130 px au lieu de 333. Un tiroir
+         de réglages n'a pas à ressembler à une table de casino de 455 × 256, et le dire
+         par la FORME est plus fort que par la place. Trois photos de moins à charger, et
+         surtout trois silhouettes identiques de moins.
+         ⚠️ #bHallReglages garde son identifiant : salon.js lui pose son clic SANS garde. -->
+    <section class="etage etage-4" id="bureau" aria-labelledby="hBureau">
+      <div class="etage-entete">
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">04</i><span class="trait" aria-hidden="true"></span></span>
+        <h2 id="hBureau">Le bureau</h2>
+      </div>
+      <div class="rangs">
+        <button class="rang" data-vue="progres"><b>Progression</b><span>Tes sessions, ton écart au compte réel, ton journal.</span></button>
+        <button class="rang" id="bHallReglages"><b>Réglages</b><span>Le système de comptage, le thème, les sons.</span></button>
+        <button class="rang" data-vue="dons"><b>Soutenir</b><span>Tout est ouvert et le restera. Ce que l'application coûte.</span></button>
       </div>
     </section>
 

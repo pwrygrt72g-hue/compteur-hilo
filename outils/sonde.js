@@ -116,9 +116,71 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
   // Une vue = un bouton : le compte suit donc le nombre d'écrans (neuf depuis la caisse).
   ok("en-tête : la nav est cachée, ses neuf boutons restent", q("#nav").hidden && qa("#nav [data-vue]").length === 9, "hidden=" + q("#nav").hidden);
   ok("hall : quatre salles + crédits photos", !!q("#lesTables") && !!q("#entrainement") && !!q("#prive") && !!q("#bureau") && qa("#hallCredits a").length >= 10, qa("#hallCredits a").length + " liens de crédit");
-  ok("hall : les portes ont leurs photos", qa("#v-accueil img.photo[src]").length >= 15, qa("#v-accueil img.photo[src]").length + " photos");
+  // Le compte de photos du hall a changé le 08/09 (18 → 13 : le bureau n'a plus de cartes, les
+  // trois entraînements partagent une seule tuile). Un seuil chiffré ne dit rien du jour où
+  // l'on retire une porte : on vérifie l'INVARIANT — chaque data-photo a soit son image avec
+  // sa source, soit plus d'image du tout (rendreHall fait `img.remove()` quand la clé n'a pas
+  // de source ; c'est le comportement voulu, pas une panne).
+  ok("hall : chaque porte a sa photo, ou plus d'image du tout",
+     qa("#v-accueil [data-photo]").length >= 3
+     && qa("#v-accueil [data-photo]").every(e => { const i = e.querySelector(":scope > img.photo"); return !i || i.getAttribute("src"); }),
+     qa("#v-accueil img.photo[src]").length + " photos posées sur " + qa("#v-accueil [data-photo]").length + " portes");
+
+  // ── LE HALL A-T-IL ENCORE L'AIR GÉNÉRÉ ? ─────────────────────────────────────
+  // Léo, 08/09 : « ça fait vraiment vibe coder ». Ce qui produisait cette impression se
+  // MESURE, et c'est ce qu'on fige ici — pas l'apparence, les chiffres qui la font.
+  // ⚠️ Ces trois contrôles doivent tourner PENDANT que #v-accueil est la vue courante :
+  // à la fin de sonde.js elle porte `hidden`, getClientRects() rend [] et tout passerait
+  // à vide sans rien prouver.
+  {
+    const d = q("#lesTables"); if (d) d.open = true;
+    await dodo(250);
+    const hall = qa("#v-accueil *").filter(e => e.getClientRects().length);
+    // 1. Combien de SIGNATURES d'objet distinctes ? Avant : UNE seule pour dix-sept objets
+    //    (455 × 256, même rayon, même ombre) — une table de casino, un exercice et un tiroir
+    //    de réglages étaient littéralement le même composant. C'est ça, un map() sur un tableau.
+    const sign = new Set(hall.filter(e => /salle-carte|tuile|rang|grand-bouton|plaque\b/.test(String(e.className)))
+      .map(e => { const s = getComputedStyle(e); return s.borderRadius + "|" + s.boxShadow + "|" + s.backgroundColor; }));
+    ok("hall : les objets ne sont plus tous le même carton", sign.size >= 4, sign.size + " signature(s) distincte(s)");
+    // 2. Le nuage de tailles de police. ⚠️ LE SEUIL EST MESURÉ, PAS DEVINÉ : relevé à 15 le
+    //    08/09 à 1440 px (11 12 13 15 17 19 23 28 29 30 33 39 46 49 52). C'est un CLIQUET
+    //    contre la dérive, pas un idéal — le viser à 9 ferait échouer un hall parfaitement
+    //    correct. Pour le rebaisser un jour, mesurer d'abord, comme ici.
+    const tailles = new Set(hall.filter(e => e.textContent.trim() && !e.children.length)
+      .map(e => Math.round(parseFloat(getComputedStyle(e).fontSize))));
+    ok("hall : une échelle typographique, pas un nuage", tailles.size <= 16,
+       tailles.size + " tailles : " + [...tailles].sort((a, b) => a - b).join(", "));
+    // 3. Les titres d'étage DESCENDENT — c'est la structure imposée par Léo, rendue visible
+    //    sans lire. Avant, les quatre faisaient 37,44 px.
+    const t = ["hTables", "hEntrainement", "hPrive", "hBureau"]
+      .map(id => q("#" + id) ? Math.round(parseFloat(getComputedStyle(q("#" + id)).fontSize)) : 0);
+    ok("hall : les quatre titres d'étage décroissent", t.every((v, i) => i === 0 || (v > 0 && v < t[i - 1])), t.join(" → "));
+  }
+  // ── LE COMPTE DE TABLES N'EST PLUS ÉCRIT À LA MAIN ───────────────────────────
+  // « Neuf » figurait trois fois dans corps.html pour dix tables réelles, en se contredisant
+  // avec le JSON-LD de la MÊME page. Le correctif n'est pas d'écrire « Dix » : c'est que PLUS
+  // AUCUN chiffre de dénombrement ne s'écrive dans le gabarit.
+  ok("hall : le nombre de tables vient du catalogue",
+     qa("#v-accueil [data-nb-tables]").length >= 2
+     && qa("#v-accueil [data-nb-tables]").every(e => e.textContent.trim().toLowerCase() === "dix"),
+     qa("#v-accueil [data-nb-tables]").map(e => e.textContent.trim()).join(" / "));
+  // ── ET AUCUN BLOC NE PEUT RESTER INVISIBLE ───────────────────────────────────
+  // Le mode de panne le plus vicieux d'une révélation au défilement : un JS sain, et le bas de
+  // la page à moitié transparent pour toujours. Après un défilement jusqu'en bas, tout doit
+  // être à 1 — crédits compris, c'est le dernier bloc.
+  {
+    scrollTo({ top: document.body.scrollHeight, behavior: "instant" }); await dodo(500);
+    const eteints = qa("#v-accueil .etage > *, #v-accueil .plaque > *, #hallCredits")
+      .filter(e => e.getClientRects().length && +getComputedStyle(e).opacity < .99)
+      .map(e => (e.id || String(e.className)).slice(0, 24) + " à " + getComputedStyle(e).opacity);
+    ok("hall : rien ne reste éteint en bas de page", !eteints.length, eteints.join(" · "));
+    scrollTo({ top: 0, behavior: "instant" }); await dodo(200);
+  }
   // « Salon » n'est plus une vue : c'est l'ancre « Les tables » du hall.
   clic('nav [data-vue="salon"]'); await dodo(300);
+  // allerHall() ouvre le <details> ; on le force quand même, pour que la suite de la sonde
+  // ne dépende pas de cette ligne-là.
+  { const d = q("#lesTables"); if (d) d.open = true; await dodo(200); }
   ok("salon : l'ancre « Les tables » du hall", !q("#v-accueil").hidden && !!q("#lesTables"), "hidden=" + q("#v-accueil").hidden);
   // ⚠️ On compare au CATALOGUE, plus à un nombre écrit ici. Un « === 9 » ne dit qu'une
   // chose : le compte a changé — et il tombe le jour où l'on AJOUTE une table, ce qui est
