@@ -23,7 +23,7 @@
    · Les boutons de table.js sont ENVELOPPÉS (l'ancien onclick est gardé) : en
      réseau ils envoient une action à l'hôte, en solo ils font ce qu'ils faisaient.
    ═══════════════════════════════════════════════════════════════════ */
-const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, tableSolo: "", ticker: null, abandon: false,
+const RS = { salle: null, api: null, code: "", moi: "", etat: null, prec: null, tableSolo: "", ticker: null, abandon: false, ouverture: false, publiqueVoulue: false,
   mise: 0, poses: [], miseVue: {}, enVol: {}, emis: new Set(), partis: new Set(), assurPartie: new Set(), vus: new Set(),
   vuCroupier: 0, vuCachee: false, signature: "", bulleAssurance: false, rachatPropose: 0, rachatFini: false, panneauOuvert: false,
   // Le crochet de visio.js : un message du courtier lui est d'abord proposé (sujets visio/*),
@@ -215,7 +215,7 @@ document.addEventListener("sabot:table", () => { rendreTableMP(); rendreModeMP()
    `brut` : il n'annonce alors rien, et tout le reste fonctionne — c'est ce
    qui permet aux bancs de tourner sans courtier.                          */
 
-const SALON = { api: null, vues: new Map(), tic: 0, battement: 0, publique: false, ouvert: false, essai: false };
+const SALON = { api: null, vues: new Map(), tic: 0, battement: 0, publique: false, ouvert: false, essai: false, depuis: 0 };
 
 // Ce qu'une table dit d'elle-même. Aucune donnée personnelle : un prénom saisi
 // dans l'application, la table, les places. Le courtier est public et l'écran
@@ -228,7 +228,7 @@ function salonFiche() {
   // des sièges tenus par des bots.
   const j = TR.salonJauge(e, RS.salle && RS.salle.pairs ? RS.salle.pairs.size : 1);
   return { t: "table", code: RS.code, hote: (prenom() || "Joueur").slice(0, 18), table: t.id, nom: t.nom,
-    pris: j.pris, places: TR.NB_SIEGES, gens: j.gens, jeu: j.jeu ? 1 : 0, miseMin: t.mise_min || 10,
+    pris: j.pris, bots: j.bots, libres: j.libres, places: TR.NB_SIEGES, gens: j.gens, jeu: j.jeu ? 1 : 0, miseMin: t.mise_min || 10,
     cave: t.tapis_depart || TAPIS_DEPART, rachats: t.rachats_max === undefined ? -1 : t.rachats_max };
 }
 function salonEmettre(o) {
@@ -282,7 +282,7 @@ async function salonEcouter() {
       onClose: () => { SALON.api = null; salonRendre(); },
     });
     api.souscrire(NET.SUJET_SALON);
-    SALON.api = api;
+    SALON.api = api; SALON.depuis = Date.now();
   } catch (e) { SALON.api = null; }
   SALON.essai = false;
   salonRendre();
@@ -290,7 +290,11 @@ async function salonEcouter() {
 function salonArreter() {
   if (SALON.api) { try { SALON.api.fermer(); } catch (e) {} SALON.api = null; }
   clearInterval(SALON.tic); SALON.tic = 0;
-  SALON.vues.clear(); SALON.essai = false;
+  // ⚠️ On NE VIDE PLUS `vues` : la péremption (22 s) s'en charge au rendu. Repartir d'une
+  // carte blanche à chaque retour sur l'écran faisait affirmer « personne n'a de table
+  // ouverte » pendant les SEPT secondes qui séparent deux battements d'hôte — au moment
+  // précis où l'on décide de jouer ou pas.
+  SALON.essai = false; SALON.depuis = 0;
 }
 
 /* ── La liste ───────────────────────────────────────────────────────────── */
@@ -319,18 +323,28 @@ function salonRendre() {
   }
   etat.textContent = tables.length ? (tables.length > 1 ? tables.length + " tables" : "1 table") : "";
   if (!tables.length) {
-    liste.innerHTML = `<p class="muet mp-vide">Personne n'a de table ouverte pour l'instant. Ouvre la première — elle apparaîtra ici pour les autres tant que tu y es.</p>`;
+    // Tant qu'on n'a pas laissé passer un battement complet, on n'a RIEN appris : « personne »
+    // serait une affirmation, pas un constat.
+    const jeune = SALON.depuis && Date.now() - SALON.depuis < NET.SALON_BATTEMENT + 1500;
+    liste.innerHTML = `<p class="muet mp-vide">${jeune ? "On écoute qui est là…"
+      : "Personne n'a de table ouverte pour l'instant. Ouvre la première — elle apparaîtra ici pour les autres tant que tu y es."}</p>`;
     return;
   }
   liste.innerHTML = tables.map(t => {
-    const plein = t.pris >= t.places;
+    // 🚨 `pris` compte les bots — c'est l'occupation honnête. Ce qui décide du bouton est
+    // le nombre de PLACES : un siège de bot se cède à un humain. Sur `pris`, une table
+    // complétée par des bots affichait « Complète », bouton mort, pour toujours.
+    const plein = t.libres <= 0;
     return `<div class="mp-ouverte${plein ? " pleine" : ""}">
       <div class="mp-ouverte-txt"><b>${echapper(t.nom || "Table")}</b>
         <span class="muet">${TR.salonLigne(t, fmtJ(t.miseMin || 10)).map(echapper).join(" · ")}</span></div>
       <button class="btn creux mp-ouverte-btn" data-code="${echapper(t.code)}"${plein ? " disabled" : ""}>${plein ? "Complète" : "Rejoindre"}</button>
     </div>`;
   }).join("");
-  liste.querySelectorAll("[data-code]").forEach(b => b.onclick = () => { salonArreter(); ouvrirTable(b.dataset.code, false); });
+  // ⚠️ Le 3ᵉ argument : si tout le monde est parti, la machine repart d'une partie NEUVE et
+  // `publique` ne peut venir que d'ici. Sans lui, la table qu'on vient de voir dans la liste
+  // en sortait à la seconde où on la ressuscitait — sans que rien ne le dise.
+  liste.querySelectorAll("[data-code]").forEach(b => b.onclick = () => { salonArreter(); ouvrirTable(b.dataset.code, false, true); });
 }
 // Un nom d'hôte est saisi à la main et traverse un courtier public : il ne va
 // JAMAIS dans du HTML sans passer par ici.
@@ -399,7 +413,7 @@ function rsOptionsPartie() {
     // dix mises — et leur rendait le rachat illimité : les deux réglages qui la définissent
     // étaient perdus entre le catalogue et la machine. Absents = le comportement d'avant.
     tapis: t.tapis_depart || TAPIS_DEPART, rachatsMax: t.rachats_max,
-    publique: SALON.publique || !!RS.publiqueVue,
+    publique: SALON.publique || !!RS.publiqueVue || !!RS.publiqueVoulue,
     sys: DB.sys, valeur: valeurCompte, rcInitial: jeux => CT.compteInitial(DB.sys, jeux), strategie: rsStrategie };
 }
 async function rsCartesNeuves() {
@@ -409,7 +423,23 @@ async function rsCartesNeuves() {
 }
 
 /* ── Ouvrir ou rejoindre ─────────────────────────────────────────────── */
+// Les trois boutons qui lancent une connexion : « Ouvrir une table », « privée » et
+// « Rejoindre ». Ils étaient deux dans les quatre lignes ci-dessous — « privée » restait
+// donc armé pendant toute la connexion.
+const MP_BOUTONS = ["mpCreer", "mpCreerPrive", "mpRejoindre"];
+const mpBoutons = off => MP_BOUTONS.forEach(i => { const b = $(i); if (b) b.disabled = !!off; });
+
 async function ouvrirTable(code, createur, publique) {
+  /* 🚨 Garde de réentrance. Deux `ouvrirTable` en vol : `RS.salle` est encore null, donc
+     `quitterTable` ne nettoie rien ; `RS.ticker` est écrasé et l'ANCIEN intervalle tourne
+     pour toujours ; l'api perdante n'est jamais fermée et continue de recevoir. Symptôme :
+     cadence qui double, chauffe, table fantôme. Un double-clic suffisait. */
+  if (RS.ouverture) return;
+  RS.ouverture = true;
+  try { await ouvrirTableImpl(code, createur, publique); }
+  finally { RS.ouverture = false; }
+}
+async function ouvrirTableImpl(code, createur, publique) {
   if (RS.salle) quitterTable(true);
   // ⚠️ Seul l'HÔTE annonce, et seulement s'il a choisi « publique ». Un invité qui
   // annoncerait la table ferait vivre l'annonce après le départ de l'hôte — donc une
@@ -421,16 +451,20 @@ async function ouvrirTable(code, createur, publique) {
   // donc `publique` ne peut venir que de ma mémoire. Sinon une table publique dont il ne
   // reste qu'un joueur sortirait du salon — au moment précis où elle a besoin de monde.
   RS.publiqueVue = false;
-  $("mpCreer").disabled = $("mpRejoindre").disabled = true;
+  // ⚠️ REPLI, jamais une source concurrente : `publique` appartient à la TABLE, pas à celui
+  // qui a cliqué. Il ne sert que quand aucun état n'a jamais été reçu — c'est-à-dire quand
+  // on ressuscite une table dont tout le monde est parti.
+  RS.publiqueVoulue = !!publique;
+  mpBoutons(true);
   rsEtatTexte("Recherche d'un courtier…");
   // Trois secondes, pas vingt-sept : un refus silencieux (CSP d'un Artifact) doit être dit tout de suite.
-  const garde = setTimeout(() => { if (!RS.api) { RS.abandon = true; rsEchec(); $("mpCreer").disabled = $("mpRejoindre").disabled = false; } }, 3000);
+  const garde = setTimeout(() => { if (!RS.api) { RS.abandon = true; rsEchec(); mpBoutons(false); } }, 3000);
   let api;
   try { api = await rsConnecter(code); }
-  catch (e) { clearTimeout(garde); if (!RS.abandon) rsEchec(); $("mpCreer").disabled = $("mpRejoindre").disabled = false; return; }
+  catch (e) { clearTimeout(garde); if (!RS.abandon) rsEchec(); mpBoutons(false); return; }
   clearTimeout(garde);
   if (RS.abandon) { try { api.fermer(); } catch (e) {} return; }
-  RS.api = api; $("mpCreer").disabled = $("mpRejoindre").disabled = false; rsEtatTexte("");
+  RS.api = api; mpBoutons(false); rsEtatTexte("");
   RS.salle = TR.creerSalle({
     moi: RS.moi, nom: prenom() || "Joueur", couleur: DB.couleur, createur, cadence: vitesse(), horloge: Date.now,
     transport: { publier: o => api.publier(o) },
@@ -443,6 +477,7 @@ async function ouvrirTable(code, createur, publique) {
   RS.salle.entrer(Date.now());
   // La visio (visio.js) se greffe ici : le courtier est relié, la scène est en mode réseau.
   emettre("reseau-entree", { api, code, moi: RS.moi });
+  clearInterval(RS.ticker);   // jamais deux tics de 200 ms sur la même table
   RS.ticker = setInterval(() => { if (!RS.salle) return; RS.salle.cadence = vitesse(); RS.salle.tic(Date.now()); }, 200);
   salonArreter();          // on ne regarde plus le salon : on y est
   salonAnnoncer();         // …et si elle est publique, on s'y annonce
@@ -639,6 +674,18 @@ function rsRendreSieges() {
     nm.innerHTML = `<i class="pastille" style="--c:${echap(st.couleur || "#8a8f8b")}"></i>${echap(st.nom)}${st.bot ? " · bot" : ""}${st.absent ? " · parti" : ""}`;
     const tp = document.createElement("span"); tp.className = "tapis-siege"; tp.textContent = fmtJ(st.tapis) + (st.rachats ? " · " + st.rachats + " rachat" + (st.rachats > 1 ? "s" : "") : "");
     nm.after(tp);
+    // 🚨 Un siège de bot SE PREND (table-reseau.mjs, `asseoir` : `!(occ.bot && !bot)`).
+    // Sans ce bouton, cocher « Compléter les sièges vides » fermait sa propre table à
+    // jamais : le salon annonçait « Complète » et AUCUN siège n'offrait de porte. La
+    // machine, elle, acceptait — un test existant le prouve (Zoé prend le siège 2).
+    // ⚠️ Jamais hors « attente » / « mise » : la machine répondrait « Attends la fin de la
+    // manche », et un bouton qui répond une erreur est pire qu'un bouton absent.
+    if (st.bot && !T.toi && e && (e.phase === "mise" || e.phase === "attente")) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "asseoir";
+      b.textContent = "Prendre sa place";
+      b.onclick = () => rsAgir("asseoir", k, { nom: prenom() || "Joueur", couleur: DB.couleur });
+      tp.after(b);
+    }
   });
   // Les sièges ont grandi (tapis sous le nom, boutons « S'asseoir ») APRÈS la mesure de
   // rendreSieges() : on remesure, sinon ce qui dépasse passe sur le lettrage du rail.
@@ -718,12 +765,28 @@ function rsMisesDesAutres(e) {
 }
 function rsGarnir() { T.sieges.forEach((s, k) => { s.miseVue = RS.miseVue[k] || 0; }); garnirCercles(); }
 
+/* 🚨 « Choisis un siège libre » quand il n'y en a AUCUN : c'est ce que voit qui arrive par
+   un code tapé à la main ou par un lien #table= sur une table pleine — les deux chemins qui
+   court-circuitent le salon et son bouton grisé. On dit ce qui est vrai, et surtout ce qui
+   va se passer : regarder n'est pas une impasse, c'est la file d'attente.
+   ⚠️ On ne grise RIEN : le spectateur reste un pair, il voit la partie, et c'est bien. Le
+   seul mensonge était la phrase. */
+function rsInvite(e) {
+  if (e.sieges.some(st => !st)) return "Choisis un siège libre pour jouer";
+  // ⚠️ COURT, et ce n'est pas de la coquetterie : à huit sièges la pastille part du bord
+  // gauche du feutre, et les AVANT-BRAS du croupier passent par-dessus (svg overflow:visible,
+  // z-index 4 contre 3 — un ordre voulu et documenté). Mesuré : 85 caractères font 643 px et
+  // se glissent sous ses mains ; ~50 en font 400 et restent en clair.
+  if (e.sieges.some(st => st && st.bot)) return "Tous les sièges sont pris — prends la place d'un bot";
+  return "Table complète — tu regardes en attendant un siège libre.";
+}
+
 /* ── L'annonce, les boutons, le rack ─────────────────────────────────── */
 function rsAnnonce(e) {
   const moi = T.toi; let txt = "";
-  if (e.phase === "attente") txt = rsHote() ? `En attente de joueurs — partage le code ${TR.formaterCode(RS.code)}` : "En attente de l'hôte…";
+  if (e.phase === "attente") txt = rsHote() ? `En attente de joueurs — partage le code ${TR.formaterCode(RS.code)}` : (moi ? "En attente de l'hôte…" : rsInvite(e));
   else if (e.phase === "sabot") txt = e.message || "Le croupier mélange un sabot neuf…";
-  else if (e.phase === "mise") txt = !moi ? "Choisis un siège libre pour jouer" : (moi.mise >= e.miseMin ? "Mise posée" : "Faites vos jeux") + ` — ${e.miseRestant} s` + (rsHote() ? " · « Distribuer » clôt les mises" : "");
+  else if (e.phase === "mise") txt = !moi ? rsInvite(e) : (moi.mise >= e.miseMin ? "Mise posée" : "Faites vos jeux") + ` — ${e.miseRestant} s` + (rsHote() ? " · « Distribuer » clôt les mises" : "");
   else if (e.phase === "assurance") txt = "Le croupier montre un as. Assurance ?";
   else if (e.phase === "jeu") {
     const st = e.actif && e.sieges[e.actif.siege];

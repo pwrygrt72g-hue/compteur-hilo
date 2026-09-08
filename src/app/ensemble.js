@@ -116,11 +116,27 @@ $("mpCode").addEventListener("keydown", e => { if (e.key === "Enter") $("mpRejoi
 // ⚠️ « Ouvrir une table » est PUBLIQUE (elle s'annonce au salon), « Table privée » ne
 // prononce jamais son code. Le courtier étant public, annoncer est un choix explicite :
 // une partie entre amis ne doit pas récolter des inconnus sans que personne ne l'ait voulu.
-$("mpCreer").onclick = () => { const code = TR.codeSalon(); MP.mode === "table" ? ouvrirTable(code, true, true) : ouvrirSalon(code); };
-$("mpCreerPrive").onclick = () => { ouvrirTable(TR.codeSalon(), true, false); };
+/* 🚨 #mpAccueil RESTE VISIBLE quand on est assis en réseau (rendreTableMP y écrit même
+   « Tu es assis à une table… »), boutons réarmés. Un clic sur « Ouvrir une table » appelait
+   `ouvrirTable`, qui commence par `quitterTable(true)` — le `true` étant « silencieux » :
+   on perdait son siège, ses jetons, et si on était hôte on éjectait tout le monde vers une
+   élection, SANS UNE PHRASE. On propose donc de revenir à sa table au lieu d'en ouvrir une
+   autre — le geste qu'on voulait faire neuf fois sur dix. */
+function mpDejaAssis() {
+  if (!T.reseau) return false;
+  aller("table");
+  bandeau("Tu es déjà à une table — quitte-la d'abord si tu veux en ouvrir une autre", 3600);
+  return true;
+}
+$("mpCreer").onclick = () => { if (mpDejaAssis()) return; const code = TR.codeSalon(); MP.mode === "table" ? ouvrirTable(code, true, true) : ouvrirSalon(code); };
+$("mpCreerPrive").onclick = () => { if (mpDejaAssis()) return; ouvrirTable(TR.codeSalon(), true, false); };
 $("mpRejoindre").onclick = () => {
+  if (mpDejaAssis()) return;
   const c = TR.normaliserCode($("mpCode").value);
   if (!TR.codeValide(c)) { $("mpEtat").textContent = "Il faut le code complet : huit caractères, comme A7K2-M9PQ."; son("ko"); return; }
+  // ⚠️ Le 3ᵉ argument reste FAUX ici, contrairement au clic dans la liste du salon : un code
+  // tapé à la main ne dit rien du caractère de la table. Dès qu'un état arrive, c'est lui
+  // qui tranche (RS.publiqueVue) ; le repli ne sert qu'à une table qu'on ressuscite seul.
   MP.mode === "table" ? ouvrirTable(c, false, false) : ouvrirSalon(c);
 };
 rendreModeMP();

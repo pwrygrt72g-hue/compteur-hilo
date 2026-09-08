@@ -5,7 +5,8 @@
 import * as E from "./engine.mjs";
 import { creerPartie, creerSalle, codeSalon, formaterCode, normaliserCode, codeValide, MISE_DELAI, ELECTION_DELAI, TAPIS_DEPART,
   salonJauge, salonNettoyer, salonLigne,
-  NB_SIEGES, NOMS_BOTS, TOUR_DELAI, TOUR_DELAI_MIN, TOUR_BUDGET_MS, tourDelai } from "./table-reseau.mjs";
+  NB_SIEGES, NOMS_BOTS, TOUR_DELAI, TOUR_DELAI_MIN, TOUR_BUDGET_MS, tourDelai,
+  couleurPropre, nomPropre } from "./table-reseau.mjs";
 
 let pass = 0, fail = 0;
 function ok(nom, a, b) {
@@ -631,6 +632,54 @@ async function avancer(salles, fil, t, jusqu, pas) {
   ok("ligne : l'entrée ressort telle quelle — c'est l'appelant qui échappe",
      salonLigne(Object.assign({}, base, { hote: "<img src=x onerror=alert(1)>" }), "10 €")[0],
      "chez <img src=x onerror=alert(1)>");
+}
+
+/* ── Une table complétée par des BOTS doit rester REJOIGNABLE ────────────────────
+   L'hôte coche « Compléter les sièges vides » — le geste naturel quand personne
+   n'arrive — et sa table sortait du jeu pour toujours : le salon annonçait
+   « Complète » (bouton mort) et, sur le lien direct, aucun siège n'offrait de porte.
+   La MACHINE, elle, acceptait déjà : `asseoir` cède un siège de bot à un humain. */
+{
+  const cartes = []; for (let i = 0; i < 312; i++) cartes.push(c("5"));
+  const p = creerPartie({ regles: REGLES, hote: "h", cartes, empreinte: "e", miseMin: 10 });
+  p.action({ id: "h", a: "asseoir", v: 0, nom: "Hôte" }, 0);
+  p.action({ id: "h", a: "bots", v: true }, 0);
+  const j = salonJauge(p.etatPublic(0), 1);
+  ok("bots : les huit sièges sont occupés", j.pris, NB_SIEGES);
+  ok("bots : sept d'entre eux sont des bots", j.bots, NB_SIEGES - 1);
+  ok("bots : il reste donc sept places pour un humain", j.libres, NB_SIEGES - 1);
+  ok("bots : la machine cède le siège", p.action({ id: "z", a: "asseoir", v: 3, nom: "Zoé" }, 0).ok, true);
+  ok("bots : le bot a laissé sa place", [p.etat.sieges[3].nom, p.etat.sieges[3].bot], ["Zoé", false]);
+
+  const humains = { phase: "mise", sieges: Array.from({ length: NB_SIEGES }, (_, i) => ({ id: "h" + i, bot: false })) };
+  ok("huit humains : zéro place, le bouton reste mort", salonJauge(humains, 8).libres, 0);
+  ok("ligne : les bots se disent", salonLigne({ hote: "L", pris: 8, places: 8, bots: 7, gens: 1, jeu: 0, rachats: -1 }, "10 €").indexOf("7 bots") >= 0, true);
+  ok("ligne : un seul bot au singulier", salonLigne({ hote: "L", pris: 8, places: 8, bots: 1, gens: 7, jeu: 0, rachats: -1 }, "10 €").indexOf("1 bot") >= 0, true);
+  ok("ligne : sans bot, aucun morceau ajouté", salonLigne({ hote: "L", pris: 3, places: 8, gens: 2, jeu: 0, rachats: -1 }, "10 €").some(x => /bot/.test(x)), false);
+  // Un onglet d'avant le 08/09 n'annonce pas `libres` : on retombe sur le comportement
+  // d'avant (places − pris), jamais sur 0 — qui grillerait le bouton d'une table ouverte.
+  ok("annonce d'un vieil onglet : `libres` se déduit", salonNettoyer({ code: "ABCD1234", pris: 3, places: 8 }).libres, 5);
+  ok("annonce d'un vieil onglet : `bots` vaut zéro, pas undefined", salonNettoyer({ code: "ABCD1234", pris: 3, places: 8 }).bots, 0);
+  ok("annonce complète : `libres` est repris tel quel", salonNettoyer({ code: "ABCD1234", pris: 8, places: 8, bots: 7, libres: 7 }).libres, 7);
+}
+
+/* ── Ce qui vient du courtier PUBLIC est borné ──────────────────────────────────
+   La couleur finit dans un attribut `style` et la page n'a aucune CSP : `echap`
+   interdit de SORTIR de l'attribut, jamais d'y AJOUTER des déclarations. */
+{
+  ok("couleur : une couleur hexadécimale passe", [couleurPropre("#f00"), couleurPropre("#8a8f8bcc")], ["#f00", "#8a8f8bcc"]);
+  ok("couleur : une déclaration greffée est REFUSÉE", couleurPropre("red;position:fixed;inset:0;z-index:9999"), "");
+  ok("couleur : une requête sortante est refusée", couleurPropre("url(https://exemple.test/x)"), "");
+  ok("couleur : un nom CSS n'est pas une couleur d'ici", couleurPropre("red"), "");
+  ok("couleur : rien du tout reste rien du tout", [couleurPropre(""), couleurPropre(null), couleurPropre(undefined)], ["", "", ""]);
+  ok("nom : borné à dix-huit, comme à table", nomPropre("z".repeat(90)).length, 18);
+  ok("nom : vide = poli", nomPropre(""), "Joueur");
+  // Et la borne s'applique VRAIMENT dans la partie, pas seulement dans le helper.
+  const cartes = []; for (let i = 0; i < 312; i++) cartes.push(c("5"));
+  const p = creerPartie({ regles: REGLES, hote: "h", cartes, empreinte: "e", miseMin: 10 });
+  p.action({ id: "m", a: "asseoir", v: 1, nom: "z".repeat(90), couleur: "red;position:fixed;inset:0" }, 0);
+  ok("asseoir : le nom est tronqué", p.etat.sieges[1].nom.length, 18);
+  ok("asseoir : la couleur greffée n'atteint pas le siège", p.etat.sieges[1].couleur, "");
 }
 
 console.log(`\n${pass} tests passés, ${fail} échecs`);

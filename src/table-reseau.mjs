@@ -79,8 +79,16 @@ const carteTxt = c => c.r + c.suit;
 const SALON_PHASES_EN_JEU = ["donne", "jeu", "assurance", "croupier", "reglement"];
 export function salonJauge(etat, nbPairs) {
   const e = etat && Array.isArray(etat.sieges) ? etat : null;
+  const pris = e ? e.sieges.filter(st => st).length : 0;
+  const bots = e ? e.sieges.filter(st => st && st.bot).length : 0;
   return {
-    pris: e ? e.sieges.filter(st => st).length : 0,
+    pris, bots,
+    /* 🚨 Un siège de BOT est une PLACE : la machine le cède à un humain (`asseoir` :
+       `!(occ.bot && !bot)`). `pris` reste l'occupation honnête — deux tests le figent —,
+       c'est `libres` qui décide du bouton. Les confondre murait toute table complétée par
+       des bots, c'est-à-dire exactement celle d'un hôte qui attend du monde : il coche
+       « Compléter les sièges vides », et sa table sort du jeu pour toujours. */
+    libres: e ? e.sieges.length - pris + bots : 0,
     gens: Math.max(1, Math.trunc(Number(nbPairs)) || 0),
     jeu: !!(e && SALON_PHASES_EN_JEU.indexOf(e.phase) >= 0),
   };
@@ -107,17 +115,35 @@ export function salonLigne(t, miseTxt) {
     "chez " + (t.hote || "quelqu'un"),
     t.gens > 0 ? t.gens + (t.gens > 1 ? " joueurs" : " joueur") : "",
     t.pris + "/" + t.places + " sièges",
+    // ⚠️ Vide quand il n'y a pas de bot : onze tests comparent des `.join(" · ")` EXACTS.
+    t.bots > 0 ? t.bots + (t.bots > 1 ? " bots" : " bot") : "",
     t.jeu ? "manche en cours" : "",
     miseTxt ? "min " + miseTxt : "",
     t.rachats >= 0 ? t.rachats + " recave" + (t.rachats > 1 ? "s" : "") : "",
   ].filter(Boolean);
 }
+/* 🚨 Ce qui traverse un courtier PUBLIC est borné ICI, une fois — c'est la doctrine déjà
+   écrite pour `salonNettoyer` juste en dessous. La couleur finit dans un attribut `style`
+   (reseau.js, la pastille d'un siège et celle d'un pair) : `echap` interdit d'en SORTIR,
+   jamais d'y AJOUTER des déclarations, et `index.html` n'a aucune CSP. Sans cette borne,
+   « red;position:fixed;inset:0;z-index:9999 » couvre l'écran de n'importe qui, et
+   « background-image:url(…) » fait sortir une requête.
+   Le nom du `salut`, lui, échappait à la troncature de 18 caractères qu'`asseoir` applique
+   déjà : deux portes pour la même valeur, une seule était gardée. */
+export const couleurPropre = v => /^#[0-9a-fA-F]{3,8}$/.test(String(v || "")) ? String(v) : "";
+export const nomPropre = v => String(v == null ? "" : v).slice(0, 18) || "Joueur";
+
 export function salonNettoyer(m) {
-  return {
+  return salonLibresParDefaut({
     t: "table", code: String(m.code),
     hote: String(m.hote == null ? "" : m.hote).slice(0, 18),
     nom: String(m.nom == null ? "" : m.nom).slice(0, 40),
     pris: salonEntier(m.pris, 1, 99),
+    bots: salonEntier(m.bots, 0, 99),
+    // ⚠️ Un onglet plus ancien n'annonce pas `libres` : on retombe sur places − pris, donc
+    // sur le comportement d'avant. Jamais sur 0, qui grillerait le bouton d'une table
+    // pourtant ouverte. (-1 = « pas annoncé », résolu en fin de fonction.)
+    libres: m.libres === undefined ? -1 : salonEntier(m.libres, -1, 99),
     places: salonEntier(m.places, NB_SIEGES, 99),
     gens: salonEntier(m.gens, 0, 99),
     jeu: Number(m.jeu) === 1 ? 1 : 0,
@@ -125,8 +151,10 @@ export function salonNettoyer(m) {
     // -1 = « recaves illimitées » (Infinity ne survit pas à JSON). C'est la seule
     // valeur négative admise : tout le reste retombe dessus.
     rachats: Number(m.rachats) === -1 ? -1 : salonEntier(m.rachats, -1, 99),
-  };
+  });
 }
+// `libres` non annoncé (onglet d'avant le 08/09) : on le déduit, comme avant.
+const salonLibresParDefaut = o => { if (o.libres < 0) o.libres = Math.max(0, o.places - o.pris); return o; };
 
 export function creerPartie(o) {
   o = o || {};
@@ -209,7 +237,7 @@ export function creerPartie(o) {
     if (occ && !(occ.bot && !bot)) return "Ce siège est pris.";
     if (occ && occ.bot && P.phase !== "attente" && P.phase !== "mise") return "Attends la fin de la manche pour prendre ce siège.";
     if (deja >= 0) { if (P.phase !== "attente" && P.phase !== "mise") return "Tu ne changes pas de siège en pleine manche."; P.sieges[deja] = null; }
-    P.sieges[k] = { id, nom: (nom || "Joueur").slice(0, 18), couleur: couleur || "", bot: !!bot, tapis: P.tapisDepart, mise: 0, rachats: 0, mains: [], passe: false, absent: 0 };
+    P.sieges[k] = { id, nom: nomPropre(nom), couleur: couleurPropre(couleur), bot: !!bot, tapis: P.tapisDepart, mise: 0, rachats: 0, mains: [], passe: false, absent: 0 };
     // Un siège pris pendant les mises entre tout de suite dans la manche (il a le temps de miser).
     if (bot && P.phase === "mise") miserBot(P.sieges[k]);
     return null;
@@ -705,7 +733,7 @@ export function creerSalle(o) {
     if (!m || !m.id || m.id === S.moi) return;
     if (m.t === "salut") {
       const nouveau = !S.pairs.has(m.id);
-      S.pairs.set(m.id, { id: m.id, nom: m.nom || "Joueur", couleur: m.couleur || "" });
+      S.pairs.set(m.id, { id: m.id, nom: nomPropre(m.nom), couleur: couleurPropre(m.couleur) });
       if (nouveau) pub({ t: "salut", id: S.moi, nom: S.nom, couleur: S.couleur });
       if (estHote()) { S.partie.revenir(m.id); diffuser(now); }
       o.onPairs && o.onPairs(S.pairs);
