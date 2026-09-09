@@ -21,6 +21,7 @@ import { empreinteSources } from "./mesurer-compteur.mjs";
 // TOUTES les pages du catalogue, pas une liste écrite ici : une page ajoutée au
 // catalogue est contrôlée sans qu'on y pense — c'est le contraire de ce qui est
 // arrivé le 07/09, où rien ne regardait les pages parce que rien ne les listait.
+const pourComparer = t => texteNu(t).replace(/\s+([,.;:!?)\u00bb])/g, "$1").replace(/([(\u00ab])\s+/g, "$1");
 const PAGES = CATALOGUE.map(p => p.slug + "/index.html");
 let ko = 0, ok = 0;
 const dire = (bon, quoi, detail) => { if (bon) { ok++; } else { ko++; console.log("KO  " + quoi + (detail ? "  → " + detail : "")); } };
@@ -67,6 +68,7 @@ const texteNu = h => h.replace(/<script[\s\S]*?<\/script>/g, " ").replace(/<styl
 for (const p of PAGES) {
   if (!existsSync(p)) { dire(false, p + " : la page a disparu"); continue; }
   const h = readFileSync(p, "utf8"), nu = texteNu(h);
+  const nuc = pourComparer(h);   // même normalisation que le pivot, sinon la comparaison est bancale d'un côté
 
   // ── Ce qui interdit d'être trouvé, ou fait sanctionner ───────────────────────
   dire(!/name="rating"/.test(h), p + " : aucun rating (SafeSearch exclurait la page)");
@@ -96,10 +98,10 @@ for (const p of PAGES) {
         // contrôle passait alors pour de mauvaises raisons, ou échouait pour de mauvaises
         // raisons selon le sens du test. Une phrase longue, elle, ne se retrouve par
         // hasard nulle part.
-        const rep = texteNu(String((q.acceptedAnswer || {}).text || ""));
+        const rep = pourComparer(String((q.acceptedAnswer || {}).text || ""));
         const phrases = rep.split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(x => x.length > 24);
         const pivot = phrases.sort((a, b) => b.length - a.length)[0] || rep;
-        dire(pivot.length > 24 && nu.includes(pivot),
+        dire(pivot.length > 24 && nuc.includes(pivot),
           p + " : la réponse balisée est visible dans la page", pivot.slice(0, 62));
       }
     }
@@ -587,6 +589,79 @@ const GRILLES = { "en/blackjack/index.html": "boulevard" };
   for (const p of CATALOGUE) {
     const qui = pointe.get("/" + p.slug + "/");
     dire(qui && qui.size > 0, "page atteignable par un lien depuis une autre page (pas seulement par le plan de site)", p.slug);
+  }
+}
+
+// ── LIENS SORTANTS : liste BLANCHE, jamais une liste noire ───────────────────
+// La page /methode/ écrit noir sur blanc que le site « ne contient aucun lien vers un
+// opérateur de jeu et n'en contiendra pas ». Jusqu'ici, RIEN ne le vérifiait : c'était
+// une promesse sur l'honneur, sur un site dont le sujet attire précisément les affiliés.
+// 🚨 Une liste NOIRE serait inutile — on ne peut pas énumérer les casinos du monde.
+// Une liste blanche, elle, rend la promesse mécaniquement vraie : tout hôte non déclaré
+// ici fait échouer la construction, quel qu'il soit. Ajouter un hôte devient un geste
+// délibéré, visible en revue, plutôt qu'une dérive que personne ne voit passer.
+{
+  const HOTES = new Set([
+    "wisehand21.com",          // nous-mêmes (canoniques, hreflang, liens internes absolus)
+    "fonts.googleapis.com",    // la feuille de polices, partagée par tout le site
+    "fonts.gstatic.com",       // les fichiers de police qu'elle appelle
+    "www.metered.ca",          // fournisseur de relais TURN, cité dans les réglages du multijoueur
+    "github.com",              // le dépôt : le site AFFIRME publier son code, il doit y mener
+    // ⚠️ Les quatre suivants sont des lignes d'AIDE au jeu problématique, citées par la
+    // page anglaise. Ce sont exactement l'inverse d'un opérateur — et c'est tout l'intérêt
+    // d'une liste blanche : la distinction est portée par un humain qui l'écrit ici, pas
+    // devinée par un motif d'URL qui rangerait « gambling » du mauvais côté.
+    "www.gamcare.org.uk",
+    "www.gambleaware.org",
+    "www.ncpgambling.org",
+    "www.gamblersanonymous.org",
+  ]);
+  const A_VERIFIER = ["index.html", ...PAGES];
+  for (const f of A_VERIFIER) {
+    if (!existsSync(f)) continue;
+    const h = readFileSync(f, "utf8");
+    const hotes = new Set();
+    for (const m of h.matchAll(/href="(https?:)\/\/([^\/"?#]+)/g)) hotes.add(m[2].toLowerCase());
+    for (const hote of hotes)
+      dire(HOTES.has(hote), "aucun lien sortant vers un hôte non déclaré (dont : aucun opérateur de jeu)", `${f} → ${hote}`);
+  }
+}
+
+// ── L'ÉDITEUR NE SE DÉCRIT QU'UNE SEULE FAÇON ───────────────────────────────
+// Le nœud « Organization » porte le même @id dans build.mjs (la racine) et dans
+// outils/pages.mjs (les 17 pages). Deux descriptions divergentes du même @id, c'est
+// une entité qui se contredit — pire, pour un moteur, qu'une entité absente.
+{
+  const DEPOT_ATTENDU = "https://github.com/pwrygrt72g-hue/compteur-hilo";
+  const editeurs = [];
+  for (const f of ["index.html", ...PAGES]) {
+    if (!existsSync(f)) continue;
+    const h = readFileSync(f, "utf8");
+    for (const m of h.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+      let j; try { j = JSON.parse(m[1]); } catch { continue; }
+      for (const n of (j["@graph"] || [j]))
+        if (n && n["@type"] === "Organization" && String(n["@id"] || "").endsWith("#editeur")) editeurs.push({ f, n });
+    }
+  }
+  dire(editeurs.length > 0, "l'éditeur du site est déclaré quelque part");
+  for (const { f, n } of editeurs) {
+    dire(Array.isArray(n.sameAs) && n.sameAs.includes(DEPOT_ATTENDU),
+      "l'éditeur mène au dépôt qu'il affirme publier (sameAs)", f);
+    dire(n.name === "WiseHand", "l'éditeur porte partout le même nom", `${f} → ${n.name}`);
+  }
+}
+
+// ── UNE PROMESSE ÉCRITE EST UNE PROMESSE TENUE ───────────────────────────────
+// /methode/ dit huit fois « le dépôt » et « sous licence MIT ». Une page qui parle d'un
+// dépôt vérifiable sans y mener demande au lecteur de la croire sur parole — c'est
+// exactement le défaut corrigé ce matin sur le tableau de stratégie, un cran plus bas.
+{
+  const f = "methode/index.html";
+  if (existsSync(f)) {
+    const h = readFileSync(f, "utf8");
+    dire(/licence MIT/i.test(h), "la page méthode revendique bien la licence MIT");
+    dire(h.includes('href="https://github.com/pwrygrt72g-hue/compteur-hilo"'),
+      "…et donne le lien qui permet d'aller le vérifier");
   }
 }
 

@@ -19,11 +19,22 @@
 // relit les pages CONSTRUITES. Ce fichier ne vérifie que ce qu'il peut voir tout seul :
 // qu'un fragment existe, qu'il ne réintroduit pas une balise de document, et qu'une
 // question balisée en FAQ est bien posée dans le texte.
+const DEPOT = "https://github.com/pwrygrt72g-hue/compteur-hilo";
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { PAGES, ORDRE_ACADEMIE } from "../src/pages/catalogue.mjs";
 
 const SITE = (readFileSync("src/visio.mjs", "utf8").match(/export const LIEN_SITE = "([^"]+)"/) || [])[1];
 if (!SITE) throw new Error("src/visio.mjs : LIEN_SITE introuvable");
+
+// 🚨 texteNu remplace CHAQUE balise par une espace : « dans <a>le dépôt</a>, sous »
+// devient « dans le dépôt , sous ». Comparer une réponse balisée au texte de la page
+// échouait donc dès qu'une phrase contenait le moindre lien ou <em> — et la seule
+// façon de faire passer le contrôle était de renoncer au lien. Un garde-fou qui
+// interdit d'enrichir une phrase punit la bonne pratique au lieu de la faute.
+// On compare donc sur une forme où l'espace parasite devant la ponctuation est retirée.
+// ⚠️ Des DEUX côtés : le français met une espace fine légitime devant « ; : ! ? » ».
+const pourComparer = t => texteNu(t).replace(/\s+([,.;:!?)\u00bb])/g, "$1").replace(/([(\u00ab])\s+/g, "$1");
+
 const RACINE = SITE.replace(/\/$/, "");
 const CSS = readFileSync("src/pages/style.css", "utf8");
 // ⚠️ Le volume de simulation se lit COMME build.mjs le lit — jamais recopié dans une
@@ -200,6 +211,7 @@ function construire(p, index) {
   if ((corps.match(/<h1[^>]*>/g) || []).length > 1) throw new Error(`${chemin} : plusieurs <h1>`);
 
   const nu = texteNu(corps);
+  const nuc = pourComparer(corps);
   const mots = nu.split(/\s+/).length;
   const minutes = Math.max(2, Math.round(mots / 200));
 
@@ -215,9 +227,9 @@ function construire(p, index) {
     const nom = q.q.replace(/\s*[?？]\s*$/, "").toLowerCase();
     if (!titres.some(x => x === nom || x.includes(nom) || nom.includes(x)))
       throw new Error(`${chemin} : la question balisée « ${q.q} » n'est posée nulle part dans la page`);
-    const phrases = texteNu(q.r).split(/(?<=[.!?])\s+/).filter(x => x.length > 24).sort((a, b) => b.length - a.length);
+    const phrases = pourComparer(q.r).split(/(?<=[.!?])\s+/).filter(x => x.length > 24).sort((a, b) => b.length - a.length);
     const pivot = phrases[0];
-    if (!pivot || !nu.includes(pivot))
+    if (!pivot || !nuc.includes(pivot))
       throw new Error(`${chemin} : la réponse balisée pour « ${q.q} » n'apparaît pas dans le texte visible`);
   }
 
@@ -250,6 +262,9 @@ function construire(p, index) {
   graphe.push({
     "@type": "Organization", "@id": RACINE + "/#editeur",
     name: "WiseHand", url: url(""),
+    // 🚨 Même @id que le nœud de build.mjs : les deux DOIVENT porter le même sameAs.
+    // Un même éditeur qui se décrit différemment selon la page est pire qu'un éditeur muet.
+    sameAs: [DEPOT],
     logo: { "@type": "ImageObject", url: RACINE + "/icon-180.png", width: 180, height: 180 },
   });
   if (p.type === "Course") {

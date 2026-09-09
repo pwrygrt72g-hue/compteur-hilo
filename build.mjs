@@ -193,6 +193,8 @@ if (!TITRE) throw new Error("tete.html : <title> introuvable — l'en-tête publ
 // SoftwareApplication décrit L'OUTIL (c'est une application, pas un article) ;
 // WebSite donne son nom au domaine. Aucun FAQPage ici : les questions vivent sur
 // /blackjack/, et baliser une question absente de la page est une violation.
+const DEPOT = "https://github.com/pwrygrt72g-hue/compteur-hilo";
+
 const JSONLD = {
   "@context": "https://schema.org",
   "@graph": [
@@ -228,7 +230,10 @@ const JSONLD = {
       publisher: { "@id": SITE + "/#editeur" } },
     // Le MÊME identifiant d'éditeur que les seize pages éditoriales (outils/pages.mjs) :
     // sans lui, l'accueil et le reste du site décrivaient deux entités sans rapport.
+    // 🚨 sameAs : le site AFFIRME publier son code sous MIT. Sans cette ligne,
+    // l'affirmation n'est vérifiable par personne — ni par un lecteur, ni par un moteur.
     { "@type": "Organization", "@id": SITE + "/#editeur", name: "WiseHand", url: SITE + "/",
+      sameAs: [DEPOT],
       logo: { "@type": "ImageObject", url: SITE + "/icon-180.png", width: 180, height: 180 } },
   ],
 };
