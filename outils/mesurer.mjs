@@ -182,6 +182,10 @@ const MISER = `(async () => { const q = s => document.querySelector(s), dodo = m
     if (!j) break; j.click(); await dodo(90);
   } })()`;
 const rapport = [];
+// Les blocs restés éteints en bas du hall. Un tableau À PART, rempli DANS la boucle et
+// versé dans `echecs` à la fin : `echecs` est déclaré cent lignes plus bas, et `const`
+// ne remonte pas — l'écrire ici lèverait dans sa zone morte temporelle.
+const halleEteinte = [];
 for (const [nom, L, H] of TAILLES) {
   await cdp("Emulation.setDeviceMetricsOverride", { width: L, height: H, deviceScaleFactor: 1, mobile: L < 900 });
   await cdp("Page.navigate", { url: `http://127.0.0.1:${PORT}/index.html` });
@@ -210,6 +214,32 @@ for (const [nom, L, H] of TAILLES) {
     if (v === "accueil" || v === "salon") {
       await evaluer(`{ const d = document.getElementById("lesTables"); if (d) d.open = true; }`);
       await dodo(250);
+    }
+    // ── LE HALL NE DOIT RIEN LAISSER ÉTEINT ────────────────────────────────────
+    // Le mode de panne le plus vicieux d'une révélation au défilement : un JS sain, et
+    // le bas de la page à demi transparent POUR TOUJOURS. Après un défilement jusqu'en
+    // bas, tout doit être à 1 — les crédits compris, c'est le dernier bloc.
+    // 🚨 Ce contrôle vit ICI et pas dans outils/sonde.js : celle-ci tourne sous
+    // `--virtual-time-budget`, où `requestAnimationFrame` ne se déclenche jamais, donc
+    // où une animation pilotée par le défilement n'est JAMAIS réévaluée. Le banc, lui,
+    // pilote un Chrome ordinaire : il a de vraies images. On attend d'ailleurs des
+    // IMAGES et non des millisecondes — c'est ce qui fait avancer ces animations-là.
+    if (v === "accueil") {
+      const eteints = await evaluer(`(async () => {
+        const img = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const sel = "#v-accueil .etage > *, #v-accueil .plaque > *, #hallCredits";
+        const noirs = () => [...document.querySelectorAll(sel)]
+          .filter(e => e.getClientRects().length && +getComputedStyle(e).opacity < .99)
+          .map(e => (e.id || String(e.className)).slice(0, 24) + " à " + getComputedStyle(e).opacity);
+        scrollTo({ top: document.body.scrollHeight, behavior: "instant" });
+        let n = [];
+        for (let i = 0; i < 12; i++) { await img(); n = noirs(); if (!n.length) break; }
+        scrollTo({ top: 0, behavior: "instant" }); await img();
+        return n;
+      })()`);
+      if (Array.isArray(eteints) && eteints.length)
+        halleEteinte.push(`${nom}/accueil : ${eteints.length} bloc(s) restent éteints en bas de page — ${eteints.slice(0, 4).join(" · ")}`);
+      await dodo(200);
     }
     // La donne exige une mise (lot Jetons) : on tape un jeton qui couvre le minimum avant de distribuer.
     if (v === "table") { await evaluer(MISER); await dodo(300); await evaluer(`(document.getElementById("bDonne")||{click(){}}).click()`); await dodo(2600); }
@@ -294,6 +324,7 @@ for (const r of rapport) {
   }
   for (const c of r.petits) if (!TOLERE.test(c)) exiger(false, `${ou} : cible tactile ${c} sous 44 px`);
 }
+for (const m of halleEteinte) exiger(false, m);
 const uniques = [...new Set(echecs)];
 const infosU = [...new Set(infos)];
 if (infosU.length) console.log("\nℹ️ téléphone (hors périmètre pour l'instant, non bloquant) : " + infosU.length + " remarque(s)\n  " + infosU.slice(0, 8).join("\n  "));

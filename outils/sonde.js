@@ -151,10 +151,10 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
     ok("hall : une échelle typographique, pas un nuage", tailles.size <= 16,
        tailles.size + " tailles : " + [...tailles].sort((a, b) => a - b).join(", "));
     // 3. Les titres d'étage DESCENDENT — c'est la structure imposée par Léo, rendue visible
-    //    sans lire. Avant, les quatre faisaient 37,44 px.
-    const t = ["hTables", "hEntrainement", "hPrive", "hBureau"]
+    //    sans lire. Avant, les quatre faisaient 37,44 px. Cinq depuis l'Académie (08/09).
+    const t = ["hTables", "hEntrainement", "hAcademie", "hPrive", "hBureau"]
       .map(id => q("#" + id) ? Math.round(parseFloat(getComputedStyle(q("#" + id)).fontSize)) : 0);
-    ok("hall : les quatre titres d'étage décroissent", t.every((v, i) => i === 0 || (v > 0 && v < t[i - 1])), t.join(" → "));
+    ok("hall : les cinq titres d'étage décroissent", t.every((v, i) => i === 0 || (v > 0 && v < t[i - 1])), t.join(" → "));
   }
   // ── LE COMPTE DE TABLES N'EST PLUS ÉCRIT À LA MAIN ───────────────────────────
   // « Neuf » figurait trois fois dans corps.html pour dix tables réelles, en se contredisant
@@ -165,17 +165,19 @@ new MutationObserver(ms => { for (const m of ms) { const b = m.target; if (!(b.c
      && qa("#v-accueil [data-nb-tables]").every(e => e.textContent.trim().toLowerCase() === "dix"),
      qa("#v-accueil [data-nb-tables]").map(e => e.textContent.trim()).join(" / "));
   // ── ET AUCUN BLOC NE PEUT RESTER INVISIBLE ───────────────────────────────────
-  // Le mode de panne le plus vicieux d'une révélation au défilement : un JS sain, et le bas de
-  // la page à moitié transparent pour toujours. Après un défilement jusqu'en bas, tout doit
-  // être à 1 — crédits compris, c'est le dernier bloc.
-  {
-    scrollTo({ top: document.body.scrollHeight, behavior: "instant" }); await dodo(500);
-    const eteints = qa("#v-accueil .etage > *, #v-accueil .plaque > *, #hallCredits")
-      .filter(e => e.getClientRects().length && +getComputedStyle(e).opacity < .99)
-      .map(e => (e.id || String(e.className)).slice(0, 24) + " à " + getComputedStyle(e).opacity);
-    ok("hall : rien ne reste éteint en bas de page", !eteints.length, eteints.join(" · "));
-    scrollTo({ top: 0, behavior: "instant" }); await dodo(200);
-  }
+  // 🚨 CE CONTRÔLE A DÉMÉNAGÉ DANS outils/mesurer.mjs. NE PAS LE REMETTRE ICI.
+  // Il vérifie qu'après un défilement jusqu'en bas, aucun bloc du hall ne reste à demi
+  // transparent — le mode de panne le plus vicieux d'une révélation au défilement.
+  // Mais cette sonde tourne sous `--virtual-time-budget`, et sous temps virtuel
+  // `requestAnimationFrame` NE SE DÉCLENCHE JAMAIS (vérifié le 08/09 : quatorze passages
+  // sur quatorze n'ont pas atteint la ligne suivant le premier rAF). Or une animation
+  // pilotée par le défilement n'est réévaluée QU'À UNE IMAGE. Le contrôle lisait donc,
+  // une fois sur deux, l'état d'avant le défilement et annonçait « tout est éteint » —
+  // c'est-à-dire l'inverse de la vérité, mesurée à 1,00 partout dans un vrai navigateur.
+  // Un `await dodo()` n'y change rien : il avance l'HORLOGE, pas la boucle de rendu.
+  // mesurer.mjs, lui, pilote un Chrome sans temps virtuel : il a de vraies images.
+  // Écrit après avoir mesuré que HEAD échouait DÉJÀ 5 fois sur 12 — cette bascule
+  // n'était pas une régression du jour, c'était un test à pile ou face depuis sa création.
   // « Salon » n'est plus une vue : c'est l'ancre « Les tables » du hall.
   clic('nav [data-vue="salon"]'); await dodo(300);
   // allerHall() ouvre le <details> ; on le force quand même, pour que la suite de la sonde
