@@ -615,6 +615,7 @@ const GRILLES = { "en/blackjack/index.html": "boulevard" };
     "www.gambleaware.org",
     "www.ncpgambling.org",
     "www.gamblersanonymous.org",
+    "www.joueurs-info-service.fr",   // la ligne d'aide francaise, citee par le pilier FR
   ]);
   const A_VERIFIER = ["index.html", ...PAGES];
   for (const f of A_VERIFIER) {
@@ -676,6 +677,22 @@ const GRILLES = { "en/blackjack/index.html": "boulevard" };
   for (const f of cles)
     dire(readFileSync(f, "utf8").trim() === f.replace(/\.txt$/, ""),
       "le fichier de clé IndexNow contient exactement sa clé", f);
+}
+
+// ── LE SÉPARATEUR DE MILLIERS DOIT SE VOIR ──────────────────────────────────
+// Mesuré au navigateur dans Archivo, la police du site : l'espace fine insécable
+// (U+202F, ce que rend toLocaleString("fr-FR")) fait 1,4 px contre 2,8 px pour une
+// insécable normale — invisible à la taille du texte. « 3 000 000 » s'affichait
+// « 3000000 » sur les seize pages françaises : un nombre qu'on ne peut pas lire est
+// pire qu'un nombre sans séparateur, parce qu'on ne voit même pas qu'il en manque un.
+// ⚠️ Le contrôle vise UNIQUEMENT le cas « chiffre fine chiffre ». La même U+202F
+// devant « ? », « : » ou « ; » est la typographie française correcte et sa discrétion
+// y est voulue — un contrôle qui l'interdirait partout casserait toute la ponctuation.
+for (const f of ["index.html", ...PAGES]) {
+  if (!existsSync(f)) continue;
+  const h = readFileSync(f, "utf8");
+  const fautes = [...h.matchAll(/\d(?: |&#8239;)\d/g)].length;
+  dire(fautes === 0, "aucun séparateur de milliers invisible (espace fine entre deux chiffres)", `${f} → ${fautes}`);
 }
 
 console.log(`\n${ok} contrôles passés, ${ko} échecs`);

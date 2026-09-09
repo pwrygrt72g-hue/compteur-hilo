@@ -35,6 +35,18 @@ if (!SITE) throw new Error("src/visio.mjs : LIEN_SITE introuvable");
 // ⚠️ Des DEUX côtés : le français met une espace fine légitime devant « ; : ! ? » ».
 const pourComparer = t => texteNu(t).replace(/\s+([,.;:!?)\u00bb])/g, "$1").replace(/([(\u00ab])\s+/g, "$1");
 
+
+// 🚨 toLocaleString("fr-FR") sépare les milliers par une espace fine insécable
+// (U+202F). Mesuré dans Archivo, la police du site : elle rend à 1,4 px, soit la
+// MOITIÉ d'une espace normale — invisible à la taille du texte. « 3 000 000 mains »
+// s'affichait donc « 3000000 mains » sur les seize pages françaises, ce qui est pire
+// que pas de séparateur du tout : le lecteur voit un nombre qu'il ne peut pas lire.
+// ⚠️ On ne remplace QUE le séparateur de milliers. La même U+202F devant « ? », « : »
+// ou « ; » est la typographie française correcte, et sa discrétion y est voulue :
+// un remplacement aveugle abîmerait toute la ponctuation du site.
+const milliers = (n, lang) =>
+  n.toLocaleString(lang === "fr" ? "fr-FR" : "en-US").replace(/\u202f/g, "\u00a0");
+
 const RACINE = SITE.replace(/\/$/, "");
 const CSS = readFileSync("src/pages/style.css", "utf8");
 // ⚠️ Le volume de simulation se lit COMME build.mjs le lit — jamais recopié dans une
@@ -389,7 +401,7 @@ ${suite}
   ${p.modifie && p.modifie !== p.publie ? `<span class="pt">·</span><span>${t.modifie} <time datetime="${p.modifie}">${dateLisible(p.modifie, p.lang)}</time></span>` : ""}
   <span class="pt">·</span><span>${t.lecture(minutes)}</span>
 </p>
-${t.methode(MAINS.toLocaleString(p.lang === "fr" ? "fr-FR" : "en-US"), p.slug)}
+${t.methode(milliers(MAINS, p.lang), p.slug)}
 ${t.ours}
 <div class="aide">${t.aide}</div>
 <p>${t.pied} · <a href="/">WiseHand</a>${alt ? ` · <a href="/${alt.slug}/" hreflang="${alt.lang}" lang="${alt.lang}">${t.autre}</a>` : ""}</p>
