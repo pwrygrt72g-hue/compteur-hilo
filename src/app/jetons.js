@@ -20,7 +20,7 @@ const TAPIS_DEPART = 1000;
 const arr = x => Math.round(x * 100) / 100;
 const fmtJ = n => {
   const neg = n < 0, a = Math.abs(arr(n)), e = Math.floor(a), d = Math.round((a - e) * 100);
-  return (neg ? "−" : "") + String(e).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + (d ? "," + String(d).padStart(2, "0") : "");
+  return (neg ? "−" : "") + String(e).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + (d ? "," + String(d).padStart(2, "0") : "");
 };
 const reduit = () => matchMedia("(prefers-reduced-motion:reduce)").matches;
 

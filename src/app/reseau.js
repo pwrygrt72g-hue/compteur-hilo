@@ -1014,3 +1014,31 @@ if (/^#table=/.test(location.hash)) {
   const c = TR.normaliserCode(location.hash.slice(7));
   if (TR.codeValide(c)) { MP.mode = "table"; rendreModeMP(); aller("ensemble"); setTimeout(() => ouvrirTable(c, false), 300); }
 }
+
+// Un résultat de moteur de recherche : /?table=ID assied directement à cette table.
+// Quelqu'un qui cherche « blackjack gratuit » veut une main, pas un menu — mais le hall
+// reste la porte normale : ceci n'est qu'un raccourci pour les liens qu'on publie.
+//
+// 🚨 CE BLOC DOIT RESTER DANS reseau.js. Il appelle aller(), qui lit CO.encours
+// (socle.js) — or CO est un const de concentration.js, le 10ᵉ morceau. Placé dans
+// salon.js (le 4ᵉ), c'est une zone morte temporelle : ReferenceError, l'enveloppe
+// entière meurt, page blanche. reseau.js est le 12ᵉ et fait déjà ce geste juste
+// au-dessus. Il précède aussi demarrage.js (18ᵉ), donc DB.table est posé AVANT son
+// nouveauSabot() : un seul mélange, pas de remélange visible.
+//
+// ⚠️ Il ne prime JAMAIS sur une invitation : un ami qui attend passe avant un lien de
+// moteur. Le hash étant lu juste au-dessus, un hash présent nous fait taire entièrement.
+if (!location.hash || location.hash.length <= 1) {
+  const idTable = new URLSearchParams(location.search).get("table");
+  // Liste blanche contre le catalogue, comme le fait déjà data-asseoir. Un identifiant
+  // inconnu, vide ou fabriqué ne fait RIEN : on retombe sur le hall, en silence. Un lien
+  // périmé doit atterrir sur quelque chose de vivant, jamais sur un écran d'erreur.
+  if (idTable && DONNEES.catalogue.some(t => t.id === idTable)) { DB.table = idTable; garder(); aller("table"); }
+  // 🚨 CONSOMMER LE PARAMÈTRE, TOUJOURS — même quand l'identifiant était invalide.
+  // Sans ça il reste dans la barre d'adresse et se REJOUE à chaque rechargement :
+  // F5, glisser pour rafraîchir, onglet restauré le lendemain. Rien dans l'application
+  // ne permettrait alors d'y échapper, et DB.table décide des limites de mise, du
+  // croupier et de tout l'entraînement à la stratégie. C'est ce nettoyage qui rend
+  // l'écrasement de DB.table acceptable : il a lieu UNE fois, comme un clic dans le hall.
+  if (location.search) { try { history.replaceState(null, "", location.pathname); } catch (e) { /* jamais au prix du démarrage */ } }
+}

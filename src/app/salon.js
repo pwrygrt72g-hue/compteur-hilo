@@ -50,14 +50,16 @@ function pucesCompte(t) {
   return [...tmp.children].filter(p => /jeux?$|mélangeuse|^pén\./.test(p.textContent.trim())).map(p => p.outerHTML).join("");
 }
 // L'indice de comptabilité : ce que la table laisse VRAIMENT à un compteur.
-// La pénétration domine, le paiement du blackjack peut tout annuler.
-function indiceComptable(t) {
-  if (t.melange === "melangeuse_continue") return 0;
-  if (t.blackjackPays < 1.5) return Math.max(0, Math.round(12 - t.jeux));
-  const pen = t.penetration, jeux = t.jeux;
-  const brut = 100 * (pen - .45) * (1.55 - .06 * jeux);
-  return Math.max(4, Math.min(99, Math.round(brut)));
-}
+// 🚨 La FORMULE a déménagé dans src/indice-comptable.mjs et le résultat est
+// précalculé par build.mjs. Elle vivait ici, donc uniquement dans le navigateur :
+// le hall servi en HTML devait la réimplémenter côté serveur, et deux copies
+// auraient divergé au premier ajustement — l'écran disant une chose et le HTML
+// servi une autre, sans que rien ne le signale. On ne fait plus que LIRE.
+const indiceComptable = t => DONNEES.tables[t.id].indice;
+
+// Au-dessus, compter rapporte. Doit rester ÉGAL à SEUIL_BATTABLE de
+// src/indice-comptable.mjs : c'est le même seuil, des deux côtés de la fabrique.
+const SEUIL_BATTABLE = 25;
 // Deux choses seulement tuent le comptage : le blackjack payé 6:5 et la mélangeuse
 // continue. Une pénétration médiocre rend la table faible — l'indice le dit déjà,
 // et la tamponner « morte » serait un mensonge utile à personne.
@@ -109,7 +111,7 @@ const sabotEntame = () => T.mains > 0 || T.enJeu;
    ⚠️ Sur l'écran COURSE AU COMPTAGE (o.compte) on ne garde QUE l'indice : l'avantage maison
    n'y décide de rien — on ne mise pas —, mais la rentabilité du comptage y est tout le sujet. */
 function ligneMesure(t, d, compte) {
-  const i = indiceComptable(t), teinte = i >= 25 ? "jade" : "cinabre";
+  const i = indiceComptable(t), teinte = i >= SEUIL_BATTABLE ? "jade" : "cinabre";
   // ⚠️ Chaque nombre et SON étiquette dans un même <span> : à plat dans le flex, « comptage »
   // se retrouvait seul sur la ligne suivante, sous « 0,58 % avantage 36/100 » — une étiquette
   // orpheline ne désigne plus rien (le défaut déjà corrigé sur la barre de filtres le 27/08).
@@ -149,7 +151,7 @@ function rendreSalon() {
   // Le numéro est celui du CATALOGUE, pas du filtre : « Table 4 » reste la quatrième.
   boite.innerHTML = DONNEES.catalogue.map((t, i) => ({ t, n: i + 1 })).filter(({ t }) => {
     const i = indiceComptable(t);
-    return filtre === "tout" || (filtre === "battable" ? i >= 25 : i < 25);
+    return filtre === "tout" || (filtre === "battable" ? i >= SEUIL_BATTABLE : i < SEUIL_BATTABLE);
   }).map(({ t, n }) => carteTableHtml(t, { n, reprise: entame && t.id === DB.table })).join("")
     || `<p class="muet">Aucune table dans ce filtre.</p>`;
   boite.querySelectorAll("[data-asseoir]").forEach(b => b.onclick = () => {
@@ -204,7 +206,10 @@ $("filtreSalon").querySelectorAll("button").forEach(b => b.onclick = () => {
    la mettrait en zone morte temporelle et tuerait le démarrage. */
 const EN_TOUTES_LETTRES = ["zéro", "une", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze"];
 // L'espace fine insécable est celui de la ligne « tapis 975 » du bouton Reprendre.
-const grouper = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
+// U+00A0 et pas U+202F : mesurée au navigateur dans Archivo, l'espace fine rend à
+// 1,4 px contre 2,8 px — « 30 000 000 » s'affichait « 30000000 ». Même correction
+// que pour les pages éditoriales, ici au runtime, là où aucun contrôle ne regardait.
+const grouper = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
 // Les six cartes de la démonstration : une histoire, pas un tirage. Le compte monte, un
 // roi le fait retomber, un sept ne fait rien, puis il remonte — c'est exactement ce que la
 // légende énonce en une phrase, montré en six images.
@@ -229,7 +234,7 @@ function rendreMesures() {
   // la faire entrer dans la fourchette annoncerait « 0 – 85 % », c'est-à-dire une table
   // qu'on ne joue jamais du tout. On ne mesure que ce qui se mesure.
   const pen = cat.filter(t => t.melange !== "melangeuse_continue").map(t => Math.round(t.penetration * 100));
-  const battables = cat.filter(t => indiceComptable(t) >= 25).length;
+  const battables = cat.filter(t => indiceComptable(t) >= SEUIL_BATTABLE).length;
 
   const poser = (id, v) => { const e = $(id); if (e) e.textContent = v; };
   poser("mesAvantage", fourchette);

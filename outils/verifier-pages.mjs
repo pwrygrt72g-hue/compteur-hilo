@@ -15,8 +15,10 @@
 // recopiés » doit prouver CHACUN de ses chiffres contre la source qui les mesure. Ce
 // fichier le fait. Il sort 1 au premier écart.
 import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { PAGES as CATALOGUE } from "../src/pages/catalogue.mjs";
 import { empreinteSources } from "./mesurer-compteur.mjs";
+import { indiceComptable, SEUIL_BATTABLE } from "../src/indice-comptable.mjs";
 
 // TOUTES les pages du catalogue, pas une liste écrite ici : une page ajoutée au
 // catalogue est contrôlée sans qu'on y pense — c'est le contraire de ce qui est
@@ -693,6 +695,204 @@ for (const f of ["index.html", ...PAGES]) {
   const h = readFileSync(f, "utf8");
   const fautes = [...h.matchAll(/\d(?: |&#8239;)\d/g)].length;
   dire(fautes === 0, "aucun séparateur de milliers invisible (espace fine entre deux chiffres)", `${f} → ${fautes}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LA RACINE : elle promettait « blackjack gratuit … dix tables … jouable tout
+// de suite » à une page dont le texte visible ne disait jamais « gratuit », ne
+// nommait aucune table, affichait cinq tirets à la place de ses chiffres et
+// cachait ses portes dans un accordéon fermé. Ces contrôles empêchent chacune
+// de ces quatre promesses de re-mentir.
+// ═══════════════════════════════════════════════════════════════════════════
+{
+  const RACINE_HTML = existsSync("index.html") ? readFileSync("index.html", "utf8") : "";
+  const D = JSON.parse(readFileSync("src/precalcul.json", "utf8")).donnees;
+  const CAT = D.catalogue, TBL = D.tables;
+  // ⚠️ L'indice et le nombre de mains ne vivent PAS dans precalcul.json : build.mjs
+  //    les pose au moment de construire. On les recalcule donc depuis leurs sources
+  //    déclarées — la formule partagée, et la constante de build.mjs.
+  const IDX = t => indiceComptable(t);
+  const MAINS_DECL = +((readFileSync("build.mjs", "utf8").match(/const MAINS = \+\(process\.env\.MAINS \|\| ([\d_]+)\)/) || [])[1] || "0").replace(/_/g, "");
+  // Le texte que voit un lecteur : hors script, hors style, hors commentaire.
+  const netRacine = RACINE_HTML
+    .replace(/<script[\s\S]*?<\/script>/g, " ").replace(/<style[\s\S]*?<\/style>/g, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ");
+  const texteRacine = texteNu(netRacine).toLowerCase();
+  // 🚨 Les promesses se vérifient dans la ZONE D'ACCUEIL, pas dans toute la page.
+  // Mesuré : « gratuit » apparaît 6 fois dans le texte visible de la page mais UNE
+  // seule dans le hall. Avant correction c'était 0 dans le hall et 5 ailleurs — un
+  // contrôle à l'échelle de la page aurait donc été VERT sur la page cassée, ce qui
+  // en fait un contrôle décoratif. Le titre décrit ce sur quoi on ATTERRIT.
+  const zoneHall = (netRacine.match(/id="v-accueil"[\s\S]*?(?=id="v-table")/) || [netRacine])[0];
+  const texteHall = texteNu(zoneHall).toLowerCase();
+
+  // ── 1. LE TITRE NE PROMET RIEN QUE LA PAGE NE DISE ────────────────────────
+  // Mesuré avant correction : « gratuit » apparaissait 7 fois dans le <head> et
+  // ZÉRO fois dans le texte visible — son unique occurrence de la zone d'accueil
+  // était dans un commentaire HTML. Le titre vendait un mot que la page taisait.
+  const PROMESSES = [
+    ["gratuit", ["gratuit"]],
+    ["sans compte", ["sans compte"]],
+    ["sans argent", ["sans argent", "zéro argent"]],
+    ["jouable tout de suite", ["tout de suite"]],
+    ["tables de casino", ["tables de casino"]],
+    ["stratégie résolue", ["stratégie de base résolue", "stratégie résolue"]],
+    ["entraînement au comptage", ["entraînement au comptage", "comptage de cartes"]],
+  ];
+  for (const [quoi, formes] of PROMESSES)
+    dire(formes.some(f => texteHall.includes(f.toLowerCase())),
+      "la racine TIENT dans le texte de son hall ce que son titre promet", quoi);
+
+  // 🚨 Sans ce verrou, la liste ci-dessus est une liste blanche écrite à la main
+  // qui périme en silence : quelqu'un retouche le titre, promet autre chose, et
+  // le contrôle continue de valider les anciennes promesses en disant « vert ».
+  {
+    const t = readFileSync("src/app/tete.html", "utf8");
+    const ti = (t.match(/<title>([^<]+)<\/title>/) || [])[1] || "";
+    const de = (t.match(/name="description" content="([^"]+)"/) || [])[1] || "";
+    dire(createHash("sha256").update(ti + " " + de).digest("hex").slice(0, 12) === "bd669d3ef9bf",
+      "le titre et la description de la racine n'ont pas changé sans qu'on relise les promesses contrôlées");
+  }
+
+  // ── 2. LES TABLES SONT SERVIES, PAS SEULEMENT DESSINÉES PAR LE JAVASCRIPT ──
+  // Mesuré avant correction : 0 nom sur 10. #salon était un div vide, rempli au
+  // démarrage — un robot, comme un lecteur sans JavaScript, ne voyait aucune table.
+  for (const t of CAT) {
+    dire(netRacine.includes(t.nom), "la table est nommée dans le HTML servi de la racine", t.nom);
+    dire(netRacine.includes(t.lieu), "…et son lieu aussi", `${t.nom} → ${t.lieu}`);
+  }
+
+  // ── 3. LA PLAQUE AFFICHE SES CHIFFRES, ET CE SONT LES BONS ────────────────
+  // Les cinq valaient « — » dans le HTML servi. Recalculés ici avec les formules
+  // de rendreMesures() : si l'écran et le HTML divergent, un chiffre clignoterait
+  // au démarrage — le servi d'abord, celui du JavaScript par-dessus.
+  {
+    const fr2 = x => x.toFixed(2).replace(".", ",");
+    const av = CAT.map(t => TBL[t.id].avantage);
+    const fourchette = fr2(Math.min(...av)) + " – " + fr2(Math.max(...av)) + " %";
+    const pen = CAT.filter(t => t.melange !== "melangeuse_continue").map(t => Math.round(t.penetration * 100));
+    const battables = CAT.filter(t => IDX(t) >= SEUIL_BATTABLE).length;
+    const mains = String(MAINS_DECL * CAT.length).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    for (const [id, attendu] of [["mesAvantage", fourchette], ["tablesAvantage", fourchette],
+                                 ["mesPenetration", Math.min(...pen) + " – " + Math.max(...pen) + " %"],
+                                 ["mesMains", mains],
+                                 ["tablesCompte", CAT.length + " tables · " + battables + " battables"]]) {
+      const m = RACINE_HTML.match(new RegExp('id="' + id + '"[^>]*>([^<]*)<'));
+      const vu = m ? m[1] : "(absent)";
+      dire(vu === attendu, "le cadran du hall affiche la valeur calculée, pas un tiret", `${id} → « ${vu} » (attendu « ${attendu} »)`);
+    }
+  }
+
+  // ── 4. AUCUN COMPTE DE TABLES ÉCRIT À LA MAIN — PROVENANCE, PAS VALEUR ────
+  // 🚨 Un contrôle de VALEUR serait vert sur la faute : « dix » vaut bien 10
+  // aujourd'hui. C'est d'où vient le nombre qui compte. Trois fautes réelles ont
+  // été trouvées comme ça, dont une dans le JSON-LD de la page elle-même.
+  const MOTS_NB = "zéro|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|\\d+";
+  for (const f of ["src/app/tete.html", "src/app/corps.html", "build.mjs"]) {
+    const brut = readFileSync(f, "utf8")
+      .replace(/<span data-nb-tables[^>]*>[^<]*<\/span>/g, " ")   // rempli depuis le catalogue
+      .replace(/__NB_TABLES(_CAP)?__/g, " ")                       // substitué à la construction
+      .replace(/nbTCap|nbT\b/g, " ")                               // la variable dérivée
+      .replace(/<!--[\s\S]*?-->/g, " ").replace(/^\s*\/\/.*$/gm, " ");  // les commentaires expliquent la faute
+    const m = brut.match(new RegExp("(?:" + MOTS_NB + ")\\s+(?:tables|règlements)", "i"));
+    dire(!m, "aucun compte de tables écrit à la main (il doit venir du catalogue)", `${f}${m ? " → « " + m[0] + " »" : ""}`);
+  }
+
+  // ── 5. LA PORTE EST OUVERTE ───────────────────────────────────────────────
+  // salon.js n'ouvre l'accordéon que pour quelqu'un qui REVIENT (sabot entamé,
+  // tapis modifié, rachats) : jamais pour un visiteur venu d'un moteur, qui
+  // devait donc cliquer deux fois avant sa première main.
+  dire(/<details[^>]*id="lesTables"[^>]*\sopen[\s>]/.test(RACINE_HTML) || /<details[^>]*\sopen[^>]*id="lesTables"/.test(RACINE_HTML),
+    "l'étage des tables est ouvert d'emblée pour qui arrive d'un moteur");
+
+  // ── 6. UNE SEULE PORTE DE REQUÊTE, ET ELLE NETTOIE DERRIÈRE ELLE ──────────
+  // 🚨 Un lecteur sans nettoyeur, c'est le paramètre qui se rejoue à CHAQUE
+  // rechargement — F5, onglet restauré le lendemain — en écrasant la table
+  // courante, sans aucun geste possible depuis l'application.
+  {
+    const jsApp = readdirSync("src/app").filter(f => f.endsWith(".js"));
+    let lecteurs = 0, nettoyeurs = 0, fichiers = new Set();
+    for (const f of jsApp) {
+      const c = readFileSync("src/app/" + f, "utf8");
+      const l = (c.match(/URLSearchParams|location\.search/g) || []).length;
+      const n = (c.match(/history\.replaceState/g) || []).length;
+      if (l) fichiers.add(f);
+      if (n) fichiers.add(f);
+      lecteurs += l ? 1 : 0; nettoyeurs += n;
+    }
+    dire(lecteurs === 1, "un seul fichier lit la requête de l'URL", `${lecteurs} fichier(s)`);
+    dire(nettoyeurs === 1, "…et exactement un nettoyage de l'URL", `${nettoyeurs}`);
+    dire(fichiers.size === 1 && fichiers.has("reseau.js"), "lecteur et nettoyeur dans le même fichier", [...fichiers].join(", "));
+  }
+
+  // ── 7. LE HASH RESTE AU MULTIJOUEUR, ET LE SEUIL EST UNIQUE ───────────────
+  // La collision est réelle : les codes d'invitation sont tronqués à 8 caractères,
+  // donc BOULEVAR, FRONTDEM, MAINCHAU, SALONPRI et AQUARIUM passeraient pour des
+  // invitations. On fige l'interdiction avant qu'on ne la câble « pour bien faire ».
+  {
+    const salon = readFileSync("src/app/salon.js", "utf8");
+    const mod = readFileSync("src/indice-comptable.mjs", "utf8");
+    const sMod = (mod.match(/SEUIL_BATTABLE\s*=\s*(\d+)/) || [])[1];
+    const sApp = (salon.match(/SEUIL_BATTABLE\s*=\s*(\d+)/) || [])[1];
+    dire(sMod && sMod === sApp, "le seuil « battable » est le même des deux côtés de la fabrique", `${sMod} / ${sApp}`);
+    dire(!/indiceComptable\([^)]*\)\s*>=\s*\d/.test(salon) && !/\bi\s*[<>]=?\s*25\b/.test(salon),
+      "plus aucun seuil d'indice écrit en dur dans salon.js");
+    const lecteursHash = readdirSync("src/app").filter(f => f.endsWith(".js"))
+      .filter(f => /location\.hash/.test(readFileSync("src/app/" + f, "utf8"))).sort();
+    dire(lecteursHash.join(",") === "dons.js,ensemble.js,reseau.js",
+      "seuls le multijoueur et les dons lisent le hash — aucun nouveau lecteur", lecteursHash.join(", "));
+  }
+
+  // ── 8. UNE SEULE IMPLÉMENTATION DE L'INDICE DE COMPTAGE ───────────────────
+  // Rendre le hall en HTML obligeait build.mjs à réimplémenter cette formule,
+  // qui n'existait que dans le navigateur. Deux copies auraient divergé au
+  // premier ajustement, l'écran disant une chose et le HTML servi une autre.
+  for (const f of ["build.mjs", "src/app/salon.js"])
+    dire(!/1\.55\s*-\s*\.?0?6\s*\*/.test(readFileSync(f, "utf8")),
+      "la formule de l'indice n'existe QUE dans src/indice-comptable.mjs", f);
+  for (const t of CAT) {
+    const m = netRacine.match(new RegExp(t.nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[\\s\\S]{0,240}?comptage (\\d+)/100"));
+    dire(m && +m[1] === IDX(t), "l'indice servi est celui du catalogue", `${t.nom} → ${m ? m[1] : "?"} (attendu ${IDX(t)})`);
+  }
+
+  // ── 9. PAS DE SECOND TABLEAU DES AVANTAGES SUR LA RACINE ──────────────────
+  // 🚨 L'ANTI-CANNIBALISATION. Le tableau des dix avantages a un domicile :
+  // /blackjack/#avantage, avec sa légende datée et le texte qui rend le chiffre
+  // défendable. La racine concentre le maillage du site : le dupliquer ici lui
+  // ferait gagner l'arbitrage contre son propre pilier, en affichant un nombre
+  // sans une phrase pour l'expliquer.
+  {
+    const lignes = [...RACINE_HTML.matchAll(/<tr[\s\S]{0,600}?<\/tr>/g)].map(m => m[0]);
+    const fautives = lignes.filter(l => CAT.some(t => l.includes(t.nom)) && /\d,\d+\s*%/.test(l));
+    dire(fautives.length === 0, "la racine ne double pas le tableau des avantages du pilier", `${fautives.length} ligne(s)`);
+    dire(RACINE_HTML.includes('href="/blackjack/#avantage"'), "…elle y MÈNE au lieu de le recopier");
+  }
+
+  // ── 10. TOUTE PORTE CITÉE MÈNE À UNE TABLE RÉELLE ─────────────────────────
+  // 🚨 Le contrôle de liens existant ne peut PAS le faire : sa regex retire la
+  // requête et rend la cible « / », qui est connue — un ?table= mort passerait
+  // donc en silence, ce qui est pire que de casser.
+  {
+    const ids = new Set(CAT.map(t => t.id));
+    for (const f of ["index.html", ...PAGES]) {
+      if (!existsSync(f)) continue;
+      for (const m of readFileSync(f, "utf8").matchAll(/href="\/\?table=([^"&]+)"/g))
+        dire(ids.has(m[1]), "le lien direct mène à une table qui existe", `${f} → ${m[1]}`);
+    }
+  }
+
+  // ── 11. UNE PORTE N'EST PAS UNE PAGE ──────────────────────────────────────
+  // Le canonique auto-référent consolide déjà toute variante sur « / » : il n'y
+  // a rien à indexer, et déclarer ces URL fabriquerait des doublons.
+  for (const f of ["sitemap.xml", "llms.txt"])
+    if (existsSync(f)) dire(!readFileSync(f, "utf8").includes("?table="), "ne déclare aucune porte de table", f);
+
+  // ── 12. LE CANONIQUE DE LA RACINE ─────────────────────────────────────────
+  // Ce contrôle existait pour les 17 pages, pas pour index.html — or c'est LUI
+  // qui rend toute variante ?table= sans risque de duplication. Il pouvait
+  // sauter sans que rien ne le dise.
+  dire(RACINE_HTML.includes('<link rel="canonical" href="https://wisehand21.com/">'),
+    "la racine porte son canonique absolu auto-référent");
 }
 
 console.log(`\n${ok} contrôles passés, ${ko} échecs`);

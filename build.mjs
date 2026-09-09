@@ -10,6 +10,7 @@ import { TABLES, reglesDe } from "./src/tables.mjs";
 import { SYSTEMES } from "./src/counting.mjs";
 import { makeRules } from "./src/engine.mjs";
 import { PAGES, ORDRE_ACADEMIE } from "./src/pages/catalogue.mjs";
+import { indiceComptable, SEUIL_BATTABLE } from "./src/indice-comptable.mjs";
 
 const t0 = Date.now();
 const MAINS = +(process.env.MAINS || 3_000_000);
@@ -65,6 +66,39 @@ if (!donnees) {
 // la construction. C'est bien ce qu'on veut dire par « recalculé le … ».
 donnees.mains = MAINS;
 donnees.empreinte = empreinte;
+// L'indice de comptabilité de chaque table, calculé par la source unique. Il alimente
+// à la fois le hall servi en HTML et l'application, qui ne fait plus que le lire.
+// ⚠️ Ici, et pas dans la boucle de calcul plus haut : celle-ci ne tourne que sur cache
+// froid, et l'indice serait absent au build suivant.
+for (const t of donnees.catalogue) donnees.tables[t.id].indice = indiceComptable(t);
+
+// ── Ce que le HALL affiche, calculé ICI et servi dans le HTML ────────────────
+// 🚨 CES FORMULES SONT CELLES DE rendreMesures() (src/app/salon.js), à la virgule près
+// — exclusion de la mélangeuse continue de la fourchette de pénétration comprise.
+// Toute divergence ferait clignoter un chiffre différent au démarrage : le HTML servi
+// d'abord, puis la valeur du JavaScript par-dessus. Un contrôle les compare.
+const CATB = donnees.catalogue, TB = donnees.tables;
+const echH = x => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const fr2H = x => x.toFixed(2).replace(".", ",");                                  // = socle.js
+// U+00A0 et pas U+202F : l'espace fine rend à 1,4 px dans Archivo, donc invisible.
+const grouperH = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
+const MOTS_N = ["zéro", "une", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze"];
+const nbT = MOTS_N[CATB.length] || String(CATB.length);
+const nbTCap = nbT.charAt(0).toUpperCase() + nbT.slice(1);
+const avH = CATB.map(t => TB[t.id].avantage);
+const fourchetteH = fr2H(Math.min(...avH)) + " – " + fr2H(Math.max(...avH)) + " %";
+const penH = CATB.filter(t => t.melange !== "melangeuse_continue").map(t => Math.round(t.penetration * 100));
+const battablesH = CATB.filter(t => TB[t.id].indice >= SEUIL_BATTABLE).length;
+
+// Le hall servi : une LISTE DE LIENS, jamais un tableau.
+// 🚨 PAS de colonne de règles (jeux, S17/H17, 3:2, coupe) : ce tableau a son domicile à
+// /blackjack/#avantage, avec la légende datée et les mots qui rendent le chiffre
+// défendable. Ce que la racine apporte en propre, c'est le NOM, le LIEU, la LEÇON et
+// l'INDICE DE COMPTAGE — qui n'existe nulle part ailleurs. Le reste, elle y mène.
+const SALON_HTML = '<ul class="salon-liste">' + CATB.map(t =>
+  `<li><a href="/?table=${t.id}"><b>${echH(t.nom)}</b><span>${echH(t.lieu)}</span>` +
+  `<span>« ${echH(t.lecon)} »</span><span>${fr2H(TB[t.id].avantage)} % d'avantage maison</span>` +
+  `<span>comptage ${TB[t.id].indice}/100</span></a></li>`).join("") + '</ul>';
 
 // ---- 2. mini-empaqueteur : des modules ES vers une seule portée ----
 // table-reseau (la table à plusieurs, hôte autoritaire) dépend d'engine : il vient après.
@@ -114,7 +148,11 @@ const app = MORCEAUX.map(f => {
   try { return `\n/* ═══ ${f} ═══ */\n` + readFileSync(`src/app/${f}`, "utf8"); }
   catch (e) { throw new Error(`morceau d'interface manquant : src/app/${f}`); }
 }).join("\n");
-const tete = readFileSync("src/app/tete.html", "utf8");
+// ⚠️ Substitué ICI, sur `tete`, et pas plus tard sur la page : TITRE et DESCRIPTION
+// sont extraits de cette chaîne et alimentent le JSON-LD, og: et twitter:. Le faire
+// en aval laisserait l'espace réservé dans les métadonnées de partage, sans un mot.
+const tete = readFileSync("src/app/tete.html", "utf8").replace(/__NB_TABLES__/g, nbT);
+if (tete.includes("__NB_TABLES__")) throw new Error("tete.html : le compte de tables n'a pas été remplacé");
 
 // ── L'adresse du site : UNE constante, dans src/visio.mjs ────────────────────────────
 // Le gabarit écrit `__LIEN_SITE__` ; c'est ici qu'il devient une URL. Sans ce détour, la
@@ -163,6 +201,19 @@ if (out.includes("__LIEN_SITE__")) out = out.split("__LIEN_SITE__").join(LIEN_SI
   const nb = ["zéro", "une", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze"][lecons.length] || String(lecons.length);
   out = out.replace("__LECONS_ACADEMIE__", li).replace("__NB_LECONS__", `${nb[0].toUpperCase() + nb.slice(1)} leçons`);
   if (out.includes("__LECONS_ACADEMIE__") || out.includes("__NB_LECONS__")) throw new Error("corps.html : un espace réservé de l'Académie n'a pas été remplacé");
+}
+// Le hall, ses cinq cadrans et son compte de tables — servis en HTML, plus dessinés
+// par le JavaScript sur un gabarit qui n'affichait que des tirets et un div vide.
+{
+  out = out.replace(/__NB_TABLES_CAP__/g, nbTCap).replace(/__NB_TABLES__/g, nbT)
+    .replace("__MES_AVANTAGE__", fourchetteH).replace("__TABLES_AVANTAGE__", fourchetteH)
+    .replace("__MES_PENETRATION__", Math.min(...penH) + " – " + Math.max(...penH) + " %")
+    .replace("__MES_MAINS__", grouperH(donnees.mains * CATB.length))
+    .replace("__TABLES_COMPTE__", CATB.length + " tables · " + battablesH + " battables")
+    .replace(/__NB_SANS_COMPTAGE__/g, MOTS_N[CATB.length - battablesH] || String(CATB.length - battablesH))
+    .replace("__SALON_STATIQUE__", SALON_HTML);
+  if (/__(NB_TABLES|NB_TABLES_CAP|NB_SANS_COMPTAGE|MES_[A-Z]+|TABLES_[A-Z]+|SALON_STATIQUE)__/.test(out))
+    throw new Error("corps.html : un espace réservé du hall n'a pas été remplacé");
 }
 writeFileSync("artefact.html", out);
 
@@ -218,7 +269,7 @@ const JSONLD = {
       // vérifier mécaniquement.
       offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
       featureList: [
-        "Dix tables de casino aux règles distinctes",
+        `${nbTCap} tables de casino aux règles distinctes`,
         "Stratégie de base résolue pour chaque table",
         "Écarts au compte vrai (Hi-Lo)",
         "Avantage maison mesuré par simulation",

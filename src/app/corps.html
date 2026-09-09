@@ -102,7 +102,7 @@
            site. Le correctif n'est pas d'écrire « Dix » — c'est de ne plus jamais écrire
            un compte à la main. [data-nb-tables] est rempli depuis DONNEES.catalogue.length,
            comme [data-nb-sieges] l'est depuis TR.NB_SIEGES. -->
-      <p class="hall-phrase">Au blackjack, chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. <span data-nb-tables="cap">Dix</span> tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
+      <p class="hall-phrase">Au blackjack, chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. <span data-nb-tables="cap">__NB_TABLES_CAP__</span> tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser. <b>Gratuit</b>, sans compte et sans argent&#8239;: la première main se joue tout de suite.</p>
       <div class="hall-entree">
         <!-- Mesuré : primaire 153 px, secondaire 331 px — le bouton qu'on veut voir pressé
              était 2,16 × plus petit que celui d'à côté. Le libellé long descend dans title=. -->
@@ -146,9 +146,9 @@
       </div>
 
       <div class="plaque-chiffres">
-        <div><b class="cadran" id="mesAvantage">—</b><span class="grave">Avantage maison, des <span data-nb-tables>dix</span> règlements</span></div>
-        <div><b class="cadran" id="mesPenetration">—</b><span class="grave">Pénétration du sabot</span></div>
-        <div><b class="cadran" id="mesMains">—</b><span class="grave">Mains simulées pour les mesurer</span></div>
+        <div><b class="cadran" id="mesAvantage">__MES_AVANTAGE__</b><span class="grave">Avantage maison, des <span data-nb-tables>__NB_TABLES__</span> règlements</span></div>
+        <div><b class="cadran" id="mesPenetration">__MES_PENETRATION__</b><span class="grave">Pénétration du sabot</span></div>
+        <div><b class="cadran" id="mesMains">__MES_MAINS__</b><span class="grave">Mains simulées pour les mesurer</span></div>
       </div>
 
       <!-- La légende : l'ancien #hallSysteme, en une ligne. #sysNom / #sysTable / #sysNote
@@ -181,12 +181,12 @@
          ouvre et fait défiler. Le scroll-margin-top vit donc sur lui.
          ⚠️ Le contenu du <summary> est du contenu phrasé plus UN titre, conformément au
          modèle de contenu de l'élément : d'où des <span>, jamais un <div>. -->
-    <details class="etage etage-1" id="lesTables">
+    <details class="etage etage-1" id="lesTables" open>
       <summary class="grand-bouton">
-        <span class="etage-barre"><i class="etage-no" aria-hidden="true">01</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte" id="tablesCompte">—</span></span>
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">01</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte" id="tablesCompte">__TABLES_COMPTE__</span></span>
         <h2 id="hTables">Les tables d'entraînement contre les IA</h2>
-        <span class="gb-sous"><span data-nb-tables="cap">Dix</span> règlements de casino réels, mesurés un par un. Des voisins qui misent — dont un compteur que rien ne signale. Zéro argent.</span>
-        <span class="gb-mesure"><b class="cadran" id="tablesAvantage">—</b><span class="grave">Avantage maison</span></span>
+        <span class="gb-sous"><span data-nb-tables="cap">__NB_TABLES_CAP__</span> règlements de casino réels, mesurés un par un — avec la stratégie de base résolue pour chacun. Des voisins qui misent — dont un compteur que rien ne signale. Zéro argent.</span>
+        <span class="gb-mesure"><b class="cadran" id="tablesAvantage">__TABLES_AVANTAGE__</b><span class="grave">Avantage maison</span></span>
         <span class="gb-chevron" aria-hidden="true"></span>
       </summary>
       <div class="contenu">
@@ -195,7 +195,12 @@
           <button role="tab" aria-selected="false" data-f="battable" title="Les tables où tenir le compte rapporte">Où compter rapporte</button>
           <button role="tab" aria-selected="false" data-f="fuir" title="Blackjack payé 6:5 ou mélangeuse continue : le compte n'y sert à rien">Où compter ne sert à rien</button>
         </div>
-        <div class="salon" id="salon"></div>
+        <div class="salon" id="salon">__SALON_STATIQUE__</div>
+        <!-- 🚨 Le tableau des dix avantages a UN domicile, /blackjack/#avantage, avec
+             sa légende datée et le texte qui rend le chiffre défendable. La racine
+             concentre le maillage du site : le recopier ici lui ferait gagner
+             l'arbitrage contre son propre pilier. Elle y MÈNE, elle ne le double pas. -->
+        <p class="muet"><a class="lien-doux" href="/blackjack/#avantage">L'avantage maison des __NB_TABLES__ tables, mesuré et expliqué</a></p>
       </div>
     </details>
 
@@ -860,7 +865,7 @@
        perdues : elles étaient l&#039; argumentaire, pas l&#039; information. -->
   <div class="laque pad dons-bloc">
     <h2>Gratuit, sans pub, sans compte.</h2>
-    <p>Tout est ouvert : les dix tables, les exercices, la stratégie calculée pour chacune, la table entre amis. Il n&#039; y a pas de version complète ailleurs. Aucune publicité, aucune donnée revendue, rien à créer pour jouer.</p>
+    <p>Tout est ouvert : les <span data-nb-tables>__NB_TABLES__</span> tables, les exercices, la stratégie calculée pour chacune, la table entre amis. Il n&#039; y a pas de version complète ailleurs. Aucune publicité, aucune donnée revendue, rien à créer pour jouer.</p>
     <p class="muet" id="donsCompteur" hidden>Une seule chose sort d&#039;ici : un compteur de visites, pour savoir si quelqu&#039;un se sert de l&#039;application. Il est <b>sans cookie</b> et ne garde <b>aucune adresse IP</b> &#8212; il compte des pages ouvertes, pas des personnes. Ta progression, tes sessions et tes réglages, eux, ne bougent pas de ton navigateur. Si ton navigateur dit &#171;&nbsp;ne pas me pister&nbsp;&#187;, il n&#039;est même pas chargé.</p>
     <p class="muet">Ça ne coûte presque rien à héberger &#8212; une seule ligne de dépense, le nom de domaine, 11,08&nbsp;$ par an. Ce que ça coûte, c&#039; est du temps : lire les règlements, écrire le solveur, mesurer chaque table sur des millions de mains. Un don ne paie donc pas un serveur, il paie la prochaine table.</p>
   </div>
@@ -902,7 +907,7 @@
 
   <div class="dons-mot">
     <span class="grave">Un mot, une fois</span>
-    <p>Ici, personne ne perd d'argent : les jetons ne valent rien et le tapis se rachète d'un clic. Dehors, c'est autre chose. Compter ne rend pas le blackjack gagnant &#8212; ça retire quelques dixièmes de pour cent à la maison, sur des milliers de mains, à condition de ne jamais se tromper. Sur quatre des dix tables de ce hall, compter ne change rien du tout &#8212; et trois d'entre elles le disent en toutes lettres.</p>
+    <p>Ici, personne ne perd d'argent : les jetons ne valent rien et le tapis se rachète d'un clic. Dehors, c'est autre chose. Compter ne rend pas le blackjack gagnant &#8212; ça retire quelques dixièmes de pour cent à la maison, sur des milliers de mains, à condition de ne jamais se tromper. Sur __NB_SANS_COMPTAGE__ des <span data-nb-tables>__NB_TABLES__</span> tables de ce hall, compter ne change rien du tout &#8212; et trois d'entre elles le disent en toutes lettres.</p>
     <p>Si le jeu a cessé d'être un jeu : <b>Joueurs Info Service, 09 74 75 13 13</b> &#8212; anonyme et non surtaxé, tous les jours de 8 h à 2 h.</p>
   </div>
 </section>
