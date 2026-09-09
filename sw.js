@@ -3,15 +3,23 @@
 // Le nom du cache PORTE LA VERSION. Le monter est ce qui purge l'ancien (voir « activate ») :
 // une retouche de cette liste sans montée de version ne changerait rien chez ceux qui ont
 // déjà installé l'application, et personne ne le verrait.
-const C = "wisehand-v9";
+const C = "wisehand-v10";
 
 // La coquille : le document, le manifeste, les icônes.
 // ⚠️ Les deux pages du guide (/blackjack/) sont DANS la coquille, et pas par confort :
 // le repli hors ligne de « fetch » rend ./index.html pour TOUTE navigation ratée. Sans
 // elles ici, ouvrir /blackjack/ dans l'avion afficherait l'APPLICATION à la place de
 // l'article, sans la moindre erreur. Précachées, la correspondance exacte gagne.
+// ⚠️ Les pages de l'Académie et de culture aussi (08/09) : le hall y mène par de vrais liens,
+// et un lien qui rend l'APPLICATION à la place de la leçon, dans l'avion, est un lien mort
+// qui ne dit pas son nom. Cette liste doit suivre src/pages/catalogue.mjs — vérifié à la
+// construction par build.mjs, dans les deux sens.
 const COQUILLE = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png",
-  "./blackjack/", "./en/blackjack/", "./static/og.jpg"];
+  "./blackjack/", "./en/blackjack/", "./static/og.jpg",
+  "./academie/", "./academie/valeurs-des-cartes-hi-lo/", "./academie/compte-vrai/", "./academie/penetration-du-sabot/",
+  "./academie/assurance/", "./academie/illustrious-18/", "./academie/blackjack-6-5/", "./academie/s17-h17/",
+  "./academie/melangeuse-continue/", "./academie/combien-rapporte-le-comptage/", "./academie/compter-les-cartes-est-ce-legal/",
+  "./histoire-du-blackjack/", "./films-comptage-de-cartes/"];
 
 // Les photos du hall, en version RÉDUITE (640 px, 642 Ko en tout). Le hall en affiche
 // dix-huit — les dix tables, le héros, et les sept portes des salles (mesuré le 07/09 :

@@ -230,15 +230,40 @@
       </div>
     </section>
 
-    <!-- ══ ÉTAGE 03 — LE MULTIJOUEUR ══════════════════════════════════════
+    <!-- ══ ÉTAGE 03 — L'ACADÉMIE ══════════════════════════════════════════
+         « rajoute un truc WiseHand Academy où il y a des cours pour apprendre à jouer »
+         (Léo, 08/09/2026). Le cours ÉCRIT — dix leçons, une question chacune — qui
+         accompagne l'entraîneur. Ce sont de vraies pages (/academie/…), indexables,
+         lisibles hors ligne : c'est là que vit ce que le site sait dire et que les
+         autres ne savent pas.
+         Aucune photo, aucune carte : c'est une TABLE DES MATIÈRES, et elle doit en avoir
+         la forme — du texte réglé, des numéros, un trait. La quatrième silhouette du hall.
+         🚨 La liste est ÉCRITE PAR build.mjs depuis src/pages/catalogue.mjs (`__LECONS_
+         ACADEMIE__`), jamais ici : un titre de leçon recopié à la main diverge de la page
+         qu'il annonce dès la première retouche — la leçon de « Neuf tables ». -->
+    <section class="etage etage-3 etage-academie" id="academie" aria-labelledby="hAcademie">
+      <div class="etage-entete">
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">03</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte" id="academieCompte">__NB_LECONS__</span></span>
+        <h2 id="hAcademie">L'Académie</h2>
+        <p class="etage-chapo">L'entraîneur montre ce qu'il faut faire. Le cours explique pourquoi — une question par leçon, et des chiffres qui sortent d'un calcul, pas d'un livre.</p>
+      </div>
+      <ol class="lecons-hall" id="leconsHall">__LECONS_ACADEMIE__</ol>
+      <div class="academie-pied">
+        <a class="btn" href="/academie/">Ouvrir le cours</a>
+        <a class="lien-doux" href="/histoire-du-blackjack/">L'histoire du blackjack</a>
+        <a class="lien-doux" href="/films-comptage-de-cartes/">Les films sur le comptage</a>
+      </div>
+    </section>
+
+    <!-- ══ ÉTAGE 04 — LE MULTIJOUEUR ══════════════════════════════════════
          (« Le Salon Privé » est le nom de la TABLE 7, high limit — deux écrans sous le
          même nom dans la même barre, les critiques du 05/09.)
          🚨 Le -webkit-line-clamp:2 est retiré de .grande dans la feuille : mesuré,
          scrollHeight 59 contre clientHeight 39 — la seule grande tuile du hall, celle que
          Léo veut promouvoir, affichait sa phrase COUPÉE sur « …ou la course au… ». -->
-    <section class="etage etage-3" id="prive" aria-labelledby="hPrive">
+    <section class="etage etage-4" id="prive" aria-labelledby="hPrive">
       <div class="etage-entete">
-        <span class="etage-barre"><i class="etage-no" aria-hidden="true">03</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte">Sans serveur · pair à pair</span></span>
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">04</i><span class="trait" aria-hidden="true"></span><span class="grave etage-compte">Sans serveur · pair à pair</span></span>
         <h2 id="hPrive">Entre amis</h2>
       </div>
       <button class="salle-carte grande" data-vue="ensemble" data-photo="prive">
@@ -249,15 +274,15 @@
       </button>
     </section>
 
-    <!-- ══ ÉTAGE 04 — LE RESTE ════════════════════════════════════════════
+    <!-- ══ ÉTAGE 05 — LE RESTE ════════════════════════════════════════════
          Trois rangées réglées, sans photo, sans carte : ~130 px au lieu de 333. Un tiroir
          de réglages n'a pas à ressembler à une table de casino de 455 × 256, et le dire
          par la FORME est plus fort que par la place. Trois photos de moins à charger, et
          surtout trois silhouettes identiques de moins.
          ⚠️ #bHallReglages garde son identifiant : salon.js lui pose son clic SANS garde. -->
-    <section class="etage etage-4" id="bureau" aria-labelledby="hBureau">
+    <section class="etage etage-5" id="bureau" aria-labelledby="hBureau">
       <div class="etage-entete">
-        <span class="etage-barre"><i class="etage-no" aria-hidden="true">04</i><span class="trait" aria-hidden="true"></span></span>
+        <span class="etage-barre"><i class="etage-no" aria-hidden="true">05</i><span class="trait" aria-hidden="true"></span></span>
         <h2 id="hBureau">Le bureau</h2>
       </div>
       <div class="rangs">

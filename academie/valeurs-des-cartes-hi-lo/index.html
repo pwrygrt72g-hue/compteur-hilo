@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les valeurs des cartes en Hi-Lo : le tableau expliqué — WiseHand</title>
+<meta name="description" content="En Hi-Lo, 2 à 6 valent +1, 7 à 9 valent 0, dix et as valent −1. Le tableau, l'origine exacte de ces valeurs, et la comparaison avec KO, Hi-Opt I et Omega II.">
+<link rel="canonical" href="https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/">
+<link rel="alternate" hreflang="fr" href="https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/">
+<link rel="alternate" hreflang="x-default" href="https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="WiseHand">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/">
+<meta property="og:title" content="Les valeurs des cartes en Hi-Lo : le tableau expliqué">
+<meta property="og:description" content="En Hi-Lo, 2 à 6 valent +1, 7 à 9 valent 0, dix et as valent −1. Le tableau, l'origine exacte de ces valeurs, et la comparaison avec KO, Hi-Opt I et Omega II.">
+<meta property="og:image" content="https://wisehand21.com/static/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Les valeurs des cartes en Hi-Lo : le tableau expliqué">
+<meta name="twitter:description" content="En Hi-Lo, 2 à 6 valent +1, 7 à 9 valent 0, dix et as valent −1. Le tableau, l'origine exacte de ces valeurs, et la comparaison avec KO, Hi-Opt I et Omega II.">
+<meta name="twitter:image" content="https://wisehand21.com/static/og.jpg">
+<meta name="twitter:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="theme-color" content="#070D0C">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Instrument+Serif&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Article","@id":"https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/#article","headline":"Les valeurs des cartes en Hi-Lo","description":"En Hi-Lo, 2 à 6 valent +1, 7 à 9 valent 0, dix et as valent −1. Le tableau, l'origine exacte de ces valeurs, et la comparaison avec KO, Hi-Opt I et Omega II.","inLanguage":"fr","datePublished":"2026-09-09","dateModified":"2026-09-09","author":{"@type":"Person","name":"Léo Lejeau"},"publisher":{"@type":"Organization","name":"WiseHand","url":"https://wisehand21.com/"},"mainEntityOfPage":{"@id":"https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/"},"image":"https://wisehand21.com/static/og.jpg","wordCount":2492,"isAccessibleForFree":true},{"@type":"BreadcrumbList","@id":"https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/#fil","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://wisehand21.com/"},{"@type":"ListItem","position":2,"name":"L'Académie","item":"https://wisehand21.com/academie/"},{"@type":"ListItem","position":3,"name":"Les valeurs Hi-Lo"}]},{"@type":"FAQPage","@id":"https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/#faq","mainEntity":[{"@type":"Question","name":"Pourquoi l'as vaut-il −1 en Hi-Lo alors qu'il peut valoir 1 ou 11 ?","acceptedAnswer":{"@type":"Answer","text":"Parce que la valeur Hi-Lo d'une carte ne décrit pas ce qu'elle vaut dans une main, mais ce que son départ du sabot fait à votre espérance. L'as fabrique des blackjacks, qui vous sont payés une fois et demie votre mise et qui ne rapportent au croupier que la mise simple : un sabot vidé de ses as vous dessert. C'est ce déséquilibre de paiement, et non la souplesse de l'as dans une main, que le −1 enregistre."}},{"@type":"Question","name":"Pourquoi les 7, 8 et 9 valent-ils zéro ?","acceptedAnswer":{"@type":"Answer","text":"Parce que leur retrait ne déplace presque pas l'espérance : ils ne complètent pas les mains faibles du croupier aussi bien qu'un 5, et ils ne font pas de blackjacks. Leur effet réel n'est pas rigoureusement nul — le 7 penche légèrement du côté du joueur, ce que KO et Omega II reconnaissent en lui donnant +1 — mais il est assez petit pour qu'un système à trois valeurs ait raison de l'ignorer."}},{"@type":"Question","name":"Hi-Lo est-il le meilleur système de comptage ?","acceptedAnswer":{"@type":"Answer","text":"Non, et il ne cherche pas à l'être. Omega II épouse de bien plus près la courbe des effets de retrait, et Hi-Opt I décide mieux les mains parce qu'il ne laisse pas les as brouiller le compte. Hi-Lo reste pourtant le bon choix pour presque tout le monde, parce que l'écart de précision entre ces systèmes est plus petit que l'écart entre un compte tenu sans faute et un compte tenu approximativement."}},{"@type":"Question","name":"Pourquoi KO ne demande-t-il pas de compte vrai ?","acceptedAnswer":{"@type":"Answer","text":"Parce que ses valeurs ne s'annulent pas sur un jeu complet : leur somme vaut +4 par jeu, et un compte qui dérive avec la profondeur ne se divise pas utilement par les jeux restants. KO compense en démarrant à un nombre négatif calculé sur la taille du sabot, soit −20 pour six jeux, et pilote la mise avec le compte courant seul. On économise une division et une estimation à vue, on perd un peu de précision."}}]}]}</script>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   Les pages éditoriales — « Laque & filament », version lecture.
+
+   🚨 POURQUOI CE FICHIER EXISTE (08/09/2026). Les deux pages du guide étaient
+   DEUX DESSINS DIFFÉRENTS : la française en sombre seul (Archivo, Instrument
+   Serif, palette --encre/--os), l'anglaise en clair/sombre avec un corps en
+   serif système et un vocabulaire de classes qui n'existait nulle part ailleurs
+   (.art, .lede, .scroll, .chart, .cta). Deux sœurs qui ne se ressemblaient pas,
+   et aucune des deux ne ressemblait à l'application. En ajouter douze de plus à
+   la main aurait fait douze dessins.
+   Une seule feuille, inlinée dans chaque page par outils/pages.mjs.
+
+   Les NOMS DE JETONS sont ceux de src/app/style.css, à l'identique, et le
+   système de thème aussi (trois états : la préférence du système, et les deux
+   forçages [data-theme]). Ce n'est pas de la coquetterie : le lecteur qui passe
+   d'une leçon à l'application ne doit pas avoir l'impression de changer de site.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  color-scheme:light dark;
+  --encre:#DBD7CB; --laque:#F6F4EE; --relief:#FCFBF7;
+  --os:#131C1A; --os-eteint:#55605C;
+  --jade:#0D735F; --cinabre:#B33F22;
+  --or-base:#8A5C0B; --or-lumiere:#6F4A08;
+  --bord:#C3BEB0; --trait:#D2CDBF;
+  --btn-or:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); --btn-encre:#1A1206;
+  --colonne:min(68ch, 100% - 2.5rem);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="clair"]){
+    --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+    --os:#EDE7D9; --os-eteint:#A3AAA4;
+    --jade:#4FD8C0; --cinabre:#F4876C;
+    --or-base:#D9B45B; --or-lumiere:#F3C866;
+    --bord:#3A4A45; --trait:#243230;
+  }
+}
+:root[data-theme="sombre"]{
+  --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+  --os:#EDE7D9; --os-eteint:#A3AAA4;
+  --jade:#4FD8C0; --cinabre:#F4876C;
+  --or-base:#D9B45B; --or-lumiere:#F3C866;
+  --bord:#3A4A45; --trait:#243230;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--encre);color:var(--os);
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65}
+::selection{background:color-mix(in oklab, var(--jade) 30%, transparent)}
+
+/* ── L'enseigne ──────────────────────────────────────────────────────── */
+.enseigne{border-bottom:1px solid var(--trait);background:var(--laque)}
+.enseigne .dedans{width:var(--colonne);margin:0 auto;display:flex;align-items:center;
+  gap:14px;min-height:56px}
+.marque{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--os);
+  font-family:"Martian Mono",ui-monospace,monospace;font-size:12px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase}
+.marque svg{width:20px;height:20px;flex:none;color:var(--or-base)}
+.enseigne nav{margin-left:auto;display:flex;gap:16px;font-size:14px}
+.enseigne nav a{color:var(--os-eteint);text-decoration:none}
+.enseigne nav a:hover,.enseigne nav a:focus-visible{color:var(--jade)}
+
+.enveloppe{width:var(--colonne);margin:0 auto;padding:26px 0 76px}
+
+/* ── Le texte ────────────────────────────────────────────────────────── */
+a{color:var(--jade);text-underline-offset:.16em}
+a:hover{color:var(--os)}
+h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;line-height:1.14;
+  margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,50px);margin:18px 0 10px;letter-spacing:-.01em}
+h2{font-size:clamp(24px,4vw,34px);margin:52px 0 12px;scroll-margin-top:70px}
+h3{font-size:21px;margin:30px 0 6px;color:var(--or-lumiere);scroll-margin-top:70px}
+p{margin:0 0 15px}
+strong{font-weight:700}
+.chapo{font-size:19.5px;line-height:1.55;color:var(--os-eteint);margin-bottom:8px}
+ul,ol{margin:0 0 15px;padding-left:22px}
+li{margin-bottom:7px}
+dt{font-weight:700;margin-top:16px}
+dd{margin:2px 0 0 18px}
+hr{border:0;border-top:1px solid var(--trait);margin:44px 0 30px}
+code,.chiffre{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.9em;font-variant-numeric:tabular-nums}
+
+/* ── Le fil d'Ariane et l'ours ───────────────────────────────────────── */
+.fil{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--os-eteint);margin:0}
+.fil a{color:var(--os-eteint);text-decoration:none}
+.fil a:hover{color:var(--jade)}
+.fil .sep{opacity:.5;padding:0 6px}
+.ours{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:13.5px;
+  color:var(--os-eteint);margin:0 0 30px;padding-bottom:18px;border-bottom:1px solid var(--trait)}
+.ours .pt{opacity:.45}
+
+/* ── Les blocs ───────────────────────────────────────────────────────── */
+.panneau{background:var(--laque);border:1px solid var(--trait);border-radius:12px;
+  padding:18px 20px;margin:26px 0}
+.panneau>:last-child{margin-bottom:0}
+.panneau h3{margin-top:0}
+.avert{border-left:3px solid var(--cinabre);padding:2px 0 2px 16px;margin:26px 0;
+  color:var(--os-eteint)}
+.avert>:last-child{margin-bottom:0}
+.appel{background:var(--relief);border:1px solid var(--bord);border-radius:14px;
+  padding:24px;margin:38px 0;text-align:center}
+.appel>:last-child{margin-bottom:0}
+.appel .btn{display:inline-block;margin-top:12px;background:var(--btn-or);color:var(--btn-encre);
+  font-weight:700;text-decoration:none;padding:13px 24px;border-radius:10px;
+  transition:transform .12s cubic-bezier(.22,.72,.24,1), filter .15s}
+.appel .btn:hover{filter:brightness(1.06);color:var(--btn-encre)}
+.appel .btn:active{transform:translateY(1px) scale(.985)}
+
+/* ── Les tableaux : le défilement est CONFINÉ, la page ne bouge jamais ─ */
+.tableau{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:20px 0;
+  border:1px solid var(--trait);border-radius:10px;
+  /* Ombres de défilement, en CSS pur (ces pages n'ont pas une ligne de JS) : les deux
+     premiers dégradés couvrent la couleur du fond et sont ANCRÉS AU CONTENU
+     (background-attachment:local), les deux ombres restent collées au cadre. Résultat :
+     l'ombre n'apparaît que du côté où il reste quelque chose à voir. Sans elle, un
+     tableau plus large que l'écran a l'air simplement tronqué — personne ne devine
+     qu'il faut le faire glisser. */
+  background-image:
+    linear-gradient(to right, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    linear-gradient(to left, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent),
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent);
+  background-position:0 0, 100% 0, 0 0, 100% 0;
+  background-repeat:no-repeat;
+  background-size:28px 100%, 28px 100%, 12px 100%, 12px 100%;
+  background-attachment:local, local, scroll, scroll}
+/* 🚨 min(32rem, 100%) et pas 32rem : à 375 px, un min-width fixe poussait TOUTES les
+   colonnes de chiffres hors de l'écran — les cinq tableaux d'une leçon ne montraient
+   que leurs libellés, et il fallait deviner qu'on pouvait les faire défiler du doigt
+   (mesuré le 09/09 : table de 512 px dans une boîte de 335). Hors écran = inexistant. */
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:min(32rem,100%)}
+@media (max-width:560px){ th,td{padding:8px 6px} table{font-size:13.5px} caption{padding:9px 10px} }
+caption{caption-side:top;text-align:left;padding:11px 13px;font-size:13px;
+  color:var(--os-eteint);border-bottom:1px solid var(--trait)}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--trait)}
+tr:last-child>*{border-bottom:0}
+th{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--os-eteint);font-weight:600}
+/* Un NOMBRE ne se coupe pas ; un EN-TÊTE, si. « Avantage maison » et « Gain du compteur »
+   en nowrap imposaient 540 px à un tableau de dix lignes sur un écran de 375. */
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.n{white-space:nowrap}
+.bon{color:var(--jade)} .mauvais{color:var(--cinabre)}
+
+/* ── Le sommaire de l'Académie ───────────────────────────────────────── */
+.lecons{list-style:none;margin:22px 0;padding:0;display:grid;gap:10px}
+.lecons li{margin:0}
+.lecons a{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;
+  text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, transform .18s cubic-bezier(.22,.72,.24,1), background .18s}
+.lecons a:hover,.lecons a:focus-visible{border-color:var(--or-base);transform:translateX(3px);
+  background:var(--relief);color:var(--os)}
+.lecons .no{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;
+  color:var(--or-base);letter-spacing:.1em;grid-row:span 2}
+.lecons b{font-weight:600;font-size:17px}
+.lecons span{color:var(--os-eteint);font-size:14.5px;line-height:1.5}
+
+/* ── Leçon précédente / suivante ─────────────────────────────────────── */
+.suite{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 0}
+.suite a{display:block;text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, background .18s}
+.suite a:hover,.suite a:focus-visible{border-color:var(--or-base);background:var(--relief);color:var(--os)}
+.suite .sens{display:block;font-family:"Martian Mono",ui-monospace,monospace;font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--os-eteint);margin-bottom:3px}
+.suite .apres{text-align:right;grid-column:2}
+@media(max-width:560px){.suite{grid-template-columns:1fr}.suite .apres{grid-column:1;text-align:left}}
+
+/* ── L'ours de pied de page ──────────────────────────────────────────── */
+footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--trait);
+  font-size:14px;color:var(--os-eteint);line-height:1.6}
+footer a{color:var(--os-eteint)}
+footer a:hover{color:var(--jade)}
+footer .aide{background:var(--laque);border:1px solid var(--trait);border-radius:10px;
+  padding:14px 16px;margin:0 0 16px}
+footer .aide strong{color:var(--os)}
+footer .meta{font-size:13.5px;line-height:1.6;margin:0 0 16px}
+footer .meta strong{color:var(--os)}
+
+
+/* ── Le sommaire d'une page longue ───────────────────────────────────── */
+.toc{border:1px solid var(--trait);border-radius:12px;padding:6px 22px 16px;margin:30px 0;
+  background:var(--laque)}
+.toc h2{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.1em;margin:16px 0 8px;color:var(--os-eteint)}
+.toc ol{margin:0;padding-left:20px;font-size:15.5px}
+.toc li{margin:3px 0}
+
+/* ── Une note en marge, plus légère qu'un panneau ─────────────────────── */
+.note{border-left:3px solid var(--or-base);padding:.6rem 0 .6rem 1rem;margin:24px 0;
+  font-size:15.5px;color:var(--os-eteint);
+  background:color-mix(in oklab, var(--or-base) 6%, transparent)}
+.note>:last-child{margin-bottom:0}
+
+/* ── Un calcul posé ──────────────────────────────────────────────────── */
+.math{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14.5px;
+  background:color-mix(in oklab, var(--os) 6%, transparent);padding:12px 14px;border-radius:8px;
+  overflow-x:auto}
+
+/* ── La grille de stratégie de base ───────────────────────────────────
+   Le GLYPHE porte l'information ; la couleur ne fait que la doubler. En
+   deutéranopie le jade et le cinabre s'effondrent à des luminances voisines :
+   une grille qui ne se lirait qu'en couleur serait illisible pour 8 % des hommes.
+   La première colonne reste collée à gauche quand on fait défiler — sans elle,
+   sur un téléphone, on lit « U » sans savoir si c'est la ligne 15 ou la 16.
+   Le fond de cette colonne doit être OPAQUE : une teinte translucide laisserait
+   passer les cellules qui glissent dessous. */
+table.chart, table.rules{font-family:Archivo,"Helvetica Neue",Arial,sans-serif}
+table.chart th, table.chart td{text-align:center;padding:6px 5px}
+table.chart tbody th[scope=row]{text-align:left;padding-left:12px;white-space:nowrap;font-weight:600;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:13px;letter-spacing:0;text-transform:none;
+  color:var(--os)}
+.chart tbody th[scope=row], .chart thead th:first-child{position:sticky;left:0;z-index:2;
+  background:var(--encre)}
+.chart thead th:first-child{z-index:3}
+.chart tbody th[scope=row]::after{content:"";position:absolute;inset:0 -1px 0 auto;width:1px;
+  background:var(--trait)}
+.chart td{font-weight:700;font-variant-numeric:tabular-nums;min-width:2.1rem}
+.rules{font-size:14px}
+.rules th[scope=row]{font-weight:400;text-transform:none;letter-spacing:0;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:14px;color:var(--os)}
+.rules td{text-align:center;font-variant-numeric:tabular-nums}
+.a-H{background:color-mix(in oklab, var(--cinabre) 15%, transparent);color:var(--cinabre)}
+.a-S{background:color-mix(in oklab, var(--jade) 15%, transparent);color:var(--jade)}
+.a-D{background:color-mix(in oklab, var(--or-base) 18%, transparent);color:var(--or-lumiere)}
+.a-P{background:color-mix(in oklab, #2f6296 20%, transparent);color:#2f6296}
+.a-U{background:color-mix(in oklab, var(--os) 12%, transparent);color:var(--os-eteint)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="clair"]) .a-P{color:#7fb3e8}}
+:root[data-theme="sombre"] .a-P{color:#7fb3e8}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;margin:16px 0;
+  color:var(--os-eteint)}
+.legend b{display:inline-block;width:1.6rem;text-align:center;border-radius:5px;margin-right:5px;
+  font-weight:700}
+.moyen{color:var(--or-lumiere);font-weight:700}
+td.bon,td.mauvais,td.moyen{font-weight:700}
+
+/* Le focus doit se VOIR : ces pages se lisent aussi au clavier. */
+a:focus-visible,button:focus-visible{outline:2px solid var(--or-base);outline-offset:3px;border-radius:4px}
+
+/* ── L'arrivée au défilement, comme dans le hall ──────────────────────
+   Même doctrine qu'à l'application : @supports pour qu'un moteur qui l'ignore
+   ne crée jamais l'animation, `no-preference` pour que la réduction du mouvement
+   gagne, et rien qui parte d'une opacité nulle sans timeline (une page d'article
+   doit rester lisible même si l'animation ne se déclenche jamais). */
+@supports (animation-timeline: view()){
+@media (prefers-reduced-motion: no-preference){
+  .enveloppe h2, .enveloppe .panneau, .enveloppe .tableau,
+  .enveloppe .appel, .enveloppe .avert, .enveloppe .lecons li{
+    animation:arrive linear both; animation-timeline:view();
+    animation-range:entry 4% entry 34%;
+  }
+  @keyframes arrive{ from{opacity:0;translate:0 14px} to{opacity:1;translate:0 0} }
+}}
+</style>
+</head>
+<body>
+
+<header class="enseigne">
+  <div class="dedans">
+    <a class="marque" href="/"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#082b1e"/><g fill="#f1e9d2"><path d="M256 63.5 425.9 292.7 86.1 292.7Z"/><circle cx="200.4" cy="279" r="84.5"/><circle cx="311.6" cy="279" r="84.5"/><path d="M256 287c2 46 8 84 34 130H222c26-46 32-84 34-130Z"/></g></svg>WiseHand</a>
+    <nav aria-label="Principale">
+      <a href="/">L'entraîneur</a>
+      <a href="/academie/">L'Académie</a>
+      
+    </nav>
+  </div>
+</header>
+
+<div class="enveloppe">
+
+<nav class="fil" aria-label="Fil d'Ariane"><a href="/">Accueil</a><span class="sep" aria-hidden="true">›</span><a href="/academie/">L'Académie</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Les valeurs Hi-Lo</span></nav>
+
+<main>
+<article>
+<h1>Les valeurs des cartes en Hi-Lo</h1>
+
+<p class="chapo">En Hi-Lo, les cartes de 2 à 6 valent +1, les 7, 8 et 9 valent 0, et les dix, les figures et les as valent &minus;1. Vous partez de zéro et vous additionnez ces valeurs à mesure que les cartes tombent : le total s'appelle le compte courant. Ces valeurs ne sont pas arbitraires — chacune résume, sur trois crans seulement, l'effet qu'a le retrait de cette carte sur votre espérance. Un jeu complet fait exactement zéro, ce qui rend légitime la division par les jeux restants : Hi-Lo est un système équilibré de niveau 1.</p>
+
+<h2 id="tableau">Le tableau des valeurs</h2>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Cartes</th><th class="n">Valeur Hi-Lo</th><th class="n">Dans un jeu</th></tr></thead>
+<tbody>
+<tr><td>2, 3, 4, 5, 6</td><td class="n bon">+1</td><td class="n">20 cartes</td></tr>
+<tr><td>7, 8, 9</td><td class="n">0</td><td class="n">12 cartes</td></tr>
+<tr><td>10, valet, dame, roi, as</td><td class="n mauvais">&minus;1</td><td class="n">20 cartes</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Il n'y a rien d'autre à mémoriser, et l'on ne revient jamais en arrière. Les cartes des autres joueurs comptent autant que les vôtres : ce qui vous intéresse n'est pas votre main, c'est ce qui reste dans le sabot.</p>
+
+<p>Ce total est le <strong>compte courant</strong>. Il ne pilote rien tout seul : il faut le diviser par le nombre de jeux restants pour obtenir le <strong>compte vrai</strong>, dont dépendent la mise et les écarts à la stratégie de base. C'est la leçon suivante de l'Académie&#8239;: <a href="/academie/compte-vrai/">le compte vrai</a>. Ici, on traite d'autre chose — d'où sortent les valeurs elles-mêmes.</p>
+
+<h2 id="pourquoi">Pourquoi ces valeurs-là, et pas d'autres</h2>
+
+<p><strong>Chaque valeur Hi-Lo approche une quantité mesurable : l'effet du retrait de la carte sur votre espérance.</strong> Retirez une seule carte du sabot, résolvez le jeu de nouveau, comparez : l'espérance a bougé. Ce déplacement a une taille et un signe, différents pour chaque rang.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">L'effet de retrait</h3>
+<p>Retirer un 5 du sabot est ce qui améliore le plus votre espérance. Retirer un as est ce qui la dégrade le plus — davantage encore qu'un dix. Entre les deux, la courbe culmine sur le 5 et descend ensuite sans repartir jusqu'à l'as : les petites cartes vous aident en partant, les grosses vous manquent. Hi-Lo écrase toute cette courbe sur trois valeurs, +1, 0 et &minus;1.</p>
+</div>
+
+<p>Deux mécanismes, et deux seulement, expliquent la forme de cette courbe.</p>
+
+<h3>Le croupier n'a pas le droit de s'arrêter</h3>
+
+<p>Sur une main faible, vous avez le choix de vous arrêter ou de tirer ; lui n'en a aucun, il tire jusqu'à 17. C'est la seule asymétrie du jeu, et c'est de là que vient tout le comptage. Un sabot appauvri en petites cartes le fait sauter plus souvent, parce qu'il ne lui reste plus de quoi compléter une main faible.</p>
+
+<p>Cette liberté est plus étroite qu'on ne le croit : sur la table étalon, la stratégie de base calculée par le solveur du dépôt fait <em>tirer</em> un 12 contre un 2 et contre un 3, et ne le fait rester que contre un 4, un 5 ou un 6. Le 12 ne se range pas avec les 13-16.</p>
+
+<p>Le 5 est le cas extrême, et l'arithmétique le montre en une ligne : 12 + 5 = 17, 13 + 5 = 18, 14 + 5 = 19, 15 + 5 = 20, 16 + 5 = 21. <strong>Le 5 est la seule carte qui transforme les cinq mains faibles en total tenable sans jamais en faire sauter une.</strong> Le 4 laisse le 12 à 16, toujours faible ; le 6 fait sauter le 16. Voilà pourquoi retirer un 5 vous aide plus que tout — et pourquoi tous les systèmes sérieux lui donnent leur valeur positive la plus forte.</p>
+
+<h3>Un blackjack ne rapporte pas la même chose aux deux camps</h3>
+
+<p>Sur une table honnête, votre blackjack est payé une fois et demie votre mise ; celui du croupier vous prend simplement la vôtre. Les as et les dix sont les seules cartes à fabriquer des blackjacks, et ce paiement dissymétrique penche de votre côté : les retirer vous coûte donc davantage qu'au croupier.</p>
+
+<p>Ces deux mécanismes se cumulent sur les dix et les figures, qui font sauter le croupier <em>et</em> font les blackjacks. L'as, lui, ne relève guère que du second : compté 1 ou 11 au choix, il ne fait sauter personne. Retenez ce détail, il commande la fin de cette page.</p>
+
+<h2 id="equilibre">Un système équilibré : la somme d'un jeu fait zéro</h2>
+
+<p>Comptez les cartes d'un jeu de 52 : vingt valent +1 (cinq rangs de quatre cartes), douze valent 0, et vingt valent &minus;1 (seize cartes de valeur 10, plus quatre as). Vingt, moins vingt. <strong>Un jeu complet compté en entier retombe exactement à zéro</strong>, et un sabot de six jeux aussi.</p>
+
+<p>Cette symétrie n'est pas une élégance : c'est ce qui autorise la division. Si un jeu complet valait autre chose que zéro, le compte dériverait à mesure que le sabot se vide, indépendamment de ce qu'il contient encore — et le diviser ne dirait plus rien. C'est parce que Hi-Lo est équilibré qu'un compte vrai existe.</p>
+
+<p>Dans l'application, cet équilibre n'est pas affirmé : il est vérifié. Un test additionne les valeurs de chaque système — quatre cartes par rang, seize pour le rang des dix — et compare le résultat à l'équilibre annoncé. Un système qui mentirait sur le sien ferait échouer la suite de tests.</p>
+
+<h2 id="correlation">La corrélation de mise, et ce que Hi-Lo laisse sur la table</h2>
+
+<p>Puisque les valeurs d'un système sont censées suivre l'effet de retrait, on peut mesurer à quel point elles le suivent : c'est la <strong>corrélation de mise</strong>, la <em>betting correlation</em>. Plus elle est haute, mieux le compte prédit le moment où miser gros. Un second indicateur la complète, l'<strong>efficacité de jeu</strong> : à quel point le même compte vous aide à décider tirer, rester ou doubler. Ces deux nombres sont de Peter Griffin, auteur en 1979 de <em>The Theory of Blackjack</em>, le premier à avoir ramené n'importe quelle méthode de comptage à ce couple.</p>
+
+<p>La littérature accorde à Hi-Lo une corrélation de mise très élevée pour un système à trois valeurs, et c'est la raison de sa longévité : la courbe des effets de retrait descend sans repartir du 5 vers l'as, et l'écraser à +1, 0 et &minus;1 en conserve l'essentiel. Les erreurs d'arrondi ne portent vraiment que sur deux rangs : le 2, à qui Hi-Lo accorde un +1 plein qu'il ne mérite pas tout à fait — c'est le plus faible de son groupe —, et le 7, qu'il traite comme neutre alors qu'il penche légèrement de votre côté.</p>
+
+<div class="avert">
+<p>WiseHand ne calcule ni la corrélation de mise, ni les effets de retrait : le solveur mesure des stratégies, le simulateur des avantages maison, aucun des deux ne produit ces chiffres-là. L'ordre des rangs décrit ci-dessus vient donc de la littérature — la table de référence est celle de Griffin — et non du dépôt. C'est pourquoi cette page n'en cite aucune valeur : ce site ne publie comme mesuré que ce qu'il sait reproduire.</p>
+</div>
+
+<h3>Le prix de l'as</h3>
+
+<p><strong>Pour la mise, l'as est une grosse carte</strong> : il fabrique des blackjacks, donc son départ vous coûte, et le compter &minus;1 est justifié. <strong>Pour les décisions de jeu, il est presque neutre</strong> : quand vous tenez 16 contre un 10, la question est de savoir s'il reste des dix pour faire sauter le croupier. Un as n'est pas un dix. Il ne vous sauvera pas cette main-là, et pourtant il vient de faire baisser votre compte comme s'il en était un.</p>
+
+<p><a href="/academie/assurance/">L'assurance</a> en donne la démonstration la plus nette, et elle tient en une ligne du dépôt : le pari devient rentable dès que les cartes de valeur 10 dépassent le tiers du sabot, ce que le code écrit <em>3 × (dix ÷ cartes restantes) &minus; 1</em>. Lisez le dénominateur : <strong>toute</strong> carte qui n'est pas un dix y pèse, et de la même façon. Un as qui sort est un non-dix qui sort — il <em>améliore</em> l'assurance. Hi-Lo, lui, le retranche comme un dix. Sur cette décision, le barème se trompe donc de signe sur un rang entier, et sous-estime les 7, 8 et 9 qui sont eux aussi des non-dix. Sur la table étalon, <a href="/blackjack/#avantage">Le Boulevard</a> et son avantage maison mesuré de 0,583&#8239;%, le seuil reste un compte vrai de +3.</p>
+
+<p>C'est ce défaut que corrigent les systèmes comptant les as à part : l'as devient neutre dans le compte principal, ce qui rend celui-ci plus juste pour jouer les mains, et le nombre d'as vus est retenu dans un second compte, uniquement pour décider de la mise. On gagne en précision ce qu'on perd en charge mentale — et cette charge est réelle.</p>
+
+<h2 id="comparaison">Les quatre systèmes de l'application</h2>
+
+<p>WiseHand implémente quatre systèmes. Voici leurs valeurs exactes, telles qu'elles sont écrites dans le code du dépôt, sans arrondi ni simplification.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Système</th><th class="n">2</th><th class="n">3</th><th class="n">4</th><th class="n">5</th><th class="n">6</th><th class="n">7</th><th class="n">8</th><th class="n">9</th><th class="n">10 V D R</th><th class="n">As</th><th>Équilibré</th><th class="n">Niveau</th></tr></thead>
+<tbody>
+<tr><td><strong>Hi-Lo</strong></td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n mauvais">&minus;1</td><td class="n mauvais">&minus;1</td><td class="bon">oui</td><td class="n">1</td></tr>
+<tr><td><strong>KO</strong></td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n">0</td><td class="n">0</td><td class="n mauvais">&minus;1</td><td class="n mauvais">&minus;1</td><td class="mauvais">non</td><td class="n">1</td></tr>
+<tr><td><strong>Hi-Opt I</strong></td><td class="n">0</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n mauvais">&minus;1</td><td class="n">0</td><td class="bon">oui</td><td class="n">1</td></tr>
+<tr><td><strong>Omega II</strong></td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+2</td><td class="n bon">+2</td><td class="n bon">+2</td><td class="n bon">+1</td><td class="n">0</td><td class="n mauvais">&minus;1</td><td class="n mauvais">&minus;2</td><td class="n">0</td><td class="bon">oui</td><td class="n">2</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Hi-Opt I met l'as à zéro.</strong> C'est le système de la section précédente : plus juste pour les décisions de jeu, mais il exige un compte des as tenu à part pour que la mise reste correcte. Il neutralise aussi le 2 — non que l'effet de retrait du 2 soit nul, il est nettement positif et dépasse même celui du 7, mais l'écarter simplifie le barème et affine les décisions. C'est un échange, pas une correction.</p>
+
+<p><strong>Omega II est le seul de niveau 2</strong> : ses valeurs vont jusqu'à ±2, ce qui lui permet d'épouser la courbe de bien plus près. Il distingue le 9, que les trois autres ignorent, et rend l'as neutre comme Hi-Opt I. Nettement plus précis, nettement plus fatigant.</p>
+
+<p><strong>KO donne +1 au 7</strong>, ce qui corrige l'un des deux arrondis grossiers de Hi-Lo. Cette correction a un prix, plus lourd qu'il n'en a l'air.</p>
+
+<h2 id="desequilibre">KO est déséquilibré : ce que cela change</h2>
+
+<p>Additionnez les valeurs de KO sur un jeu complet : vous obtenez +4, et non zéro. Le 7 supplémentaire ajoute quatre points par jeu que rien ne vient compenser. <strong>KO est le seul système déséquilibré des quatre</strong>, et c'est une décision, pas un oubli.</p>
+
+<p>La conséquence est simple : <strong>il n'y a pas de compte vrai en KO</strong>. Diviser un compte qui dérive avec la profondeur ne produirait qu'un nombre trompeur. On compense en ne partant pas de zéro : le compte démarre à 4 moins quatre fois le nombre de jeux, soit &minus;20 pour un sabot de six jeux, et c'est le compte courant seul qui pilote la mise.</p>
+
+<p>Dans l'application, ce choix se voit immédiatement. Avec KO sélectionné, le sélecteur affiche « déséquilibré · départ à &minus;20 », le champ « Vrai » de la barre de table porte « n/a » au lieu d'un nombre, le seuil d'assurance disparaît — il est défini en compte vrai, et le conseil devient un « non » sans condition — et la rampe de mise passe au tiret. <strong>Elle ne retombe pas au minimum : elle se tait</strong>, le tiret étant la valeur que le site réserve à « je ne sais pas ». Ce n'est pas un défaut d'affichage : c'est la contrepartie exacte de la simplification, rendue visible plutôt que masquée.</p>
+
+<p>Le calcul des écarts, lui, ne dépend d'aucun système : le moteur d'indices déforme la composition du sabot pour qu'elle porte le compte visé, résout, puis cherche par dichotomie le point où la meilleure décision bascule. Il vaut donc pour n'importe quel barème et n'importe quel règlement — <a href="/academie/illustrious-18/">les dix-huit écarts qui rapportent le plus</a> entrent dans le détail.</p>
+
+<p>Hi-Lo reste la référence, et pour une raison qui n'a rien à voir avec sa précision : c'est le système pour lequel tous les écarts publiés existent, et celui dont vous trouverez une réponse à chaque question.</p>
+
+<div class="avert">
+<p>Un système plus précis appliqué avec des erreurs vaut moins qu'un système simple appliqué sans aucune. Le comptage ne retire que quelques dixièmes de pour cent à la maison, sur des milliers de mains, et une seule erreur par sabot suffit à effacer cet avantage. Changer de barème avant d'avoir rendu le premier automatique est la manière la plus courante de reculer en croyant avancer.</p>
+</div>
+
+<div class="appel">
+<p>Les valeurs se retiennent en cinq minutes. Les tenir à la vitesse d'une vraie table, sans compter à voix basse et sans perdre le fil quand on vous parle, demande des heures. L'exercice « Le réflexe » fait défiler les cartes au rythme que vous choisissez et vérifie votre compte à l'arrivée.</p>
+<a class="btn" href="/#entrainement">Ouvrir l'exercice « Le réflexe »</a>
+</div>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Pourquoi l'as vaut-il &minus;1 en Hi-Lo alors qu'il peut valoir 1 ou 11 ?</h3>
+
+<p>Parce que la valeur Hi-Lo d'une carte ne décrit pas ce qu'elle vaut dans une main, mais ce que son départ du sabot fait à votre espérance. L'as fabrique des blackjacks, qui vous sont payés une fois et demie votre mise et qui ne rapportent au croupier que la mise simple : un sabot vidé de ses as vous dessert. C'est ce déséquilibre de paiement, et non la souplesse de l'as dans une main, que le &minus;1 enregistre.</p>
+
+<h3>Pourquoi les 7, 8 et 9 valent-ils zéro ?</h3>
+
+<p>Parce que leur retrait ne déplace presque pas l'espérance : ils ne complètent pas les mains faibles du croupier aussi bien qu'un 5, et ils ne font pas de blackjacks. Leur effet réel n'est pas rigoureusement nul — le 7 penche légèrement du côté du joueur, ce que KO et Omega II reconnaissent en lui donnant +1 — mais il est assez petit pour qu'un système à trois valeurs ait raison de l'ignorer.</p>
+
+<h3>Hi-Lo est-il le meilleur système de comptage ?</h3>
+
+<p>Non, et il ne cherche pas à l'être. Omega II épouse de bien plus près la courbe des effets de retrait, et Hi-Opt I décide mieux les mains parce qu'il ne laisse pas les as brouiller le compte. Hi-Lo reste pourtant le bon choix pour presque tout le monde, parce que l'écart de précision entre ces systèmes est plus petit que l'écart entre un compte tenu sans faute et un compte tenu approximativement.</p>
+
+<h3>Pourquoi KO ne demande-t-il pas de compte vrai ?</h3>
+
+<p>Parce que ses valeurs ne s'annulent pas sur un jeu complet : leur somme vaut +4 par jeu, et un compte qui dérive avec la profondeur ne se divise pas utilement par les jeux restants. KO compense en démarrant à un nombre négatif calculé sur la taille du sabot, soit &minus;20 pour six jeux, et pilote la mise avec le compte courant seul. On économise une division et une estimation à vue, on perd un peu de précision.</p>
+</article>
+
+<nav class="suite" aria-label="Dans le cours"><a href="/academie/"><span class="sens">← Leçon précédente</span>L'Académie</a><a class="apres" href="/academie/compte-vrai/"><span class="sens">Leçon suivante →</span>Le compte vrai</a></nav>
+</main>
+
+<footer>
+<p class="ours" style="border:0;padding:0;margin:0 0 14px">
+  <span>Publié le <time datetime="2026-09-09">9 septembre 2026</time></span>
+  
+  <span class="pt">·</span><span>12 min de lecture</span>
+</p>
+<p class="meta"><strong>D'où viennent ces chiffres.</strong> Chaque avantage maison
+cité sur ce site est produit en simulant <strong>3 000 000 mains</strong> par jeu de règles, avec un
+joueur qui applique la stratégie de base résolue pour ces règles-là — pas une grille recopiée.
+Les grilles sont calculées par un solveur exact&#8239;; les index de comptage sont obtenus par
+dichotomie sur la composition du sabot. La graine est fixe, donc le résultat est reproductible.
+Dernier calcul&#8239;: 2026-09-09. Le code est ouvert&#8239;: les chiffres peuvent être
+régénérés à partir de lui.</p>
+<p><strong>Ici, personne ne perd d'argent&#8239;: les jetons ne valent rien et le tapis se rachète
+d'un clic. Dehors, c'est autre chose.</strong> Le blackjack reste un jeu d'argent, et un jeu
+d'argent se perd à long terme. Rien sur cette page n'est un conseil de jouer.</p>
+<div class="aide"><p>Si le jeu a cessé d'être un jeu&#8239;: <strong>Joueurs Info Service, 09 74 75 13 13</strong>
+— anonyme et non surtaxé, tous les jours de 8&nbsp;h à 2&nbsp;h.</p></div>
+<p>Jeu interdit aux mineurs. · <a href="/">WiseHand</a></p>
+</footer>
+
+</div>
+</body>
+</html>

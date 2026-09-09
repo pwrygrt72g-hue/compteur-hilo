@@ -1,0 +1,59 @@
+# WiseHand
+
+> Entraîneur de comptage de cartes au blackjack, gratuit, sans compte, sans publicité et
+> sans argent réel. Code ouvert (MIT). Il tourne entièrement dans le navigateur.
+
+Ce que ce site a et que les autres n'ont pas : ses chiffres ne sont pas recopiés. Un
+solveur calcule la stratégie de base pour chaque règlement de table, et un simulateur
+MESURE l'avantage maison sur 3 000 000 mains par variante,
+graine fixe, résultat reproductible. Dernier calcul : 2026-09-09.
+
+Avantage maison mesuré, des dix tables du catalogue, de la meilleure à la pire :
+- La Marina — 6 jeux, S17, blackjack payé 3:2, coupe à 78 % : **0,359 %**
+- Le Front de Mer — 8 jeux, S17, blackjack payé 3:2, coupe à 70 % : **0,379 %**
+- La Main Chaude — 2 jeux, H17, blackjack payé 3:2, coupe à 65 % : **0,381 %**
+- Le Salon Privé — 6 jeux, S17, blackjack payé 3:2, coupe à 85 % : **0,384 %**
+- Le Cotai — 6 jeux, S17, blackjack payé 3:2, mélangeuse continue : **0,463 %**
+- Le Boulevard — 6 jeux, H17, blackjack payé 3:2, coupe à 75 % : **0,583 %**
+- Le Cercle — 6 jeux, S17, blackjack payé 3:2, coupe à 75 % : **0,601 %**
+- Le Vieux Reno — 1 jeu, H17, blackjack payé 3:2, coupe à 60 % : **0,631 %**
+- Le Néon — 1 jeu, H17, blackjack payé 6:5, coupe à 50 % : **1,850 %**
+- L'Aquarium — 8 jeux, H17, blackjack payé 6:5, coupe à 65 % : **2,073 %**
+
+Index d'assurance calculé : compte vrai **+3** (identique sur les dix tables).
+
+## L'application
+
+- [WiseHand](https://wisehand21.com/) : dix tables, exercices de comptage, stratégie et écarts au compte, table à plusieurs sans serveur, fonctionne hors ligne.
+
+## Le cours
+
+- [L'Académie du blackjack : dix leçons pour compter les cartes](https://wisehand21.com/academie/) : Le sommaire de l'Académie WiseHand : dix leçons gratuites sur le blackjack et le comptage des cartes, des valeurs Hi-Lo au choix d'une table de casino.
+- [Les valeurs des cartes en Hi-Lo : le tableau expliqué](https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/) : En Hi-Lo, 2 à 6 valent +1, 7 à 9 valent 0, dix et as valent −1. Le tableau, l'origine exacte de ces valeurs, et la comparaison avec KO, Hi-Opt I et Omega II.
+- [Le compte vrai au blackjack : le calcul et l'estimation](https://wisehand21.com/academie/compte-vrai/) : Le compte vrai, c'est le compte courant divisé par les jeux restants. Pourquoi cette division est indispensable, et comment estimer le sabot à vue.
+- [Pénétration du sabot au blackjack : définition et effets](https://wisehand21.com/academie/penetration-du-sabot/) : La pénétration est la part du sabot jouée avant le remélange : ce que la carte de coupe décide vraiment, mesuré sur les dix tables de WiseHand.
+- [Assurance au blackjack : quand la prendre (compte vrai +3)](https://wisehand21.com/academie/assurance/) : Jamais, sauf au compte vrai +3 ou plus : le calcul complet du pari, le seuil d'un tiers de dix, et pourquoi l'index est le même sur les dix tables.
+- [Illustrious 18 : la liste des écarts au compte, calculée](https://wisehand21.com/academie/illustrious-18/) : L'Illustrious 18 : les écarts au compte qui rapportent le plus, recalculés par WiseHand pour chaque règlement, avec l'index exact de chaque décision.
+- [Le blackjack payé 6:5 : pourquoi il faut éviter ces tables](https://wisehand21.com/academie/blackjack-6-5/) : Une mise de 10 rapporte 12 au lieu de 15 : le blackjack payé 6:5 coûte près de 1,4 % d'avantage maison, et aucun compteur de cartes ne rattrape un tel écart.
+- [S17 ou H17 au blackjack : ce que ça change vraiment](https://wisehand21.com/academie/s17-h17/) : H17 (le croupier tire sur 17 souple) est pire pour le joueur que S17 : environ deux dixièmes de point, et six cases de stratégie de base qui changent.
+- [Mélangeuse continue au blackjack : le comptage ne sert plus](https://wisehand21.com/academie/melangeuse-continue/) : Une mélangeuse continue remet les cartes jouées dans le sabot à chaque main : le compte vrai reste à zéro. Pourquoi c'est une bonne table quand même.
+- [Combien rapporte le comptage de cartes au blackjack](https://wisehand21.com/academie/combien-rapporte-le-comptage/) : Un comptage parfait rapporte environ 0,008 unité de mise par main, pour un écart-type de 2,6 unités : les chiffres mesurés, la variance et la caisse.
+- [Compter les cartes est-il légal ? Ce que dit vraiment la loi](https://wisehand21.com/academie/compter-les-cartes-est-ce-legal/) : Oui, compter les cartes est légal : c'est de la mémoire, pas un appareil. Mais un casino privé peut vous refuser sa table. Les textes, sources à l'appui.
+
+## Les pages de fond
+
+- [Comment jouer au blackjack : règles, stratégie et comptage](https://wisehand21.com/blackjack/) : Les règles du blackjack, la stratégie de base, et ce que le comptage des cartes fait vraiment — avec l’avantage maison de dix tables, mesuré par simulation et non recopié.
+- [L'histoire du blackjack : des origines à l'invention du comptage](https://wisehand21.com/histoire-du-blackjack/) : L'histoire du blackjack, de la veintiuna espagnole au 6:5 moderne : les dates et les noms vérifiés, et qui a réellement inventé le comptage des cartes.
+- [Les films sur le comptage des cartes : le vrai du faux](https://wisehand21.com/films-comptage-de-cartes/) : Rain Man, Las Vegas 21, Very Bad Trip : pour chaque film, ce qu'il montre du comptage des cartes et ce qui est vrai, confronté à des chiffres mesurés.
+
+## En anglais
+
+- [How to Play Blackjack: Rules, Basic Strategy and Card Counting](https://wisehand21.com/en/blackjack/) : The rules of blackjack, the full basic strategy chart, and what card counting actually does — with the house edge of ten tables, measured by simulation rather than copied.
+
+## Ce que ce site ne dit pas
+
+Le comptage de cartes ne rend personne riche. Il renverse un avantage de quelques
+dixièmes de pour cent, sur des milliers de mains, à condition de ne jamais se tromper.
+Aucune page de ce site ne conseille de jouer de l'argent, ne promet un gain, ni
+n'explique comment tricher. Le blackjack est un jeu d'argent, et un jeu d'argent se
+perd à long terme.

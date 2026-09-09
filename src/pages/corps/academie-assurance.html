@@ -1,0 +1,127 @@
+<h1>L'assurance au blackjack&#8239;: quand la prendre</h1>
+
+<p class="chapo">Jamais — sauf si vous comptez les cartes et que le compte vrai atteint +3. C'est la valeur que calcule le solveur de WiseHand, et elle est la même sur les dix tables du site, du jeu unique au sabot de huit jeux. La raison tient en une ligne&#8239;: l'assurance paie 2:1, elle n'est donc gagnante que si plus d'un tiers des cartes encore dans le sabot valent 10. Un sabot neutre en contient 16 sur 52, soit un peu moins de 31&#8239;%. Tout l'intérêt du casino tient dans cet écart au tiers. Sans comptage, refusez à chaque fois, y compris quand vous tenez un blackjack.</p>
+
+<h2 id="pari">Ce que vous pariez, exactement</h2>
+
+<p>Quand la carte visible du croupier est un as, il vous propose l'assurance avant de regarder sa carte cachée. Vous pouvez engager jusqu'à la moitié de votre mise. Si la carte cachée vaut 10 — dix, valet, dame ou roi —, l'assurance paie 2:1&#8239;: engagée au maximum, elle vous rend une somme égale à votre mise principale. Sinon l'assurance est perdue, et la main se poursuit normalement avec la <a href="/blackjack/">stratégie de base</a> habituelle.</p>
+
+<p><strong>L'assurance n'assure rien.</strong> Ce n'est pas une garantie adossée à votre main&#8239;: c'est un pari séparé, posé sur une seule question — la carte cachée du croupier vaut-elle 10&#8239;? Votre propre main n'entre à aucun moment dans le calcul. Que vous teniez 20, 16 ou un blackjack ne change en rien la probabilité que cette carte soit une figure. Le nom est le meilleur argument de vente du casino&#8239;: il décrit une couverture, il vend un pari annexe.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">La règle, en trois lignes</h3>
+<ul>
+  <li>Vous ne comptez pas&#8239;? <strong>Refusez toujours.</strong> Sans exception, sur toutes les tables, quelle que soit votre main.</li>
+  <li>Vous comptez en Hi-Lo&#8239;? <strong>Prenez l'assurance à partir d'un compte vrai de +3</strong>, jamais en dessous.</li>
+  <li>L'« assurance à égalité » proposée sur un blackjack est le même pari. La même règle s'applique.</li>
+</ul>
+</div>
+
+<h2 id="calcul">Le calcul, fait devant vous</h2>
+
+<p>Appelons <em>p</em> la proportion de cartes de valeur 10 parmi celles qui restent. Vous engagez une unité&#8239;: avec la probabilité <em>p</em> vous en gagnez deux, sinon vous perdez la vôtre. L'espérance vaut donc&#8239;:</p>
+
+<p style="text-align:center;font-size:19px;margin:18px 0"><strong>2 &times; p &minus; 1 &times; (1 &minus; p) = 3p &minus; 1</strong></p>
+
+<p>Ce n'est pas une reformulation littéraire&#8239;: c'est, à la lettre, la fonction <code>insuranceEV</code> de <code>src/indices.mjs</code>. Elle devient positive quand <em>p</em> dépasse un tiers, et pas avant. <strong>Le seuil de l'assurance, c'est qu'un tiers des cartes restantes vaillent 10</strong> — tout le reste de cette page en découle.</p>
+
+<p>Un jeu de 52 cartes contient 16 cartes de valeur 10. Cela fait <em>p</em> = 16/52, et l'espérance tombe à 48/52 &minus; 1, soit <strong>&minus;1/13 de la somme engagée&#8239;: exactement un treizième</strong>. Pour franchir le tiers, il faudrait plus de 52/3 = 17,33 cartes de valeur 10 par jeu restant, contre 16 dans un sabot neutre. Il manque 1,33 dix par jeu.</p>
+
+<p>Reste à savoir ce qu'un point de <a href="/academie/compte-vrai/">compte vrai</a> apporte de dix. En Hi-Lo, cinq rangs comptent &minus;1 — les quatre as et les seize dix, 20 cartes par jeu — et cinq rangs comptent +1, les 2 à 6, 20 cartes également. Le compte ne mesure donc pas un stock&#8239;: il mesure l'<em>écart</em> entre ces deux camps. C'est ainsi que le dépôt le reconstitue — pour fabriquer un sabot qui porte le compte voulu, <code>countedShoe</code> retire des cartes basses et en ajoute autant de hautes, « moitié par retrait, moitié par ajout », dit le commentaire du fichier.</p>
+
+<p>Un point de compte vrai n'ajoute donc qu'un demi-point de cartes hautes par jeu, et ce demi-point se répartit à proportion des rangs concernés — 16 dix pour 4 as, soit quatre cinquièmes pour les dix. Reste 0,8 &times; 0,5 = 0,4 dix par point&#8239;:</p>
+
+<p style="text-align:center;font-size:19px;margin:18px 0"><strong>dix par jeu restant = 16 + 0,4 &times; compte vrai</strong></p>
+
+<p>Il ne reste plus qu'à résoudre. 16 + 0,4 &times; TC &gt; 52/3 donne <strong>TC &gt; 10/3</strong>, c'est-à-dire 3,333… Voici la même chose en valeurs, calculée avec la formule du dépôt&#8239;:</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Compte vrai</th><th class="n">Dix par jeu restant</th><th class="n">Gain de l'assurance, pour 100 unités engagées</th></tr></thead>
+<tbody>
+<tr><td>0 (sabot neutre)</td><td class="n">16,00</td><td class="n mauvais">&minus;7,69</td></tr>
+<tr><td>+1</td><td class="n">16,40</td><td class="n mauvais">&minus;5,38</td></tr>
+<tr><td>+2</td><td class="n">16,80</td><td class="n mauvais">&minus;3,08</td></tr>
+<tr><td>+3</td><td class="n">17,20</td><td class="n mauvais">&minus;0,77</td></tr>
+<tr><td>+3,333… (bascule)</td><td class="n">17,33</td><td class="n">0</td></tr>
+<tr><td>+4</td><td class="n">17,60</td><td class="n bon">+1,54</td></tr>
+<tr><td>+5</td><td class="n">18,00</td><td class="n bon">+3,85</td></tr>
+<tr><td>+6</td><td class="n">18,40</td><td class="n bon">+6,15</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>La colonne de droite est une droite&#8239;: chaque point de compte vrai vaut 2,31 unités de plus pour 100 engagées. C'est ce qui rend la décision si tranchée — il n'y a pas de zone grise, il y a une pente et un point de passage.</p>
+
+<h2 id="seuil">Pourquoi l'index publié est +3 et non +3,33</h2>
+
+<p>Le point de bascule est un nombre réel&#8239;; l'index est un nombre entier, parce que vous ne saurez jamais que votre compte vrai vaut 3,34. Vous divisez un compte courant par une estimation à vue des jeux restants&#8239;: le résultat est une approximation, et vous l'arrondissez avant de décider.</p>
+
+<p>Le dépôt ne prétend d'ailleurs pas à plus de précision qu'il n'en a. Il cherche la bascule par dichotomie, à 0,02 près — sa recherche s'arrête un cheveu au-dessus du point réel —, puis il en prend le plancher. Ce que la construction enregistre, pour chacune des dix tables, n'est donc pas une décimale&#8239;: c'est l'entier <strong>3</strong>. Les décimales de cette page sortent de l'algèbre&#8239;; le fichier de données, lui, ne publie que l'index.</p>
+
+<p>Ce choix se défend au chiffre près. Un compte vrai que vous annoncez « +3 » ne vaut pas 3,00&#8239;: il couvre tout l'intervalle qui va de +3 à +4, dont le milieu est +3,5. Or à +3,5 l'assurance rapporte déjà, comme le montre le tableau. Attendre « +4 » par prudence reviendrait à refuser un pari favorable la moitié du temps, ce qui coûte plus cher que de le prendre un peu tôt.</p>
+
+<div class="avert">
+<p>Aucune de ces décimales ne survit à une mauvaise estimation des jeux restants. Vous tromper d'un demi-jeu sur le sabot restant déplace votre compte vrai bien plus que le tiers de point qui sépare +3 du point de bascule. L'ordre des priorités est celui-là&#8239;: d'abord estimer juste, ensuite seulement affiner le seuil.</p>
+</div>
+
+<h2 id="tables">Le seul écart que les règles de la table ne déplacent pas</h2>
+
+<p>WiseHand recalcule ses écarts pour chaque règlement, parce que deux tables ne sont pas le même jeu. Le Boulevard produit 79 écarts de jeu et 16 abandons&#8239;; La Main Chaude en produit 80, Le Cercle 46, et ce ne sont pas les mêmes. <strong>L'assurance, elle, ressort à +3 sur les dix, sans une exception.</strong></p>
+
+<p>C'est logique une fois qu'on a écrit 3<em>p</em> &minus; 1. Aucune règle du jeu principal n'apparaît dans cette expression&#8239;: ni le tirage du croupier sur 17 souple, ni le paiement du blackjack, ni l'abandon, ni les doublements après séparation. Le pari porte sur une seule carte face cachée, et cette carte ignore le tapis sur lequel on la retourne. Le nombre de jeux disparaît lui aussi, pour une raison différente&#8239;: le seuil est une proportion, et le compte vrai est déjà une valeur ramenée au jeu restant. Le Néon (1,850&#8239;% d'avantage maison) et Le Boulevard (0,583&#8239;%) sont deux jeux sans commune mesure&#8239;; leur index d'assurance est identique, et les <a href="/blackjack/">dix tables mesurées</a> le montrent une par une.</p>
+
+<p>Une limite, puisqu'il faut la dire&#8239;: le solveur raisonne sur la composition du sabot et ne retire pas les cartes déjà visibles — les vôtres et l'as du croupier. L'approximation pèse d'autant plus que le sabot est petit&#8239;; sur un jeu unique, trois cartes sur 52 ne sont pas rien. WiseHand publie +3 pour les dix tables parce que c'est ce que calcule son solveur, pas parce que les dix situations seraient rigoureusement identiques.</p>
+
+<h2 id="evenmoney">L'« assurance à égalité », c'est le même pari</h2>
+
+<p>Vous tenez un blackjack, le croupier montre un as. Il vous propose l'<em>even money</em>&#8239;: une mise payée une fois, tout de suite, au lieu du dénouement normal. L'offre est séduisante parce qu'elle est certaine. Elle est aussi, mathématiquement, une assurance prise au maximum.</p>
+
+<p>Comptons. Si vous refusez&#8239;: quand le croupier a lui aussi un blackjack, la main est nulle et vous ne gagnez rien&#8239;; sinon vous êtes payé une fois et demie. Votre espérance vaut 1,5 &times; (1 &minus; <em>p</em>). L'even money vaut 1. Accepter n'est meilleur que si 1 &gt; 1,5 &times; (1 &minus; <em>p</em>), c'est-à-dire si <em>p</em> dépasse un tiers — <strong>le même seuil, au même endroit, pour la même raison</strong>.</p>
+
+<p>Dans un sabot neutre, refuser rapporte 1,5 &times; 36/52 = 54/52 de mise, contre 1 pour l'even money&#8239;: un vingt-sixième d'écart, en votre faveur, à chaque fois. Ce n'est pas énorme&#8239;; c'est simplement toujours du même côté. Le casino n'a pas à vous forcer la main — il lui suffit de vous offrir la certitude au moment où vous tenez la plus belle main du jeu. Refuser au compte neutre est la bonne décision, et elle sera parfois punie sur le coup.</p>
+
+<p>Une réserve sur le nom, pas sur le calcul. Cette égalité parfaite — un gain garanti, quoi que cache le croupier — n'existe que là où le blackjack est payé 3:2. Sur les deux tables du site qui le paient 6:5, Le Néon et L'Aquarium, assurer un blackjack ne garantit plus rien, et le raccourci perd son nom. Le seuil, lui, ne bouge pas d'un cheveu&#8239;: l'assurance s'ajoute à votre main sans s'y mêler, son espérance reste 3<em>p</em> &minus; 1, et elle devient favorable au même endroit.</p>
+
+<h2 id="compteur">L'écart le plus rentable du comptage</h2>
+
+<p>Parmi tous les changements qu'un compteur apporte à la stratégie de base, l'assurance est celui qui rapporte le plus. Deux raisons, et elles se cumulent.</p>
+
+<p><strong>Elle se présente beaucoup plus souvent que les autres.</strong> Un écart de jeu ordinaire exige une coïncidence&#8239;: « 16 contre 10 » réclame que vous ayez un 16 <em>et</em> que le croupier montre un dix. Chacune des 79 cases d'écart du Boulevard est conditionnée à une combinaison précise. L'assurance, elle, ne demande rien de votre main&#8239;: il suffit que le croupier montre un as, ce qui arrive sur environ une main sur treize — quatre as pour 52 cartes. Elle couvre une colonne entière du tableau, pas une case.</p>
+
+<p><strong>Et la somme en jeu est la moitié de votre mise.</strong> Les autres écarts déplacent l'espérance d'une main déjà engagée&#8239;; celui-ci ouvre un pari supplémentaire, au moment exact où il devient favorable, dans une situation où vous misez probablement gros parce que le compte est haut. C'est pour cette raison que l'assurance ouvre invariablement la liste des <a href="/academie/illustrious-18/">écarts de l'Illustrious 18</a>, la sélection de Donald Schlesinger.</p>
+
+<p>Le dépôt lui-même la traite à part. Les 79 écarts de jeu sortent d'une résolution complète du tableau à chaque compte&#8239;; l'assurance, non — elle a son propre champ et sa propre formule d'une ligne, parce que ce n'est pas la même décision.</p>
+
+<div class="avert">
+<p>« Le plus rentable des écarts » veut dire&#8239;: la plus grosse part d'une marge très mince. Le comptage retire quelques dixièmes de pour cent à la maison, sur des milliers de mains, à condition de ne jamais se tromper. L'assurance ne renverse pas ce constat, elle en occupe le premier rang.</p>
+</div>
+
+<h2 id="surveille">…et le premier geste qu'une table surveille</h2>
+
+<p>C'est le paradoxe de cet écart&#8239;: il est le plus payant et le plus visible. Un écart de jeu ordinaire ressemble à une erreur — doubler un 10 contre un dix, rester sur 16 contre un as&#8239;: un joueur maladroit fait ça tous les soirs, et personne ne s'en émeut. L'assurance, non. Elle est binaire, elle est annoncée à voix haute, elle se pose avec des jetons, et elle arrive au moment précis où toute la table regarde le croupier.</p>
+
+<p>Un joueur qui refuse l'assurance pendant deux heures, puis l'accepte deux fois en dix minutes, vient d'annoncer son compte à l'ensemble de la table. Personne ne prend l'assurance par distraction après l'avoir déclinée toute la soirée. C'est un signal propre, sans bruit, et il est lu comme tel.</p>
+
+<p>Deux choses à ne pas confondre. Compter les cartes est légal et purement mental&#8239;: vous regardez des cartes distribuées face visible et vous vous souvenez de ce que vous avez vu. Marquer des cartes, s'entendre avec un croupier, employer un appareil&#8239;: ce sont des délits, et cette page n'explique pas comment on s'y prend. Reste qu'un casino est un commerce privé et qu'il peut refuser de vous servir, sans avoir à se justifier.</p>
+
+<p>WiseHand est un entraîneur. Il vous apprend à calculer juste et à décider vite&#8239;; il ne vous dit pas ce qu'il faut faire dans une salle de jeu, et il ne vous conseille pas d'y aller.</p>
+
+<div class="appel">
+<p>L'assurance est la seule décision du blackjack qu'un seul chiffre tranche entièrement. WiseHand vous montre le compte vrai, retourne un as, et vous demande de choisir — sur les dix tables, sans argent, sans compte et sans publicité.</p>
+<a class="btn" href="/">Ouvrir l'entraîneur</a>
+</div>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Faut-il prendre l'assurance quand on a un blackjack&#8239;?</h3>
+<p>Non, sauf au compte vrai +3 ou plus, exactement comme avec n'importe quelle autre main. L'assurance à égalité proposée sur un blackjack est le même pari sous un autre nom, et la refuser dans un sabot neutre rapporte en moyenne un vingt-sixième de mise de plus que l'accepter.</p>
+
+<h3>L'assurance protège-t-elle vraiment ma mise&#8239;?</h3>
+<p>Non. C'est un pari séparé qui porte sur la seule carte cachée du croupier, et votre propre main n'entre à aucun moment dans le calcul de sa rentabilité. Comme il paie 2:1, il n'est gagnant que si plus d'un tiers des cartes restantes valent 10, alors qu'un sabot neutre en contient 16 sur 52.</p>
+
+<h3>À partir de quel compte vrai prend-on l'assurance&#8239;?</h3>
+<p>À +3 et au-dessus, jamais en dessous&#8239;: c'est l'index que le solveur de WiseHand publie pour les dix tables. Le point de bascule réel n'est pas un entier — l'algèbre le place à 10/3, soit un peu plus de 3,33 — et l'index publié en est le plancher, parce qu'un compte vrai annoncé « +3 » couvre en réalité tout l'intervalle qui va de +3 à +4.</p>
+
+<h3>Le nombre de jeux change-t-il l'index d'assurance&#8239;?</h3>
+<p>Non, le solveur du dépôt renvoie +3 sur les dix tables de WiseHand, du jeu unique au sabot de huit jeux. Le seuil porte sur une proportion de cartes et le compte vrai est déjà une valeur ramenée au jeu restant, si bien que le nombre de jeux disparaît purement et simplement du calcul.</p>

@@ -9,6 +9,7 @@ import { simulate } from "./src/sim.mjs";
 import { TABLES, reglesDe } from "./src/tables.mjs";
 import { SYSTEMES } from "./src/counting.mjs";
 import { makeRules } from "./src/engine.mjs";
+import { PAGES, ORDRE_ACADEMIE } from "./src/pages/catalogue.mjs";
 
 const t0 = Date.now();
 const MAINS = +(process.env.MAINS || 3_000_000);
@@ -102,10 +103,13 @@ const corps = readFileSync("src/app/corps.html", "utf8");
 // il vient après eux trois, et après ensemble.js dont il complète l'écran d'accueil.
 // visio.js (les têtes des amis sur les sièges, le bouton Caméra, le relais de ⚙) écoute
 // les événements « sabot:reseau-* » que reseau.js émet : il vient juste après lui.
+// mouvement.js (l'onde au clic) ne dépend de RIEN : un seul écouteur délégué sur le
+// document, posé en dernier, qui ne connaît que des sélecteurs. Il vient juste avant
+// demarrage.js pour que l'écouteur existe avant le premier rendu.
 // dons.js (la caisse) ne dépend que du socle : $ pour les deux états de la page, aller()
 // pour la porte vers la table entre amis. Il tient en vingt lignes et ne branche rien d'autre.
 const MORCEAUX = ["socle.js","camera.js","cartes.js","salon.js","table.js","jetons.js","croupier.js",
-  "exercices.js","strategie.js","concentration.js","ensemble.js","reseau.js","visio.js","dons.js","progres.js","clavier.js","demarrage.js"];
+  "exercices.js","strategie.js","concentration.js","ensemble.js","reseau.js","visio.js","dons.js","progres.js","clavier.js","mouvement.js","demarrage.js"];
 const app = MORCEAUX.map(f => {
   try { return `\n/* ═══ ${f} ═══ */\n` + readFileSync(`src/app/${f}`, "utf8"); }
   catch (e) { throw new Error(`morceau d'interface manquant : src/app/${f}`); }
@@ -143,6 +147,23 @@ ${app}
 //  · artefact.html — le même corps SANS doctype ni <head>, parce que l'outil
 //    Artifact enveloppe le fichier lui-même et refuse ces balises.
 if (out.includes("__LIEN_SITE__")) out = out.split("__LIEN_SITE__").join(LIEN_SITE);
+
+// ── L'ÉTAGE « L'ACADÉMIE » DU HALL LIT LE CATALOGUE DES PAGES ────────────────────────
+// Dix leçons, une ligne chacune, écrites ici depuis src/pages/catalogue.mjs — la MÊME
+// source que outils/pages.mjs, qui construit les pages elles-mêmes. Un titre recopié à
+// la main dans le gabarit divergerait de la page qu'il annonce dès la première retouche.
+// ⚠️ Une liste VIDE fait échouer la construction : un étage « L'Académie » sans leçon
+// est exactement la page à moitié muette que ce fichier refuse de produire ailleurs.
+{
+  const lecons = ORDRE_ACADEMIE.slice(1).map(slug => PAGES.find(p => p.slug === slug)).filter(Boolean);
+  if (lecons.length < 2) throw new Error(`catalogue.mjs : ${lecons.length} leçon(s) dans ORDRE_ACADEMIE — l'étage L'Académie du hall serait vide`);
+  const ech = x => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const li = lecons.map((p, i) =>
+    `<li><a href="/${p.slug}/"><span class="no">${String(i + 1).padStart(2, "0")}</span><b>${ech(p.court)}</b><span>${ech(p.sous || p.titre)}</span></a></li>`).join("\n");
+  const nb = ["zéro", "une", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze"][lecons.length] || String(lecons.length);
+  out = out.replace("__LECONS_ACADEMIE__", li).replace("__NB_LECONS__", `${nb[0].toUpperCase() + nb.slice(1)} leçons`);
+  if (out.includes("__LECONS_ACADEMIE__") || out.includes("__NB_LECONS__")) throw new Error("corps.html : un espace réservé de l'Académie n'a pas été remplacé");
+}
 writeFileSync("artefact.html", out);
 
 // ── Ce qui n'existe QUE dans index.html : l'en-tête public ────────────────────
@@ -296,6 +317,18 @@ console.log(`\nindex.html écrit : ${ko} Ko, ${out.split("\n").length} lignes, e
       "sw.js : la liste des photos hors ligne ne correspond plus à credits.json.\n"
       + (manquantes.length ? `  à AJOUTER dans sw.js : ${manquantes.join(", ")}\n` : "")
       + (fantomes.length ? `  à RETIRER de sw.js (absentes du disque ou du catalogue) : ${fantomes.join(", ")}\n` : ""));
+    // Même contrôle pour les PAGES : chaque entrée du catalogue est dans la coquille, et
+    // la coquille ne cite aucune page que le catalogue ne connaît pas.
+    const blocC = sw.match(/const COQUILLE = \[([\s\S]*?)\];/);
+    if (!blocC) throw new Error("sw.js : le tableau COQUILLE est introuvable");
+    const dansSw = new Set([...blocC[1].matchAll(/"\.\/([^"]*)"/g)].map(m => m[1]).filter(u => u.endsWith("/") && u !== ""));
+    const auCatalogue = new Set(PAGES.map(p => p.slug + "/"));
+    const pagesManquantes = [...auCatalogue].filter(u => !dansSw.has(u));
+    const pagesFantomes = [...dansSw].filter(u => !auCatalogue.has(u));
+    if (pagesManquantes.length || pagesFantomes.length) throw new Error(
+      "sw.js : la coquille hors ligne ne correspond plus à src/pages/catalogue.mjs.\n"
+      + (pagesManquantes.length ? `  à AJOUTER dans sw.js : ${pagesManquantes.map(u => "./" + u).join(", ")}\n` : "")
+      + (pagesFantomes.length ? `  à RETIRER de sw.js : ${pagesFantomes.map(u => "./" + u).join(", ")}\n` : ""));
     const poids = [...attendues].reduce((n, p) => n + readFileSync(p).length, 0);
     console.log(`hors ligne : ${attendues.size} photos réduites précachées par sw.js · ${Math.round(poids / 1024)} Ko`);
 

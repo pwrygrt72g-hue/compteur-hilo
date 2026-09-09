@@ -1,0 +1,161 @@
+<h1>Le blackjack payé 6:5 — pourquoi il faut éviter ces tables</h1>
+
+<p class="chapo">Sur une table qui paie le blackjack 6:5, une mise de 10 rapporte 12 au lieu de 15. Le blackjack tombe environ une main sur vingt et une, et ces trois jetons manquants coûtent à eux seuls près de 1,4&#8239;% d'avantage maison — plus que toute autre règle courante du jeu. Les deux tables 6:5 de WiseHand sont mesurées à 1,850&#8239;% et 2,073&#8239;% d'avantage maison, quand les huit tables 3:2 du salon tiennent toutes entre 0,359&#8239;% et 0,631&#8239;%. Aucun compteur de cartes ne rattrape un écart pareil. La règle est imprimée sur le tapis : elle se lit avant de s'asseoir.</p>
+
+<h2 id="calcul">Ce que « 6:5 » veut dire, en jetons</h2>
+
+<p>Un blackjack — un as et une carte de valeur 10 servis d'entrée — est la seule main du jeu qui rapporte plus que la mise. C'est la seule prime accordée au joueur, et le rapport imprimé sur le feutre dit combien.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Mise</th><th class="n">Payé 3:2</th><th class="n">Payé 6:5</th><th class="n">Écart</th></tr></thead>
+<tbody>
+<tr><td>5</td><td class="n bon">7,50</td><td class="n mauvais">6</td><td class="n">&minus;1,50</td></tr>
+<tr><td>10</td><td class="n bon">15</td><td class="n mauvais">12</td><td class="n">&minus;3</td></tr>
+<tr><td>100</td><td class="n bon">150</td><td class="n mauvais">120</td><td class="n">&minus;30</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Un cinquième du paiement disparaît, mais ce n'est pas le chiffre qui compte. Comparez plutôt le blackjack à une victoire ordinaire, qui rapporte la mise : sur 10 jetons, elle en rapporte 10, un blackjack payé 3:2 en rapporte 15, un blackjack 6:5 en rapporte 12. <strong>La prime — ce que le blackjack donne en plus d'une victoire ordinaire — tombe de 5 jetons à 2.</strong> Ce n'est pas un cinquième qu'on retire, ce sont les trois cinquièmes de l'avantage que cette main devait rendre.</p>
+
+<h2 id="frequence">Une main sur vingt et une, et ce que ça coûte</h2>
+
+<p>Un blackjack demande un as et une carte de 10 : la probabilité se calcule à la main, elle n'a pas besoin d'être simulée. Elle tourne autour d'une main sur vingt et une — un peu plus avec un seul jeu, un peu moins avec huit.</p>
+
+<p>Posons deux hypothèses, pour qu'on puisse les vérifier : cent mains jouées, et 10 jetons de mise initiale.</p>
+
+<ul>
+<li>Cent mains à 10 jetons, ce sont 1 000 jetons engagés d'entrée.</li>
+<li>Un peu moins de cinq sont des blackjacks, et une petite part est annulée par un blackjack du croupier, qui fait égalité : il en reste environ quatre et demi à payer.</li>
+<li>Chacun rapporte 12 au lieu de 15, soit trois jetons de moins.</li>
+</ul>
+
+<p>Environ quatorze jetons partent ainsi sans qu'il se soit rien passé de remarquable : pas une main perdue de plus, pas une décision ratée. Et 1,4&#8239;% de 1 000 jetons, ce sont quatorze jetons — les deux chemins tombent au même endroit.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Table</th><th class="n">Avantage maison</th><th class="n">Perte sur 100 mains</th><th class="n">Sur 400 mains</th></tr></thead>
+<tbody>
+<tr><td>Le Boulevard (3:2)</td><td class="n bon">0,583&#8239;%</td><td class="n">5,8 jetons</td><td class="n">23 jetons</td></tr>
+<tr><td>Le Néon (6:5)</td><td class="n mauvais">1,850&#8239;%</td><td class="n">18,5 jetons</td><td class="n">74 jetons</td></tr>
+<tr><td>L'Aquarium (6:5)</td><td class="n mauvais">2,073&#8239;%</td><td class="n">20,7 jetons</td><td class="n">83 jetons</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Ce tableau compte des <em>mains</em>, pas des heures. <strong>WiseHand ne mesure pas le nombre de mains distribuées par heure</strong>, et cette cadence varie beaucoup : une table à un seul jeu mélangée à la main débite bien plus de mains qu'un sabot de huit jeux occupé par sept joueurs. Le classement à l'heure n'est donc pas celui de ce tableau — Le Néon, plus rapide, coûte en réalité plus cher par heure que L'Aquarium, dont l'avantage maison est pourtant plus élevé. Ce qui est mesuré ici, c'est la perte par main jouée.</p>
+
+<h2 id="mesure">Les tables 6:5, mesurées</h2>
+
+<p>Le salon de WiseHand compte dix tables, chacune bâtie sur un règlement de casino réel. Leur avantage maison n'est pas recopié d'un ouvrage : il est obtenu en simulant trois millions de mains par table, à graine fixe, avec la stratégie de base que le solveur calcule pour ce règlement-là. Voici les huit qui servent cette page ; le <a href="/blackjack/#avantage">tableau complet</a> est sur la page du jeu.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Table</th><th class="n">Jeux</th><th class="n">Croupier</th><th class="n">Blackjack</th><th class="n">Avantage maison</th></tr></thead>
+<tbody>
+<tr><td>La Marina</td><td class="n">6</td><td class="n">S17</td><td class="n">3:2</td><td class="n bon">0,359&#8239;%</td></tr>
+<tr><td>Le Front de Mer</td><td class="n">8</td><td class="n">S17</td><td class="n">3:2</td><td class="n bon">0,379&#8239;%</td></tr>
+<tr><td>La Main Chaude</td><td class="n">2</td><td class="n">H17</td><td class="n">3:2</td><td class="n bon">0,381&#8239;%</td></tr>
+<tr><td>Le Salon Privé</td><td class="n">6</td><td class="n">S17</td><td class="n">3:2</td><td class="n bon">0,384&#8239;%</td></tr>
+<tr><td>Le Boulevard</td><td class="n">6</td><td class="n">H17</td><td class="n">3:2</td><td class="n">0,583&#8239;%</td></tr>
+<tr><td>Le Vieux Reno</td><td class="n">1</td><td class="n">H17</td><td class="n">3:2</td><td class="n">0,631&#8239;%</td></tr>
+<tr><td>Le Néon</td><td class="n">1</td><td class="n">H17</td><td class="n mauvais">6:5</td><td class="n mauvais">1,850&#8239;%</td></tr>
+<tr><td>L'Aquarium</td><td class="n">8</td><td class="n">H17</td><td class="n mauvais">6:5</td><td class="n mauvais">2,073&#8239;%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Les huit tables 3:2 du salon — les six ci-dessus, plus Le Cotai et Le Cercle — tiennent dans moins de trois dixièmes de point, de 0,359&#8239;% à 0,631&#8239;%. Et pourtant leurs règlements n'ont presque rien en commun : un jeu ou huit, croupier qui tire ou non sur le 17 souple, abandon ou pas, doublement libre ou bridé. Puis les deux tables 6:5 arrivent, et elles ne sont pas un peu plus chères : Le Néon coûte plus de trois fois Le Boulevard et plus de cinq fois La Marina, et L'Aquarium va plus loin encore.</p>
+
+<h3>Le Néon contre Le Vieux Reno : le même jeu, un rapport d'écart</h3>
+
+<p>La comparaison la plus propre du catalogue oppose deux tables à un seul jeu, croupier qui tire sur le 17 souple, sans abandon, sans doublement après séparation, une seule séparation autorisée. Le même jeu, bridé de la même façon. Deux règles les séparent.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th></th><th class="n">Le Néon</th><th class="n">Le Vieux Reno</th></tr></thead>
+<tbody>
+<tr><td>Jeux dans le sabot</td><td class="n">1</td><td class="n">1</td></tr>
+<tr><td>Doublement autorisé</td><td class="n bon">sur 9, 10 et 11</td><td class="n">sur 10 et 11</td></tr>
+<tr><td>Blackjack payé</td><td class="n mauvais">6:5</td><td class="n bon">3:2</td></tr>
+<tr><td>Avantage maison</td><td class="n mauvais">1,850&#8239;%</td><td class="n">0,631&#8239;%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Lisez ce tableau dans le bon sens : <strong>Le Néon a le règlement le plus généreux des deux.</strong> Il vous laisse doubler sur 9, ce que Le Vieux Reno refuse. Ce droit joue en votre faveur, et il ne se voit pas dans le résultat — il est enseveli. La carte de coupe, plantée un peu plus loin au Vieux Reno, n'explique rien non plus : la pénétration décide de ce qu'un compteur peut faire, elle ne change rien à l'avantage maison en stratégie de base. Reste un seul écart qui pèse, le rapport imprimé sur le feutre, et Le Néon coûte près de trois fois Le Vieux Reno.</p>
+
+<h2 id="rien-ne-compense">Aucune autre règle ne coûte autant</h2>
+
+<p>C'est le point à retenir, et il se démontre avec les mêmes mesures. Prenez Le Boulevard et Le Salon Privé : six jeux tous les deux, blackjack 3:2, abandon tardif, doublement libre, doublement après séparation. Une seule différence pèse sur l'avantage maison — au Boulevard le croupier tire sur le 17 souple, au Salon Privé il reste. Le premier sort à 0,583&#8239;%, le second à 0,384&#8239;%, soit environ 0,2&#8239;% d'écart. Leurs cartes de coupe diffèrent aussi, mais la pénétration ne concerne que le comptage.</p>
+
+<p><a href="/academie/s17-h17/">H17 contre S17</a> est pourtant l'une des règles les plus commentées du blackjack, celle qu'on cherche en premier sur un tapis. Elle vaut deux dixièmes de point. Le paiement du blackjack en vaut sept fois plus.</p>
+
+<p>Le nombre de jeux, alors&#8239;? Il compte, mais il se laisse annuler par le reste : Le Front de Mer aligne huit jeux et sort à 0,379&#8239;%, La Main Chaude n'en a que deux et sort à 0,381&#8239;% — l'avantage de ses deux jeux est repris par son croupier qui tire sur le 17 souple et par l'absence d'abandon. Deux millièmes de point séparent ces deux tables, moins que le bruit d'une mesure. L'abandon tardif, le doublement après séparation, le droit de séparer quatre fois valent chacun des centièmes ou des dixièmes de point. Le blackjack payé 6:5 les vaut tous ensemble, à lui seul.</p>
+
+<h2 id="comptage">Pourquoi un compteur ne rattrape pas ça</h2>
+
+<div class="avert">
+<p>Le comptage des cartes rapporte quelques dixièmes de pour cent, sur des milliers de mains, à condition de ne jamais se tromper. Une table 6:5 part avec plus d'un point de retard en plus. Ce n'est pas le même ordre de grandeur.</p>
+</div>
+
+<p>Un compteur ne joue pas mieux ses mains : il joue plus gros quand le sabot lui devient favorable. Son gain se compte en dixièmes de point. Commencer à 1,850&#8239;% au lieu de 0,583&#8239;% oblige à retrouver plus d'un point entier avant d'espérer le premier jeton, et aucune rampe de mise ne fait ça.</p>
+
+<p>Il y a pire. Ce que produit un compte fort, c'est un sabot riche en as et en 10 — donc plus de blackjacks pour vous, et plus de mains où le croupier dépasse. La première moitié de ce gain est précisément celle que la table ampute, et elle l'ampute au moment où votre mise est la plus grosse : sur une mise de cinq unités, la prime d'un blackjack tombe de deux unités et demie à une seule.</p>
+
+<p>WiseHand ne publie pas de compte vrai d'équilibre pour ces tables : le simulateur mesure l'avantage maison face à un joueur de stratégie de base, pas le seuil où un compteur passerait devant. Ce qui est mesuré est affiché, ce qui ne l'est pas n'est pas inventé — et ce point d'équilibre est repoussé au-delà des comptes qu'un sabot réel atteint.</p>
+
+<p>Trois des dix tables du salon ne se comptent pas, pour deux raisons différentes. Sur les deux tables 6:5, le compte fonctionne mais ne suffit pas. Sur <a href="/academie/melangeuse-continue/">celle qui tourne à la mélangeuse continue</a>, il ne fonctionne pas du tout : les cartes jouées retournent aussitôt dans le sabot, le compte ne s'accumule jamais. <a href="/blackjack/#comptage">Ce que le comptage fait vraiment</a> est expliqué sur la page du jeu.</p>
+
+<h2 id="reperer">Comment repérer une table 6:5 avant de s'asseoir</h2>
+
+<p>C'est écrit sur le feutre. Pas caché — écrit, mais petit.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">Les cinq secondes avant de s'asseoir</h3>
+<ol>
+<li><strong>Lisez le feutre en entier.</strong> Une table 3:2 imprime son rapport en grand, au centre du tapis — « BLACKJACK PAIE 3 CONTRE 2 », ou « BLACKJACK PAYS 3 TO 2 ». Une table 6:5 imprime « BLACKJACK PAYS 6 TO 5 », souvent sur un petit panneau posé au coin.</li>
+<li><strong>Regardez le pas des mises.</strong> Six pour cinq ne tombe sur un nombre entier que si la mise est un multiple de cinq&#8239;: les tables 6:5 imposent souvent ce pas, et quand elles ne l'imposent pas, le paiement est arrondi — jamais en votre faveur.</li>
+<li><strong>Regardez à deux fois un minimum bas au mauvais endroit.</strong> Un minimum modeste sur une table pleine, à l'heure de pointe, dans une zone très fréquentée, n'est pas toujours une générosité. Ce n'est qu'un indice : il existe d'excellentes tables 3:2 à petit minimum, et seul le feutre tranche.</li>
+<li><strong>Ne vous fiez pas au jeu unique.</strong> Un seul jeu offre la meilleure géométrie qui existe pour un compteur, et c'est pour cette raison qu'on l'associe si souvent à un paiement 6:5. Peu de jeux ne veut pas dire bon jeu.</li>
+<li><strong>Demandez.</strong> « Le blackjack paie combien&#8239;? » est une question ordinaire, à laquelle un croupier répond sans se formaliser.</li>
+</ol>
+</div>
+
+<p>Le salon imprime ce même lettrage sur ses feutres. <a href="/">Ouvrez Le Néon, puis Le Boulevard</a>, et regardez le milieu du tapis : plus d'un point d'avantage maison sépare ces deux tapis.</p>
+
+<h2 id="honnete">Ce n'est pas une arnaque</h2>
+
+<p>Il faut le dire. Une table qui paie 6:5 ne triche pas. Le rapport est imprimé sur le feutre, il est le même pour tout le monde, il est connu avant que la première carte ne sorte, et un casino a le droit de fixer le prix de son jeu.</p>
+
+<p>Ce qui est vrai aussi : un joueur de stratégie de base parfaite y perd son argent trois à six fois plus vite qu'à la table d'à côté, dans une partie qui lui paraîtra identique. Le piège n'est pas dans le mensonge, il est dans l'indifférence. C'est une règle qui coûte cher et qui ne se voit pas pendant qu'on joue : elle ne se voit qu'avant, sur le feutre, et après, sur le solde.</p>
+
+<p>Une dernière chose, qui vaut pour toutes les tables de cette page. <strong>Même la meilleure d'entre elles reste perdante à long terme.</strong> La Marina prend 0,359&#8239;% au meilleur joueur du monde. Choisir sa table ne change pas le sens de la pente, seulement son inclinaison. Le blackjack ne se joue bien qu'avec des jetons qui ne valent rien, et c'est tout ce que <a href="/academie/">l'académie</a> propose.</p>
+
+<div class="appel">
+<p>Le Néon et L'Aquarium existent dans le salon exprès : pour qu'on apprenne à les reconnaître, et à se lever. Dix tables, dix règlements de casino, l'avantage maison mesuré sur chaque porte. Jetons sans valeur, aucun argent réel.</p>
+<a class="btn" href="/">Ouvrir le salon et comparer les tables</a>
+</div>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Pourquoi faut-il éviter le blackjack payé 6:5&#8239;?</h3>
+
+<p>Parce qu'il coûte près de 1,4&#8239;% d'avantage maison à lui seul, plus que toute autre règle courante du jeu. Sur une mise de 10, un blackjack rapporte 12 au lieu de 15, et un blackjack tombe environ une main sur vingt et une. Les deux tables 6:5 de WiseHand sont mesurées à 1,850&#8239;% et 2,073&#8239;% d'avantage maison, quand les huit tables 3:2 du salon tiennent toutes entre 0,359&#8239;% et 0,631&#8239;%.</p>
+
+<h3>Un compteur de cartes peut-il battre une table 6:5&#8239;?</h3>
+
+<p>Non. Le comptage rapporte quelques dixièmes de point sur des milliers de mains, quand une table 6:5 part avec plus d'un point de retard supplémentaire à combler. Le compte fort produit surtout des blackjacks, c'est-à-dire exactement la main que la table sous-paie, et il les produit au moment précis où la mise est la plus grosse.</p>
+
+<h3>Combien coûte vraiment une table 6:5 sur cent mains&#8239;?</h3>
+
+<p>Sur cent mains à 10 jetons de mise initiale, soit 1 000 jetons engagés, une table 3:2 comme Le Boulevard prend en moyenne 5,8 jetons, Le Néon en prend 18,5 et L'Aquarium 20,7. Ces montants comptent des mains et non des heures, parce que WiseHand ne mesure pas le nombre de mains distribuées par heure : cette cadence dépend du croupier et du nombre de joueurs, et elle varie assez pour changer le classement d'une table à l'autre.</p>
+
+<h3>Comment savoir si une table paie 6:5 avant de s'asseoir&#8239;?</h3>
+
+<p>C'est écrit sur le feutre, mais souvent en petit. Une table 3:2 annonce « BLACKJACK PAIE 3 CONTRE 2 » en grandes lettres au centre du tapis, tandis qu'une table 6:5 le mentionne volontiers sur un petit panneau posé au coin. Un autre indice aide : six pour cinq ne tombe sur un nombre entier qu'à des mises multiples de cinq, et ces tables imposent souvent ce pas. En cas de doute, la question se pose au croupier.</p>
+
+<h3>Le blackjack payé 6:5, est-ce une arnaque&#8239;?</h3>
+
+<p>Non. Le rapport est imprimé sur le tapis, il est le même pour tout le monde, et il est connu avant que la première carte ne sorte. Ce n'est pas un mensonge, c'est une règle qui coûte cher et qui ne se voit pas pendant qu'on joue, puisqu'elle ne se voit qu'avant, sur le feutre, et après, sur le solde.</p>

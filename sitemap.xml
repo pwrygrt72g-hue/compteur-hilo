@@ -1,23 +1,109 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  UNE seule URL pour l'instant : l'application. Le guide (FR et EN) en a été RETIRÉ le
-  07/09/2026, le temps qu'un humain relise ses chiffres — il porte un noindex assorti.
-  Le remettre ici et retirer le noindex vont ENSEMBLE, jamais l'un sans l'autre.
-  Un plan de site n'est pas un inventaire de fichiers — y déclarer les .webp, le
-  manifeste ou le service worker ne fait que diluer ce qu'on demande de lire.
-  ⚠️ `lastmod` doit être la VRAIE date de dernière modification du contenu. Le
-  gonfler à chaque déploiement apprend au robot à l'ignorer.
--->
+<!-- Écrit par outils/pages.mjs. Ne pas modifier à la main : la prochaine construction
+     l'écraserait. Une page s'ajoute au plan en s'ajoutant à src/pages/catalogue.mjs. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
   <url>
     <loc>https://wisehand21.com/</loc>
-    <lastmod>2026-09-07</lastmod>
+    <lastmod>2026-09-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
-
+  <url>
+    <loc>https://wisehand21.com/blackjack/</loc>
+    <lastmod>2026-09-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://wisehand21.com/blackjack/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wisehand21.com/en/blackjack/"/>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/en/blackjack/</loc>
+    <lastmod>2026-09-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wisehand21.com/en/blackjack/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://wisehand21.com/blackjack/"/>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/valeurs-des-cartes-hi-lo/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/compte-vrai/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/penetration-du-sabot/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/assurance/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/illustrious-18/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/blackjack-6-5/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/s17-h17/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/melangeuse-continue/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/combien-rapporte-le-comptage/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/academie/compter-les-cartes-est-ce-legal/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/histoire-du-blackjack/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://wisehand21.com/films-comptage-de-cartes/</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
 
 </urlset>

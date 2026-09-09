@@ -1,0 +1,257 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Les pages éditoriales — « Laque & filament », version lecture.
+
+   🚨 POURQUOI CE FICHIER EXISTE (08/09/2026). Les deux pages du guide étaient
+   DEUX DESSINS DIFFÉRENTS : la française en sombre seul (Archivo, Instrument
+   Serif, palette --encre/--os), l'anglaise en clair/sombre avec un corps en
+   serif système et un vocabulaire de classes qui n'existait nulle part ailleurs
+   (.art, .lede, .scroll, .chart, .cta). Deux sœurs qui ne se ressemblaient pas,
+   et aucune des deux ne ressemblait à l'application. En ajouter douze de plus à
+   la main aurait fait douze dessins.
+   Une seule feuille, inlinée dans chaque page par outils/pages.mjs.
+
+   Les NOMS DE JETONS sont ceux de src/app/style.css, à l'identique, et le
+   système de thème aussi (trois états : la préférence du système, et les deux
+   forçages [data-theme]). Ce n'est pas de la coquetterie : le lecteur qui passe
+   d'une leçon à l'application ne doit pas avoir l'impression de changer de site.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  color-scheme:light dark;
+  --encre:#DBD7CB; --laque:#F6F4EE; --relief:#FCFBF7;
+  --os:#131C1A; --os-eteint:#55605C;
+  --jade:#0D735F; --cinabre:#B33F22;
+  --or-base:#8A5C0B; --or-lumiere:#6F4A08;
+  --bord:#C3BEB0; --trait:#D2CDBF;
+  --btn-or:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); --btn-encre:#1A1206;
+  --colonne:min(68ch, 100% - 2.5rem);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="clair"]){
+    --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+    --os:#EDE7D9; --os-eteint:#A3AAA4;
+    --jade:#4FD8C0; --cinabre:#F4876C;
+    --or-base:#D9B45B; --or-lumiere:#F3C866;
+    --bord:#3A4A45; --trait:#243230;
+  }
+}
+:root[data-theme="sombre"]{
+  --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+  --os:#EDE7D9; --os-eteint:#A3AAA4;
+  --jade:#4FD8C0; --cinabre:#F4876C;
+  --or-base:#D9B45B; --or-lumiere:#F3C866;
+  --bord:#3A4A45; --trait:#243230;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--encre);color:var(--os);
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65}
+::selection{background:color-mix(in oklab, var(--jade) 30%, transparent)}
+
+/* ── L'enseigne ──────────────────────────────────────────────────────── */
+.enseigne{border-bottom:1px solid var(--trait);background:var(--laque)}
+.enseigne .dedans{width:var(--colonne);margin:0 auto;display:flex;align-items:center;
+  gap:14px;min-height:56px}
+.marque{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--os);
+  font-family:"Martian Mono",ui-monospace,monospace;font-size:12px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase}
+.marque svg{width:20px;height:20px;flex:none;color:var(--or-base)}
+.enseigne nav{margin-left:auto;display:flex;gap:16px;font-size:14px}
+.enseigne nav a{color:var(--os-eteint);text-decoration:none}
+.enseigne nav a:hover,.enseigne nav a:focus-visible{color:var(--jade)}
+
+.enveloppe{width:var(--colonne);margin:0 auto;padding:26px 0 76px}
+
+/* ── Le texte ────────────────────────────────────────────────────────── */
+a{color:var(--jade);text-underline-offset:.16em}
+a:hover{color:var(--os)}
+h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;line-height:1.14;
+  margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,50px);margin:18px 0 10px;letter-spacing:-.01em}
+h2{font-size:clamp(24px,4vw,34px);margin:52px 0 12px;scroll-margin-top:70px}
+h3{font-size:21px;margin:30px 0 6px;color:var(--or-lumiere);scroll-margin-top:70px}
+p{margin:0 0 15px}
+strong{font-weight:700}
+.chapo{font-size:19.5px;line-height:1.55;color:var(--os-eteint);margin-bottom:8px}
+ul,ol{margin:0 0 15px;padding-left:22px}
+li{margin-bottom:7px}
+dt{font-weight:700;margin-top:16px}
+dd{margin:2px 0 0 18px}
+hr{border:0;border-top:1px solid var(--trait);margin:44px 0 30px}
+code,.chiffre{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.9em;font-variant-numeric:tabular-nums}
+
+/* ── Le fil d'Ariane et l'ours ───────────────────────────────────────── */
+.fil{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--os-eteint);margin:0}
+.fil a{color:var(--os-eteint);text-decoration:none}
+.fil a:hover{color:var(--jade)}
+.fil .sep{opacity:.5;padding:0 6px}
+.ours{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:13.5px;
+  color:var(--os-eteint);margin:0 0 30px;padding-bottom:18px;border-bottom:1px solid var(--trait)}
+.ours .pt{opacity:.45}
+
+/* ── Les blocs ───────────────────────────────────────────────────────── */
+.panneau{background:var(--laque);border:1px solid var(--trait);border-radius:12px;
+  padding:18px 20px;margin:26px 0}
+.panneau>:last-child{margin-bottom:0}
+.panneau h3{margin-top:0}
+.avert{border-left:3px solid var(--cinabre);padding:2px 0 2px 16px;margin:26px 0;
+  color:var(--os-eteint)}
+.avert>:last-child{margin-bottom:0}
+.appel{background:var(--relief);border:1px solid var(--bord);border-radius:14px;
+  padding:24px;margin:38px 0;text-align:center}
+.appel>:last-child{margin-bottom:0}
+.appel .btn{display:inline-block;margin-top:12px;background:var(--btn-or);color:var(--btn-encre);
+  font-weight:700;text-decoration:none;padding:13px 24px;border-radius:10px;
+  transition:transform .12s cubic-bezier(.22,.72,.24,1), filter .15s}
+.appel .btn:hover{filter:brightness(1.06);color:var(--btn-encre)}
+.appel .btn:active{transform:translateY(1px) scale(.985)}
+
+/* ── Les tableaux : le défilement est CONFINÉ, la page ne bouge jamais ─ */
+.tableau{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:20px 0;
+  border:1px solid var(--trait);border-radius:10px;
+  /* Ombres de défilement, en CSS pur (ces pages n'ont pas une ligne de JS) : les deux
+     premiers dégradés couvrent la couleur du fond et sont ANCRÉS AU CONTENU
+     (background-attachment:local), les deux ombres restent collées au cadre. Résultat :
+     l'ombre n'apparaît que du côté où il reste quelque chose à voir. Sans elle, un
+     tableau plus large que l'écran a l'air simplement tronqué — personne ne devine
+     qu'il faut le faire glisser. */
+  background-image:
+    linear-gradient(to right, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    linear-gradient(to left, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent),
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent);
+  background-position:0 0, 100% 0, 0 0, 100% 0;
+  background-repeat:no-repeat;
+  background-size:28px 100%, 28px 100%, 12px 100%, 12px 100%;
+  background-attachment:local, local, scroll, scroll}
+/* 🚨 min(32rem, 100%) et pas 32rem : à 375 px, un min-width fixe poussait TOUTES les
+   colonnes de chiffres hors de l'écran — les cinq tableaux d'une leçon ne montraient
+   que leurs libellés, et il fallait deviner qu'on pouvait les faire défiler du doigt
+   (mesuré le 09/09 : table de 512 px dans une boîte de 335). Hors écran = inexistant. */
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:min(32rem,100%)}
+@media (max-width:560px){ th,td{padding:8px 6px} table{font-size:13.5px} caption{padding:9px 10px} }
+caption{caption-side:top;text-align:left;padding:11px 13px;font-size:13px;
+  color:var(--os-eteint);border-bottom:1px solid var(--trait)}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--trait)}
+tr:last-child>*{border-bottom:0}
+th{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--os-eteint);font-weight:600}
+/* Un NOMBRE ne se coupe pas ; un EN-TÊTE, si. « Avantage maison » et « Gain du compteur »
+   en nowrap imposaient 540 px à un tableau de dix lignes sur un écran de 375. */
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.n{white-space:nowrap}
+.bon{color:var(--jade)} .mauvais{color:var(--cinabre)}
+
+/* ── Le sommaire de l'Académie ───────────────────────────────────────── */
+.lecons{list-style:none;margin:22px 0;padding:0;display:grid;gap:10px}
+.lecons li{margin:0}
+.lecons a{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;
+  text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, transform .18s cubic-bezier(.22,.72,.24,1), background .18s}
+.lecons a:hover,.lecons a:focus-visible{border-color:var(--or-base);transform:translateX(3px);
+  background:var(--relief);color:var(--os)}
+.lecons .no{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;
+  color:var(--or-base);letter-spacing:.1em;grid-row:span 2}
+.lecons b{font-weight:600;font-size:17px}
+.lecons span{color:var(--os-eteint);font-size:14.5px;line-height:1.5}
+
+/* ── Leçon précédente / suivante ─────────────────────────────────────── */
+.suite{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 0}
+.suite a{display:block;text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, background .18s}
+.suite a:hover,.suite a:focus-visible{border-color:var(--or-base);background:var(--relief);color:var(--os)}
+.suite .sens{display:block;font-family:"Martian Mono",ui-monospace,monospace;font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--os-eteint);margin-bottom:3px}
+.suite .apres{text-align:right;grid-column:2}
+@media(max-width:560px){.suite{grid-template-columns:1fr}.suite .apres{grid-column:1;text-align:left}}
+
+/* ── L'ours de pied de page ──────────────────────────────────────────── */
+footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--trait);
+  font-size:14px;color:var(--os-eteint);line-height:1.6}
+footer a{color:var(--os-eteint)}
+footer a:hover{color:var(--jade)}
+footer .aide{background:var(--laque);border:1px solid var(--trait);border-radius:10px;
+  padding:14px 16px;margin:0 0 16px}
+footer .aide strong{color:var(--os)}
+footer .meta{font-size:13.5px;line-height:1.6;margin:0 0 16px}
+footer .meta strong{color:var(--os)}
+
+
+/* ── Le sommaire d'une page longue ───────────────────────────────────── */
+.toc{border:1px solid var(--trait);border-radius:12px;padding:6px 22px 16px;margin:30px 0;
+  background:var(--laque)}
+.toc h2{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.1em;margin:16px 0 8px;color:var(--os-eteint)}
+.toc ol{margin:0;padding-left:20px;font-size:15.5px}
+.toc li{margin:3px 0}
+
+/* ── Une note en marge, plus légère qu'un panneau ─────────────────────── */
+.note{border-left:3px solid var(--or-base);padding:.6rem 0 .6rem 1rem;margin:24px 0;
+  font-size:15.5px;color:var(--os-eteint);
+  background:color-mix(in oklab, var(--or-base) 6%, transparent)}
+.note>:last-child{margin-bottom:0}
+
+/* ── Un calcul posé ──────────────────────────────────────────────────── */
+.math{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14.5px;
+  background:color-mix(in oklab, var(--os) 6%, transparent);padding:12px 14px;border-radius:8px;
+  overflow-x:auto}
+
+/* ── La grille de stratégie de base ───────────────────────────────────
+   Le GLYPHE porte l'information ; la couleur ne fait que la doubler. En
+   deutéranopie le jade et le cinabre s'effondrent à des luminances voisines :
+   une grille qui ne se lirait qu'en couleur serait illisible pour 8 % des hommes.
+   La première colonne reste collée à gauche quand on fait défiler — sans elle,
+   sur un téléphone, on lit « U » sans savoir si c'est la ligne 15 ou la 16.
+   Le fond de cette colonne doit être OPAQUE : une teinte translucide laisserait
+   passer les cellules qui glissent dessous. */
+table.chart, table.rules{font-family:Archivo,"Helvetica Neue",Arial,sans-serif}
+table.chart th, table.chart td{text-align:center;padding:6px 5px}
+table.chart tbody th[scope=row]{text-align:left;padding-left:12px;white-space:nowrap;font-weight:600;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:13px;letter-spacing:0;text-transform:none;
+  color:var(--os)}
+.chart tbody th[scope=row], .chart thead th:first-child{position:sticky;left:0;z-index:2;
+  background:var(--encre)}
+.chart thead th:first-child{z-index:3}
+.chart tbody th[scope=row]::after{content:"";position:absolute;inset:0 -1px 0 auto;width:1px;
+  background:var(--trait)}
+.chart td{font-weight:700;font-variant-numeric:tabular-nums;min-width:2.1rem}
+.rules{font-size:14px}
+.rules th[scope=row]{font-weight:400;text-transform:none;letter-spacing:0;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:14px;color:var(--os)}
+.rules td{text-align:center;font-variant-numeric:tabular-nums}
+.a-H{background:color-mix(in oklab, var(--cinabre) 15%, transparent);color:var(--cinabre)}
+.a-S{background:color-mix(in oklab, var(--jade) 15%, transparent);color:var(--jade)}
+.a-D{background:color-mix(in oklab, var(--or-base) 18%, transparent);color:var(--or-lumiere)}
+.a-P{background:color-mix(in oklab, #2f6296 20%, transparent);color:#2f6296}
+.a-U{background:color-mix(in oklab, var(--os) 12%, transparent);color:var(--os-eteint)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="clair"]) .a-P{color:#7fb3e8}}
+:root[data-theme="sombre"] .a-P{color:#7fb3e8}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;margin:16px 0;
+  color:var(--os-eteint)}
+.legend b{display:inline-block;width:1.6rem;text-align:center;border-radius:5px;margin-right:5px;
+  font-weight:700}
+.moyen{color:var(--or-lumiere);font-weight:700}
+td.bon,td.mauvais,td.moyen{font-weight:700}
+
+/* Le focus doit se VOIR : ces pages se lisent aussi au clavier. */
+a:focus-visible,button:focus-visible{outline:2px solid var(--or-base);outline-offset:3px;border-radius:4px}
+
+/* ── L'arrivée au défilement, comme dans le hall ──────────────────────
+   Même doctrine qu'à l'application : @supports pour qu'un moteur qui l'ignore
+   ne crée jamais l'animation, `no-preference` pour que la réduction du mouvement
+   gagne, et rien qui parte d'une opacité nulle sans timeline (une page d'article
+   doit rester lisible même si l'animation ne se déclenche jamais). */
+@supports (animation-timeline: view()){
+@media (prefers-reduced-motion: no-preference){
+  .enveloppe h2, .enveloppe .panneau, .enveloppe .tableau,
+  .enveloppe .appel, .enveloppe .avert, .enveloppe .lecons li{
+    animation:arrive linear both; animation-timeline:view();
+    animation-range:entry 4% entry 34%;
+  }
+  @keyframes arrive{ from{opacity:0;translate:0 14px} to{opacity:1;translate:0 0} }
+}}

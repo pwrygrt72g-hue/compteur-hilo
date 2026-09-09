@@ -60,6 +60,11 @@ const eteints = await evaluer(`(async () => { const raf = () => new Promise(r =>
     if (!reste.length) break; }
   return reste.slice(0, 6); })()`);
 const horizontal = await evaluer(`document.documentElement.scrollWidth - document.documentElement.clientWidth`);
+// --mesure=<fichier.mjs> : on ÉVALUE un bout de JS dans la page et on imprime ce qu'il rend.
+// Regarder une capture ne dit pas si une colonne de chiffres est hors écran de 3 px ou de
+// 300 ; la mesure, si. (Vécu le 09/09 : un tableau à trois colonnes lisible à l'œil sur
+// l'image, dont les nombres étaient en fait poussés hors du cadre sur téléphone.)
+if (opt.mesure) console.log(JSON.stringify(await evaluer(`(() => { ${readFileSync(String(opt.mesure), "utf8")} })()`), null, 1));
 const shot = await cdp("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
 writeFileSync(sortie, Buffer.from(shot.result.data, "base64"));
 console.log(`${sortie}  (${L}×${H}, ${chemin}${opt.vers ? " → " + opt.vers : ""}${opt.sombre ? ", sombre" : ""})${horizontal > 0 ? `  ⚠ DÉBORDEMENT horizontal de ${horizontal} px` : ""}${eteints && eteints.length ? `  ⚠ encore éteints : ${eteints.join(", ")}` : ""}`);

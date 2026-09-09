@@ -1,0 +1,135 @@
+<h1>L'Illustrious 18&#8239;: la liste des écarts au compte qui rapportent le plus</h1>
+
+<p class="chapo">L'Illustrious 18 est la courte liste des situations où le compte vrai doit vous faire quitter la stratégie de base&#8239;: les écarts qui rapportent le plus au regard de ce qu'ils coûtent à mémoriser, nommés et classés par Don Schlesinger dans «&nbsp;Blackjack Attack&nbsp;». WiseHand ne recopie pas cette liste&#8239;: il la retrouve par le calcul, table par table, avec son propre solveur. Vous trouverez ci-dessous celle du Boulevard — six jeux, croupier qui tire sur 17 souple, blackjack payé 3:2, coupe à 75&#8239;% — avec l'index exact de chaque décision. Et surtout ce que la plupart des listes publiées passent sous silence&#8239;: elle n'est pas la même d'un casino à l'autre, et une liste apprise pour un règlement est fausse ailleurs.</p>
+
+<h2 id="definition">Ce qu'est l'Illustrious 18</h2>
+
+<p>La <a href="/blackjack/#strategie">stratégie de base</a> vous dit quoi faire sans rien savoir du sabot. Elle est calculée pour un jeu neutre, et elle est optimale tant que vous ne comptez pas. Dès que vous suivez le <a href="/blackjack/#comptage">compte vrai</a>, vous en savez plus qu'elle&#8239;: vous savez si les cartes qui restent sont riches en dix et en as, ou pauvres. Certaines décisions basculent alors — le bon coup n'est plus le même.</p>
+
+<p><strong>Un écart au compte, c'est une case de la stratégie de base assortie d'un seuil.</strong> «&nbsp;Dur 16 contre 10&nbsp;: rester à partir de 0&nbsp;» veut dire&#8239;: en dessous d'un compte vrai de zéro, vous tirez comme le dit la stratégie de base&#8239;; à partir de zéro, vous restez. Ce seuil s'appelle un <em>index</em>.</p>
+
+<p>Il existe des dizaines d'écarts sur une table donnée, et la plupart ne se déclenchent qu'à des comptes qu'on ne voit presque jamais. L'idée de l'Illustrious 18 est là&#8239;: isoler la poignée qui capture l'essentiel du gain, et laisser tomber le reste. C'est une liste de rendement, pas d'exhaustivité.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">Index positif, index négatif</h3>
+<p>Un index positif se lit «&nbsp;seulement quand le sabot est devenu favorable&nbsp;»&#8239;: la décision remplace la stratégie de base au-dessus du seuil. Un index négatif se lit à l'envers&#8239;: la décision de la stratégie de base reste la bonne au compte neutre, et c'est <em>en dessous</em> du seuil qu'il faut y renoncer. Un index de &minus;1 ne veut donc pas dire «&nbsp;jouer ce coup rarement&nbsp;» — il veut dire «&nbsp;jouer ce coup presque toujours, sauf quand le sabot a tourné&nbsp;».</p>
+</div>
+
+<h2 id="liste">La liste calculée pour Le Boulevard</h2>
+
+<p>Le solveur du dépôt trouve <strong>79 écarts de jeu</strong> au Boulevard, plus 16 situations d'abandon. Classés par distance à zéro, dix-huit se détachent&#8239;: ce sont exactement ceux dont l'index tombe entre &minus;1 et +1. Le dix-neuvième n'apparaît qu'à &plusmn;2. La coupure n'a pas été choisie pour tomber sur dix-huit — c'est le calcul qui la pose là.</p>
+
+<p>L'assurance figure en tête du tableau sans faire partie de ces dix-huit. Ce n'est pas une manière de jouer sa main&#8239;: c'est un pari annexe, qu'on accepte ou qu'on refuse. La liste classique la compte parmi ses dix-huit&#8239;; le calcul, lui, la met à part.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Main</th><th class="n">Carte du croupier</th><th>Décision</th><th class="n">À partir de</th></tr></thead>
+<tbody>
+<tr><td><strong>N'importe laquelle</strong></td><td class="n">As</td><td><strong>Prendre l'assurance</strong></td><td class="n bon">+3</td></tr>
+<tr><td>Dur 9</td><td class="n">2</td><td>Doubler</td><td class="n">0</td></tr>
+<tr><td>Dur 12</td><td class="n">3</td><td>Rester</td><td class="n">0</td></tr>
+<tr><td>Dur 16</td><td class="n">10</td><td>Rester</td><td class="n">0</td></tr>
+<tr><td>Souple 17</td><td class="n">2</td><td>Doubler</td><td class="n">0</td></tr>
+<tr><td>Dur 8</td><td class="n">6</td><td>Doubler</td><td class="n">+1</td></tr>
+<tr><td>Dur 11</td><td class="n">As</td><td>Doubler</td><td class="n">&minus;1</td></tr>
+<tr><td>Dur 12</td><td class="n">4</td><td>Rester</td><td class="n">&minus;1</td></tr>
+<tr><td>Souple 13</td><td class="n">5</td><td>Doubler</td><td class="n">&minus;1</td></tr>
+<tr><td>Souple 14</td><td class="n">4</td><td>Doubler</td><td class="n">+1</td></tr>
+<tr><td>Souple 15</td><td class="n">4</td><td>Doubler</td><td class="n">&minus;1</td></tr>
+<tr><td>Souple 18</td><td class="n">2</td><td>Doubler</td><td class="n">&minus;1</td></tr>
+<tr><td>Souple 19</td><td class="n">5</td><td>Doubler</td><td class="n">+1</td></tr>
+<tr><td>Souple 19</td><td class="n">6</td><td>Doubler</td><td class="n">&minus;1</td></tr>
+<tr><td>Paire de 3</td><td class="n">2</td><td>Séparer</td><td class="n">&minus;1</td></tr>
+<tr><td>Paire de 9</td><td class="n">As</td><td>Séparer</td><td class="n">+1</td></tr>
+<tr><td>Dur 15</td><td class="n">As</td><td>Abandonner</td><td class="n">&minus;1</td></tr>
+<tr><td>Dur 15</td><td class="n">10</td><td>Abandonner</td><td class="n">&minus;1</td></tr>
+<tr><td>Dur 16</td><td class="n">9</td><td>Abandonner</td><td class="n">&minus;1</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>«&nbsp;Dur&nbsp;» désigne une main sans as, ou dont l'as ne peut plus compter 11. «&nbsp;Souple&nbsp;» désigne une main où un as vaut encore 11 — un souple 19, c'est un as et un 8.</p>
+
+<p>Les trois dernières lignes supposent l'abandon tardif. Quatre tables du salon sur dix le proposent&#8239;: Le Boulevard, Le Front de Mer, Le Salon Privé et La Marina. Sur les six qui ne l'offrent pas, ces trois écarts n'existent pas du tout. Sur les trois autres, «&nbsp;dur 15 contre 10&nbsp;» et «&nbsp;dur 16 contre 9&nbsp;» gardent leur seuil de &minus;1, tandis que «&nbsp;dur 15 contre As&nbsp;» remonte à +1.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">Pourquoi les lignes d'abandon sont à part</h3>
+<p>Le dépôt calcule les quinze premiers écarts <em>en désactivant l'abandon</em>&#8239;: sinon celui-ci masque la bascule tirer/rester, qui est précisément celle que les tableaux publient. Les trois lignes d'abandon, elles, sont calculées avec les vraies règles. À savoir avant de jouer&#8239;: au Boulevard, la stratégie de base abandonne déjà un dur 16 contre 10 au compte neutre. «&nbsp;Rester à partir de 0&nbsp;» est donc la consigne d'une table qui ne permet pas d'abandonner&#8239;; là où il est permis, c'est la ligne d'abandon qui tranche d'abord.</p>
+</div>
+
+<h2 id="lecture">Comment lire une ligne, et comment ne pas la jouer de travers</h2>
+
+<p>Le seuil est un compte vrai, jamais un compte courant. Un compte courant de +6 avec quatre jeux dans le sabot vaut un compte vrai de +1,5&#8239;: il déclenche les écarts d'index +1, pas ceux d'index +3. <strong>Un compteur qui applique ses écarts au compte courant les applique presque tous au mauvais moment.</strong> C'est l'erreur la plus fréquente, et elle coûte plus cher que les écarts ne rapportent.</p>
+
+<p>L'index est un plancher, pas une cible. Un index de +1 vaut pour +1, +2, +3 et au-delà&#8239;: une fois franchi, il reste franchi tant que le compte ne redescend pas. Et plus l'index est proche de zéro, plus le compte passe souvent de part et d'autre du seuil — c'est-à-dire plus souvent la décision change réellement. Les quatre lignes d'index 0 sont dans ce cas&#8239;: elles basculent au compte le plus banal qui soit.</p>
+
+<div class="avert">
+<p>Ces écarts ne rendent pas la table gagnante. Ils ajoutent une fraction de ce que le comptage retire déjà à la maison, et seulement si le compte est juste. Appliqués sur un compte faux, ils aggravent la perte au lieu de la réduire.</p>
+</div>
+
+<h2 id="assurance">L'assurance, le seul index qui ignore les règles de la table</h2>
+
+<p>L'assurance est le seul pari du blackjack qui ne dépend que d'une chose&#8239;: la proportion de cartes de valeur 10 encore dans le sabot. Elle paie 2 contre 1, elle est donc rentable dès que ces cartes dépassent un tiers du sabot restant. Rien d'autre n'entre dans le calcul — ni le comportement du croupier sur 17 souple, ni le paiement du blackjack, ni la main que vous tenez. <strong>C'est pour cette raison que son index ne suit pas les règles de la table&#8239;:</strong> le dépôt le recalcule pour chacune des dix tables du salon, et il tombe sur <strong>+3 les dix fois</strong>.</p>
+
+<p>Une réserve, et elle compte. Ce +3 est autant une propriété du modèle qu'une mesure&#8239;: pour représenter un compte vrai donné, le dépôt déforme la composition du sabot entier sans retirer les cartes déjà sur le tapis. La proportion de dix qu'il obtient est alors la même quel que soit le nombre de jeux, et le seuil ne <em>peut</em> pas bouger. En jeu réduit, la réalité est plus fine&#8239;: les auteurs qui calculent carte par carte publient un seuil plus bas, de l'ordre de +1,5 en jeu unique et +2,4 en double jeu. <strong>Le salon compte deux tables à un seul jeu et une à deux jeux&#8239;: sur celles-là, attendre +3 est prudent, mais tardif.</strong> Sur les sept tables à sabot, le +3 tient.</p>
+
+<p>Quant à la part du gain qu'elle représente, Don Schlesinger attribue à l'assurance seule plus de 30&#8239;% de ce que rapportent les écarts. C'est son chiffre, pas le nôtre&#8239;: il dépend du règlement, de la pénétration et de la rampe de mise retenus, et le dépôt ne le vérifie pas — il calcule des seuils, il ne ventile pas leur rendement.</p>
+
+<h2 id="tables">Pourquoi la liste change d'une table à l'autre</h2>
+
+<p>Une liste d'écarts n'est pas une propriété du blackjack. C'est une propriété d'un <em>règlement</em>. Le solveur du dépôt le montre sans discussion, puisqu'il produit une liste différente pour chaque table&#8239;:</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Table</th><th>Règlement</th><th class="n">Écarts de jeu</th><th class="n">Abandons</th><th class="n">Avantage maison</th></tr></thead>
+<tbody>
+<tr><td>Le Boulevard</td><td>6 jeux, H17, 3:2, abandon tardif</td><td class="n">79</td><td class="n">16</td><td class="n">0,583&#8239;%</td></tr>
+<tr><td>Le Néon</td><td>1 jeu, H17, 6:5, sans abandon</td><td class="n">53</td><td class="n">0</td><td class="n mauvais">1,850&#8239;%</td></tr>
+<tr><td>Le Cercle</td><td>6 jeux, S17, 3:2, sans carte cachée</td><td class="n">46</td><td class="n">0</td><td class="n">0,601&#8239;%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Ce ne sont pas les mêmes écarts avec des seuils voisins&#8239;: ce sont largement d'autres écarts. Si l'on prend les dix-huit du Boulevard et qu'on les cherche au Cercle, <strong>trois seulement s'y retrouvent à l'identique</strong>. Deux ont changé de seuil. Les treize autres n'existent tout simplement pas. Au Néon, un seul survit inchangé&#8239;: six ont changé de seuil, onze ont disparu.</p>
+
+<h3>Trois raisons, toutes vérifiables</h3>
+
+<p><strong>Une décision qu'on n'a pas le droit de prendre n'a pas d'index.</strong> Le Cercle et Le Néon n'autorisent le doublement que sur 9, 10 et 11. Aucune main souple n'atteignant l'un de ces totaux, le solveur ne place aucun doublement sur main souple dans leurs tableaux — sept des dix-huit lignes du Boulevard s'évaporent d'un coup. Ni l'un ni l'autre n'accepte l'abandon&#8239;: les trois dernières disparaissent aussi.</p>
+
+<p><strong>Une règle éloignée peut déplacer une décision qui semble sans rapport.</strong> Au Cercle, le croupier ne prend pas de carte cachée et un blackjack de sa part emporte la mise doublée. Doubler un 11 contre son as devient perdant à tout compte&#8239;: l'écart n'existe pas, et la stratégie de base elle-même renonce à ce doublement. Le Néon impose pourtant la même restriction de doublement que Le Cercle — mais il distribue une carte cachée, et il garde ce doublement. La différence ne vient donc pas du doublement&#8239;: elle vient de la carte cachée.</p>
+
+<p><strong>Le nombre de jeux déplace les seuils, parfois beaucoup.</strong> «&nbsp;Dur 16 contre 10&nbsp;: rester à partir de 0&nbsp;» est vrai au Boulevard. Au Cercle, le seuil monte à +1. Au Néon, jeu unique, il monte à <strong>+4</strong>. Un joueur qui a appris la valeur du Boulevard resterait sur 16 au Néon dans une quantité de situations où il faut tirer. À l'inverse, «&nbsp;dur 9 contre 2&nbsp;» passe de 0 à &minus;2, parce qu'en jeu unique la stratégie de base double déjà cette main.</p>
+
+<p>C'est la raison pour laquelle cet outil calcule au lieu de citer. Une liste apprise pour «&nbsp;six jeux, croupier qui tire sur 17 souple&nbsp;» est un bon point de départ — et une source d'erreurs dès que vous changez de table. Le <a href="/blackjack/#avantage">catalogue des dix tables</a> le montre règlement par règlement.</p>
+
+<h2 id="limites">Ce que les dix-huit ne font pas</h2>
+
+<p>Les écarts au compte sont la partie la plus visible du comptage, et la moins rentable des deux leviers. <strong>L'essentiel du gain vient de la mise, pas des décisions&#8239;:</strong> la littérature du comptage est unanime là-dessus, et le dépôt ne le mesure pas. Les écarts viennent après la rampe de mise, comme un complément.</p>
+
+<p>Au sein de la liste, l'occasion de jouer se raréfie vite à mesure que l'index s'éloigne de zéro. Un écart d'index 0 bascule dès que le sabot cesse d'être défavorable&#8239;; un écart d'index +5 attend un sabot que vous verrez rarement, et qui ne durera que quelques mains. C'est pour cela que le dix-neuvième écart du Boulevard, puis le vingtième, puis les soixante suivants, comptent de moins en moins&#8239;: non parce que la décision est moins bonne quand elle se présente, mais parce qu'elle se présente moins. Nous n'avons pas mesuré la contribution de chacun.</p>
+
+<div class="avert">
+<p>Aucun de ces dix-huit écarts ne rend le blackjack gagnant, et cette page ne conseille de miser aucun argent. Le comptage retire quelques dixièmes de pour cent à la maison, sur des milliers de mains, sans jamais se tromper — et il n'annule ni la variance, ni les mauvaises tables. Sur une table à 6:5, il ne rattrape rien du tout&#8239;: <a href="/blackjack/#verite">la meilleure décision reste de ne pas s'asseoir</a>.</p>
+</div>
+
+<div class="appel">
+<p>Une liste d'écarts ne se retient pas en la lisant&#8239;: elle se retient en la jouant, et elle s'oublie dès qu'on cesse de la réviser. WiseHand la fait réviser à la table, sur le règlement que vous avez choisi, avec les index recalculés pour lui — et non ceux d'un autre casino.</p>
+<a class="btn" href="/">Réviser les écarts au compte</a>
+</div>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Faut-il apprendre l'Illustrious 18 par cœur ?</h3>
+<p>Seulement après la stratégie de base et le compte vrai, jamais avant. Un écart appliqué sur un compte mal tenu coûte plus cher que le même écart correctement joué ne rapporte, et la stratégie de base est ce qui vous fait perdre le moins pendant que vous apprenez le reste.</p>
+
+<h3>L'Illustrious 18 est-il valable sur toutes les tables ?</h3>
+<p>Non, et c'est son principal malentendu. Sur les dix-huit écarts calculés pour Le Boulevard, trois seulement se retrouvent à l'identique au Cercle et un seul au Néon, parce qu'un écart dépend du nombre de jeux, du droit de doubler, du droit d'abandonner et de la présence d'une carte cachée.</p>
+
+<h3>Quel est l'écart le plus rentable de la liste ?</h3>
+<p>La liste classique met l'assurance en tête, et Don Schlesinger lui attribue à elle seule plus de 30 % du gain que rapportent les écarts. Le dépôt ne mesure pas ces parts&#8239;: il calcule des seuils, pas leur rendement. Ce qu'il établit, c'est que l'assurance est le seul index qui ne dépend d'aucune règle de table, puisqu'il ne dépend que de la proportion de cartes de valeur 10 restantes — il vaut +3 sur les dix tables du salon, avec la réserve que les jeux à un ou deux paquets justifient un seuil plus bas.</p>
+
+<h3>Combien d'écarts faut-il connaître ?</h3>
+<p>Le dépôt en calcule 79 pour Le Boulevard, plus 16 situations d'abandon, mais les apprendre tous n'a pas de sens, parce que plus un index est éloigné de zéro, plus la situation qui le déclenche est rare. Commencez par l'assurance, puis par les quatre écarts d'index 0, dont le seuil tombe sur le compte le plus courant.</p>
+
+<h3>Un écart d'index négatif sert-il vraiment ?</h3>
+<p>Oui, et il se joue à l'envers des autres. Un index négatif signifie que la stratégie de base a raison au compte neutre et qu'il faut cesser de la suivre uniquement quand le sabot devient défavorable, ce qui arrive plus souvent qu'un compte très positif.</p>

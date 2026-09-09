@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combien rapporte le comptage de cartes au blackjack — WiseHand</title>
+<meta name="description" content="Un comptage parfait rapporte environ 0,008 unité de mise par main, pour un écart-type de 2,6 unités : les chiffres mesurés, la variance et la caisse.">
+<link rel="canonical" href="https://wisehand21.com/academie/combien-rapporte-le-comptage/">
+<link rel="alternate" hreflang="fr" href="https://wisehand21.com/academie/combien-rapporte-le-comptage/">
+<link rel="alternate" hreflang="x-default" href="https://wisehand21.com/academie/combien-rapporte-le-comptage/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="WiseHand">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="https://wisehand21.com/academie/combien-rapporte-le-comptage/">
+<meta property="og:title" content="Combien rapporte le comptage de cartes au blackjack">
+<meta property="og:description" content="Un comptage parfait rapporte environ 0,008 unité de mise par main, pour un écart-type de 2,6 unités : les chiffres mesurés, la variance et la caisse.">
+<meta property="og:image" content="https://wisehand21.com/static/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Combien rapporte le comptage de cartes au blackjack">
+<meta name="twitter:description" content="Un comptage parfait rapporte environ 0,008 unité de mise par main, pour un écart-type de 2,6 unités : les chiffres mesurés, la variance et la caisse.">
+<meta name="twitter:image" content="https://wisehand21.com/static/og.jpg">
+<meta name="twitter:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="theme-color" content="#070D0C">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Instrument+Serif&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Article","@id":"https://wisehand21.com/academie/combien-rapporte-le-comptage/#article","headline":"Ce que le comptage des cartes rapporte vraiment","description":"Un comptage parfait rapporte environ 0,008 unité de mise par main, pour un écart-type de 2,6 unités : les chiffres mesurés, la variance et la caisse.","inLanguage":"fr","datePublished":"2026-09-09","dateModified":"2026-09-09","author":{"@type":"Person","name":"Léo Lejeau"},"publisher":{"@type":"Organization","name":"WiseHand","url":"https://wisehand21.com/"},"mainEntityOfPage":{"@id":"https://wisehand21.com/academie/combien-rapporte-le-comptage/"},"image":"https://wisehand21.com/static/og.jpg","wordCount":2659,"isAccessibleForFree":true},{"@type":"BreadcrumbList","@id":"https://wisehand21.com/academie/combien-rapporte-le-comptage/#fil","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://wisehand21.com/"},{"@type":"ListItem","position":2,"name":"L'Académie","item":"https://wisehand21.com/academie/"},{"@type":"ListItem","position":3,"name":"Ce que ça rapporte"}]},{"@type":"FAQPage","@id":"https://wisehand21.com/academie/combien-rapporte-le-comptage/#faq","mainEntity":[{"@type":"Question","name":"Combien rapporte le comptage des cartes par main ?","acceptedAnswer":{"@type":"Answer","text":"De l'ordre de 0,008 unité de mise par main sur la table étalon de WiseHand, six jeux avec une carte de coupe à 75 %, en jouant un comptage parfait : la rampe de mise de référence, l'assurance au compte vrai +3 et les écarts au compte. Sans les écarts au compte, la même rampe, assurance comprise, ne rapporte que 0,005 unité par main. Le gain se mesure en unités de mise et non en euros, parce qu'il dépend du minimum de la table, du nombre de mains jouées par heure et de la caisse dont vous disposez. Sur une table plus profonde il monte ; sur une table payée 6:5 il tombe à zéro ou passe en négatif."}},{"@type":"Question","name":"Quelle caisse faut-il pour compter les cartes ?","acceptedAnswer":{"@type":"Answer","text":"Dans la simulation, un compteur parfait qui démarre avec cent unités de mise se ruine dans près de trois cas sur quatre avant d'avoir joué cinquante mille mains. Il faut de l'ordre de mille unités pour que le risque de ruine descende autour de 2 %. La caisse n'améliore pas le gain : elle sert uniquement à survivre à la variance assez longtemps pour que l'avantage se manifeste."}},{"@type":"Question","name":"Peut-on vivre du comptage de cartes ?","acceptedAnswer":{"@type":"Answer","text":"Rien dans ces chiffres ne le laisse penser pour la quasi-totalité des gens. Il faut de l'ordre de cent mille mains pour que l'avantage dépasse seulement le bruit, une caisse de mille fois la mise minimale, l'accès durable à des tables profondes payées 3:2, et une exactitude tenue pendant des heures. Même dans ces conditions, près d'une carrière simulée sur quatre finit dans le rouge après cinquante mille mains."}},{"@type":"Question","name":"Une erreur de comptage annule-t-elle l'avantage ?","acceptedAnswer":{"@type":"Answer","text":"Pas une erreur isolée, contrairement à ce qu'on lit souvent. En injectant une erreur de comptage par sabot dans la simulation, le gain ne bouge pas de façon mesurable, parce que les écarts dans un sens et dans l'autre se compensent et qu'une unité de compte courant pèse peu une fois divisée par les jeux restants. C'est l'estimation des jeux restants qui coûte cher, et seulement quand elle est biaisée toujours du même côté : surestimer d'un demi-jeu ce qui reste dans le sabot divise le gain par deux. Se tromper d'un demi-jeu au hasard, tantôt dans un sens tantôt dans l'autre, ne coûte rien en espérance — cela fait miser un peu plus gros, donc jouer un peu plus risqué : l'écart-type monte avec le gain."}}]}]}</script>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   Les pages éditoriales — « Laque & filament », version lecture.
+
+   🚨 POURQUOI CE FICHIER EXISTE (08/09/2026). Les deux pages du guide étaient
+   DEUX DESSINS DIFFÉRENTS : la française en sombre seul (Archivo, Instrument
+   Serif, palette --encre/--os), l'anglaise en clair/sombre avec un corps en
+   serif système et un vocabulaire de classes qui n'existait nulle part ailleurs
+   (.art, .lede, .scroll, .chart, .cta). Deux sœurs qui ne se ressemblaient pas,
+   et aucune des deux ne ressemblait à l'application. En ajouter douze de plus à
+   la main aurait fait douze dessins.
+   Une seule feuille, inlinée dans chaque page par outils/pages.mjs.
+
+   Les NOMS DE JETONS sont ceux de src/app/style.css, à l'identique, et le
+   système de thème aussi (trois états : la préférence du système, et les deux
+   forçages [data-theme]). Ce n'est pas de la coquetterie : le lecteur qui passe
+   d'une leçon à l'application ne doit pas avoir l'impression de changer de site.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  color-scheme:light dark;
+  --encre:#DBD7CB; --laque:#F6F4EE; --relief:#FCFBF7;
+  --os:#131C1A; --os-eteint:#55605C;
+  --jade:#0D735F; --cinabre:#B33F22;
+  --or-base:#8A5C0B; --or-lumiere:#6F4A08;
+  --bord:#C3BEB0; --trait:#D2CDBF;
+  --btn-or:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); --btn-encre:#1A1206;
+  --colonne:min(68ch, 100% - 2.5rem);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="clair"]){
+    --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+    --os:#EDE7D9; --os-eteint:#A3AAA4;
+    --jade:#4FD8C0; --cinabre:#F4876C;
+    --or-base:#D9B45B; --or-lumiere:#F3C866;
+    --bord:#3A4A45; --trait:#243230;
+  }
+}
+:root[data-theme="sombre"]{
+  --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+  --os:#EDE7D9; --os-eteint:#A3AAA4;
+  --jade:#4FD8C0; --cinabre:#F4876C;
+  --or-base:#D9B45B; --or-lumiere:#F3C866;
+  --bord:#3A4A45; --trait:#243230;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--encre);color:var(--os);
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65}
+::selection{background:color-mix(in oklab, var(--jade) 30%, transparent)}
+
+/* ── L'enseigne ──────────────────────────────────────────────────────── */
+.enseigne{border-bottom:1px solid var(--trait);background:var(--laque)}
+.enseigne .dedans{width:var(--colonne);margin:0 auto;display:flex;align-items:center;
+  gap:14px;min-height:56px}
+.marque{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--os);
+  font-family:"Martian Mono",ui-monospace,monospace;font-size:12px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase}
+.marque svg{width:20px;height:20px;flex:none;color:var(--or-base)}
+.enseigne nav{margin-left:auto;display:flex;gap:16px;font-size:14px}
+.enseigne nav a{color:var(--os-eteint);text-decoration:none}
+.enseigne nav a:hover,.enseigne nav a:focus-visible{color:var(--jade)}
+
+.enveloppe{width:var(--colonne);margin:0 auto;padding:26px 0 76px}
+
+/* ── Le texte ────────────────────────────────────────────────────────── */
+a{color:var(--jade);text-underline-offset:.16em}
+a:hover{color:var(--os)}
+h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;line-height:1.14;
+  margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,50px);margin:18px 0 10px;letter-spacing:-.01em}
+h2{font-size:clamp(24px,4vw,34px);margin:52px 0 12px;scroll-margin-top:70px}
+h3{font-size:21px;margin:30px 0 6px;color:var(--or-lumiere);scroll-margin-top:70px}
+p{margin:0 0 15px}
+strong{font-weight:700}
+.chapo{font-size:19.5px;line-height:1.55;color:var(--os-eteint);margin-bottom:8px}
+ul,ol{margin:0 0 15px;padding-left:22px}
+li{margin-bottom:7px}
+dt{font-weight:700;margin-top:16px}
+dd{margin:2px 0 0 18px}
+hr{border:0;border-top:1px solid var(--trait);margin:44px 0 30px}
+code,.chiffre{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.9em;font-variant-numeric:tabular-nums}
+
+/* ── Le fil d'Ariane et l'ours ───────────────────────────────────────── */
+.fil{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--os-eteint);margin:0}
+.fil a{color:var(--os-eteint);text-decoration:none}
+.fil a:hover{color:var(--jade)}
+.fil .sep{opacity:.5;padding:0 6px}
+.ours{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:13.5px;
+  color:var(--os-eteint);margin:0 0 30px;padding-bottom:18px;border-bottom:1px solid var(--trait)}
+.ours .pt{opacity:.45}
+
+/* ── Les blocs ───────────────────────────────────────────────────────── */
+.panneau{background:var(--laque);border:1px solid var(--trait);border-radius:12px;
+  padding:18px 20px;margin:26px 0}
+.panneau>:last-child{margin-bottom:0}
+.panneau h3{margin-top:0}
+.avert{border-left:3px solid var(--cinabre);padding:2px 0 2px 16px;margin:26px 0;
+  color:var(--os-eteint)}
+.avert>:last-child{margin-bottom:0}
+.appel{background:var(--relief);border:1px solid var(--bord);border-radius:14px;
+  padding:24px;margin:38px 0;text-align:center}
+.appel>:last-child{margin-bottom:0}
+.appel .btn{display:inline-block;margin-top:12px;background:var(--btn-or);color:var(--btn-encre);
+  font-weight:700;text-decoration:none;padding:13px 24px;border-radius:10px;
+  transition:transform .12s cubic-bezier(.22,.72,.24,1), filter .15s}
+.appel .btn:hover{filter:brightness(1.06);color:var(--btn-encre)}
+.appel .btn:active{transform:translateY(1px) scale(.985)}
+
+/* ── Les tableaux : le défilement est CONFINÉ, la page ne bouge jamais ─ */
+.tableau{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:20px 0;
+  border:1px solid var(--trait);border-radius:10px;
+  /* Ombres de défilement, en CSS pur (ces pages n'ont pas une ligne de JS) : les deux
+     premiers dégradés couvrent la couleur du fond et sont ANCRÉS AU CONTENU
+     (background-attachment:local), les deux ombres restent collées au cadre. Résultat :
+     l'ombre n'apparaît que du côté où il reste quelque chose à voir. Sans elle, un
+     tableau plus large que l'écran a l'air simplement tronqué — personne ne devine
+     qu'il faut le faire glisser. */
+  background-image:
+    linear-gradient(to right, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    linear-gradient(to left, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent),
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent);
+  background-position:0 0, 100% 0, 0 0, 100% 0;
+  background-repeat:no-repeat;
+  background-size:28px 100%, 28px 100%, 12px 100%, 12px 100%;
+  background-attachment:local, local, scroll, scroll}
+/* 🚨 min(32rem, 100%) et pas 32rem : à 375 px, un min-width fixe poussait TOUTES les
+   colonnes de chiffres hors de l'écran — les cinq tableaux d'une leçon ne montraient
+   que leurs libellés, et il fallait deviner qu'on pouvait les faire défiler du doigt
+   (mesuré le 09/09 : table de 512 px dans une boîte de 335). Hors écran = inexistant. */
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:min(32rem,100%)}
+@media (max-width:560px){ th,td{padding:8px 6px} table{font-size:13.5px} caption{padding:9px 10px} }
+caption{caption-side:top;text-align:left;padding:11px 13px;font-size:13px;
+  color:var(--os-eteint);border-bottom:1px solid var(--trait)}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--trait)}
+tr:last-child>*{border-bottom:0}
+th{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--os-eteint);font-weight:600}
+/* Un NOMBRE ne se coupe pas ; un EN-TÊTE, si. « Avantage maison » et « Gain du compteur »
+   en nowrap imposaient 540 px à un tableau de dix lignes sur un écran de 375. */
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.n{white-space:nowrap}
+.bon{color:var(--jade)} .mauvais{color:var(--cinabre)}
+
+/* ── Le sommaire de l'Académie ───────────────────────────────────────── */
+.lecons{list-style:none;margin:22px 0;padding:0;display:grid;gap:10px}
+.lecons li{margin:0}
+.lecons a{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;
+  text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, transform .18s cubic-bezier(.22,.72,.24,1), background .18s}
+.lecons a:hover,.lecons a:focus-visible{border-color:var(--or-base);transform:translateX(3px);
+  background:var(--relief);color:var(--os)}
+.lecons .no{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;
+  color:var(--or-base);letter-spacing:.1em;grid-row:span 2}
+.lecons b{font-weight:600;font-size:17px}
+.lecons span{color:var(--os-eteint);font-size:14.5px;line-height:1.5}
+
+/* ── Leçon précédente / suivante ─────────────────────────────────────── */
+.suite{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 0}
+.suite a{display:block;text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, background .18s}
+.suite a:hover,.suite a:focus-visible{border-color:var(--or-base);background:var(--relief);color:var(--os)}
+.suite .sens{display:block;font-family:"Martian Mono",ui-monospace,monospace;font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--os-eteint);margin-bottom:3px}
+.suite .apres{text-align:right;grid-column:2}
+@media(max-width:560px){.suite{grid-template-columns:1fr}.suite .apres{grid-column:1;text-align:left}}
+
+/* ── L'ours de pied de page ──────────────────────────────────────────── */
+footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--trait);
+  font-size:14px;color:var(--os-eteint);line-height:1.6}
+footer a{color:var(--os-eteint)}
+footer a:hover{color:var(--jade)}
+footer .aide{background:var(--laque);border:1px solid var(--trait);border-radius:10px;
+  padding:14px 16px;margin:0 0 16px}
+footer .aide strong{color:var(--os)}
+footer .meta{font-size:13.5px;line-height:1.6;margin:0 0 16px}
+footer .meta strong{color:var(--os)}
+
+
+/* ── Le sommaire d'une page longue ───────────────────────────────────── */
+.toc{border:1px solid var(--trait);border-radius:12px;padding:6px 22px 16px;margin:30px 0;
+  background:var(--laque)}
+.toc h2{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.1em;margin:16px 0 8px;color:var(--os-eteint)}
+.toc ol{margin:0;padding-left:20px;font-size:15.5px}
+.toc li{margin:3px 0}
+
+/* ── Une note en marge, plus légère qu'un panneau ─────────────────────── */
+.note{border-left:3px solid var(--or-base);padding:.6rem 0 .6rem 1rem;margin:24px 0;
+  font-size:15.5px;color:var(--os-eteint);
+  background:color-mix(in oklab, var(--or-base) 6%, transparent)}
+.note>:last-child{margin-bottom:0}
+
+/* ── Un calcul posé ──────────────────────────────────────────────────── */
+.math{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14.5px;
+  background:color-mix(in oklab, var(--os) 6%, transparent);padding:12px 14px;border-radius:8px;
+  overflow-x:auto}
+
+/* ── La grille de stratégie de base ───────────────────────────────────
+   Le GLYPHE porte l'information ; la couleur ne fait que la doubler. En
+   deutéranopie le jade et le cinabre s'effondrent à des luminances voisines :
+   une grille qui ne se lirait qu'en couleur serait illisible pour 8 % des hommes.
+   La première colonne reste collée à gauche quand on fait défiler — sans elle,
+   sur un téléphone, on lit « U » sans savoir si c'est la ligne 15 ou la 16.
+   Le fond de cette colonne doit être OPAQUE : une teinte translucide laisserait
+   passer les cellules qui glissent dessous. */
+table.chart, table.rules{font-family:Archivo,"Helvetica Neue",Arial,sans-serif}
+table.chart th, table.chart td{text-align:center;padding:6px 5px}
+table.chart tbody th[scope=row]{text-align:left;padding-left:12px;white-space:nowrap;font-weight:600;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:13px;letter-spacing:0;text-transform:none;
+  color:var(--os)}
+.chart tbody th[scope=row], .chart thead th:first-child{position:sticky;left:0;z-index:2;
+  background:var(--encre)}
+.chart thead th:first-child{z-index:3}
+.chart tbody th[scope=row]::after{content:"";position:absolute;inset:0 -1px 0 auto;width:1px;
+  background:var(--trait)}
+.chart td{font-weight:700;font-variant-numeric:tabular-nums;min-width:2.1rem}
+.rules{font-size:14px}
+.rules th[scope=row]{font-weight:400;text-transform:none;letter-spacing:0;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:14px;color:var(--os)}
+.rules td{text-align:center;font-variant-numeric:tabular-nums}
+.a-H{background:color-mix(in oklab, var(--cinabre) 15%, transparent);color:var(--cinabre)}
+.a-S{background:color-mix(in oklab, var(--jade) 15%, transparent);color:var(--jade)}
+.a-D{background:color-mix(in oklab, var(--or-base) 18%, transparent);color:var(--or-lumiere)}
+.a-P{background:color-mix(in oklab, #2f6296 20%, transparent);color:#2f6296}
+.a-U{background:color-mix(in oklab, var(--os) 12%, transparent);color:var(--os-eteint)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="clair"]) .a-P{color:#7fb3e8}}
+:root[data-theme="sombre"] .a-P{color:#7fb3e8}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;margin:16px 0;
+  color:var(--os-eteint)}
+.legend b{display:inline-block;width:1.6rem;text-align:center;border-radius:5px;margin-right:5px;
+  font-weight:700}
+.moyen{color:var(--or-lumiere);font-weight:700}
+td.bon,td.mauvais,td.moyen{font-weight:700}
+
+/* Le focus doit se VOIR : ces pages se lisent aussi au clavier. */
+a:focus-visible,button:focus-visible{outline:2px solid var(--or-base);outline-offset:3px;border-radius:4px}
+
+/* ── L'arrivée au défilement, comme dans le hall ──────────────────────
+   Même doctrine qu'à l'application : @supports pour qu'un moteur qui l'ignore
+   ne crée jamais l'animation, `no-preference` pour que la réduction du mouvement
+   gagne, et rien qui parte d'une opacité nulle sans timeline (une page d'article
+   doit rester lisible même si l'animation ne se déclenche jamais). */
+@supports (animation-timeline: view()){
+@media (prefers-reduced-motion: no-preference){
+  .enveloppe h2, .enveloppe .panneau, .enveloppe .tableau,
+  .enveloppe .appel, .enveloppe .avert, .enveloppe .lecons li{
+    animation:arrive linear both; animation-timeline:view();
+    animation-range:entry 4% entry 34%;
+  }
+  @keyframes arrive{ from{opacity:0;translate:0 14px} to{opacity:1;translate:0 0} }
+}}
+</style>
+</head>
+<body>
+
+<header class="enseigne">
+  <div class="dedans">
+    <a class="marque" href="/"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#082b1e"/><g fill="#f1e9d2"><path d="M256 63.5 425.9 292.7 86.1 292.7Z"/><circle cx="200.4" cy="279" r="84.5"/><circle cx="311.6" cy="279" r="84.5"/><path d="M256 287c2 46 8 84 34 130H222c26-46 32-84 34-130Z"/></g></svg>WiseHand</a>
+    <nav aria-label="Principale">
+      <a href="/">L'entraîneur</a>
+      <a href="/academie/">L'Académie</a>
+      
+    </nav>
+  </div>
+</header>
+
+<div class="enveloppe">
+
+<nav class="fil" aria-label="Fil d'Ariane"><a href="/">Accueil</a><span class="sep" aria-hidden="true">›</span><a href="/academie/">L'Académie</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Ce que ça rapporte</span></nav>
+
+<main>
+<article>
+<h1>Ce que le comptage des cartes rapporte vraiment</h1>
+
+<p class="chapo">Le comptage des cartes ne rend pas le blackjack rentable au sens où on l'entend d'habitude. Mesuré sur Le Boulevard, la table étalon de WiseHand, un comptage parfait joué avec la rampe de mise de référence rapporte de l'ordre de 0,008 unité de mise par main, pour un écart-type de 2,6 unités par main : le hasard pèse environ trois cents fois plus lourd que l'avantage. Il faut de l'ordre de cent mille mains pour que cet avantage dépasse simplement le bruit, et sur trois des dix tables du site le comptage est sans objet : sur deux d'entre elles un compteur parfait perd quand même, sur la troisième il joue pour rien. Cette page donne ces chiffres en unités de mise et jamais en euros de l'heure : le gain dépend de la table, du minimum et de la caisse, et personne ne peut l'annoncer à votre place.</p>
+
+<h2 id="reponse">La réponse, en unités de mise</h2>
+
+<p>La borne admise, celle que la littérature répète depuis <em>Beat the Dealer</em> d'Edward Thorp, paru en 1962, est qu'un compteur qui joue bien, sur une table qui s'y prête, retourne l'avantage de la maison et se retrouve avec un avantage compris entre 0,5&#8239;% et 1,5&#8239;% de l'argent qu'il mise. C'est une fourchette théorique, pas une mesure : elle dépend des règles, de la profondeur du sabot et de l'écart entre la petite et la grosse mise.</p>
+
+<p>WiseHand ne peut pas mesurer votre gain en euros, et refuse de le faire : une unité de mise, c'est le minimum de la table où vous êtes assis, et convertir reviendrait à choisir à votre place une table, une mise et une cadence de jeu. La seule grandeur honnête est <strong>le gain par main, exprimé en unités de mise</strong>.</p>
+
+<p>Sur <a href="/blackjack/#avantage">Le Boulevard</a>, la table étalon du site — six jeux, croupier qui tire sur 17 souple, blackjack payé 3:2, carte de coupe à 75&#8239;% —, l'avantage de la maison contre un joueur de stratégie de base est de 0,583&#8239;%. En rejouant le même règlement avec un comptage parfait — la rampe de mise de référence, deux unités par point de compte vrai au-dessus de +1, l'assurance et les écarts au compte —, on obtient un gain de l'ordre de <strong>0,008 unité par main</strong> pour le joueur. Les deux chiffres ne se comparent pas tels quels — l'un se rapporte à une main, l'autre à l'argent misé, et la rampe fait varier la mise. Ramené à l'argent réellement misé, le compteur gagne <strong>0,55&#8239;%</strong> de ce qu'il pose sur le tapis, là où le joueur de stratégie de base en perd 0,583&#8239;%. L'avantage a bien changé de camp. Il reste minuscule.</p>
+
+<p>Encore faut-il dire ce que « jouer parfaitement » recouvre, parce que le chiffre en dépend. Sur la même table et la même rampe, quarante millions de mains séparent ce que chaque geste rapporte vraiment.</p>
+
+<div class="tableau">
+<table>
+<caption>Ce que le compteur fait du compte, au Boulevard&#8239;: gain en unités de mise par main, sur 40 millions de mains</caption>
+<thead><tr><th scope="col">Ce qu'il en fait</th><th scope="col" class="n">Gain</th></tr></thead>
+<tbody>
+<tr><td>Rien&#8239;: mise plate</td><td class="n mauvais">&minus;0,006</td></tr>
+<tr><td>Régler la mise (rampe de référence)</td><td class="n bon">+0,004</td></tr>
+<tr><td>&hellip; et l'assurance au compte vrai +3</td><td class="n bon">+0,005</td></tr>
+<tr><td>&hellip; et jouer <a href="/academie/illustrious-18/">les écarts au compte</a></td><td class="n bon">+0,008</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>La rampe fait le plus spectaculaire du chemin&#8239;: elle suffit à renverser le signe. Elle ne fait pourtant que la moitié du travail — l'autre moitié vient des décisions, c'est-à-dire de la seule partie du comptage qui ne se voit pas à table.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">Ce que « 0,008 unité par main » veut dire</h3>
+<p>Si l'unité vaut un jeton, il faut jouer environ cent vingt mains pour gagner un jeton. Vous en aurez gagné et perdu plusieurs centaines au passage. L'avantage n'est pas une somme que l'on encaisse : c'est une très légère déformation d'un tirage au sort, qui ne devient visible qu'en la répétant assez longtemps pour que le hasard s'annule.</p>
+</div>
+
+<h2 id="variance">Le bruit écrase le signal</h2>
+
+<p>C'est le chiffre que les pages qui vendent des méthodes ne publient jamais. Dans la même simulation, l'écart-type du résultat est de <strong>2,6 unités par main</strong>, contre une espérance de 0,008. Le rapport entre les deux est d'environ trois cents.</p>
+
+<p>Une conséquence directe, et elle est brutale : <strong>il faut de l'ordre de cent mille mains pour que le gain espéré atteigne seulement un écart-type</strong>, c'est-à-dire pour qu'il commence tout juste à se distinguer du hasard. Pour être raisonnablement sûr d'être en positif, il en faut plusieurs centaines de milliers. Une soirée, une semaine, un mois de jeu ne mesurent rien du tout. Un compteur parfait qui rentre chez lui perdant n'a rien fait de mal&#8239;; c'est le résultat le plus banal du monde.</p>
+
+<div class="avert">
+<p>Aucune séance ne vous dira si vous jouez bien. Sur une session, le résultat est presque entièrement du hasard, et il l'est autant quand vous gagnez que quand vous perdez. Se juger sur ses gains est le meilleur moyen de prendre une bonne habitude pour une mauvaise, ou l'inverse.</p>
+</div>
+
+<h2 id="carriere">Mille carrières de cinquante mille mains</h2>
+
+<p>Plutôt que de raisonner sur une moyenne, on rejoue des carrières entières : mille compteurs parfaits, cinquante mille mains chacun au Boulevard avec la rampe de référence — pour la plupart des joueurs, plusieurs années de casino.</p>
+
+<div class="tableau">
+<table>
+<caption>Résultat après 50 000 mains, en unités de mise, sur 1 000 carrières simulées&#8239;: la pire et la meilleure sont deux tirages, pas deux lois</caption>
+<thead><tr><th scope="col">Carrière</th><th scope="col" class="n">Résultat</th></tr></thead>
+<tbody>
+<tr><td>La pire</td><td class="n mauvais">&minus;1 589</td></tr>
+<tr><td>Premier décile (une sur dix fait pire)</td><td class="n mauvais">&minus;311</td></tr>
+<tr><td>Médiane</td><td class="n bon">+404</td></tr>
+<tr><td>Neuvième décile (une sur dix fait mieux)</td><td class="n bon">+1 212</td></tr>
+<tr><td>La meilleure</td><td class="n bon">+2 316</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Le compteur médian gagne, et c'est la preuve que l'avantage existe. Mais <strong>23&#8239;% de ces carrières finissent dans le rouge après cinquante mille mains jouées sans une faute</strong> : près d'un compteur parfait sur quatre travaille des années et perd de l'argent. Ce n'est pas une anomalie de la simulation, c'est ce que « quelques dixièmes de pour cent » signifie réellement.</p>
+
+<h2 id="caisse">La caisse, et le risque de ruine</h2>
+
+<p>Le risque de ruine est la probabilité que votre caisse tombe à zéro avant que l'avantage n'ait eu le temps de s'exprimer. Il ne se raconte pas, il se mesure : on rejoue les mêmes carrières et on compte celles qui touchent le fond en cours de route. La simulation ne les arrête pas pour autant&#8239;: elle mesure la part de compteurs qui auraient perdu leur caisse en chemin — les résultats du tableau précédent sont ceux d'un joueur qu'aucune banqueroute n'a interrompu.</p>
+
+<div class="tableau">
+<table>
+<caption>Part des carrières ruinées avant 50 000 mains, Le Boulevard, rampe de référence</caption>
+<thead><tr><th scope="col">Caisse de départ</th><th scope="col" class="n">Risque de ruine</th></tr></thead>
+<tbody>
+<tr><td>50 unités</td><td class="n mauvais">85&#8239;%</td></tr>
+<tr><td>100 unités</td><td class="n mauvais">73&#8239;%</td></tr>
+<tr><td>200 unités</td><td class="n mauvais">53&#8239;%</td></tr>
+<tr><td>400 unités</td><td class="n mauvais">28&#8239;%</td></tr>
+<tr><td>600 unités</td><td class="n">13&#8239;%</td></tr>
+<tr><td>1 000 unités</td><td class="n bon">2&#8239;%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>La lecture est sans appel. <strong>Avec cent unités de caisse, un compteur parfait se ruine près de trois fois sur quatre</strong> — non parce qu'il joue mal, mais parce que sa caisse est trop petite pour absorber un écart-type de 2,6 unités par main. Il en faut de l'ordre de mille, dont la seule fonction est d'encaisser les mauvaises séries. C'est ce que la simulation exige, ce n'est pas un conseil.</p>
+
+<p>C'est ici que la plupart des projets s'arrêtent, et c'est une bonne chose : une caisse insuffisante ne réduit pas le gain, elle le remplace par une quasi-certitude de tout perdre, quelle que soit la qualité du jeu.</p>
+
+<h2 id="table">La table décide avant vous</h2>
+
+<p>Le même joueur, la même rampe, la même discipline ne donnent pas du tout le même résultat selon la table — et le classement des tables pour un compteur n'est pas celui de l'avantage maison. Ce qui commande d'abord, c'est <strong>le nombre de jeux</strong> et <strong>la profondeur du sabot</strong> : un compte vrai élevé n'apparaît que dans les cartes du fond, et il monte d'autant plus haut que le sabot est court.</p>
+
+<div class="tableau">
+<table>
+<caption>Gain du compteur, en unités de mise par main, sur les dix tables du site</caption>
+<thead><tr><th scope="col">Table</th><th scope="col" class="n">Gain du compteur</th><th scope="col" class="n">Jeux</th><th scope="col" class="n">Coupe</th><th scope="col" class="n">Avantage maison</th></tr></thead>
+<tbody>
+<tr><td>Le Vieux Reno</td><td class="n bon">+0,043</td><td class="n">1</td><td class="n">60&#8239;%</td><td class="n">0,631&#8239;%</td></tr>
+<tr><td>La Main Chaude</td><td class="n bon">+0,028</td><td class="n">2</td><td class="n">65&#8239;%</td><td class="n">0,381&#8239;%</td></tr>
+<tr><td>Le Salon Privé</td><td class="n bon">+0,019</td><td class="n">6</td><td class="n">85&#8239;%</td><td class="n">0,384&#8239;%</td></tr>
+<tr><td>La Marina</td><td class="n bon">+0,013</td><td class="n">6</td><td class="n">78&#8239;%</td><td class="n">0,359&#8239;%</td></tr>
+<tr><td>Le Boulevard</td><td class="n bon">+0,008</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">0,583&#8239;%</td></tr>
+<tr><td>Le Front de Mer</td><td class="n bon">+0,004</td><td class="n">8</td><td class="n">70&#8239;%</td><td class="n">0,379&#8239;%</td></tr>
+<tr><td>Le Cercle</td><td class="n bon">+0,003</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">0,601&#8239;%</td></tr>
+<tr><td>Le Néon (6:5)</td><td class="n">&asymp; 0</td><td class="n">1</td><td class="n">50&#8239;%</td><td class="n">1,850&#8239;%</td></tr>
+<tr><td>Le Cotai (mélangeuse continue)</td><td class="n mauvais">&minus;0,004</td><td class="n">6</td><td class="n">&mdash;</td><td class="n">0,463&#8239;%</td></tr>
+<tr><td>L'Aquarium (6:5)</td><td class="n mauvais">&minus;0,020</td><td class="n">8</td><td class="n">65&#8239;%</td><td class="n">2,073&#8239;%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>À nombre de jeux égal, la carte de coupe commande : entre Le Salon Privé et Le Boulevard, tous deux à six jeux, dix points de coupe multiplient le gain par plus de deux, alors que l'avantage maison de départ est meilleur au Salon Privé. Mais la comparaison ne traverse pas les familles : Le Vieux Reno, coupé à 60&#8239;% et bridé sur presque tout, rapporte près de cinq fois plus que Le Boulevard, parce qu'un seul jeu produit des comptes vrais qu'un sabot de six n'atteint jamais. <a href="/academie/penetration-du-sabot/">La pénétration</a> se lit toujours avec le nombre de jeux à côté d'elle.</p>
+
+<p>Et sur <strong>deux des dix tables du site, le compteur perd malgré un jeu parfait</strong> : la mélangeuse continue du Cotai remet les cartes jouées dans le sabot et empêche le compte de se former&#8239;; L'Aquarium paie le blackjack 6:5, ce qui creuse un trou qu'aucune variation de mise ne comble. Sur une troisième, Le Néon, le même 6:5 ramène le compteur à l'équilibre malgré le meilleur sabot du catalogue : la mesure ne le distingue pas d'une partie blanche. Le détail de ces dix règlements est sur <a href="/blackjack/">la page du blackjack</a>.</p>
+
+<p>La compétence la plus rentable du compteur n'est donc pas de compter vite. C'est de reconnaître une table imbattable et de ne pas s'y asseoir.</p>
+
+<h2 id="cout">Ce que ça coûte</h2>
+
+<p>Le gain a un prix, et il ne figure sur aucun tableau.</p>
+
+<p><strong>L'ennui.</strong> Dans la simulation, la mise dépasse le minimum sur environ 14&#8239;% des mains seulement. Près de neuf mains sur dix, le compteur mise le minimum et attend. C'est l'essentiel du métier : rester exact pendant des heures où il ne se passe rien.</p>
+
+<p><strong>La contre-mesure.</strong> Compter de tête est légal : se souvenir de ce qu'on a vu ne tombe sous aucune loi. Utiliser un appareil, en revanche, est un délit — au Nevada, se servir d'une aide électronique pour obtenir un avantage au jeu est un crime de catégorie B. Et rester légal n'oblige personne à vous accueillir : un casino peut mélanger plus tôt, plafonner votre mise, vous interdire d'entrer en cours de sabot, ou vous demander de partir. Une exception existe, et <a href="/histoire-du-blackjack/">elle a coûté un procès</a> : en 1982, la Cour suprême du New Jersey a jugé, dans <em>Uston contre Resorts International</em>, qu'un casino de cet État ne pouvait pas exclure un joueur pour ce seul motif. C'est un État, pas une règle générale. Un compteur repéré ne perd pas devant un tribunal : il perd son terrain de jeu, et avec lui les centaines de milliers de mains dont son avantage a besoin.</p>
+
+<p><strong>L'exactitude, mais pas là où on le croit.</strong> On répète qu'une seule erreur par sabot suffit à annuler l'avantage. La mesure ne le confirme pas, et elle dit autre chose de plus utile&#8239;: ce qui coûte, ce n'est pas de se tromper, c'est de se tromper toujours du même côté — et seulement du côté qui fait miser petit.</p>
+
+<div class="tableau">
+<table>
+<caption>Le même joueur, au Boulevard, avec une erreur injectée sur les jeux restants&#8239;: gain et écart-type en unités de mise par main</caption>
+<thead><tr><th scope="col">L'erreur</th><th scope="col" class="n">Gain</th><th scope="col" class="n">Écart-type</th></tr></thead>
+<tbody>
+<tr><td>Aucune erreur</td><td class="n bon">+0,008</td><td class="n">2,6</td></tr>
+<tr><td>Une erreur de compte par sabot</td><td class="n bon">+0,008</td><td class="n">2,6</td></tr>
+<tr><td>Un demi-jeu de trop</td><td class="n mauvais">+0,004</td><td class="n">2,1</td></tr>
+<tr><td>Un demi-jeu de moins</td><td class="n">+0,012</td><td class="n">3,3</td></tr>
+<tr><td>Un demi-jeu au hasard</td><td class="n">+0,010</td><td class="n">2,8</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>L'erreur de comptage ne se voit pas dans le résultat&#8239;: les écarts symétriques se compensent, et une unité de compte courant survit mal à la division par les jeux restants. <strong>Surestimer d'un demi-jeu ce qui reste dans le sabot divise le gain par deux</strong>, parce qu'on mise petit exactement quand il faudrait miser gros. Le sens inverse est un piège d'une autre nature&#8239;: sous-estimer fait miser plus tôt et plus gros, ce qui augmente le gain affiché — et l'écart-type avec lui, qui passe à 3,3 unités par main. C'est le même métier joué à un niveau de risque qu'on n'a pas choisi, avec la caisse qu'on a. Ce n'est donc pas le comptage qui est fragile, c'est <a href="/academie/compte-vrai/">la conversion en compte vrai</a> — et c'est ce geste-là qu'il faut travailler.</p>
+
+<p>Reste la question que cette page n'a pas le droit de trancher à votre place : est-ce que des centaines de milliers de mains, une caisse de mille unités et des heures d'attention soutenue ressemblent à un raccourci&#8239;? C'est un travail, avec un salaire incertain, versé par un employeur qui a le droit de vous mettre dehors. Ce n'est ni un secret, ni une martingale, ni une source de revenus.</p>
+
+<div class="appel">
+<p style="margin:0"><strong>Le comptage se juge sur des milliers de mains, pas sur une soirée.</strong></p>
+<p style="margin:6px 0 0;color:var(--os-eteint);font-size:15px">WiseHand est un entraîneur gratuit, sans compte, sans publicité et sans argent réel : le compte sur les dix tables, le compte vrai vérifié à la demande, et la mise que la rampe de référence recommande.</p>
+<a class="btn" href="/">Ouvrir l'entraîneur</a>
+</div>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Combien rapporte le comptage des cartes par main&#8239;?</h3>
+<p>De l'ordre de 0,008 unité de mise par main sur la table étalon de WiseHand, six jeux avec une carte de coupe à 75&#8239;%, en jouant un comptage parfait : la rampe de mise de référence, l'assurance au compte vrai +3 et les écarts au compte. Sans les écarts au compte, la même rampe, assurance comprise, ne rapporte que 0,005 unité par main. Le gain se mesure en unités de mise et non en euros, parce qu'il dépend du minimum de la table, du nombre de mains jouées par heure et de la caisse dont vous disposez. Sur une table plus profonde il monte&#8239;; sur une table payée 6:5 il tombe à zéro ou passe en négatif.</p>
+
+<h3>Quelle caisse faut-il pour compter les cartes&#8239;?</h3>
+<p>Dans la simulation, un compteur parfait qui démarre avec cent unités de mise se ruine dans près de trois cas sur quatre avant d'avoir joué cinquante mille mains. Il faut de l'ordre de mille unités pour que le risque de ruine descende autour de 2&#8239;%. La caisse n'améliore pas le gain : elle sert uniquement à survivre à la variance assez longtemps pour que l'avantage se manifeste.</p>
+
+<h3>Peut-on vivre du comptage de cartes&#8239;?</h3>
+<p>Rien dans ces chiffres ne le laisse penser pour la quasi-totalité des gens. Il faut de l'ordre de cent mille mains pour que l'avantage dépasse seulement le bruit, une caisse de mille fois la mise minimale, l'accès durable à des tables profondes payées 3:2, et une exactitude tenue pendant des heures. Même dans ces conditions, près d'une carrière simulée sur quatre finit dans le rouge après cinquante mille mains.</p>
+
+<h3>Une erreur de comptage annule-t-elle l'avantage&#8239;?</h3>
+<p>Pas une erreur isolée, contrairement à ce qu'on lit souvent. En injectant une erreur de comptage par sabot dans la simulation, le gain ne bouge pas de façon mesurable, parce que les écarts dans un sens et dans l'autre se compensent et qu'une unité de compte courant pèse peu une fois divisée par les jeux restants. C'est l'estimation des jeux restants qui coûte cher, et seulement quand elle est biaisée toujours du même côté&#8239;: surestimer d'un demi-jeu ce qui reste dans le sabot divise le gain par deux. Se tromper d'un demi-jeu au hasard, tantôt dans un sens tantôt dans l'autre, ne coûte rien en espérance — cela fait miser un peu plus gros, donc jouer un peu plus risqué&#8239;: l'écart-type monte avec le gain.</p>
+</article>
+
+<nav class="suite" aria-label="Dans le cours"><a href="/academie/melangeuse-continue/"><span class="sens">← Leçon précédente</span>La mélangeuse continue</a><a class="apres" href="/academie/compter-les-cartes-est-ce-legal/"><span class="sens">Leçon suivante →</span>Est-ce légal ?</a></nav>
+</main>
+
+<footer>
+<p class="ours" style="border:0;padding:0;margin:0 0 14px">
+  <span>Publié le <time datetime="2026-09-09">9 septembre 2026</time></span>
+  
+  <span class="pt">·</span><span>13 min de lecture</span>
+</p>
+<p class="meta"><strong>D'où viennent ces chiffres.</strong> Chaque avantage maison
+cité sur ce site est produit en simulant <strong>3 000 000 mains</strong> par jeu de règles, avec un
+joueur qui applique la stratégie de base résolue pour ces règles-là — pas une grille recopiée.
+Les grilles sont calculées par un solveur exact&#8239;; les index de comptage sont obtenus par
+dichotomie sur la composition du sabot. La graine est fixe, donc le résultat est reproductible.
+Dernier calcul&#8239;: 2026-09-09. Le code est ouvert&#8239;: les chiffres peuvent être
+régénérés à partir de lui.</p>
+<p><strong>Ici, personne ne perd d'argent&#8239;: les jetons ne valent rien et le tapis se rachète
+d'un clic. Dehors, c'est autre chose.</strong> Le blackjack reste un jeu d'argent, et un jeu
+d'argent se perd à long terme. Rien sur cette page n'est un conseil de jouer.</p>
+<div class="aide"><p>Si le jeu a cessé d'être un jeu&#8239;: <strong>Joueurs Info Service, 09 74 75 13 13</strong>
+— anonyme et non surtaxé, tous les jours de 8&nbsp;h à 2&nbsp;h.</p></div>
+<p>Jeu interdit aux mineurs. · <a href="/">WiseHand</a></p>
+</footer>
+
+</div>
+</body>
+</html>

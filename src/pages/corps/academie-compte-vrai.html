@@ -1,0 +1,127 @@
+<h1>Le compte vrai au blackjack&#8239;: le calcul, et l'estimation des jeux restants</h1>
+
+<p class="chapo">Le compte vrai, c'est le compte courant divisé par le nombre de jeux qui restent dans le sabot. Cette division n'est pas un raffinement d'expert : un compte de +6 dans un sabot de six jeux à peine entamé et le même +6 à une carte de la coupe décrivent deux tables sans rapport. Personne n'affiche les jeux restants dans un casino — on les lit dans la défausse, à vue, et on arrondit au demi-jeu. Chaque unité de compte vrai vaut environ un demi-point d'espérance, la borne théorique admise de 0,5&#8239;%, et c'est l'ordre de grandeur de tout ce que le comptage déplace.</p>
+
+<h2 id="calcul">Le calcul, en une ligne</h2>
+
+<p><strong>Le compte vrai est le compte courant divisé par le nombre de jeux restants.</strong> Le compte courant se tient carte après carte, sans division. Le compte vrai ne se calcule qu'au moment où il sert : quand vous misez, et quand une main touche un écart à la stratégie de base.</p>
+
+<p style="text-align:center;font-size:19px;margin:18px 0"><strong>compte vrai = compte courant &divide; jeux restants</strong></p>
+
+<p>Un exemple sur la table étalon de WiseHand — six jeux, croupier qui tire sur 17 souple, blackjack payé 3:2, avantage maison mesuré à 0,583&#8239;%. Quatre jeux sont passés, il en reste deux, votre compte courant est à +6 : le compte vrai vaut +3. Le même +6 avec cinq jeux et demi devant vous ne vaut qu'un peu plus de +1. Même nombre en tête, décisions opposées.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">Les trois nombres à ne pas confondre</h3>
+<ul>
+  <li><strong>Le compte courant</strong> — la somme des +1 et des &minus;1 vus depuis le mélange. Un entier, qui ne doit rien à aucune estimation.</li>
+  <li><strong>Les jeux restants</strong> — le seul des trois que vous devinez.</li>
+  <li><strong>Le compte vrai</strong> — leur quotient, et le seul qui pilote la mise et les écarts.</li>
+</ul>
+<p style="margin-bottom:0">Dans le code du site, la division porte un plancher : jamais moins d'un quart de jeu au dénominateur. Sans lui, les dernières cartes avant la coupe produiraient des comptes vrais absurdes, du seul fait que le diviseur tend vers zéro.</p>
+</div>
+
+<h2 id="pourquoi">Pourquoi la division est indispensable</h2>
+
+<p>Hi-Lo est un système <em>équilibré</em>, et tout le raisonnement vient de là. Chaque jeu de 52 cartes contient exactement vingt cartes comptées +1 (les 2 à 6), vingt cartes comptées &minus;1 (les dix, les figures et les as) et douze cartes neutres (7, 8, 9). Les deux camps s'annulent : un sabot complet compte zéro, quel que soit le nombre de jeux.</p>
+
+<p>Il en découle une identité qu'il vaut mieux comprendre que retenir. <strong>Le compte courant est exactement l'excédent de cartes hautes sur les cartes basses parmi celles qui restent à sortir.</strong> Un compte à +6, c'est six cartes hautes de trop dans le sabot, à n'importe quel moment.</p>
+
+<p>Six cartes de trop réparties sur cinq jeux, cela fait un peu plus d'une carte par jeu : le sabot penche à peine, et votre mise ne bouge pas. Les mêmes six cartes concentrées dans le dernier jeu, c'est une distorsion massive. <strong>Le compte vrai n'est rien d'autre que cet excédent ramené au jeu</strong> : une densité, pas un total. Qui mise sur son compte courant mise pareil dans les deux cas.</p>
+
+<h2 id="estimer">Estimer les jeux restants sans compteur</h2>
+
+<p>Rien, dans un casino, n'affiche le nombre de cartes restantes. Deux volumes sont sous vos yeux : le sabot qui se vide, la défausse qui se remplit. <strong>On lit la défausse.</strong> Elle est posée à plat, immobile, éclairée ; le sabot est incliné et souvent masqué par la main du croupier. D'où la seule question que pose l'exercice de l'application : combien de jeux dans ce tas&#8239;?</p>
+
+<ol>
+  <li><strong>Calibrez la hauteur d'un jeu sur cette table-là.</strong> Au premier mélange, le croupier étale puis empile les paquets : vous voyez ce que valent un jeu et deux jeux. Aucun chiffre publié ne remplace ce repère — l'épaisseur dépend des cartes, de leur usure et du bac.</li>
+  <li><strong>Lisez le tas en demi-jeux, pas plus fin.</strong> Un jeu, c'est 52 cartes ; un demi-jeu, 26. « Deux jeux et quart » est une fausse précision : votre œil ne fait pas cette différence.</li>
+  <li><strong>Soustrayez.</strong> Jeux restants = total du sabot &minus; ce qui est à la défausse. Six jeux, deux et demi au tas : il en reste trois et demi. La soustraction est plus sûre que l'estimation directe du sabot, parce que vous connaissez le total exactement.</li>
+</ol>
+
+<p>Dans quelle plage votre estimation doit-elle tomber juste&#8239;? La carte de coupe le décide : elle fixe le plus petit nombre de jeux que vous aurez jamais à estimer. Voici les dix tables du salon, et ce qu'il reste de cartes, en jeux, quand la table remélange.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Table</th><th class="n">Jeux</th><th class="n">Coupe</th><th class="n">Jeux restants à la coupe</th></tr></thead>
+<tbody>
+<tr><td>Le Vieux Reno</td><td class="n">1</td><td class="n">60&#8239;%</td><td class="n bon">0,4</td></tr>
+<tr><td>Le Néon</td><td class="n">1</td><td class="n">50&#8239;%</td><td class="n bon">0,5</td></tr>
+<tr><td>La Main Chaude</td><td class="n">2</td><td class="n">65&#8239;%</td><td class="n bon">0,7</td></tr>
+<tr><td>Le Salon Privé</td><td class="n">6</td><td class="n">85&#8239;%</td><td class="n bon">0,9</td></tr>
+<tr><td>La Marina</td><td class="n">6</td><td class="n">78&#8239;%</td><td class="n">1,3</td></tr>
+<tr><td>Le Boulevard</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">1,5</td></tr>
+<tr><td>Le Cercle</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">1,5</td></tr>
+<tr><td>Le Front de Mer</td><td class="n">8</td><td class="n">70&#8239;%</td><td class="n mauvais">2,4</td></tr>
+<tr><td>L'Aquarium</td><td class="n">8</td><td class="n">65&#8239;%</td><td class="n mauvais">2,8</td></tr>
+<tr><td>Le Cotai</td><td class="n">6</td><td class="n">aucune</td><td class="mauvais">mélangeuse continue</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Ce tableau dit une chose désagréable : les tables où le comptage rapporte le plus sont celles qui descendent le plus bas, donc celles où l'estimation est la plus difficile. Au Salon Privé, la coupe à 85&#8239;% laisse moins d'un jeu — un demi-jeu d'erreur y fausse le dénominateur de plus de la moitié. La pénétration profonde exige un meilleur œil — c'est le sujet de <a href="/academie/penetration-du-sabot/">la leçon sur la pénétration</a>.</p>
+
+<h2 id="erreur">L'erreur typique, et ce qu'elle coûte</h2>
+
+<p>L'erreur que l'on mesure ici est d'un demi-jeu : c'est la tolérance de l'exercice de l'application, dont l'objectif est fixé à 70&#8239;% de manches justes. Voici ce que ce demi-jeu fait au compte vrai, à compte courant figé sur +8.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Jeux restants (réels)</th><th class="n">Compte vrai exact</th><th class="n">Surestimé d'un demi-jeu</th><th class="n">Sous-estimé d'un demi-jeu</th></tr></thead>
+<tbody>
+<tr><td>5</td><td class="n">+1,6</td><td class="n">+1,5</td><td class="n">+1,8</td></tr>
+<tr><td>4</td><td class="n">+2,0</td><td class="n">+1,8</td><td class="n">+2,3</td></tr>
+<tr><td>3</td><td class="n">+2,7</td><td class="n">+2,3</td><td class="n">+3,2</td></tr>
+<tr><td>2</td><td class="n">+4,0</td><td class="n mauvais">+3,2</td><td class="n mauvais">+5,3</td></tr>
+<tr><td>1</td><td class="n">+8,0</td><td class="n mauvais">+5,3</td><td class="n mauvais">+16,0</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>La même erreur ne coûte pas la même chose selon le moment.</strong> À cinq jeux restants, un demi-jeu de travers déplace le compte vrai d'un ou deux dixièmes et ne change aucune décision. À un jeu restant, il fait passer de +5,3 à +16, au moment précis où le compte est fort et la mise grosse.</p>
+
+<p>Traduit en jetons, avec la rampe de référence du site — deux unités par point de compte vrai au-dessus de +1 : à deux jeux restants et un compte de +8, le bon compte vrai (+4,0) demande six unités. Un demi-jeu de trop dans votre tête et vous n'en misez que quatre ; un demi-jeu de moins, huit. Du simple au double sur la mise posée.</p>
+
+<p>La décision de jeu bascule pareillement. L'index d'assurance calculé par le solveur du dépôt pour la table étalon est de +3 : on la prend à partir de ce seuil, jamais en dessous. À trois jeux restants avec un compte de +8, le compte vrai réel est +2,7 — l'assurance n'est pas rentable. Une sous-estimation d'un demi-jeu affiche +3,2, et vous la payez perdante.</p>
+
+<p>S'il faut se tromper, mieux vaut le faire dans un sens que dans l'autre. <strong>Surestimer les jeux restants est l'erreur prudente</strong> : elle abaisse le compte vrai, donc la mise, donc l'exposition. Sous-estimer gonfle le compte vrai et fait miser gros sur un sabot qui ne le mérite pas. Entre deux valeurs, prenez la plus grande.</p>
+
+<h2 id="demi-jeux">Diviser par les jeux, ou par les demi-jeux&#8239;?</h2>
+
+<p>La variante est ancienne : certains divisent non par les jeux restants, mais par les <em>demi-jeux</em> restants. Deux jeux au sabot font quatre demi-jeux, donc un compte courant de +8 y donne +2, là où notre échelle donne +4. <strong>Le nombre obtenu vaut la moitié du nôtre</strong> — diviser par un nombre deux fois plus grand ne peut rien donner d'autre. Aucune des deux conventions n'est fausse. <strong>Ce qui est faux, c'est de les mélanger</strong> : un seuil publié appartient à une seule échelle, et un index de +3 lu sur la mauvaise déclenche l'écart deux fois trop tôt.</p>
+
+<p>L'argument avancé pour les demi-jeux est la finesse, et il confond deux choses. Lire la défausse au demi-jeu près, nous le faisons déjà : c'est l'arrondi recommandé plus haut. Changer l'unité du <em>diviseur</em> ne change rien à la finesse de votre <em>lecture</em>, seulement l'échelle du résultat — et la précision d'un quotient reste bornée par son terme le plus grossier, qui est votre œil.</p>
+
+<p>WiseHand s'en tient au jeu entier, pour deux raisons vérifiables dans le dépôt : c'est l'échelle des écarts publiés partout, index d'assurance à +3 compris, et celle sur laquelle son solveur calcule les siens, en déformant un sabot proportionnellement à son nombre de jeux. Changer d'échelle sans tout recalculer déplacerait en silence les 79 écarts et les 16 abandons de la table étalon.</p>
+
+<p>Reste une conséquence que la variante rend concrète. <strong>Un index publié est le plancher du vrai point de bascule, pas ce point lui-même</strong> : le solveur cherche par dichotomie le compte exact où l'action change, puis en prend le plancher — « à partir de +3 » couvre donc l'intervalle de +3 à +4. Sur une échelle réduite de moitié, un pas entier recouvre deux points de notre compte vrai au lieu d'un : la décision devient plus grossière, pas plus fine.</p>
+
+<h2 id="valeur">Ce qu'une unité de compte vrai vaut vraiment</h2>
+
+<p><strong>Une unité de compte vrai vaut environ un demi-point d'espérance.</strong> C'est la borne théorique admise, 0,5&#8239;% : un ordre de grandeur, pas une mesure de votre soirée. Elle suffit pourtant à tout expliquer. L'avantage maison d'une table honnête est du même ordre — 0,583&#8239;% sur la table étalon — donc il faut un compte vrai d'un peu plus de +1 pour seulement revenir à l'équilibre. D'où la forme de la rampe : elle reste au minimum en dessous de +1, parce qu'en dessous il n'y a rien à prendre.</p>
+
+<p>Cela condamne deux familles de tables. Sur une mélangeuse continue comme celle du Cotai, les cartes jouées retournent au sabot : le dénominateur ne descend jamais, le compte vrai reste collé à zéro, et l'estimation n'a plus d'objet. Sur une table au blackjack payé 6:5, l'équilibre est repoussé si haut que le compte vrai n'y arrive pratiquement jamais — l'arithmétique de cette page y reste exacte, elle ne mène nulle part. Les règles de chaque table sont <a href="/blackjack/#avantage">sur la page principale</a>.</p>
+
+<div class="avert">
+<p>Le compte vrai ne rend pas le blackjack gagnant. Il donne quelques dixièmes de pour cent, sur des milliers de mains, à condition de ne se tromper ni sur le compte ni sur la division. Toute page qui promet autre chose vous vend quelque chose. WiseHand n'emploie pas d'argent réel et ne conseille pas d'en jouer.</p>
+</div>
+
+<div class="appel">
+<p>Aucune de ces erreurs ne se voit sur le moment : en sortant du casino, vous ne saurez pas si la soirée s'est mal passée à cause du sabot ou parce que vous divisiez par le mauvais nombre. Un exercice, lui, connaît la réponse. Un tas de défausse s'affiche, vous annoncez combien de jeux il contient, et l'application donne le chiffre exact et les jeux restants — puis votre part de manches dans le demi-jeu de tolérance, votre écart moyen, votre pire écart.</p>
+<a class="btn" href="/">Ouvrir l'exercice « Estimation »</a>
+</div>
+
+<p>Si le compte courant n'est pas encore automatique, commencez par lui : diviser un compte faux ne donne rien de juste. Les valeurs Hi-Lo sont sur <a href="/blackjack/#comptage">la page principale</a>, et <a href="/academie/">les autres leçons de l'académie</a> traitent les écarts au compte et l'assurance une par une.</p>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Comment calcule-t-on le compte vrai au blackjack&#8239;?</h3>
+<p>On divise le compte courant par le nombre de jeux qui restent dans le sabot, estimé à vue et arrondi au demi-jeu : +6 avec deux jeux restants donne un compte vrai de +3. Le compte courant seul ne permet aucune décision, parce qu'il ne dit pas sur combien de cartes son excédent est réparti.</p>
+
+<h3>Comment estimer le nombre de jeux restants sans compteur&#8239;?</h3>
+<p>On regarde la défausse plutôt que le sabot, on lit le tas en demi-jeux, et on soustrait du total connu du sabot. La défausse est posée à plat, immobile et bien éclairée, alors que le sabot est incliné et souvent masqué par la main du croupier. La hauteur d'un jeu se calibre au premier mélange, sur la table où vous êtes assis : elle dépend des cartes, de leur usure et du bac.</p>
+
+<h3>Une erreur d'un demi-jeu, c'est grave&#8239;?</h3>
+<p>Cela dépend entièrement du moment du sabot, et l'écart entre les deux extrêmes est énorme. À cinq jeux restants, un demi-jeu d'erreur déplace le compte vrai d'un ou deux dixièmes et ne change aucune décision. À un jeu restant, avec un compte courant de +8, la même erreur fait passer le compte vrai de +5,3 à +16 — au moment où la mise est la plus grosse.</p>
+
+<h3>Faut-il diviser par les jeux restants ou par les demi-jeux&#8239;?</h3>
+<p>Les deux conventions existent et aucune n'est fausse, mais il faut en choisir une et s'y tenir, puisqu'un seuil publié appartient à une échelle et à une seule. Diviser par les demi-jeux restants donne un nombre deux fois plus petit : deux jeux au sabot font quatre demi-jeux, donc +8 y vaut +2 au lieu de +4. WiseHand divise par les jeux entiers, parce que c'est l'échelle des écarts publiés et celle sur laquelle son solveur calcule les siens.</p>

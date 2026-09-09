@@ -1,0 +1,130 @@
+<h1>La pénétration du sabot au blackjack&#8239;: ce que décide la carte de coupe</h1>
+
+<p class="chapo">La pénétration est la part du sabot que le croupier distribue avant de tout remélanger. Une carte de coupe glissée dans le sabot au montage la fixe&#8239;: ce qui est devant elle sera joué, ce qui est derrière ne sera jamais vu. Pour un joueur de stratégie de base, ce chiffre ne change à peu près rien, et le simulateur du dépôt le montre. Pour un compteur, c'est le paramètre qui commande tous les autres — une fois vérifié que le blackjack est payé 3:2. C'est aussi le seul qu'aucun panneau n'affiche.</p>
+
+<h2 id="definition">Ce qu'est la pénétration</h2>
+
+<p>Le croupier insère une carte de coupe opaque à une certaine profondeur du sabot. Quand elle apparaît, la manche en cours se termine, puis tout repart au mélange. <strong>La pénétration est la fraction du sabot jouée avant ce remélange.</strong> Une pénétration de 75&#8239;% sur six jeux veut dire que 234 cartes sur 312 seront distribuées, et que 78 cartes — un jeu et demi — retourneront au mélange sans avoir été vues.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">La définition, et la seule formule qui compte</h3>
+<p><strong>Pénétration</strong> = part du sabot distribuée avant le remélange. Elle est décidée par la position de la carte de coupe, et rien d'autre.</p>
+<p>Son effet passe entièrement par le compte vrai&#8239;:</p>
+<p style="text-align:center;font-size:19px;margin:18px 0"><strong>compte vrai = compte courant &divide; jeux restants</strong></p>
+<p>Plus la carte de coupe est profonde, plus le diviseur devient petit en fin de sabot, et un compte courant identique produit un compte vrai plus grand. La pénétration n'est rien d'autre que cela&#8239;: le droit de diviser par un petit nombre.</p>
+</div>
+
+<h2 id="invisible">Le chiffre que la colonne « avantage maison » ne montre pas</h2>
+
+<p>Voici pourquoi personne ne regarde la carte de coupe&#8239;: <strong>elle est invisible dans l'avantage de la maison.</strong> Le tableau range les dix tables par pénétration décroissante&#8239;; l'avantage de chacune est mesuré en simulant trois millions de mains sur ses règles exactes. Lisez la dernière colonne de haut en bas&#8239;: elle ne suit rien.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Table</th><th class="n">Jeux</th><th class="n">Coupe</th><th class="n">Jeux derrière la coupe</th><th class="n">Avantage maison mesuré</th></tr></thead>
+<tbody>
+<tr><td>Le Salon Privé</td><td class="n">6</td><td class="n bon">85&#8239;%</td><td class="n">0,9</td><td class="n">0,384&#8239;%</td></tr>
+<tr><td>La Marina</td><td class="n">6</td><td class="n bon">78&#8239;%</td><td class="n">1,3</td><td class="n">0,359&#8239;%</td></tr>
+<tr><td>Le Boulevard</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">1,5</td><td class="n">0,583&#8239;%</td></tr>
+<tr><td>Le Cercle</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">1,5</td><td class="n">0,601&#8239;%</td></tr>
+<tr><td>Le Front de Mer</td><td class="n">8</td><td class="n">70&#8239;%</td><td class="n mauvais">2,4</td><td class="n">0,379&#8239;%</td></tr>
+<tr><td>La Main Chaude</td><td class="n">2</td><td class="n">65&#8239;%</td><td class="n">0,7</td><td class="n">0,381&#8239;%</td></tr>
+<tr><td>L'Aquarium</td><td class="n">8</td><td class="n">65&#8239;%</td><td class="n mauvais">2,8</td><td class="n mauvais">2,073&#8239;%</td></tr>
+<tr><td>Le Vieux Reno</td><td class="n">1</td><td class="n">60&#8239;%</td><td class="n bon">0,4</td><td class="n">0,631&#8239;%</td></tr>
+<tr><td>Le Néon</td><td class="n">1</td><td class="n mauvais">50&#8239;%</td><td class="n">0,5</td><td class="n mauvais">1,850&#8239;%</td></tr>
+<tr><td>Le Cotai</td><td class="n">6</td><td class="n mauvais">aucune</td><td class="n mauvais">tout</td><td class="n">0,463&#8239;%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Deux tables coupées à 65&#8239;% affichent 0,381&#8239;% et 2,073&#8239;%. À l'autre bout, la meilleure pénétration du catalogue et l'absence totale de carte de coupe se tiennent à moins d'un dixième de point&#8239;: Le Salon Privé, coupé à 85&#8239;%, mesure 0,384&#8239;%&#8239;; Le Cotai et sa mélangeuse continue, 0,463&#8239;%. <strong>Cette colonne parle du paiement du blackjack et du 17 souple, pas de la carte de coupe.</strong></p>
+
+<p>On peut l'isoler, et c'est l'intérêt du simulateur. Le Boulevard et Le Salon Privé sont deux tables à six jeux, blackjack payé 3:2, abandon tardif, doublement libre&#8239;: elles ne diffèrent que par le 17 souple, par la coupe et par le nombre de sièges — lequel ne change rien à l'espérance d'une main. Reprenez les règles du Boulevard et ne changez que la coupe, de 50&#8239;% à 85&#8239;%&#8239;: l'avantage ne part dans aucune direction lisible, et l'écart entre ses extrêmes reste plus petit que celui qu'on obtient en changeant la seule graine du générateur, à règles identiques. Ne changez maintenant que le 17 souple&#8239;: l'avantage tombe d'un coup, et l'écart de 0,583&#8239;% à 0,384&#8239;% est expliqué en entier. <strong>Le passage de 75&#8239;% à 85&#8239;% n'y a rien ajouté de mesurable.</strong></p>
+
+<p>Ce n'est pas une anomalie du simulateur&#8239;: la stratégie de base ne consulte jamais le sabot restant, et joue la même carte contre la même carte du début à la fin du sabot. Un joueur qui ne compte pas est indifférent à la profondeur de la coupe. Le tableau complet est sur la <a href="/blackjack/#avantage">page principale du blackjack</a>.</p>
+
+<h2 id="pourquoi">Pourquoi une bonne pénétration produit des comptes plus extrêmes</h2>
+
+<p>Le compteur, lui, ne joue pas la même partie. Son seul levier est de miser plus quand le sabot restant est riche en dix et en as, jugement qui passe par le compte vrai — une division dont <strong>la pénétration fixe le plus petit diviseur atteignable.</strong></p>
+
+<p>Prenez un compte courant de +6 tenu jusqu'à la dernière manche avant le remélange, quand un compteur relève sa mise. Le tableau divise par les jeux restants imprimés au dixième près, puis applique la rampe de référence de WiseHand&#8239;: deux unités par point de compte vrai au-dessus de +1, arrondies vers le bas, plafonnées à douze — chaque colonne se recalcule à partir de la précédente.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Table</th><th class="n">Coupe</th><th class="n">Jeux restants en fin de sabot</th><th class="n">Compte vrai pour un compte courant de +6</th><th class="n">Mise, en unités</th></tr></thead>
+<tbody>
+<tr><td>Le Vieux Reno</td><td class="n">60&#8239;%</td><td class="n">0,4</td><td class="n bon">+15,0</td><td class="n bon">12</td></tr>
+<tr><td>La Main Chaude</td><td class="n">65&#8239;%</td><td class="n">0,7</td><td class="n bon">+8,6</td><td class="n bon">12</td></tr>
+<tr><td>Le Salon Privé</td><td class="n">85&#8239;%</td><td class="n">0,9</td><td class="n bon">+6,7</td><td class="n bon">11</td></tr>
+<tr><td>La Marina</td><td class="n">78&#8239;%</td><td class="n">1,3</td><td class="n">+4,6</td><td class="n">7</td></tr>
+<tr><td>Le Boulevard</td><td class="n">75&#8239;%</td><td class="n">1,5</td><td class="n">+4,0</td><td class="n">6</td></tr>
+<tr><td>Le Front de Mer</td><td class="n">70&#8239;%</td><td class="n">2,4</td><td class="n mauvais">+2,5</td><td class="n mauvais">3</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Même sabot, même discipline, même compte courant&#8239;: au Front de Mer le compteur pose trois unités, au Salon Privé onze. <strong>La pénétration ne rend pas les bonnes cartes plus fréquentes&#8239;: elle vous laisse rester à table pendant que le sabot se déséquilibre, au lieu de vous renvoyer au mélange juste avant.</strong></p>
+
+<p>Le même mécanisme joue sur les écarts à la stratégie de base. L'assurance cesse d'être un mauvais pari à partir d'un compte vrai de +3&#8239;: sur une table qui ne descend jamais sous deux jeux restants, il faut un compte courant très élevé pour l'atteindre, et c'est rare. Coupée profond, la même table y arrive en fin de sabot avec un compte courant ordinaire.</p>
+
+<h2 id="derriere">Ce n'est pas un pourcentage, c'est un nombre de jeux</h2>
+
+<p>Le tableau précédent contient un piège utile. <strong>Le Vieux Reno est coupé à 60&#8239;%, l'une des plus mauvaises pénétrations du catalogue, et c'est pourtant lui qui produit les comptes vrais les plus extrêmes.</strong> Le Front de Mer est coupé à 70&#8239;%, mieux, et c'est le pire.</p>
+
+<p>La raison tient en une phrase&#8239;: 60&#8239;% d'un seul jeu laisse 21 cartes derrière la carte de coupe, quand 70&#8239;% de huit jeux en laisse 125. Ce qui compte n'est pas la fraction jouée, c'est <strong>la quantité de sabot qui reste inconnue au moment où vous misez</strong>. Un pourcentage n'est comparable qu'à nombre de jeux égal&#8239;; sinon, la seule lecture honnête est en jeux derrière la coupe.</p>
+
+<p>Cela explique deux leçons du catalogue. La Main Chaude, deux jeux coupés à 65&#8239;%, a un avantage maison indiscernable de celui du Front de Mer — 0,381&#8239;% contre 0,379&#8239;%, bien à l'intérieur du bruit de mesure — et reste bien plus intéressante à compter&#8239;: 0,7 jeu derrière la coupe contre 2,4. Le Vieux Reno, bridé, descend à 0,4. Les restrictions de règles coûtent des dixièmes de point&#8239;; la géométrie du sabot se compte en unités de mise.</p>
+
+<h2 id="frontdemer">Le Front de Mer&#8239;: d'excellentes règles, un mauvais terrain</h2>
+
+<p>Le Front de Mer est le meilleur jeu à sabot du catalogue pour qui applique la stratégie de base&#8239;: <strong>0,379&#8239;% d'avantage maison</strong>, croupier qui reste sur 17 souple, blackjack payé 3:2, abandon tardif, doublement libre. Sur le papier, c'est la table qu'on retiendrait sans hésiter.</p>
+
+<p>Un compteur n'a presque rien à y faire, pour trois raisons cumulatives&#8239;:</p>
+
+<ul>
+  <li><strong>Huit jeux coupés à 70&#8239;%.</strong> Deux jeux et demi restent derrière la carte de coupe&#8239;: le diviseur du compte vrai ne descend jamais assez bas pour que le compte s'emballe.</li>
+  <li><strong>Sept sièges.</strong> Une table pleine consomme le sabot en peu de manches, et chaque manche prend plus de temps&#8239;: les occasions de miser s'effondrent.</li>
+  <li><strong>Une cadence lente.</strong> Sept joueurs et huit jeux à remélanger&#8239;: c'est la cadence la plus lente des dix tables.</li>
+</ul>
+
+<p>D'où la leçon que porte cette table&#8239;: <strong>le rendement d'un compteur, c'est l'espérance multipliée par la cadence.</strong> Une espérance favorable, sur une main qui arrive rarement, à une table lente, ne produit rien. Le Front de Mer a les meilleures règles et le pire terrain — les deux à la fois.</p>
+
+<div class="avert">
+<p>WiseHand ne convertit pas cela en gain horaire, et méfiez-vous de tout site qui le fait. Le dépôt mesure le comptage au Boulevard en unités par main&#8239;: environ 0,008 unité par main pour un comptage parfait, avec un écart-type de 2,6 unités par main qui écrase ce chiffre sur n'importe quelle session réelle. Passer de « par main » à « par heure » demanderait un nombre de mains par heure que ce site ne mesure pas. Le blackjack se perd à long terme, et une bonne pénétration ne change pas ce fait&#8239;: elle rend seulement le comptage moins inutile.</p>
+</div>
+
+<h2 id="regarder">Comment regarder la carte de coupe dans un vrai casino</h2>
+
+<p>Le minimum de mise, le nombre de jeux, le paiement du blackjack et souvent le 17 souple sont écrits sur le tapis&#8239;; la carte de coupe, jamais. Elle se lit avec les yeux, debout, avant de s'asseoir.</p>
+
+<ol>
+  <li><strong>Regardez un sabot entier, de loin.</strong> Seule mesure fiable&#8239;: repérez le moment où la carte de coupe sort.</li>
+  <li><strong>Lisez le sabot restant, pas la pile de défausse.</strong> Son épaisseur donne les jeux derrière la coupe — le seul chiffre qui décide si la table vaut quelque chose.</li>
+  <li><strong>Convertissez en jeux, jamais en pourcentage.</strong> « Il reste deux jeux » est exploitable&#8239;; « il reste un tiers » ne l'est pas tant qu'on ignore de combien de jeux on parle.</li>
+  <li><strong>Observez plusieurs croupiers.</strong> La profondeur est souvent une consigne de l'établissement, mais son application varie&#8239;: une seule observation peut être flatteuse par hasard.</li>
+  <li><strong>Vérifiez qu'il y a un sabot.</strong> Une mélangeuse continue renvoie chaque manche dans la machine&#8239;: il n'y a alors pas de pénétration du tout, et le compte vrai reste collé à zéro.</li>
+</ol>
+
+<p>Tout cela se fait sans rien demander ni rien toucher. Observer une table et compter mentalement sont légaux. Marquer des cartes, se coordonner avec un croupier ou chercher à voir la carte cachée ne le sont pas — ce sont des délits, sans rapport avec cette page.</p>
+
+<p><strong>La décision se prend avant de s'asseoir</strong>, parce qu'elle est presque impossible à prendre après&#8239;: se lever au bout d'un sabot attire plus l'attention que ne jamais s'installer. Sur trois des dix tables du catalogue, compter ne sert à rien&#8239;: L'Aquarium et Le Néon parce que le blackjack y est payé 6:5, Le Cotai parce que la mélangeuse continue supprime la pénétration — et aucune profondeur de coupe ne rattrape ces règles-là. Savoir refuser une table est la compétence la moins spectaculaire du comptage, et l'une des plus utiles.</p>
+
+<div class="appel">
+<p>La division par les jeux restants est la seule étape du comptage qui demande une estimation à l'œil, et c'est celle que tout le monde rate. WiseHand y consacre un exercice&#8239;: vous lisez le sabot, vous annoncez les jeux restants, l'application vous dit de combien vous vous êtes trompé — chaque table avec sa vraie carte de coupe.</p>
+<a class="btn" href="/">Ouvrir l'entraîneur</a>
+</div>
+
+<p>Pour le reste du parcours — Hi-Lo, compte vrai, écarts à la stratégie de base — la <a href="/blackjack/#comptage">page principale</a> pose les bases, et l'<a href="/academie/">académie</a> reprend chaque notion une par une.</p>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Qu'est-ce que la pénétration au blackjack</h3>
+<p>La pénétration est la part du sabot que le croupier distribue avant de tout remélanger, et elle est fixée par la position de la carte de coupe insérée au montage du sabot. Une pénétration de 75 % sur six jeux signifie que 234 cartes seront jouées et que 78 cartes retourneront au mélange sans avoir été vues.</p>
+
+<h3>La pénétration change-t-elle l'avantage de la maison</h3>
+<p>Non, pas de façon mesurable. Le simulateur de WiseHand ne détecte aucune tendance lisible sur l'avantage maison quand on ne fait varier que la position de la carte de coupe, parce que la stratégie de base ne consulte jamais le sabot restant et joue la même carte contre la même carte à la première manche comme à la dernière.</p>
+
+<h3>Quelle pénétration faut-il pour que compter les cartes serve à quelque chose</h3>
+<p>La question est mal posée tant qu'elle porte sur un pourcentage, car ce qui compte est le nombre de jeux laissés derrière la carte de coupe et non la fraction jouée. Un jeu unique coupé à 60 % laisse 21 cartes inconnues et produit des comptes vrais très élevés, alors que huit jeux coupés à 70 % en laissent 125 et n'en produisent presque jamais.</p>
+
+<h3>Comment connaître la pénétration d'une table avant de s'asseoir</h3>
+<p>Il faut regarder jouer un sabot entier depuis l'extérieur de la table et repérer le moment où la carte de coupe sort, car aucun panneau ne donne cette information. Estimez ensuite l'épaisseur de ce qui n'a pas été joué et convertissez-la en jeux plutôt qu'en pourcentage.</p>

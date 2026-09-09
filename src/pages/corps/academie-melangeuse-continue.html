@@ -1,0 +1,118 @@
+<h1>La mélangeuse continue au blackjack&#8239;: pourquoi elle rend le comptage inutile</h1>
+
+<p class="chapo">Une mélangeuse continue — CSM, pour <em>continuous shuffling machine</em> — renvoie les cartes jouées dans le sabot après chaque main. Le compte ne mesure alors plus rien&#8239;: il n'y a jamais assez de cartes sorties pour que le compte vrai s'éloigne de zéro, et l'information sur laquelle repose tout le comptage cesse d'exister. Le paradoxe est qu'elle peut équiper une bonne table&#8239;: Le Cotai, dans le catalogue de WiseHand, affiche <strong>0,463&#8239;% d'avantage maison mesuré</strong>, nettement en dessous de la table étalon de Las Vegas. Une bonne table et une table battable sont deux questions différentes.</p>
+
+<h2 id="machine">Ce que la machine fait aux cartes</h2>
+
+<p><strong>Une mélangeuse continue n'est pas un sabot&#8239;: c'est un sabot qui se remplit lui-même.</strong> Le croupier distribue depuis la machine, ramasse les cartes de la main qui vient de finir et les réinsère aussitôt dans l'appareil, où elles se redistribuent au hasard parmi les cartes en attente. Pas de carte de coupe, pas de fin de sabot, pas de pause de mélange&#8239;: la partie ne s'arrête jamais.</p>
+
+<p>Sur une table classique, le sabot est mélangé, coupé, puis épuisé jusqu'à la marque&#8239;: à chaque main, ce qui reste s'éloigne un peu plus de sa composition initiale — et cet écart est exactement ce que le comptage mesure. La mélangeuse continue l'efface à la fin de chaque main.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">Mélangeuse continue&#8239;: la définition en une phrase</h3>
+<p>Machine qui réintègre les cartes jouées dans le stock à mélanger après chaque main&#8239;: le sabot ne s'appauvrit jamais, et la pénétration n'existe plus. Elle ne change pas les règles de la table. Elle supprime la mémoire du jeu.</p>
+</div>
+
+<h2 id="compte-zero">Pourquoi le compte vrai reste collé à zéro</h2>
+
+<p>Le comptage Hi-Lo se joue en deux temps. On tient un <strong>compte courant</strong> — +1 par carte de 2 à 6, 0 pour les 7, 8 et 9, &minus;1 par 10, figure ou as — puis on le ramène à l'échelle du sabot&#8239;:</p>
+
+<p style="text-align:center;font-size:19px;margin:18px 0"><strong><a href="/academie/compte-vrai/">compte vrai</a> = compte courant &divide; jeux restants</strong></p>
+
+<p>La machine détruit les deux termes de cette division. Le numérateur&#8239;: le compte courant ne reflète plus que les cartes posées sur le tapis, tout ce qui a été joué avant étant déjà retourné dans le stock. Le dénominateur&#8239;: il ne reste jamais un jeu ou deux dans la machine, il en reste toujours à peu près six. Un numérateur qui ne monte pas, divisé par un dénominateur qui ne descend pas, donne un compte vrai qui oscille autour de zéro et n'en sort pas.</p>
+
+<p>La conséquence se calcule. <strong>L'<a href="/academie/assurance/">index d'assurance</a> de WiseHand est +3</strong>&#8239;: on ne prend l'assurance qu'à partir d'un compte vrai de +3, jamais en dessous. Or Le Cotai compte six places&#8239;: quand l'assurance est proposée, treize cartes seulement sont sur le tapis — douze aux joueurs, plus l'as du croupier. Même si ces douze-là étaient toutes petites, le compte courant plafonnerait à +11 face à près de six jeux encore dans la machine, soit un compte vrai inférieur à +2. Le seuil est hors d'atteinte&#8239;: l'assurance y reste un mauvais pari à chaque main.</p>
+
+<p>Il en va de même des écarts à la stratégie de base. Sur la table étalon, WiseHand en calcule 79, plus 16 écarts d'abandon&#8239;; <strong>quatre seulement portent l'index 0</strong>, tous les autres réclamant un compte vrai que la machine ne laisse jamais s'installer. Ces quatre-là ne rendent rien pour autant&#8239;: leur point de bascule tombe juste au-dessus du neutre, là où les deux décisions se valent. Rien à décider sur le compte, rien à faire varier sur la mise.</p>
+
+<div class="avert">
+<p>Aucune méthode de comptage ne bat une mélangeuse continue&#8239;: ni le Hi-Lo, ni les systèmes à plusieurs niveaux, ni le suivi des as. Ce n'est pas affaire d'entraînement — la donnée qu'ils lisent n'est plus produite par la table.</p>
+</div>
+
+<h2 id="paradoxe">Le paradoxe du Cotai&#8239;: bonne table, table sans intérêt</h2>
+
+<p>Le Cotai est la table à mélangeuse continue du catalogue&#8239;: six jeux, croupier qui reste sur 17 souple (S17), blackjack payé 3:2, sans abandon. <strong>Un joueur de stratégie de base y est mieux traité que sur la table étalon de Las Vegas.</strong> Les chiffres ci-dessous ne sont pas repris d'un ouvrage&#8239;: ils sont mesurés en simulant trois millions de mains par table, sur les règles exactes de chacune. Pour Le Cotai, le simulateur remélange à chaque main — il fait ce que fait la machine.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Table</th><th>Règles</th><th>Mélange</th><th class="n">Avantage maison mesuré</th></tr></thead>
+<tbody>
+<tr><td>La Marina</td><td>6 jeux, S17, 3:2, abandon tardif</td><td>coupe 78&#8239;%</td><td class="n bon">0,359&#8239;%</td></tr>
+<tr><td>Le Salon Privé</td><td>6 jeux, S17, 3:2, abandon tardif</td><td>coupe 85&#8239;%</td><td class="n bon">0,384&#8239;%</td></tr>
+<tr><td><strong>Le Cotai</strong></td><td>6 jeux, S17, 3:2, sans abandon</td><td><strong>mélangeuse continue</strong></td><td class="n bon">0,463&#8239;%</td></tr>
+<tr><td>Le Boulevard</td><td>6 jeux, H17, 3:2, abandon tardif</td><td>coupe 75&#8239;%</td><td class="n">0,583&#8239;%</td></tr>
+<tr><td>L'Aquarium</td><td>8 jeux, H17, 6:5, sans abandon</td><td>coupe 65&#8239;%</td><td class="n mauvais">2,073&#8239;%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Le Cotai est dans le peloton de tête sans le mener&#8239;: il paie l'absence d'abandon face à La Marina et au Salon Privé, qui l'accordent. Mais il devance la table de référence du Strip, et joue dans un autre monde que les tables à 6:5. Entre s'asseoir au Cotai et s'asseoir à L'Aquarium, il y a plus d'un point et demi — sans mémoriser une seule carte, et bien davantage que <a href="/academie/combien-rapporte-le-comptage/">ce que le comptage retire à la maison</a> lorsqu'il est appliqué sans faute.</p>
+
+<p>Une petite part de ce bon chiffre vient de la machine elle-même. Sur une table à carte de coupe, les mains de fin de sabot tombent un peu plus souvent dans des sabots pauvres en grosses cartes que dans des sabots riches&#8239;: un biais discret, défavorable au joueur, appelé effet de carte de coupe. Faute de fin de sabot, la mélangeuse continue le supprime. Le gain se compte en centièmes de point, et <strong>WiseHand ne l'isole pas</strong> — nos mesures portent sur des tables entières, jamais sur un effet pris à part. La maison reste devant.</p>
+
+<p>La leçon dépasse cette table&#8239;: dans le catalogue de WiseHand, compter ne sert à rien sur trois des dix tables, et la machine n'en explique qu'une. Le Néon et L'Aquarium sont perdus pour le compteur à cause de leur <a href="/academie/blackjack-6-5/">blackjack payé 6:5</a>, qui repousse le point d'équilibre hors d'atteinte du compte. D'où la leçon du Cotai&#8239;: <em>la mélangeuse continue tue le comptage, pas les règles.</em> La <a href="/blackjack/#avantage">comparaison des dix tables</a> est sur la page principale, et les <a href="/academie/">autres leçons de l'académie</a> creusent les règles une à une.</p>
+
+<h2 id="cadence">Le point que personne ne dit&#8239;: la machine vous fait perdre plus vite</h2>
+
+<p>Un avantage maison est un taux, pas une somme&#8239;: ce que vous perdez, c'est ce taux multiplié par le nombre de mains jouées — donc, par heure, multiplié par la cadence de la table.</p>
+
+<p><strong>Or la mélangeuse continue est d'abord un outil de cadence.</strong> C'est le premier argument sur lequel ces machines sont vendues aux casinos&#8239;: sur une table à sabot, le croupier s'arrête pour mélanger — plusieurs fois par heure sur une table pleine — et pendant ce temps la maison ne prélève rien. La machine supprime ces interruptions. Les fabricants mettent aussi en avant qu'elle gêne les compteurs&#8239;; les deux arguments vont ensemble, mais seul le premier concerne tous les joueurs assis.</p>
+
+<p>Faites l'arithmétique dans le bon ordre. Le Cotai prend 0,463&#8239;% par main, Le Boulevard 0,583&#8239;%&#8239;: l'écart relatif est d'un peu plus d'un quart. <strong>Il suffit donc que la machine fasse distribuer environ un quart de mains en plus par heure pour que l'avantage du Cotai soit entièrement consommé</strong> — et au-delà, pour qu'on perde davantage par heure sur la table dont le taux par main est pourtant le plus faible.</p>
+
+<p>Nous ne mesurons pas ce nombre de mains par heure&#8239;: il dépend du croupier, des joueurs assis et du modèle de machine, et le simulateur de WiseHand ne connaît que des mains, jamais des heures. Toute cadence avancée ici serait une hypothèse déclarée, pas une mesure. Le seuil, lui, n'est qu'un rapport entre deux chiffres mesurés, et il est bas&#8239;: un meilleur taux ne garantit pas une perte plus faible. La machine n'est pas une punition infligée au joueur — c'est une décision d'exploitation, et ce qu'elle rapporte, ce sont les mains gagnées sur le mélange.</p>
+
+<h2 id="asm">Ne pas confondre CSM et ASM</h2>
+
+<p>Beaucoup de joueurs quittent une table à la seule vue d'une machine, et se privent d'un jeu parfaitement comptable. Deux appareils très différents occupent la même place&#8239;; un seul détruit le comptage.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>&nbsp;</th><th>Mélangeuse continue (CSM)</th><th>Mélangeuse automatique par lots (ASM)</th></tr></thead>
+<tbody>
+<tr><td>Ce qu'elle fait</td><td>Réintègre les cartes jouées après chaque main</td><td>Mélange un lot de jeux pendant qu'on joue l'autre</td></tr>
+<tr><td>Défausse visible</td><td>Aucune, ou presque vide en permanence</td><td>Oui, elle se remplit normalement</td></tr>
+<tr><td>Carte de coupe</td><td>Aucune</td><td>Oui</td></tr>
+<tr><td>Le compte reste-t-il valide&#8239;?</td><td class="mauvais">Non</td><td class="bon">Oui</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>L'ASM ne tue pas le comptage.</strong> Avec une mélangeuse par lots, le sabot en jeu se vide exactement comme un sabot mélangé à la main&#8239;: les cartes jouées vont à la défausse et n'en reviennent pas avant la fin du sabot. Ce qui reste s'éloigne donc de la composition initiale, main après main, et le compte vrai garde tout son sens. La machine prépare le lot suivant pendant qu'on joue le premier&#8239;: elle supprime la pause, pas l'information.</p>
+
+<p>Ce qu'une ASM change pour un compteur est indirect et tient en un mot&#8239;: la <a href="/academie/penetration-du-sabot/">pénétration</a>. La profondeur de coupe est fixée par la maison, pas par la machine — mais l'ASM lui retire le seul motif qu'elle avait de couper profond. Mélanger à la main coûte des minutes, donc des mains, donc de l'argent&#8239;; avec deux lots qui alternent, couper court ne coûte plus rien.</p>
+
+<p>Nous ne donnons pas de chiffre ici, faute d'en avoir mesuré&#8239;: aucune des dix tables de WiseHand n'utilise de mélangeuse par lots. Devant une ASM, jugez la table à la position de sa carte de coupe, comme partout ailleurs.</p>
+
+<h2 id="reconnaitre">Reconnaître une mélangeuse continue d'un coup d'œil</h2>
+
+<p>La distinction se fait debout, en quelques secondes. Quatre signes, du plus fiable au moins fiable&#8239;:</p>
+
+<ol>
+<li><strong>Le croupier remet les cartes dans la machine à la fin de chaque main.</strong> C'est le signe décisif, et il ne trompe jamais&#8239;: c'est la définition même de l'appareil. Regardez une main se terminer, vous saurez.</li>
+<li><strong>La défausse est vide, ou n'existe pas.</strong> Sur une table à sabot, le bac de défausse se remplit au fil du sabot — c'est lui qu'on lit pour estimer les jeux restants. Devant une mélangeuse continue, il reste vide toute la soirée.</li>
+<li><strong>Il n'y a pas de carte de coupe, et personne ne coupe.</strong> Aucun joueur ne se voit tendre la carte plastique, et vous ne verrez jamais de mélange.</li>
+<li><strong>L'appareil occupe la place du sabot et rend les cartes par le haut.</strong> Ce signe seul ne suffit pas&#8239;: une mélangeuse par lots se pose au même endroit et lui ressemble beaucoup. Revenez au premier point — seul le trajet des cartes jouées tranche.</li>
+</ol>
+
+<div class="appel">
+<p>WiseHand contient les dix tables citées ici, Le Cotai compris, avec la stratégie de base recalculée pour chaque règlement et des exercices de comptage chronométrés. Tout tourne dans le navigateur, sans compte ni argent réel.</p>
+<a class="btn" href="/">Ouvrir l'entraîneur</a>
+</div>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Peut-on compter les cartes face à une mélangeuse continue&#8239;?</h3>
+<p>Non. Les cartes jouées retournent dans le sabot après chaque main, si bien que le compte courant ne s'accumule jamais et que le nombre de jeux restants ne diminue jamais&#8239;: le compte vrai reste collé à zéro et ne fournit plus aucune information exploitable. Ce n'est pas une difficulté à surmonter par l'entraînement, c'est une donnée que la table ne produit plus.</p>
+
+<h3>Une table à mélangeuse continue est-elle une mauvaise table&#8239;?</h3>
+<p>Souvent, c'est l'inverse. Le Cotai, la table à mélangeuse continue du catalogue de WiseHand, affiche 0,463&#8239;% d'avantage maison mesuré, contre 0,583&#8239;% pour la table étalon de Las Vegas et 2,073&#8239;% pour la table touristique du catalogue. Pour un joueur de stratégie de base qui ne compte pas, c'est une bonne table&#8239;; pour un compteur, elle est sans intérêt. Une bonne table et une table battable sont deux questions différentes.</p>
+
+<h3>Quelle est la différence entre une CSM et une mélangeuse automatique&#8239;?</h3>
+<p>Une mélangeuse continue réintègre les cartes jouées dans le stock après chaque main, tandis qu'une mélangeuse automatique par lots se contente de préparer un sabot pendant que l'autre est en jeu. La première supprime le comptage, la seconde le laisse entièrement valide et ne fait que supprimer la pause de mélange. Pour les distinguer, regardez si le croupier rend les cartes de la main terminée à la machine ou à un bac de défausse.</p>
+
+<h3>Perd-on plus d'argent sur une table à mélangeuse continue&#8239;?</h3>
+<p>C'est possible, et c'est le point que l'on oublie presque toujours. Ce que vous perdez par heure est l'avantage maison multiplié par le nombre de mains jouées, or la machine supprime les pauses de mélange et fait donc distribuer davantage de mains dans le même temps. Il suffit qu'elle fasse jouer environ un quart de mains en plus par heure pour que l'écart entre 0,463&#8239;% et 0,583&#8239;% soit entièrement consommé.</p>
+
+<h3>La mélangeuse continue est-elle truquée&#8239;?</h3>
+<p>Rien ne permet de l'affirmer, et la maison n'en a aucun besoin&#8239;: son avantage est déjà inscrit dans les règles du jeu, mesurable et suffisant. Ces appareils sont soumis au contrôle des autorités de jeu là où ils sont installés. La bonne raison de se méfier d'une table n'est pas sa machine&#8239;: c'est un blackjack payé 6:5, affiché sur le tapis, et qui coûte bien davantage.</p>

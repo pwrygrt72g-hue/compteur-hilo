@@ -1,0 +1,163 @@
+<h1>Ce que le comptage des cartes rapporte vraiment</h1>
+
+<p class="chapo">Le comptage des cartes ne rend pas le blackjack rentable au sens où on l'entend d'habitude. Mesuré sur Le Boulevard, la table étalon de WiseHand, un comptage parfait joué avec la rampe de mise de référence rapporte de l'ordre de 0,008 unité de mise par main, pour un écart-type de 2,6 unités par main : le hasard pèse environ trois cents fois plus lourd que l'avantage. Il faut de l'ordre de cent mille mains pour que cet avantage dépasse simplement le bruit, et sur trois des dix tables du site le comptage est sans objet : sur deux d'entre elles un compteur parfait perd quand même, sur la troisième il joue pour rien. Cette page donne ces chiffres en unités de mise et jamais en euros de l'heure : le gain dépend de la table, du minimum et de la caisse, et personne ne peut l'annoncer à votre place.</p>
+
+<h2 id="reponse">La réponse, en unités de mise</h2>
+
+<p>La borne admise, celle que la littérature répète depuis <em>Beat the Dealer</em> d'Edward Thorp, paru en 1962, est qu'un compteur qui joue bien, sur une table qui s'y prête, retourne l'avantage de la maison et se retrouve avec un avantage compris entre 0,5&#8239;% et 1,5&#8239;% de l'argent qu'il mise. C'est une fourchette théorique, pas une mesure : elle dépend des règles, de la profondeur du sabot et de l'écart entre la petite et la grosse mise.</p>
+
+<p>WiseHand ne peut pas mesurer votre gain en euros, et refuse de le faire : une unité de mise, c'est le minimum de la table où vous êtes assis, et convertir reviendrait à choisir à votre place une table, une mise et une cadence de jeu. La seule grandeur honnête est <strong>le gain par main, exprimé en unités de mise</strong>.</p>
+
+<p>Sur <a href="/blackjack/#avantage">Le Boulevard</a>, la table étalon du site — six jeux, croupier qui tire sur 17 souple, blackjack payé 3:2, carte de coupe à 75&#8239;% —, l'avantage de la maison contre un joueur de stratégie de base est de 0,583&#8239;%. En rejouant le même règlement avec un comptage parfait — la rampe de mise de référence, deux unités par point de compte vrai au-dessus de +1, l'assurance et les écarts au compte —, on obtient un gain de l'ordre de <strong>0,008 unité par main</strong> pour le joueur. Les deux chiffres ne se comparent pas tels quels — l'un se rapporte à une main, l'autre à l'argent misé, et la rampe fait varier la mise. Ramené à l'argent réellement misé, le compteur gagne <strong>0,55&#8239;%</strong> de ce qu'il pose sur le tapis, là où le joueur de stratégie de base en perd 0,583&#8239;%. L'avantage a bien changé de camp. Il reste minuscule.</p>
+
+<p>Encore faut-il dire ce que « jouer parfaitement » recouvre, parce que le chiffre en dépend. Sur la même table et la même rampe, quarante millions de mains séparent ce que chaque geste rapporte vraiment.</p>
+
+<div class="tableau">
+<table>
+<caption>Ce que le compteur fait du compte, au Boulevard&#8239;: gain en unités de mise par main, sur 40 millions de mains</caption>
+<thead><tr><th scope="col">Ce qu'il en fait</th><th scope="col" class="n">Gain</th></tr></thead>
+<tbody>
+<tr><td>Rien&#8239;: mise plate</td><td class="n mauvais">&minus;0,006</td></tr>
+<tr><td>Régler la mise (rampe de référence)</td><td class="n bon">+0,004</td></tr>
+<tr><td>&hellip; et l'assurance au compte vrai +3</td><td class="n bon">+0,005</td></tr>
+<tr><td>&hellip; et jouer <a href="/academie/illustrious-18/">les écarts au compte</a></td><td class="n bon">+0,008</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>La rampe fait le plus spectaculaire du chemin&#8239;: elle suffit à renverser le signe. Elle ne fait pourtant que la moitié du travail — l'autre moitié vient des décisions, c'est-à-dire de la seule partie du comptage qui ne se voit pas à table.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">Ce que « 0,008 unité par main » veut dire</h3>
+<p>Si l'unité vaut un jeton, il faut jouer environ cent vingt mains pour gagner un jeton. Vous en aurez gagné et perdu plusieurs centaines au passage. L'avantage n'est pas une somme que l'on encaisse : c'est une très légère déformation d'un tirage au sort, qui ne devient visible qu'en la répétant assez longtemps pour que le hasard s'annule.</p>
+</div>
+
+<h2 id="variance">Le bruit écrase le signal</h2>
+
+<p>C'est le chiffre que les pages qui vendent des méthodes ne publient jamais. Dans la même simulation, l'écart-type du résultat est de <strong>2,6 unités par main</strong>, contre une espérance de 0,008. Le rapport entre les deux est d'environ trois cents.</p>
+
+<p>Une conséquence directe, et elle est brutale : <strong>il faut de l'ordre de cent mille mains pour que le gain espéré atteigne seulement un écart-type</strong>, c'est-à-dire pour qu'il commence tout juste à se distinguer du hasard. Pour être raisonnablement sûr d'être en positif, il en faut plusieurs centaines de milliers. Une soirée, une semaine, un mois de jeu ne mesurent rien du tout. Un compteur parfait qui rentre chez lui perdant n'a rien fait de mal&#8239;; c'est le résultat le plus banal du monde.</p>
+
+<div class="avert">
+<p>Aucune séance ne vous dira si vous jouez bien. Sur une session, le résultat est presque entièrement du hasard, et il l'est autant quand vous gagnez que quand vous perdez. Se juger sur ses gains est le meilleur moyen de prendre une bonne habitude pour une mauvaise, ou l'inverse.</p>
+</div>
+
+<h2 id="carriere">Mille carrières de cinquante mille mains</h2>
+
+<p>Plutôt que de raisonner sur une moyenne, on rejoue des carrières entières : mille compteurs parfaits, cinquante mille mains chacun au Boulevard avec la rampe de référence — pour la plupart des joueurs, plusieurs années de casino.</p>
+
+<div class="tableau">
+<table>
+<caption>Résultat après 50 000 mains, en unités de mise, sur 1 000 carrières simulées&#8239;: la pire et la meilleure sont deux tirages, pas deux lois</caption>
+<thead><tr><th scope="col">Carrière</th><th scope="col" class="n">Résultat</th></tr></thead>
+<tbody>
+<tr><td>La pire</td><td class="n mauvais">&minus;1 589</td></tr>
+<tr><td>Premier décile (une sur dix fait pire)</td><td class="n mauvais">&minus;311</td></tr>
+<tr><td>Médiane</td><td class="n bon">+404</td></tr>
+<tr><td>Neuvième décile (une sur dix fait mieux)</td><td class="n bon">+1 212</td></tr>
+<tr><td>La meilleure</td><td class="n bon">+2 316</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Le compteur médian gagne, et c'est la preuve que l'avantage existe. Mais <strong>23&#8239;% de ces carrières finissent dans le rouge après cinquante mille mains jouées sans une faute</strong> : près d'un compteur parfait sur quatre travaille des années et perd de l'argent. Ce n'est pas une anomalie de la simulation, c'est ce que « quelques dixièmes de pour cent » signifie réellement.</p>
+
+<h2 id="caisse">La caisse, et le risque de ruine</h2>
+
+<p>Le risque de ruine est la probabilité que votre caisse tombe à zéro avant que l'avantage n'ait eu le temps de s'exprimer. Il ne se raconte pas, il se mesure : on rejoue les mêmes carrières et on compte celles qui touchent le fond en cours de route. La simulation ne les arrête pas pour autant&#8239;: elle mesure la part de compteurs qui auraient perdu leur caisse en chemin — les résultats du tableau précédent sont ceux d'un joueur qu'aucune banqueroute n'a interrompu.</p>
+
+<div class="tableau">
+<table>
+<caption>Part des carrières ruinées avant 50 000 mains, Le Boulevard, rampe de référence</caption>
+<thead><tr><th scope="col">Caisse de départ</th><th scope="col" class="n">Risque de ruine</th></tr></thead>
+<tbody>
+<tr><td>50 unités</td><td class="n mauvais">85&#8239;%</td></tr>
+<tr><td>100 unités</td><td class="n mauvais">73&#8239;%</td></tr>
+<tr><td>200 unités</td><td class="n mauvais">53&#8239;%</td></tr>
+<tr><td>400 unités</td><td class="n mauvais">28&#8239;%</td></tr>
+<tr><td>600 unités</td><td class="n">13&#8239;%</td></tr>
+<tr><td>1 000 unités</td><td class="n bon">2&#8239;%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>La lecture est sans appel. <strong>Avec cent unités de caisse, un compteur parfait se ruine près de trois fois sur quatre</strong> — non parce qu'il joue mal, mais parce que sa caisse est trop petite pour absorber un écart-type de 2,6 unités par main. Il en faut de l'ordre de mille, dont la seule fonction est d'encaisser les mauvaises séries. C'est ce que la simulation exige, ce n'est pas un conseil.</p>
+
+<p>C'est ici que la plupart des projets s'arrêtent, et c'est une bonne chose : une caisse insuffisante ne réduit pas le gain, elle le remplace par une quasi-certitude de tout perdre, quelle que soit la qualité du jeu.</p>
+
+<h2 id="table">La table décide avant vous</h2>
+
+<p>Le même joueur, la même rampe, la même discipline ne donnent pas du tout le même résultat selon la table — et le classement des tables pour un compteur n'est pas celui de l'avantage maison. Ce qui commande d'abord, c'est <strong>le nombre de jeux</strong> et <strong>la profondeur du sabot</strong> : un compte vrai élevé n'apparaît que dans les cartes du fond, et il monte d'autant plus haut que le sabot est court.</p>
+
+<div class="tableau">
+<table>
+<caption>Gain du compteur, en unités de mise par main, sur les dix tables du site</caption>
+<thead><tr><th scope="col">Table</th><th scope="col" class="n">Gain du compteur</th><th scope="col" class="n">Jeux</th><th scope="col" class="n">Coupe</th><th scope="col" class="n">Avantage maison</th></tr></thead>
+<tbody>
+<tr><td>Le Vieux Reno</td><td class="n bon">+0,043</td><td class="n">1</td><td class="n">60&#8239;%</td><td class="n">0,631&#8239;%</td></tr>
+<tr><td>La Main Chaude</td><td class="n bon">+0,028</td><td class="n">2</td><td class="n">65&#8239;%</td><td class="n">0,381&#8239;%</td></tr>
+<tr><td>Le Salon Privé</td><td class="n bon">+0,019</td><td class="n">6</td><td class="n">85&#8239;%</td><td class="n">0,384&#8239;%</td></tr>
+<tr><td>La Marina</td><td class="n bon">+0,013</td><td class="n">6</td><td class="n">78&#8239;%</td><td class="n">0,359&#8239;%</td></tr>
+<tr><td>Le Boulevard</td><td class="n bon">+0,008</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">0,583&#8239;%</td></tr>
+<tr><td>Le Front de Mer</td><td class="n bon">+0,004</td><td class="n">8</td><td class="n">70&#8239;%</td><td class="n">0,379&#8239;%</td></tr>
+<tr><td>Le Cercle</td><td class="n bon">+0,003</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">0,601&#8239;%</td></tr>
+<tr><td>Le Néon (6:5)</td><td class="n">&asymp; 0</td><td class="n">1</td><td class="n">50&#8239;%</td><td class="n">1,850&#8239;%</td></tr>
+<tr><td>Le Cotai (mélangeuse continue)</td><td class="n mauvais">&minus;0,004</td><td class="n">6</td><td class="n">&mdash;</td><td class="n">0,463&#8239;%</td></tr>
+<tr><td>L'Aquarium (6:5)</td><td class="n mauvais">&minus;0,020</td><td class="n">8</td><td class="n">65&#8239;%</td><td class="n">2,073&#8239;%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>À nombre de jeux égal, la carte de coupe commande : entre Le Salon Privé et Le Boulevard, tous deux à six jeux, dix points de coupe multiplient le gain par plus de deux, alors que l'avantage maison de départ est meilleur au Salon Privé. Mais la comparaison ne traverse pas les familles : Le Vieux Reno, coupé à 60&#8239;% et bridé sur presque tout, rapporte près de cinq fois plus que Le Boulevard, parce qu'un seul jeu produit des comptes vrais qu'un sabot de six n'atteint jamais. <a href="/academie/penetration-du-sabot/">La pénétration</a> se lit toujours avec le nombre de jeux à côté d'elle.</p>
+
+<p>Et sur <strong>deux des dix tables du site, le compteur perd malgré un jeu parfait</strong> : la mélangeuse continue du Cotai remet les cartes jouées dans le sabot et empêche le compte de se former&#8239;; L'Aquarium paie le blackjack 6:5, ce qui creuse un trou qu'aucune variation de mise ne comble. Sur une troisième, Le Néon, le même 6:5 ramène le compteur à l'équilibre malgré le meilleur sabot du catalogue : la mesure ne le distingue pas d'une partie blanche. Le détail de ces dix règlements est sur <a href="/blackjack/">la page du blackjack</a>.</p>
+
+<p>La compétence la plus rentable du compteur n'est donc pas de compter vite. C'est de reconnaître une table imbattable et de ne pas s'y asseoir.</p>
+
+<h2 id="cout">Ce que ça coûte</h2>
+
+<p>Le gain a un prix, et il ne figure sur aucun tableau.</p>
+
+<p><strong>L'ennui.</strong> Dans la simulation, la mise dépasse le minimum sur environ 14&#8239;% des mains seulement. Près de neuf mains sur dix, le compteur mise le minimum et attend. C'est l'essentiel du métier : rester exact pendant des heures où il ne se passe rien.</p>
+
+<p><strong>La contre-mesure.</strong> Compter de tête est légal : se souvenir de ce qu'on a vu ne tombe sous aucune loi. Utiliser un appareil, en revanche, est un délit — au Nevada, se servir d'une aide électronique pour obtenir un avantage au jeu est un crime de catégorie B. Et rester légal n'oblige personne à vous accueillir : un casino peut mélanger plus tôt, plafonner votre mise, vous interdire d'entrer en cours de sabot, ou vous demander de partir. Une exception existe, et <a href="/histoire-du-blackjack/">elle a coûté un procès</a> : en 1982, la Cour suprême du New Jersey a jugé, dans <em>Uston contre Resorts International</em>, qu'un casino de cet État ne pouvait pas exclure un joueur pour ce seul motif. C'est un État, pas une règle générale. Un compteur repéré ne perd pas devant un tribunal : il perd son terrain de jeu, et avec lui les centaines de milliers de mains dont son avantage a besoin.</p>
+
+<p><strong>L'exactitude, mais pas là où on le croit.</strong> On répète qu'une seule erreur par sabot suffit à annuler l'avantage. La mesure ne le confirme pas, et elle dit autre chose de plus utile&#8239;: ce qui coûte, ce n'est pas de se tromper, c'est de se tromper toujours du même côté — et seulement du côté qui fait miser petit.</p>
+
+<div class="tableau">
+<table>
+<caption>Le même joueur, au Boulevard, avec une erreur injectée sur les jeux restants&#8239;: gain et écart-type en unités de mise par main</caption>
+<thead><tr><th scope="col">L'erreur</th><th scope="col" class="n">Gain</th><th scope="col" class="n">Écart-type</th></tr></thead>
+<tbody>
+<tr><td>Aucune erreur</td><td class="n bon">+0,008</td><td class="n">2,6</td></tr>
+<tr><td>Une erreur de compte par sabot</td><td class="n bon">+0,008</td><td class="n">2,6</td></tr>
+<tr><td>Un demi-jeu de trop</td><td class="n mauvais">+0,004</td><td class="n">2,1</td></tr>
+<tr><td>Un demi-jeu de moins</td><td class="n">+0,012</td><td class="n">3,3</td></tr>
+<tr><td>Un demi-jeu au hasard</td><td class="n">+0,010</td><td class="n">2,8</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>L'erreur de comptage ne se voit pas dans le résultat&#8239;: les écarts symétriques se compensent, et une unité de compte courant survit mal à la division par les jeux restants. <strong>Surestimer d'un demi-jeu ce qui reste dans le sabot divise le gain par deux</strong>, parce qu'on mise petit exactement quand il faudrait miser gros. Le sens inverse est un piège d'une autre nature&#8239;: sous-estimer fait miser plus tôt et plus gros, ce qui augmente le gain affiché — et l'écart-type avec lui, qui passe à 3,3 unités par main. C'est le même métier joué à un niveau de risque qu'on n'a pas choisi, avec la caisse qu'on a. Ce n'est donc pas le comptage qui est fragile, c'est <a href="/academie/compte-vrai/">la conversion en compte vrai</a> — et c'est ce geste-là qu'il faut travailler.</p>
+
+<p>Reste la question que cette page n'a pas le droit de trancher à votre place : est-ce que des centaines de milliers de mains, une caisse de mille unités et des heures d'attention soutenue ressemblent à un raccourci&#8239;? C'est un travail, avec un salaire incertain, versé par un employeur qui a le droit de vous mettre dehors. Ce n'est ni un secret, ni une martingale, ni une source de revenus.</p>
+
+<div class="appel">
+<p style="margin:0"><strong>Le comptage se juge sur des milliers de mains, pas sur une soirée.</strong></p>
+<p style="margin:6px 0 0;color:var(--os-eteint);font-size:15px">WiseHand est un entraîneur gratuit, sans compte, sans publicité et sans argent réel : le compte sur les dix tables, le compte vrai vérifié à la demande, et la mise que la rampe de référence recommande.</p>
+<a class="btn" href="/">Ouvrir l'entraîneur</a>
+</div>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Combien rapporte le comptage des cartes par main&#8239;?</h3>
+<p>De l'ordre de 0,008 unité de mise par main sur la table étalon de WiseHand, six jeux avec une carte de coupe à 75&#8239;%, en jouant un comptage parfait : la rampe de mise de référence, l'assurance au compte vrai +3 et les écarts au compte. Sans les écarts au compte, la même rampe, assurance comprise, ne rapporte que 0,005 unité par main. Le gain se mesure en unités de mise et non en euros, parce qu'il dépend du minimum de la table, du nombre de mains jouées par heure et de la caisse dont vous disposez. Sur une table plus profonde il monte&#8239;; sur une table payée 6:5 il tombe à zéro ou passe en négatif.</p>
+
+<h3>Quelle caisse faut-il pour compter les cartes&#8239;?</h3>
+<p>Dans la simulation, un compteur parfait qui démarre avec cent unités de mise se ruine dans près de trois cas sur quatre avant d'avoir joué cinquante mille mains. Il faut de l'ordre de mille unités pour que le risque de ruine descende autour de 2&#8239;%. La caisse n'améliore pas le gain : elle sert uniquement à survivre à la variance assez longtemps pour que l'avantage se manifeste.</p>
+
+<h3>Peut-on vivre du comptage de cartes&#8239;?</h3>
+<p>Rien dans ces chiffres ne le laisse penser pour la quasi-totalité des gens. Il faut de l'ordre de cent mille mains pour que l'avantage dépasse seulement le bruit, une caisse de mille fois la mise minimale, l'accès durable à des tables profondes payées 3:2, et une exactitude tenue pendant des heures. Même dans ces conditions, près d'une carrière simulée sur quatre finit dans le rouge après cinquante mille mains.</p>
+
+<h3>Une erreur de comptage annule-t-elle l'avantage&#8239;?</h3>
+<p>Pas une erreur isolée, contrairement à ce qu'on lit souvent. En injectant une erreur de comptage par sabot dans la simulation, le gain ne bouge pas de façon mesurable, parce que les écarts dans un sens et dans l'autre se compensent et qu'une unité de compte courant pèse peu une fois divisée par les jeux restants. C'est l'estimation des jeux restants qui coûte cher, et seulement quand elle est biaisée toujours du même côté&#8239;: surestimer d'un demi-jeu ce qui reste dans le sabot divise le gain par deux. Se tromper d'un demi-jeu au hasard, tantôt dans un sens tantôt dans l'autre, ne coûte rien en espérance — cela fait miser un peu plus gros, donc jouer un peu plus risqué&#8239;: l'écart-type monte avec le gain.</p>

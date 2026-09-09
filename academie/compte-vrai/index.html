@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le compte vrai au blackjack : le calcul et l'estimation — WiseHand</title>
+<meta name="description" content="Le compte vrai, c'est le compte courant divisé par les jeux restants. Pourquoi cette division est indispensable, et comment estimer le sabot à vue.">
+<link rel="canonical" href="https://wisehand21.com/academie/compte-vrai/">
+<link rel="alternate" hreflang="fr" href="https://wisehand21.com/academie/compte-vrai/">
+<link rel="alternate" hreflang="x-default" href="https://wisehand21.com/academie/compte-vrai/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="WiseHand">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="https://wisehand21.com/academie/compte-vrai/">
+<meta property="og:title" content="Le compte vrai au blackjack : le calcul et l'estimation">
+<meta property="og:description" content="Le compte vrai, c'est le compte courant divisé par les jeux restants. Pourquoi cette division est indispensable, et comment estimer le sabot à vue.">
+<meta property="og:image" content="https://wisehand21.com/static/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Le compte vrai au blackjack : le calcul et l'estimation">
+<meta name="twitter:description" content="Le compte vrai, c'est le compte courant divisé par les jeux restants. Pourquoi cette division est indispensable, et comment estimer le sabot à vue.">
+<meta name="twitter:image" content="https://wisehand21.com/static/og.jpg">
+<meta name="twitter:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="theme-color" content="#070D0C">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Instrument+Serif&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Article","@id":"https://wisehand21.com/academie/compte-vrai/#article","headline":"Le compte vrai au blackjack : le calcul, et l'estimation des jeux restants","description":"Le compte vrai, c'est le compte courant divisé par les jeux restants. Pourquoi cette division est indispensable, et comment estimer le sabot à vue.","inLanguage":"fr","datePublished":"2026-09-09","dateModified":"2026-09-09","author":{"@type":"Person","name":"Léo Lejeau"},"publisher":{"@type":"Organization","name":"WiseHand","url":"https://wisehand21.com/"},"mainEntityOfPage":{"@id":"https://wisehand21.com/academie/compte-vrai/"},"image":"https://wisehand21.com/static/og.jpg","wordCount":2253,"isAccessibleForFree":true},{"@type":"BreadcrumbList","@id":"https://wisehand21.com/academie/compte-vrai/#fil","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://wisehand21.com/"},{"@type":"ListItem","position":2,"name":"L'Académie","item":"https://wisehand21.com/academie/"},{"@type":"ListItem","position":3,"name":"Le compte vrai"}]},{"@type":"FAQPage","@id":"https://wisehand21.com/academie/compte-vrai/#faq","mainEntity":[{"@type":"Question","name":"Comment calcule-t-on le compte vrai au blackjack ?","acceptedAnswer":{"@type":"Answer","text":"On divise le compte courant par le nombre de jeux qui restent dans le sabot, estimé à vue et arrondi au demi-jeu : +6 avec deux jeux restants donne un compte vrai de +3. Le compte courant seul ne permet aucune décision, parce qu'il ne dit pas sur combien de cartes son excédent est réparti."}},{"@type":"Question","name":"Comment estimer le nombre de jeux restants sans compteur ?","acceptedAnswer":{"@type":"Answer","text":"On regarde la défausse plutôt que le sabot, on lit le tas en demi-jeux, et on soustrait du total connu du sabot. La défausse est posée à plat, immobile et bien éclairée, alors que le sabot est incliné et souvent masqué par la main du croupier. La hauteur d'un jeu se calibre au premier mélange, sur la table où vous êtes assis : elle dépend des cartes, de leur usure et du bac."}},{"@type":"Question","name":"Une erreur d'un demi-jeu, c'est grave ?","acceptedAnswer":{"@type":"Answer","text":"Cela dépend entièrement du moment du sabot, et l'écart entre les deux extrêmes est énorme. À cinq jeux restants, un demi-jeu d'erreur déplace le compte vrai d'un ou deux dixièmes et ne change aucune décision. À un jeu restant, avec un compte courant de +8, la même erreur fait passer le compte vrai de +5,3 à +16 — au moment où la mise est la plus grosse."}},{"@type":"Question","name":"Faut-il diviser par les jeux restants ou par les demi-jeux ?","acceptedAnswer":{"@type":"Answer","text":"Les deux conventions existent et aucune n'est fausse, mais il faut en choisir une et s'y tenir, puisqu'un seuil publié appartient à une échelle et à une seule. Diviser par les demi-jeux restants donne un nombre deux fois plus petit : deux jeux au sabot font quatre demi-jeux, donc +8 y vaut +2 au lieu de +4. WiseHand divise par les jeux entiers, parce que c'est l'échelle des écarts publiés et celle sur laquelle son solveur calcule les siens."}}]}]}</script>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   Les pages éditoriales — « Laque & filament », version lecture.
+
+   🚨 POURQUOI CE FICHIER EXISTE (08/09/2026). Les deux pages du guide étaient
+   DEUX DESSINS DIFFÉRENTS : la française en sombre seul (Archivo, Instrument
+   Serif, palette --encre/--os), l'anglaise en clair/sombre avec un corps en
+   serif système et un vocabulaire de classes qui n'existait nulle part ailleurs
+   (.art, .lede, .scroll, .chart, .cta). Deux sœurs qui ne se ressemblaient pas,
+   et aucune des deux ne ressemblait à l'application. En ajouter douze de plus à
+   la main aurait fait douze dessins.
+   Une seule feuille, inlinée dans chaque page par outils/pages.mjs.
+
+   Les NOMS DE JETONS sont ceux de src/app/style.css, à l'identique, et le
+   système de thème aussi (trois états : la préférence du système, et les deux
+   forçages [data-theme]). Ce n'est pas de la coquetterie : le lecteur qui passe
+   d'une leçon à l'application ne doit pas avoir l'impression de changer de site.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  color-scheme:light dark;
+  --encre:#DBD7CB; --laque:#F6F4EE; --relief:#FCFBF7;
+  --os:#131C1A; --os-eteint:#55605C;
+  --jade:#0D735F; --cinabre:#B33F22;
+  --or-base:#8A5C0B; --or-lumiere:#6F4A08;
+  --bord:#C3BEB0; --trait:#D2CDBF;
+  --btn-or:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); --btn-encre:#1A1206;
+  --colonne:min(68ch, 100% - 2.5rem);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="clair"]){
+    --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+    --os:#EDE7D9; --os-eteint:#A3AAA4;
+    --jade:#4FD8C0; --cinabre:#F4876C;
+    --or-base:#D9B45B; --or-lumiere:#F3C866;
+    --bord:#3A4A45; --trait:#243230;
+  }
+}
+:root[data-theme="sombre"]{
+  --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+  --os:#EDE7D9; --os-eteint:#A3AAA4;
+  --jade:#4FD8C0; --cinabre:#F4876C;
+  --or-base:#D9B45B; --or-lumiere:#F3C866;
+  --bord:#3A4A45; --trait:#243230;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--encre);color:var(--os);
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65}
+::selection{background:color-mix(in oklab, var(--jade) 30%, transparent)}
+
+/* ── L'enseigne ──────────────────────────────────────────────────────── */
+.enseigne{border-bottom:1px solid var(--trait);background:var(--laque)}
+.enseigne .dedans{width:var(--colonne);margin:0 auto;display:flex;align-items:center;
+  gap:14px;min-height:56px}
+.marque{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--os);
+  font-family:"Martian Mono",ui-monospace,monospace;font-size:12px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase}
+.marque svg{width:20px;height:20px;flex:none;color:var(--or-base)}
+.enseigne nav{margin-left:auto;display:flex;gap:16px;font-size:14px}
+.enseigne nav a{color:var(--os-eteint);text-decoration:none}
+.enseigne nav a:hover,.enseigne nav a:focus-visible{color:var(--jade)}
+
+.enveloppe{width:var(--colonne);margin:0 auto;padding:26px 0 76px}
+
+/* ── Le texte ────────────────────────────────────────────────────────── */
+a{color:var(--jade);text-underline-offset:.16em}
+a:hover{color:var(--os)}
+h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;line-height:1.14;
+  margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,50px);margin:18px 0 10px;letter-spacing:-.01em}
+h2{font-size:clamp(24px,4vw,34px);margin:52px 0 12px;scroll-margin-top:70px}
+h3{font-size:21px;margin:30px 0 6px;color:var(--or-lumiere);scroll-margin-top:70px}
+p{margin:0 0 15px}
+strong{font-weight:700}
+.chapo{font-size:19.5px;line-height:1.55;color:var(--os-eteint);margin-bottom:8px}
+ul,ol{margin:0 0 15px;padding-left:22px}
+li{margin-bottom:7px}
+dt{font-weight:700;margin-top:16px}
+dd{margin:2px 0 0 18px}
+hr{border:0;border-top:1px solid var(--trait);margin:44px 0 30px}
+code,.chiffre{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.9em;font-variant-numeric:tabular-nums}
+
+/* ── Le fil d'Ariane et l'ours ───────────────────────────────────────── */
+.fil{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--os-eteint);margin:0}
+.fil a{color:var(--os-eteint);text-decoration:none}
+.fil a:hover{color:var(--jade)}
+.fil .sep{opacity:.5;padding:0 6px}
+.ours{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:13.5px;
+  color:var(--os-eteint);margin:0 0 30px;padding-bottom:18px;border-bottom:1px solid var(--trait)}
+.ours .pt{opacity:.45}
+
+/* ── Les blocs ───────────────────────────────────────────────────────── */
+.panneau{background:var(--laque);border:1px solid var(--trait);border-radius:12px;
+  padding:18px 20px;margin:26px 0}
+.panneau>:last-child{margin-bottom:0}
+.panneau h3{margin-top:0}
+.avert{border-left:3px solid var(--cinabre);padding:2px 0 2px 16px;margin:26px 0;
+  color:var(--os-eteint)}
+.avert>:last-child{margin-bottom:0}
+.appel{background:var(--relief);border:1px solid var(--bord);border-radius:14px;
+  padding:24px;margin:38px 0;text-align:center}
+.appel>:last-child{margin-bottom:0}
+.appel .btn{display:inline-block;margin-top:12px;background:var(--btn-or);color:var(--btn-encre);
+  font-weight:700;text-decoration:none;padding:13px 24px;border-radius:10px;
+  transition:transform .12s cubic-bezier(.22,.72,.24,1), filter .15s}
+.appel .btn:hover{filter:brightness(1.06);color:var(--btn-encre)}
+.appel .btn:active{transform:translateY(1px) scale(.985)}
+
+/* ── Les tableaux : le défilement est CONFINÉ, la page ne bouge jamais ─ */
+.tableau{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:20px 0;
+  border:1px solid var(--trait);border-radius:10px;
+  /* Ombres de défilement, en CSS pur (ces pages n'ont pas une ligne de JS) : les deux
+     premiers dégradés couvrent la couleur du fond et sont ANCRÉS AU CONTENU
+     (background-attachment:local), les deux ombres restent collées au cadre. Résultat :
+     l'ombre n'apparaît que du côté où il reste quelque chose à voir. Sans elle, un
+     tableau plus large que l'écran a l'air simplement tronqué — personne ne devine
+     qu'il faut le faire glisser. */
+  background-image:
+    linear-gradient(to right, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    linear-gradient(to left, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent),
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent);
+  background-position:0 0, 100% 0, 0 0, 100% 0;
+  background-repeat:no-repeat;
+  background-size:28px 100%, 28px 100%, 12px 100%, 12px 100%;
+  background-attachment:local, local, scroll, scroll}
+/* 🚨 min(32rem, 100%) et pas 32rem : à 375 px, un min-width fixe poussait TOUTES les
+   colonnes de chiffres hors de l'écran — les cinq tableaux d'une leçon ne montraient
+   que leurs libellés, et il fallait deviner qu'on pouvait les faire défiler du doigt
+   (mesuré le 09/09 : table de 512 px dans une boîte de 335). Hors écran = inexistant. */
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:min(32rem,100%)}
+@media (max-width:560px){ th,td{padding:8px 6px} table{font-size:13.5px} caption{padding:9px 10px} }
+caption{caption-side:top;text-align:left;padding:11px 13px;font-size:13px;
+  color:var(--os-eteint);border-bottom:1px solid var(--trait)}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--trait)}
+tr:last-child>*{border-bottom:0}
+th{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--os-eteint);font-weight:600}
+/* Un NOMBRE ne se coupe pas ; un EN-TÊTE, si. « Avantage maison » et « Gain du compteur »
+   en nowrap imposaient 540 px à un tableau de dix lignes sur un écran de 375. */
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.n{white-space:nowrap}
+.bon{color:var(--jade)} .mauvais{color:var(--cinabre)}
+
+/* ── Le sommaire de l'Académie ───────────────────────────────────────── */
+.lecons{list-style:none;margin:22px 0;padding:0;display:grid;gap:10px}
+.lecons li{margin:0}
+.lecons a{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;
+  text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, transform .18s cubic-bezier(.22,.72,.24,1), background .18s}
+.lecons a:hover,.lecons a:focus-visible{border-color:var(--or-base);transform:translateX(3px);
+  background:var(--relief);color:var(--os)}
+.lecons .no{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;
+  color:var(--or-base);letter-spacing:.1em;grid-row:span 2}
+.lecons b{font-weight:600;font-size:17px}
+.lecons span{color:var(--os-eteint);font-size:14.5px;line-height:1.5}
+
+/* ── Leçon précédente / suivante ─────────────────────────────────────── */
+.suite{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 0}
+.suite a{display:block;text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, background .18s}
+.suite a:hover,.suite a:focus-visible{border-color:var(--or-base);background:var(--relief);color:var(--os)}
+.suite .sens{display:block;font-family:"Martian Mono",ui-monospace,monospace;font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--os-eteint);margin-bottom:3px}
+.suite .apres{text-align:right;grid-column:2}
+@media(max-width:560px){.suite{grid-template-columns:1fr}.suite .apres{grid-column:1;text-align:left}}
+
+/* ── L'ours de pied de page ──────────────────────────────────────────── */
+footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--trait);
+  font-size:14px;color:var(--os-eteint);line-height:1.6}
+footer a{color:var(--os-eteint)}
+footer a:hover{color:var(--jade)}
+footer .aide{background:var(--laque);border:1px solid var(--trait);border-radius:10px;
+  padding:14px 16px;margin:0 0 16px}
+footer .aide strong{color:var(--os)}
+footer .meta{font-size:13.5px;line-height:1.6;margin:0 0 16px}
+footer .meta strong{color:var(--os)}
+
+
+/* ── Le sommaire d'une page longue ───────────────────────────────────── */
+.toc{border:1px solid var(--trait);border-radius:12px;padding:6px 22px 16px;margin:30px 0;
+  background:var(--laque)}
+.toc h2{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.1em;margin:16px 0 8px;color:var(--os-eteint)}
+.toc ol{margin:0;padding-left:20px;font-size:15.5px}
+.toc li{margin:3px 0}
+
+/* ── Une note en marge, plus légère qu'un panneau ─────────────────────── */
+.note{border-left:3px solid var(--or-base);padding:.6rem 0 .6rem 1rem;margin:24px 0;
+  font-size:15.5px;color:var(--os-eteint);
+  background:color-mix(in oklab, var(--or-base) 6%, transparent)}
+.note>:last-child{margin-bottom:0}
+
+/* ── Un calcul posé ──────────────────────────────────────────────────── */
+.math{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14.5px;
+  background:color-mix(in oklab, var(--os) 6%, transparent);padding:12px 14px;border-radius:8px;
+  overflow-x:auto}
+
+/* ── La grille de stratégie de base ───────────────────────────────────
+   Le GLYPHE porte l'information ; la couleur ne fait que la doubler. En
+   deutéranopie le jade et le cinabre s'effondrent à des luminances voisines :
+   une grille qui ne se lirait qu'en couleur serait illisible pour 8 % des hommes.
+   La première colonne reste collée à gauche quand on fait défiler — sans elle,
+   sur un téléphone, on lit « U » sans savoir si c'est la ligne 15 ou la 16.
+   Le fond de cette colonne doit être OPAQUE : une teinte translucide laisserait
+   passer les cellules qui glissent dessous. */
+table.chart, table.rules{font-family:Archivo,"Helvetica Neue",Arial,sans-serif}
+table.chart th, table.chart td{text-align:center;padding:6px 5px}
+table.chart tbody th[scope=row]{text-align:left;padding-left:12px;white-space:nowrap;font-weight:600;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:13px;letter-spacing:0;text-transform:none;
+  color:var(--os)}
+.chart tbody th[scope=row], .chart thead th:first-child{position:sticky;left:0;z-index:2;
+  background:var(--encre)}
+.chart thead th:first-child{z-index:3}
+.chart tbody th[scope=row]::after{content:"";position:absolute;inset:0 -1px 0 auto;width:1px;
+  background:var(--trait)}
+.chart td{font-weight:700;font-variant-numeric:tabular-nums;min-width:2.1rem}
+.rules{font-size:14px}
+.rules th[scope=row]{font-weight:400;text-transform:none;letter-spacing:0;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:14px;color:var(--os)}
+.rules td{text-align:center;font-variant-numeric:tabular-nums}
+.a-H{background:color-mix(in oklab, var(--cinabre) 15%, transparent);color:var(--cinabre)}
+.a-S{background:color-mix(in oklab, var(--jade) 15%, transparent);color:var(--jade)}
+.a-D{background:color-mix(in oklab, var(--or-base) 18%, transparent);color:var(--or-lumiere)}
+.a-P{background:color-mix(in oklab, #2f6296 20%, transparent);color:#2f6296}
+.a-U{background:color-mix(in oklab, var(--os) 12%, transparent);color:var(--os-eteint)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="clair"]) .a-P{color:#7fb3e8}}
+:root[data-theme="sombre"] .a-P{color:#7fb3e8}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;margin:16px 0;
+  color:var(--os-eteint)}
+.legend b{display:inline-block;width:1.6rem;text-align:center;border-radius:5px;margin-right:5px;
+  font-weight:700}
+.moyen{color:var(--or-lumiere);font-weight:700}
+td.bon,td.mauvais,td.moyen{font-weight:700}
+
+/* Le focus doit se VOIR : ces pages se lisent aussi au clavier. */
+a:focus-visible,button:focus-visible{outline:2px solid var(--or-base);outline-offset:3px;border-radius:4px}
+
+/* ── L'arrivée au défilement, comme dans le hall ──────────────────────
+   Même doctrine qu'à l'application : @supports pour qu'un moteur qui l'ignore
+   ne crée jamais l'animation, `no-preference` pour que la réduction du mouvement
+   gagne, et rien qui parte d'une opacité nulle sans timeline (une page d'article
+   doit rester lisible même si l'animation ne se déclenche jamais). */
+@supports (animation-timeline: view()){
+@media (prefers-reduced-motion: no-preference){
+  .enveloppe h2, .enveloppe .panneau, .enveloppe .tableau,
+  .enveloppe .appel, .enveloppe .avert, .enveloppe .lecons li{
+    animation:arrive linear both; animation-timeline:view();
+    animation-range:entry 4% entry 34%;
+  }
+  @keyframes arrive{ from{opacity:0;translate:0 14px} to{opacity:1;translate:0 0} }
+}}
+</style>
+</head>
+<body>
+
+<header class="enseigne">
+  <div class="dedans">
+    <a class="marque" href="/"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#082b1e"/><g fill="#f1e9d2"><path d="M256 63.5 425.9 292.7 86.1 292.7Z"/><circle cx="200.4" cy="279" r="84.5"/><circle cx="311.6" cy="279" r="84.5"/><path d="M256 287c2 46 8 84 34 130H222c26-46 32-84 34-130Z"/></g></svg>WiseHand</a>
+    <nav aria-label="Principale">
+      <a href="/">L'entraîneur</a>
+      <a href="/academie/">L'Académie</a>
+      
+    </nav>
+  </div>
+</header>
+
+<div class="enveloppe">
+
+<nav class="fil" aria-label="Fil d'Ariane"><a href="/">Accueil</a><span class="sep" aria-hidden="true">›</span><a href="/academie/">L'Académie</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Le compte vrai</span></nav>
+
+<main>
+<article>
+<h1>Le compte vrai au blackjack&#8239;: le calcul, et l'estimation des jeux restants</h1>
+
+<p class="chapo">Le compte vrai, c'est le compte courant divisé par le nombre de jeux qui restent dans le sabot. Cette division n'est pas un raffinement d'expert : un compte de +6 dans un sabot de six jeux à peine entamé et le même +6 à une carte de la coupe décrivent deux tables sans rapport. Personne n'affiche les jeux restants dans un casino — on les lit dans la défausse, à vue, et on arrondit au demi-jeu. Chaque unité de compte vrai vaut environ un demi-point d'espérance, la borne théorique admise de 0,5&#8239;%, et c'est l'ordre de grandeur de tout ce que le comptage déplace.</p>
+
+<h2 id="calcul">Le calcul, en une ligne</h2>
+
+<p><strong>Le compte vrai est le compte courant divisé par le nombre de jeux restants.</strong> Le compte courant se tient carte après carte, sans division. Le compte vrai ne se calcule qu'au moment où il sert : quand vous misez, et quand une main touche un écart à la stratégie de base.</p>
+
+<p style="text-align:center;font-size:19px;margin:18px 0"><strong>compte vrai = compte courant &divide; jeux restants</strong></p>
+
+<p>Un exemple sur la table étalon de WiseHand — six jeux, croupier qui tire sur 17 souple, blackjack payé 3:2, avantage maison mesuré à 0,583&#8239;%. Quatre jeux sont passés, il en reste deux, votre compte courant est à +6 : le compte vrai vaut +3. Le même +6 avec cinq jeux et demi devant vous ne vaut qu'un peu plus de +1. Même nombre en tête, décisions opposées.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">Les trois nombres à ne pas confondre</h3>
+<ul>
+  <li><strong>Le compte courant</strong> — la somme des +1 et des &minus;1 vus depuis le mélange. Un entier, qui ne doit rien à aucune estimation.</li>
+  <li><strong>Les jeux restants</strong> — le seul des trois que vous devinez.</li>
+  <li><strong>Le compte vrai</strong> — leur quotient, et le seul qui pilote la mise et les écarts.</li>
+</ul>
+<p style="margin-bottom:0">Dans le code du site, la division porte un plancher : jamais moins d'un quart de jeu au dénominateur. Sans lui, les dernières cartes avant la coupe produiraient des comptes vrais absurdes, du seul fait que le diviseur tend vers zéro.</p>
+</div>
+
+<h2 id="pourquoi">Pourquoi la division est indispensable</h2>
+
+<p>Hi-Lo est un système <em>équilibré</em>, et tout le raisonnement vient de là. Chaque jeu de 52 cartes contient exactement vingt cartes comptées +1 (les 2 à 6), vingt cartes comptées &minus;1 (les dix, les figures et les as) et douze cartes neutres (7, 8, 9). Les deux camps s'annulent : un sabot complet compte zéro, quel que soit le nombre de jeux.</p>
+
+<p>Il en découle une identité qu'il vaut mieux comprendre que retenir. <strong>Le compte courant est exactement l'excédent de cartes hautes sur les cartes basses parmi celles qui restent à sortir.</strong> Un compte à +6, c'est six cartes hautes de trop dans le sabot, à n'importe quel moment.</p>
+
+<p>Six cartes de trop réparties sur cinq jeux, cela fait un peu plus d'une carte par jeu : le sabot penche à peine, et votre mise ne bouge pas. Les mêmes six cartes concentrées dans le dernier jeu, c'est une distorsion massive. <strong>Le compte vrai n'est rien d'autre que cet excédent ramené au jeu</strong> : une densité, pas un total. Qui mise sur son compte courant mise pareil dans les deux cas.</p>
+
+<h2 id="estimer">Estimer les jeux restants sans compteur</h2>
+
+<p>Rien, dans un casino, n'affiche le nombre de cartes restantes. Deux volumes sont sous vos yeux : le sabot qui se vide, la défausse qui se remplit. <strong>On lit la défausse.</strong> Elle est posée à plat, immobile, éclairée ; le sabot est incliné et souvent masqué par la main du croupier. D'où la seule question que pose l'exercice de l'application : combien de jeux dans ce tas&#8239;?</p>
+
+<ol>
+  <li><strong>Calibrez la hauteur d'un jeu sur cette table-là.</strong> Au premier mélange, le croupier étale puis empile les paquets : vous voyez ce que valent un jeu et deux jeux. Aucun chiffre publié ne remplace ce repère — l'épaisseur dépend des cartes, de leur usure et du bac.</li>
+  <li><strong>Lisez le tas en demi-jeux, pas plus fin.</strong> Un jeu, c'est 52 cartes ; un demi-jeu, 26. « Deux jeux et quart » est une fausse précision : votre œil ne fait pas cette différence.</li>
+  <li><strong>Soustrayez.</strong> Jeux restants = total du sabot &minus; ce qui est à la défausse. Six jeux, deux et demi au tas : il en reste trois et demi. La soustraction est plus sûre que l'estimation directe du sabot, parce que vous connaissez le total exactement.</li>
+</ol>
+
+<p>Dans quelle plage votre estimation doit-elle tomber juste&#8239;? La carte de coupe le décide : elle fixe le plus petit nombre de jeux que vous aurez jamais à estimer. Voici les dix tables du salon, et ce qu'il reste de cartes, en jeux, quand la table remélange.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Table</th><th class="n">Jeux</th><th class="n">Coupe</th><th class="n">Jeux restants à la coupe</th></tr></thead>
+<tbody>
+<tr><td>Le Vieux Reno</td><td class="n">1</td><td class="n">60&#8239;%</td><td class="n bon">0,4</td></tr>
+<tr><td>Le Néon</td><td class="n">1</td><td class="n">50&#8239;%</td><td class="n bon">0,5</td></tr>
+<tr><td>La Main Chaude</td><td class="n">2</td><td class="n">65&#8239;%</td><td class="n bon">0,7</td></tr>
+<tr><td>Le Salon Privé</td><td class="n">6</td><td class="n">85&#8239;%</td><td class="n bon">0,9</td></tr>
+<tr><td>La Marina</td><td class="n">6</td><td class="n">78&#8239;%</td><td class="n">1,3</td></tr>
+<tr><td>Le Boulevard</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">1,5</td></tr>
+<tr><td>Le Cercle</td><td class="n">6</td><td class="n">75&#8239;%</td><td class="n">1,5</td></tr>
+<tr><td>Le Front de Mer</td><td class="n">8</td><td class="n">70&#8239;%</td><td class="n mauvais">2,4</td></tr>
+<tr><td>L'Aquarium</td><td class="n">8</td><td class="n">65&#8239;%</td><td class="n mauvais">2,8</td></tr>
+<tr><td>Le Cotai</td><td class="n">6</td><td class="n">aucune</td><td class="mauvais">mélangeuse continue</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Ce tableau dit une chose désagréable : les tables où le comptage rapporte le plus sont celles qui descendent le plus bas, donc celles où l'estimation est la plus difficile. Au Salon Privé, la coupe à 85&#8239;% laisse moins d'un jeu — un demi-jeu d'erreur y fausse le dénominateur de plus de la moitié. La pénétration profonde exige un meilleur œil — c'est le sujet de <a href="/academie/penetration-du-sabot/">la leçon sur la pénétration</a>.</p>
+
+<h2 id="erreur">L'erreur typique, et ce qu'elle coûte</h2>
+
+<p>L'erreur que l'on mesure ici est d'un demi-jeu : c'est la tolérance de l'exercice de l'application, dont l'objectif est fixé à 70&#8239;% de manches justes. Voici ce que ce demi-jeu fait au compte vrai, à compte courant figé sur +8.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Jeux restants (réels)</th><th class="n">Compte vrai exact</th><th class="n">Surestimé d'un demi-jeu</th><th class="n">Sous-estimé d'un demi-jeu</th></tr></thead>
+<tbody>
+<tr><td>5</td><td class="n">+1,6</td><td class="n">+1,5</td><td class="n">+1,8</td></tr>
+<tr><td>4</td><td class="n">+2,0</td><td class="n">+1,8</td><td class="n">+2,3</td></tr>
+<tr><td>3</td><td class="n">+2,7</td><td class="n">+2,3</td><td class="n">+3,2</td></tr>
+<tr><td>2</td><td class="n">+4,0</td><td class="n mauvais">+3,2</td><td class="n mauvais">+5,3</td></tr>
+<tr><td>1</td><td class="n">+8,0</td><td class="n mauvais">+5,3</td><td class="n mauvais">+16,0</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>La même erreur ne coûte pas la même chose selon le moment.</strong> À cinq jeux restants, un demi-jeu de travers déplace le compte vrai d'un ou deux dixièmes et ne change aucune décision. À un jeu restant, il fait passer de +5,3 à +16, au moment précis où le compte est fort et la mise grosse.</p>
+
+<p>Traduit en jetons, avec la rampe de référence du site — deux unités par point de compte vrai au-dessus de +1 : à deux jeux restants et un compte de +8, le bon compte vrai (+4,0) demande six unités. Un demi-jeu de trop dans votre tête et vous n'en misez que quatre ; un demi-jeu de moins, huit. Du simple au double sur la mise posée.</p>
+
+<p>La décision de jeu bascule pareillement. L'index d'assurance calculé par le solveur du dépôt pour la table étalon est de +3 : on la prend à partir de ce seuil, jamais en dessous. À trois jeux restants avec un compte de +8, le compte vrai réel est +2,7 — l'assurance n'est pas rentable. Une sous-estimation d'un demi-jeu affiche +3,2, et vous la payez perdante.</p>
+
+<p>S'il faut se tromper, mieux vaut le faire dans un sens que dans l'autre. <strong>Surestimer les jeux restants est l'erreur prudente</strong> : elle abaisse le compte vrai, donc la mise, donc l'exposition. Sous-estimer gonfle le compte vrai et fait miser gros sur un sabot qui ne le mérite pas. Entre deux valeurs, prenez la plus grande.</p>
+
+<h2 id="demi-jeux">Diviser par les jeux, ou par les demi-jeux&#8239;?</h2>
+
+<p>La variante est ancienne : certains divisent non par les jeux restants, mais par les <em>demi-jeux</em> restants. Deux jeux au sabot font quatre demi-jeux, donc un compte courant de +8 y donne +2, là où notre échelle donne +4. <strong>Le nombre obtenu vaut la moitié du nôtre</strong> — diviser par un nombre deux fois plus grand ne peut rien donner d'autre. Aucune des deux conventions n'est fausse. <strong>Ce qui est faux, c'est de les mélanger</strong> : un seuil publié appartient à une seule échelle, et un index de +3 lu sur la mauvaise déclenche l'écart deux fois trop tôt.</p>
+
+<p>L'argument avancé pour les demi-jeux est la finesse, et il confond deux choses. Lire la défausse au demi-jeu près, nous le faisons déjà : c'est l'arrondi recommandé plus haut. Changer l'unité du <em>diviseur</em> ne change rien à la finesse de votre <em>lecture</em>, seulement l'échelle du résultat — et la précision d'un quotient reste bornée par son terme le plus grossier, qui est votre œil.</p>
+
+<p>WiseHand s'en tient au jeu entier, pour deux raisons vérifiables dans le dépôt : c'est l'échelle des écarts publiés partout, index d'assurance à +3 compris, et celle sur laquelle son solveur calcule les siens, en déformant un sabot proportionnellement à son nombre de jeux. Changer d'échelle sans tout recalculer déplacerait en silence les 79 écarts et les 16 abandons de la table étalon.</p>
+
+<p>Reste une conséquence que la variante rend concrète. <strong>Un index publié est le plancher du vrai point de bascule, pas ce point lui-même</strong> : le solveur cherche par dichotomie le compte exact où l'action change, puis en prend le plancher — « à partir de +3 » couvre donc l'intervalle de +3 à +4. Sur une échelle réduite de moitié, un pas entier recouvre deux points de notre compte vrai au lieu d'un : la décision devient plus grossière, pas plus fine.</p>
+
+<h2 id="valeur">Ce qu'une unité de compte vrai vaut vraiment</h2>
+
+<p><strong>Une unité de compte vrai vaut environ un demi-point d'espérance.</strong> C'est la borne théorique admise, 0,5&#8239;% : un ordre de grandeur, pas une mesure de votre soirée. Elle suffit pourtant à tout expliquer. L'avantage maison d'une table honnête est du même ordre — 0,583&#8239;% sur la table étalon — donc il faut un compte vrai d'un peu plus de +1 pour seulement revenir à l'équilibre. D'où la forme de la rampe : elle reste au minimum en dessous de +1, parce qu'en dessous il n'y a rien à prendre.</p>
+
+<p>Cela condamne deux familles de tables. Sur une mélangeuse continue comme celle du Cotai, les cartes jouées retournent au sabot : le dénominateur ne descend jamais, le compte vrai reste collé à zéro, et l'estimation n'a plus d'objet. Sur une table au blackjack payé 6:5, l'équilibre est repoussé si haut que le compte vrai n'y arrive pratiquement jamais — l'arithmétique de cette page y reste exacte, elle ne mène nulle part. Les règles de chaque table sont <a href="/blackjack/#avantage">sur la page principale</a>.</p>
+
+<div class="avert">
+<p>Le compte vrai ne rend pas le blackjack gagnant. Il donne quelques dixièmes de pour cent, sur des milliers de mains, à condition de ne se tromper ni sur le compte ni sur la division. Toute page qui promet autre chose vous vend quelque chose. WiseHand n'emploie pas d'argent réel et ne conseille pas d'en jouer.</p>
+</div>
+
+<div class="appel">
+<p>Aucune de ces erreurs ne se voit sur le moment : en sortant du casino, vous ne saurez pas si la soirée s'est mal passée à cause du sabot ou parce que vous divisiez par le mauvais nombre. Un exercice, lui, connaît la réponse. Un tas de défausse s'affiche, vous annoncez combien de jeux il contient, et l'application donne le chiffre exact et les jeux restants — puis votre part de manches dans le demi-jeu de tolérance, votre écart moyen, votre pire écart.</p>
+<a class="btn" href="/">Ouvrir l'exercice « Estimation »</a>
+</div>
+
+<p>Si le compte courant n'est pas encore automatique, commencez par lui : diviser un compte faux ne donne rien de juste. Les valeurs Hi-Lo sont sur <a href="/blackjack/#comptage">la page principale</a>, et <a href="/academie/">les autres leçons de l'académie</a> traitent les écarts au compte et l'assurance une par une.</p>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Comment calcule-t-on le compte vrai au blackjack&#8239;?</h3>
+<p>On divise le compte courant par le nombre de jeux qui restent dans le sabot, estimé à vue et arrondi au demi-jeu : +6 avec deux jeux restants donne un compte vrai de +3. Le compte courant seul ne permet aucune décision, parce qu'il ne dit pas sur combien de cartes son excédent est réparti.</p>
+
+<h3>Comment estimer le nombre de jeux restants sans compteur&#8239;?</h3>
+<p>On regarde la défausse plutôt que le sabot, on lit le tas en demi-jeux, et on soustrait du total connu du sabot. La défausse est posée à plat, immobile et bien éclairée, alors que le sabot est incliné et souvent masqué par la main du croupier. La hauteur d'un jeu se calibre au premier mélange, sur la table où vous êtes assis : elle dépend des cartes, de leur usure et du bac.</p>
+
+<h3>Une erreur d'un demi-jeu, c'est grave&#8239;?</h3>
+<p>Cela dépend entièrement du moment du sabot, et l'écart entre les deux extrêmes est énorme. À cinq jeux restants, un demi-jeu d'erreur déplace le compte vrai d'un ou deux dixièmes et ne change aucune décision. À un jeu restant, avec un compte courant de +8, la même erreur fait passer le compte vrai de +5,3 à +16 — au moment où la mise est la plus grosse.</p>
+
+<h3>Faut-il diviser par les jeux restants ou par les demi-jeux&#8239;?</h3>
+<p>Les deux conventions existent et aucune n'est fausse, mais il faut en choisir une et s'y tenir, puisqu'un seuil publié appartient à une échelle et à une seule. Diviser par les demi-jeux restants donne un nombre deux fois plus petit : deux jeux au sabot font quatre demi-jeux, donc +8 y vaut +2 au lieu de +4. WiseHand divise par les jeux entiers, parce que c'est l'échelle des écarts publiés et celle sur laquelle son solveur calcule les siens.</p>
+</article>
+
+<nav class="suite" aria-label="Dans le cours"><a href="/academie/valeurs-des-cartes-hi-lo/"><span class="sens">← Leçon précédente</span>Les valeurs Hi-Lo</a><a class="apres" href="/academie/penetration-du-sabot/"><span class="sens">Leçon suivante →</span>La pénétration</a></nav>
+</main>
+
+<footer>
+<p class="ours" style="border:0;padding:0;margin:0 0 14px">
+  <span>Publié le <time datetime="2026-09-09">9 septembre 2026</time></span>
+  
+  <span class="pt">·</span><span>11 min de lecture</span>
+</p>
+<p class="meta"><strong>D'où viennent ces chiffres.</strong> Chaque avantage maison
+cité sur ce site est produit en simulant <strong>3 000 000 mains</strong> par jeu de règles, avec un
+joueur qui applique la stratégie de base résolue pour ces règles-là — pas une grille recopiée.
+Les grilles sont calculées par un solveur exact&#8239;; les index de comptage sont obtenus par
+dichotomie sur la composition du sabot. La graine est fixe, donc le résultat est reproductible.
+Dernier calcul&#8239;: 2026-09-09. Le code est ouvert&#8239;: les chiffres peuvent être
+régénérés à partir de lui.</p>
+<p><strong>Ici, personne ne perd d'argent&#8239;: les jetons ne valent rien et le tapis se rachète
+d'un clic. Dehors, c'est autre chose.</strong> Le blackjack reste un jeu d'argent, et un jeu
+d'argent se perd à long terme. Rien sur cette page n'est un conseil de jouer.</p>
+<div class="aide"><p>Si le jeu a cessé d'être un jeu&#8239;: <strong>Joueurs Info Service, 09 74 75 13 13</strong>
+— anonyme et non surtaxé, tous les jours de 8&nbsp;h à 2&nbsp;h.</p></div>
+<p>Jeu interdit aux mineurs. · <a href="/">WiseHand</a></p>
+</footer>
+
+</div>
+</body>
+</html>

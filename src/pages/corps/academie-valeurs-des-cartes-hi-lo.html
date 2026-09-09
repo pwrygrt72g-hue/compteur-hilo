@@ -1,0 +1,132 @@
+<h1>Les valeurs des cartes en Hi-Lo</h1>
+
+<p class="chapo">En Hi-Lo, les cartes de 2 à 6 valent +1, les 7, 8 et 9 valent 0, et les dix, les figures et les as valent &minus;1. Vous partez de zéro et vous additionnez ces valeurs à mesure que les cartes tombent : le total s'appelle le compte courant. Ces valeurs ne sont pas arbitraires — chacune résume, sur trois crans seulement, l'effet qu'a le retrait de cette carte sur votre espérance. Un jeu complet fait exactement zéro, ce qui rend légitime la division par les jeux restants : Hi-Lo est un système équilibré de niveau 1.</p>
+
+<h2 id="tableau">Le tableau des valeurs</h2>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Cartes</th><th class="n">Valeur Hi-Lo</th><th class="n">Dans un jeu</th></tr></thead>
+<tbody>
+<tr><td>2, 3, 4, 5, 6</td><td class="n bon">+1</td><td class="n">20 cartes</td></tr>
+<tr><td>7, 8, 9</td><td class="n">0</td><td class="n">12 cartes</td></tr>
+<tr><td>10, valet, dame, roi, as</td><td class="n mauvais">&minus;1</td><td class="n">20 cartes</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Il n'y a rien d'autre à mémoriser, et l'on ne revient jamais en arrière. Les cartes des autres joueurs comptent autant que les vôtres : ce qui vous intéresse n'est pas votre main, c'est ce qui reste dans le sabot.</p>
+
+<p>Ce total est le <strong>compte courant</strong>. Il ne pilote rien tout seul : il faut le diviser par le nombre de jeux restants pour obtenir le <strong>compte vrai</strong>, dont dépendent la mise et les écarts à la stratégie de base. C'est la leçon suivante de l'Académie&#8239;: <a href="/academie/compte-vrai/">le compte vrai</a>. Ici, on traite d'autre chose — d'où sortent les valeurs elles-mêmes.</p>
+
+<h2 id="pourquoi">Pourquoi ces valeurs-là, et pas d'autres</h2>
+
+<p><strong>Chaque valeur Hi-Lo approche une quantité mesurable : l'effet du retrait de la carte sur votre espérance.</strong> Retirez une seule carte du sabot, résolvez le jeu de nouveau, comparez : l'espérance a bougé. Ce déplacement a une taille et un signe, différents pour chaque rang.</p>
+
+<div class="panneau">
+<h3 style="margin-top:0">L'effet de retrait</h3>
+<p>Retirer un 5 du sabot est ce qui améliore le plus votre espérance. Retirer un as est ce qui la dégrade le plus — davantage encore qu'un dix. Entre les deux, la courbe culmine sur le 5 et descend ensuite sans repartir jusqu'à l'as : les petites cartes vous aident en partant, les grosses vous manquent. Hi-Lo écrase toute cette courbe sur trois valeurs, +1, 0 et &minus;1.</p>
+</div>
+
+<p>Deux mécanismes, et deux seulement, expliquent la forme de cette courbe.</p>
+
+<h3>Le croupier n'a pas le droit de s'arrêter</h3>
+
+<p>Sur une main faible, vous avez le choix de vous arrêter ou de tirer ; lui n'en a aucun, il tire jusqu'à 17. C'est la seule asymétrie du jeu, et c'est de là que vient tout le comptage. Un sabot appauvri en petites cartes le fait sauter plus souvent, parce qu'il ne lui reste plus de quoi compléter une main faible.</p>
+
+<p>Cette liberté est plus étroite qu'on ne le croit : sur la table étalon, la stratégie de base calculée par le solveur du dépôt fait <em>tirer</em> un 12 contre un 2 et contre un 3, et ne le fait rester que contre un 4, un 5 ou un 6. Le 12 ne se range pas avec les 13-16.</p>
+
+<p>Le 5 est le cas extrême, et l'arithmétique le montre en une ligne : 12 + 5 = 17, 13 + 5 = 18, 14 + 5 = 19, 15 + 5 = 20, 16 + 5 = 21. <strong>Le 5 est la seule carte qui transforme les cinq mains faibles en total tenable sans jamais en faire sauter une.</strong> Le 4 laisse le 12 à 16, toujours faible ; le 6 fait sauter le 16. Voilà pourquoi retirer un 5 vous aide plus que tout — et pourquoi tous les systèmes sérieux lui donnent leur valeur positive la plus forte.</p>
+
+<h3>Un blackjack ne rapporte pas la même chose aux deux camps</h3>
+
+<p>Sur une table honnête, votre blackjack est payé une fois et demie votre mise ; celui du croupier vous prend simplement la vôtre. Les as et les dix sont les seules cartes à fabriquer des blackjacks, et ce paiement dissymétrique penche de votre côté : les retirer vous coûte donc davantage qu'au croupier.</p>
+
+<p>Ces deux mécanismes se cumulent sur les dix et les figures, qui font sauter le croupier <em>et</em> font les blackjacks. L'as, lui, ne relève guère que du second : compté 1 ou 11 au choix, il ne fait sauter personne. Retenez ce détail, il commande la fin de cette page.</p>
+
+<h2 id="equilibre">Un système équilibré : la somme d'un jeu fait zéro</h2>
+
+<p>Comptez les cartes d'un jeu de 52 : vingt valent +1 (cinq rangs de quatre cartes), douze valent 0, et vingt valent &minus;1 (seize cartes de valeur 10, plus quatre as). Vingt, moins vingt. <strong>Un jeu complet compté en entier retombe exactement à zéro</strong>, et un sabot de six jeux aussi.</p>
+
+<p>Cette symétrie n'est pas une élégance : c'est ce qui autorise la division. Si un jeu complet valait autre chose que zéro, le compte dériverait à mesure que le sabot se vide, indépendamment de ce qu'il contient encore — et le diviser ne dirait plus rien. C'est parce que Hi-Lo est équilibré qu'un compte vrai existe.</p>
+
+<p>Dans l'application, cet équilibre n'est pas affirmé : il est vérifié. Un test additionne les valeurs de chaque système — quatre cartes par rang, seize pour le rang des dix — et compare le résultat à l'équilibre annoncé. Un système qui mentirait sur le sien ferait échouer la suite de tests.</p>
+
+<h2 id="correlation">La corrélation de mise, et ce que Hi-Lo laisse sur la table</h2>
+
+<p>Puisque les valeurs d'un système sont censées suivre l'effet de retrait, on peut mesurer à quel point elles le suivent : c'est la <strong>corrélation de mise</strong>, la <em>betting correlation</em>. Plus elle est haute, mieux le compte prédit le moment où miser gros. Un second indicateur la complète, l'<strong>efficacité de jeu</strong> : à quel point le même compte vous aide à décider tirer, rester ou doubler. Ces deux nombres sont de Peter Griffin, auteur en 1979 de <em>The Theory of Blackjack</em>, le premier à avoir ramené n'importe quelle méthode de comptage à ce couple.</p>
+
+<p>La littérature accorde à Hi-Lo une corrélation de mise très élevée pour un système à trois valeurs, et c'est la raison de sa longévité : la courbe des effets de retrait descend sans repartir du 5 vers l'as, et l'écraser à +1, 0 et &minus;1 en conserve l'essentiel. Les erreurs d'arrondi ne portent vraiment que sur deux rangs : le 2, à qui Hi-Lo accorde un +1 plein qu'il ne mérite pas tout à fait — c'est le plus faible de son groupe —, et le 7, qu'il traite comme neutre alors qu'il penche légèrement de votre côté.</p>
+
+<div class="avert">
+<p>WiseHand ne calcule ni la corrélation de mise, ni les effets de retrait : le solveur mesure des stratégies, le simulateur des avantages maison, aucun des deux ne produit ces chiffres-là. L'ordre des rangs décrit ci-dessus vient donc de la littérature — la table de référence est celle de Griffin — et non du dépôt. C'est pourquoi cette page n'en cite aucune valeur : ce site ne publie comme mesuré que ce qu'il sait reproduire.</p>
+</div>
+
+<h3>Le prix de l'as</h3>
+
+<p><strong>Pour la mise, l'as est une grosse carte</strong> : il fabrique des blackjacks, donc son départ vous coûte, et le compter &minus;1 est justifié. <strong>Pour les décisions de jeu, il est presque neutre</strong> : quand vous tenez 16 contre un 10, la question est de savoir s'il reste des dix pour faire sauter le croupier. Un as n'est pas un dix. Il ne vous sauvera pas cette main-là, et pourtant il vient de faire baisser votre compte comme s'il en était un.</p>
+
+<p><a href="/academie/assurance/">L'assurance</a> en donne la démonstration la plus nette, et elle tient en une ligne du dépôt : le pari devient rentable dès que les cartes de valeur 10 dépassent le tiers du sabot, ce que le code écrit <em>3 × (dix ÷ cartes restantes) &minus; 1</em>. Lisez le dénominateur : <strong>toute</strong> carte qui n'est pas un dix y pèse, et de la même façon. Un as qui sort est un non-dix qui sort — il <em>améliore</em> l'assurance. Hi-Lo, lui, le retranche comme un dix. Sur cette décision, le barème se trompe donc de signe sur un rang entier, et sous-estime les 7, 8 et 9 qui sont eux aussi des non-dix. Sur la table étalon, <a href="/blackjack/#avantage">Le Boulevard</a> et son avantage maison mesuré de 0,583&#8239;%, le seuil reste un compte vrai de +3.</p>
+
+<p>C'est ce défaut que corrigent les systèmes comptant les as à part : l'as devient neutre dans le compte principal, ce qui rend celui-ci plus juste pour jouer les mains, et le nombre d'as vus est retenu dans un second compte, uniquement pour décider de la mise. On gagne en précision ce qu'on perd en charge mentale — et cette charge est réelle.</p>
+
+<h2 id="comparaison">Les quatre systèmes de l'application</h2>
+
+<p>WiseHand implémente quatre systèmes. Voici leurs valeurs exactes, telles qu'elles sont écrites dans le code du dépôt, sans arrondi ni simplification.</p>
+
+<div class="tableau">
+<table>
+<thead><tr><th>Système</th><th class="n">2</th><th class="n">3</th><th class="n">4</th><th class="n">5</th><th class="n">6</th><th class="n">7</th><th class="n">8</th><th class="n">9</th><th class="n">10 V D R</th><th class="n">As</th><th>Équilibré</th><th class="n">Niveau</th></tr></thead>
+<tbody>
+<tr><td><strong>Hi-Lo</strong></td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n mauvais">&minus;1</td><td class="n mauvais">&minus;1</td><td class="bon">oui</td><td class="n">1</td></tr>
+<tr><td><strong>KO</strong></td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n">0</td><td class="n">0</td><td class="n mauvais">&minus;1</td><td class="n mauvais">&minus;1</td><td class="mauvais">non</td><td class="n">1</td></tr>
+<tr><td><strong>Hi-Opt I</strong></td><td class="n">0</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n mauvais">&minus;1</td><td class="n">0</td><td class="bon">oui</td><td class="n">1</td></tr>
+<tr><td><strong>Omega II</strong></td><td class="n bon">+1</td><td class="n bon">+1</td><td class="n bon">+2</td><td class="n bon">+2</td><td class="n bon">+2</td><td class="n bon">+1</td><td class="n">0</td><td class="n mauvais">&minus;1</td><td class="n mauvais">&minus;2</td><td class="n">0</td><td class="bon">oui</td><td class="n">2</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Hi-Opt I met l'as à zéro.</strong> C'est le système de la section précédente : plus juste pour les décisions de jeu, mais il exige un compte des as tenu à part pour que la mise reste correcte. Il neutralise aussi le 2 — non que l'effet de retrait du 2 soit nul, il est nettement positif et dépasse même celui du 7, mais l'écarter simplifie le barème et affine les décisions. C'est un échange, pas une correction.</p>
+
+<p><strong>Omega II est le seul de niveau 2</strong> : ses valeurs vont jusqu'à ±2, ce qui lui permet d'épouser la courbe de bien plus près. Il distingue le 9, que les trois autres ignorent, et rend l'as neutre comme Hi-Opt I. Nettement plus précis, nettement plus fatigant.</p>
+
+<p><strong>KO donne +1 au 7</strong>, ce qui corrige l'un des deux arrondis grossiers de Hi-Lo. Cette correction a un prix, plus lourd qu'il n'en a l'air.</p>
+
+<h2 id="desequilibre">KO est déséquilibré : ce que cela change</h2>
+
+<p>Additionnez les valeurs de KO sur un jeu complet : vous obtenez +4, et non zéro. Le 7 supplémentaire ajoute quatre points par jeu que rien ne vient compenser. <strong>KO est le seul système déséquilibré des quatre</strong>, et c'est une décision, pas un oubli.</p>
+
+<p>La conséquence est simple : <strong>il n'y a pas de compte vrai en KO</strong>. Diviser un compte qui dérive avec la profondeur ne produirait qu'un nombre trompeur. On compense en ne partant pas de zéro : le compte démarre à 4 moins quatre fois le nombre de jeux, soit &minus;20 pour un sabot de six jeux, et c'est le compte courant seul qui pilote la mise.</p>
+
+<p>Dans l'application, ce choix se voit immédiatement. Avec KO sélectionné, le sélecteur affiche « déséquilibré · départ à &minus;20 », le champ « Vrai » de la barre de table porte « n/a » au lieu d'un nombre, le seuil d'assurance disparaît — il est défini en compte vrai, et le conseil devient un « non » sans condition — et la rampe de mise passe au tiret. <strong>Elle ne retombe pas au minimum : elle se tait</strong>, le tiret étant la valeur que le site réserve à « je ne sais pas ». Ce n'est pas un défaut d'affichage : c'est la contrepartie exacte de la simplification, rendue visible plutôt que masquée.</p>
+
+<p>Le calcul des écarts, lui, ne dépend d'aucun système : le moteur d'indices déforme la composition du sabot pour qu'elle porte le compte visé, résout, puis cherche par dichotomie le point où la meilleure décision bascule. Il vaut donc pour n'importe quel barème et n'importe quel règlement — <a href="/academie/illustrious-18/">les dix-huit écarts qui rapportent le plus</a> entrent dans le détail.</p>
+
+<p>Hi-Lo reste la référence, et pour une raison qui n'a rien à voir avec sa précision : c'est le système pour lequel tous les écarts publiés existent, et celui dont vous trouverez une réponse à chaque question.</p>
+
+<div class="avert">
+<p>Un système plus précis appliqué avec des erreurs vaut moins qu'un système simple appliqué sans aucune. Le comptage ne retire que quelques dixièmes de pour cent à la maison, sur des milliers de mains, et une seule erreur par sabot suffit à effacer cet avantage. Changer de barème avant d'avoir rendu le premier automatique est la manière la plus courante de reculer en croyant avancer.</p>
+</div>
+
+<div class="appel">
+<p>Les valeurs se retiennent en cinq minutes. Les tenir à la vitesse d'une vraie table, sans compter à voix basse et sans perdre le fil quand on vous parle, demande des heures. L'exercice « Le réflexe » fait défiler les cartes au rythme que vous choisissez et vérifie votre compte à l'arrivée.</p>
+<a class="btn" href="/#entrainement">Ouvrir l'exercice « Le réflexe »</a>
+</div>
+
+<h2 id="faq">Questions fréquentes</h2>
+
+<h3>Pourquoi l'as vaut-il &minus;1 en Hi-Lo alors qu'il peut valoir 1 ou 11 ?</h3>
+
+<p>Parce que la valeur Hi-Lo d'une carte ne décrit pas ce qu'elle vaut dans une main, mais ce que son départ du sabot fait à votre espérance. L'as fabrique des blackjacks, qui vous sont payés une fois et demie votre mise et qui ne rapportent au croupier que la mise simple : un sabot vidé de ses as vous dessert. C'est ce déséquilibre de paiement, et non la souplesse de l'as dans une main, que le &minus;1 enregistre.</p>
+
+<h3>Pourquoi les 7, 8 et 9 valent-ils zéro ?</h3>
+
+<p>Parce que leur retrait ne déplace presque pas l'espérance : ils ne complètent pas les mains faibles du croupier aussi bien qu'un 5, et ils ne font pas de blackjacks. Leur effet réel n'est pas rigoureusement nul — le 7 penche légèrement du côté du joueur, ce que KO et Omega II reconnaissent en lui donnant +1 — mais il est assez petit pour qu'un système à trois valeurs ait raison de l'ignorer.</p>
+
+<h3>Hi-Lo est-il le meilleur système de comptage ?</h3>
+
+<p>Non, et il ne cherche pas à l'être. Omega II épouse de bien plus près la courbe des effets de retrait, et Hi-Opt I décide mieux les mains parce qu'il ne laisse pas les as brouiller le compte. Hi-Lo reste pourtant le bon choix pour presque tout le monde, parce que l'écart de précision entre ces systèmes est plus petit que l'écart entre un compte tenu sans faute et un compte tenu approximativement.</p>
+
+<h3>Pourquoi KO ne demande-t-il pas de compte vrai ?</h3>
+
+<p>Parce que ses valeurs ne s'annulent pas sur un jeu complet : leur somme vaut +4 par jeu, et un compte qui dérive avec la profondeur ne se divise pas utilement par les jeux restants. KO compense en démarrant à un nombre négatif calculé sur la taille du sabot, soit &minus;20 pour six jeux, et pilote la mise avec le compte courant seul. On économise une division et une estimation à vue, on perd un peu de précision.</p>

@@ -1,0 +1,220 @@
+{
+ "genere": "2026-09-09",
+ "empreinte": "f04c3a69fa167b11",
+ "graine": 20260904,
+ "mains": 12000000,
+ "mains_decomposition": 40000000,
+ "rampe": "miseRampe : deux unités par point de compte vrai au-dessus de +1, plafond 12",
+ "systeme": "hilo",
+ "tables": {
+  "neon": {
+   "nom": "Le Néon",
+   "ev": 0.001248,
+   "sd": 3.724,
+   "ic95": 0.002107,
+   "part_mises_hautes": 0.2008,
+   "mise_moyenne": 2.086,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "frontdemer": {
+   "nom": "Le Front de Mer",
+   "ev": 0.00373,
+   "sd": 2.054,
+   "ic95": 0.001162,
+   "part_mises_hautes": 0.1014,
+   "mise_moyenne": 1.312,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "cotai": {
+   "nom": "Le Cotai",
+   "ev": -0.004238,
+   "sd": 1.161,
+   "ic95": 0.000657,
+   "part_mises_hautes": 0,
+   "mise_moyenne": 1,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "cercle": {
+   "nom": "Le Cercle",
+   "ev": 0.003365,
+   "sd": 2.586,
+   "ic95": 0.001463,
+   "part_mises_hautes": 0.1367,
+   "mise_moyenne": 1.512,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "reno": {
+   "nom": "Le Vieux Reno",
+   "ev": 0.043052,
+   "sd": 4.223,
+   "ic95": 0.002389,
+   "part_mises_hautes": 0.2333,
+   "mise_moyenne": 2.337,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "mainchaude": {
+   "nom": "La Main Chaude",
+   "ev": 0.028038,
+   "sd": 3.823,
+   "ic95": 0.002163,
+   "part_mises_hautes": 0.2031,
+   "mise_moyenne": 1.981,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "salonprive": {
+   "nom": "Le Salon Privé",
+   "ev": 0.018526,
+   "sd": 3.08,
+   "ic95": 0.001743,
+   "part_mises_hautes": 0.1552,
+   "mise_moyenne": 1.673,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "marina": {
+   "nom": "La Marina",
+   "ev": 0.013447,
+   "sd": 2.732,
+   "ic95": 0.001546,
+   "part_mises_hautes": 0.1413,
+   "mise_moyenne": 1.55,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "aquarium": {
+   "nom": "L'Aquarium",
+   "ev": -0.019528,
+   "sd": 1.915,
+   "ic95": 0.001084,
+   "part_mises_hautes": 0.0933,
+   "mise_moyenne": 1.265,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "boulevard": {
+   "nom": "Le Boulevard",
+   "ev": 0.008303,
+   "sd": 2.619,
+   "ic95": 0.000812,
+   "part_mises_hautes": 0.1357,
+   "mise_moyenne": 1.508,
+   "mains": 40000000,
+   "index_assurance": 3
+  }
+ },
+ "boulevard": {
+  "rampe_intuitive": {
+   "ev": 0.000843,
+   "sd": 1.594,
+   "ic95": 0.000902,
+   "part_mises_hautes": 0.0751,
+   "mise_moyenne": 1.165,
+   "mains": 12000000,
+   "index_assurance": 3
+  },
+  "decomposition": {
+   "mise_plate": {
+    "ev": -0.005833,
+    "sd": 1.144,
+    "ic95": 0.000355,
+    "part_mises_hautes": 0,
+    "mise_moyenne": 1,
+    "mains": 40000000,
+    "index_assurance": null
+   },
+   "rampe_assurance": {
+    "ev": 0.004819,
+    "sd": 2.475,
+    "ic95": 0.000767,
+    "part_mises_hautes": 0.1333,
+    "mise_moyenne": 1.498,
+    "mains": 40000000,
+    "index_assurance": 3
+   },
+   "rampe_seule": {
+    "ev": 0.004009,
+    "sd": 2.483,
+    "ic95": 0.000769,
+    "part_mises_hautes": 0.1333,
+    "mise_moyenne": 1.498,
+    "mains": 40000000,
+    "index_assurance": null
+   },
+   "parfait": {
+    "ev": 0.008303,
+    "sd": 2.619,
+    "ic95": 0.000812,
+    "part_mises_hautes": 0.1357,
+    "mise_moyenne": 1.508,
+    "mains": 40000000,
+    "index_assurance": 3
+   }
+  },
+  "carrieres": {
+   "n": 1000,
+   "mains": 50000,
+   "graine": 777001,
+   "ev": 0.008457,
+   "sd": 2.621,
+   "pire": -1589,
+   "decile_1": -311,
+   "mediane": 404,
+   "decile_9": 1212,
+   "meilleure": 2316,
+   "moyenne": 423,
+   "part_negative": 0.231,
+   "ruine": {
+    "50": 0.848,
+    "100": 0.732,
+    "200": 0.529,
+    "400": 0.275,
+    "600": 0.133,
+    "1000": 0.022
+   }
+  },
+  "fragilite": {
+   "erreur_par_sabot": {
+    "ev": 0.008476,
+    "sd": 2.643,
+    "ic95": 0.001495,
+    "part_mises_hautes": 0.1372,
+    "mise_moyenne": 1.517,
+    "mains": 12000000,
+    "index_assurance": 3
+   },
+   "demi_jeu_au_hasard": {
+    "ev": 0.010028,
+    "sd": 2.77,
+    "ic95": 0.001567,
+    "part_mises_hautes": 0.1374,
+    "mise_moyenne": 1.544,
+    "mains": 12000000,
+    "index_assurance": 3
+   },
+   "demi_jeu_de_trop": {
+    "ev": 0.004112,
+    "sd": 2.133,
+    "ic95": 0.001207,
+    "part_mises_hautes": 0.1109,
+    "mise_moyenne": 1.347,
+    "mains": 12000000,
+    "index_assurance": 3
+   },
+   "demi_jeu_de_moins": {
+    "ev": 0.011975,
+    "sd": 3.271,
+    "ic95": 0.001851,
+    "part_mises_hautes": 0.1632,
+    "mise_moyenne": 1.739,
+    "mains": 12000000,
+    "index_assurance": 3
+   }
+  }
+ }
+}

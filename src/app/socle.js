@@ -496,6 +496,28 @@ function mesurerEntete() {
 addEventListener("resize", mesurerEntete);
 addEventListener("orientationchange", () => setTimeout(mesurerEntete, 120));
 
+/* ── LE CHANGEMENT D'ÉCRAN ────────────────────────────────────────────
+   🚨 LES TRANSITIONS DE VUE DU NAVIGATEUR ONT ÉTÉ ESSAYÉES ET RETIRÉES (08/09/2026).
+   NE PAS LES REMETTRE sans lire ce qui suit.
+
+   `document.startViewTransition` donne le vrai fondu croisé — l'ancien écran et le
+   nouveau superposés. C'est joli, et c'est exactement ce qu'on voulait. Mais son rappel
+   est ASYNCHRONE : `aller()` rend la main AVANT que la vue ait changé.
+
+   Mesuré des deux côtés, le 08/09 :
+     · dans un vrai navigateur, la bascule prend 25 à 50 ms — parfait ;
+     · sous `--virtual-time-budget` (c'est-à-dire dans outils/verifier.sh, le filet
+       principal du dépôt, plus de deux cents contrôles), le rappel est AFFAMÉ : la
+       première navigation ne s'est jamais faite en 8 000 ms virtuelles, la seconde
+       s'est faite en 50. Non-déterministe.
+   Autrement dit : garder les transitions rendait la moitié du banc aléatoire, et
+   surtout AVEUGLE — chaque futur contrôle de navigation serait devenu un tirage.
+   Le mode d'échec, lui, est le pire possible : « l'application ne navigue pas ».
+
+   Ce qu'on garde à la place : la bascule reste SYNCHRONE, et l'écran qui arrive a une
+   entrée plus travaillée (`.vue{animation:paraitre}`, plus bas dans la feuille). Firefox
+   n'a de toute façon pas les transitions de vue. Le mouvement demandé — au clic, au
+   défilement — est ailleurs, et il est entièrement en CSS.  */
 function aller(v) {
   // « Le salon » n'est plus une vue : c'est l'ancre « Les tables » du hall. Tout ce qui
   // y envoyait (Changer de table, le rachat, la nav cachée) arrive au bon endroit.
