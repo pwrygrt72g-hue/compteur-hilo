@@ -183,6 +183,12 @@ const SITE = LIEN_SITE.replace(/\/$/, "");
 const OG_IMAGE = SITE + "/static/og.jpg";
 const DESCRIPTION = (tete.match(/<meta name="description" content="([^"]+)"/) || [])[1];
 if (!DESCRIPTION) throw new Error("tete.html : <meta name=\"description\"> introuvable — l'en-tête public ne peut plus être construit");
+// 🚨 Le titre était écrit TROIS fois : dans <title>, dans og:title et dans twitter:title.
+// Deux d'entre elles vivaient ici, en dur — donc le jour où l'on retouche le titre de la
+// page, l'aperçu partagé sur les réseaux continue d'annoncer l'ancien, sans que rien ne le
+// signale. Une seule source : tete.html.
+const TITRE = (tete.match(/<title>([^<]+)<\/title>/) || [])[1];
+if (!TITRE) throw new Error("tete.html : <title> introuvable — l'en-tête public ne peut plus être construit");
 
 // SoftwareApplication décrit L'OUTIL (c'est une application, pas un article) ;
 // WebSite donne son nom au domaine. Aucun FAQPage ici : les questions vivent sur
@@ -202,6 +208,7 @@ const JSONLD = {
       description: DESCRIPTION,
       image: OG_IMAGE,
       author: { "@type": "Person", name: "Léo Lejeau" },
+      publisher: { "@id": SITE + "/#editeur" },
       license: "https://opensource.org/licenses/MIT",
       isAccessibleForFree: true,
       // 🚨 Un prix de 0 se déclare, sinon « gratuit » n'est qu'une affirmation
@@ -217,7 +224,12 @@ const JSONLD = {
         "Fonctionne hors ligne",
       ],
     },
-    { "@type": "WebSite", "@id": SITE + "/#site", url: SITE + "/", name: "WiseHand", inLanguage: "fr" },
+    { "@type": "WebSite", "@id": SITE + "/#site", url: SITE + "/", name: "WiseHand", inLanguage: "fr",
+      publisher: { "@id": SITE + "/#editeur" } },
+    // Le MÊME identifiant d'éditeur que les seize pages éditoriales (outils/pages.mjs) :
+    // sans lui, l'accueil et le reste du site décrivaient deux entités sans rapport.
+    { "@type": "Organization", "@id": SITE + "/#editeur", name: "WiseHand", url: SITE + "/",
+      logo: { "@type": "ImageObject", url: SITE + "/icon-180.png", width: 180, height: 180 } },
   ],
 };
 
@@ -228,7 +240,7 @@ const ENTETE = `<link rel="canonical" href="${SITE}/">
 <meta property="og:site_name" content="WiseHand">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:url" content="${SITE}/">
-<meta property="og:title" content="WiseHand — compter les cartes au blackjack, pour de vrai">
+<meta property="og:title" content="${TITRE}">
 <meta property="og:description" content="${DESCRIPTION}">
 <meta property="og:image" content="${OG_IMAGE}">
 <meta property="og:image:type" content="image/jpeg">
@@ -236,7 +248,7 @@ const ENTETE = `<link rel="canonical" href="${SITE}/">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="WiseHand — compter les cartes au blackjack, pour de vrai">
+<meta name="twitter:title" content="${TITRE}">
 <meta name="twitter:description" content="${DESCRIPTION}">
 <meta name="twitter:image" content="${OG_IMAGE}">
 <meta name="twitter:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">

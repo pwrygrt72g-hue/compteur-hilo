@@ -379,5 +379,216 @@ if (existsSync("sitemap.xml")) {
   for (const u of auPlan) dire(CATALOGUE.some(p => p.slug + "/" === u), "plan de site : l'URL est au catalogue", u);
 }
 
+// ── LES GRILLES DE STRATÉGIE DE BASE, CELLULE PAR CELLULE ─────────────────────
+// 09/09/2026. La page anglaise porte 340 cellules de stratégie ÉCRITES À LA MAIN, et
+// rien ne les regardait — alors que l'incident fondateur du 07/09 est exactement celui-là :
+// une stratégie de base fausse (« 12 contre 2, restez ») publiée sous une page qui se
+// vend sur « nos chiffres sont mesurés ». Une grille recopiée est une grille qui dérive
+// le jour où le solveur change d'avis, et personne ne le verrait : une cellule fausse au
+// milieu de trois cents ne se remarque pas à la lecture.
+//
+// Le jeu de règles de chaque page est DÉCLARÉ ici, et une page qui poserait une grille
+// sans le déclarer fait échouer le contrôle : on ne devine pas contre quoi comparer.
+const GRILLES = { "en/blackjack/index.html": "boulevard" };
+{
+  // Le solveur range les colonnes croupier dans l'ordre A,2,3…10 et les paires par
+  // indice de rang (0 = as, 9 = dix). La page, elle, écrit ses colonnes dans l'ordre
+  // qui se lit — on lit SON en-tête plutôt que de le supposer.
+  const idxCol = l => l === "A" ? 0 : (+l === 10 ? 9 : +l - 1);
+  for (const p of PAGES) {
+    if (!existsSync(p)) continue;
+    const h = readFileSync(p, "utf8");
+    // Une grille écrite par le générateur s'annonce elle-même (data-table) ; celles
+    // écrites à la main sont déclarées dans GRILLES ci-dessus. Une grille qui ne fait ni
+    // l'un ni l'autre échoue : on ne devine pas contre quel jeu de règles comparer.
+    const tables = [...h.matchAll(/<table class="chart"([^>]*)>([\s\S]*?)<\/table>/g)]
+      .map(m => ({ table: (m[1].match(/data-table="([a-z]+)"/) || [])[1] || GRILLES[p], corps: m[2] }));
+    if (!tables.length) continue;
+    for (const { table, corps: t } of tables) {
+      dire(!!table, "la grille de stratégie déclare le jeu de règles qu'elle décrit (data-table, ou GRILLES dans verifier-pages.mjs)", p);
+      if (!table || !AV[table]) continue;
+      const CH = AV[table].chart;
+      const entetes = [...(t.match(/<thead>[\s\S]*?<\/thead>/) || [""])[0].matchAll(/<th scope="col">([^<]*)<\/th>/g)].map(m => texteNu(m[1]));
+      const colonnes = entetes.slice(1).map(idxCol);   // la première colonne nomme la main
+      dire(colonnes.length === 10 && colonnes.every(c => c >= 0 && c <= 9),
+        "la grille a dix colonnes croupier lisibles", p + " — " + entetes.join("|"));
+      if (colonnes.length !== 10) continue;
+      for (const r of t.matchAll(/<tr><th scope="row">([\s\S]*?)<\/th>([\s\S]*?)<\/tr>/g)) {
+        const lib = texteNu(r[1]);
+        // On lit la CLASSE (a-H, a-S…), pas la lettre affichée : elle porte l'action
+        // canonique du solveur et survivrait à une grille dont les lettres seraient
+        // traduites. Repli sur la lettre pour les grilles écrites avant cette règle.
+        const cells = [...r[2].matchAll(/<td[^>]*class="a-([A-Z])"[^>]*>([A-Z])<\/td>|<td[^>]*>([A-Z])<\/td>/g)].map(x => x[1] || x[3]);
+        // De quelle case du solveur cette ligne parle-t-elle ? Les libellés sont des
+        // nombres et des lettres : la règle vaut dans les deux langues.
+        let attendus = null;
+        const paire = lib.match(/^(A),\s*A$|^(\d+)\s*,\s*(\d+)$/);
+        const souple = lib.match(/^A\s*,\s*(\d+)$/);
+        if (paire && (paire[1] || paire[2] === paire[3])) {
+          const i = paire[1] ? 0 : (+paire[2] === 10 ? 9 : +paire[2] - 1);
+          attendus = [CH.pair[String(i)]];
+        } else if (souple) {
+          attendus = [CH.soft[String(11 + +souple[1])]];
+        } else if (/moins|less|under/i.test(lib)) {
+          attendus = ["5", "6", "7", "8"].map(k => CH.hard[k]);
+        } else if (/^\s*(\d+)\s*\+\s*$/.test(lib)) {
+          const d = +lib.match(/(\d+)/)[1];
+          attendus = Object.keys(CH.hard).filter(k => +k >= d).map(k => CH.hard[k]);
+        } else if (/^\d+$/.test(lib)) {
+          attendus = [CH.hard[lib]];
+        }
+        dire(attendus && attendus.every(Boolean), "libellé de ligne reconnu dans la grille", p + " — « " + lib + " »");
+        if (!attendus || !attendus.every(Boolean)) continue;
+        for (const att of attendus) {
+          const voulu = colonnes.map(c => att[c]).join(" ");
+          dire(cells.join(" ") === voulu, "grille de stratégie conforme au solveur (" + table + ", ligne « " + lib + " »)",
+            "page : " + cells.join(" ") + "  ≠  solveur : " + voulu);
+        }
+      }
+    }
+  }
+}
+
+// ── « Trente et une des 290 cases changent » ──────────────────────────────────
+// Ce nombre est le cœur de la page du tableau : c'est lui qui prouve qu'un tableau
+// appartient à une table et pas au jeu. Il est calculé ici depuis les deux grilles du
+// solveur, exactement sur les lignes que la page AFFICHE (5 à 8 repliés sur une seule,
+// 18 et plus sur une autre) — un écart entre le texte et les grilles publiées juste en
+// dessous serait la faute la plus visible que ce site puisse commettre.
+{
+  const B = AV.boulevard.chart, C = AV.cercle.chart, l = [];
+  l.push([B.hard["8"], C.hard["8"]]);
+  for (let v = 9; v <= 17; v++) l.push([B.hard[String(v)], C.hard[String(v)]]);
+  l.push([B.hard["18"], C.hard["18"]]);
+  for (let d = 9; d >= 2; d--) l.push([B.soft[String(11 + d)], C.soft[String(11 + d)]]);
+  l.push([B.pair["0"], C.pair["0"]]);
+  for (let r = 9; r >= 1; r--) l.push([B.pair[String(r)], C.pair[String(r)]]);
+  let n = 0;
+  for (const [a, b] of l) for (let i = 0; i < 10; i++) if (a[i] !== b[i]) n++;
+  const cases = l.length * 10;
+  const LETTRES = ["zéro", "une", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
+    "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf", "vingt"];
+  const enLettres = v => v <= 20 ? LETTRES[v] : (v < 30 ? "vingt et un".replace("un", LETTRES[v - 20]) : v >= 31 && v <= 39 ? "trente et " + (v === 31 ? "une" : LETTRES[v - 30]) : String(v));
+  const p = "strategie-de-base-blackjack/index.html";
+  if (existsSync(p)) {
+    const nu = texteNu(readFileSync(p, "utf8"));
+    dire(nu.includes(String(cases) + " cases"), "la page annonce le bon nombre de cases", `attendu ${cases}`);
+    // 🚨 On regarde TOUTES les occurrences, pas la première : une page qui dit « trente
+    // et une » dans son corps et « trente-deux » dans sa FAQ passerait un contrôle qui se
+    // contente d'un match — vérifié, c'est exactement ce qui arrivait.
+    const dits = [...nu.matchAll(new RegExp("([\\p{L}-]+(?:\\s+et\\s+[\\p{L}-]+)?|\\d+)\\s+des\\s+" + cases + "\\s+cases", "giu"))]
+      .map(m => m[1].toLowerCase());
+    const bons = [String(n), enLettres(n)];
+    dire(dits.length > 0, "la page annonce combien de cases changent d'une table à l'autre", `attendu ${n} sur ${cases}`);
+    for (const d of dits)
+      dire(bons.includes(d), "le nombre de cases qui changent est celui du solveur",
+        `la page dit « ${d} des ${cases} », le solveur en compte ${n} (« ${enLettres(n)} »)`);
+  }
+  // Le catalogue porte les mêmes nombres dans sa FAQ : deux écritures, une seule vérité.
+  const fiche = CATALOGUE.find(x => x.slug === "strategie-de-base-blackjack");
+  if (fiche) {
+    const t = (fiche.desc || "") + " " + (fiche.sous || "") + " " + (fiche.faq || []).map(q => q.r).join(" ");
+    dire(t.includes(String(n)) || t.includes(enLettres(n)), "le catalogue annonce le même nombre de cases changées", String(n));
+  }
+}
+
+// ── LES RÈGLES DE RÉFÉRENCEMENT, VÉRIFIÉES COMME LE RESTE ─────────────────────
+// 09/09/2026. Le référencement de ce site ne tient à aucune astuce : il tient à des
+// pages qui répondent à une question et qu'un robot peut lire. Ce qui suit fige la
+// part MÉCANIQUE — celle qu'aucun relecteur humain ne repère parce qu'elle ne se voit
+// pas en lisant la page : un titre de 70 caractères est COUPÉ dans les résultats et sa
+// fin ne se lit jamais ; deux pages qui portent la même description se disputent la
+// même place et n'en obtiennent aucune ; une page vers laquelle rien ne pointe n'est
+// pas explorée, quelle que soit sa qualité ; un lien interne mort dépose un lecteur
+// sur une 404 et un robot dans un cul-de-sac. Aucune de ces quatre fautes ne se voit
+// à l'œil. Toutes se prouvent contre le dépôt.
+{
+  const TITRE_MAX = 62;              // au-delà, le titre est coupé dans les résultats
+  const DESC_MIN = 110, DESC_MAX = 165;
+  const attr = (h, re) => { const m = h.match(re); return m ? m[1] : null; };
+  const vus = { titre: new Map(), desc: new Map() };
+  // Qui pointe vers qui. La page d'accueil compte comme source : c'est elle qui ouvre
+  // la porte de l'Académie, et une leçon qui ne serait atteignable que par le plan de
+  // site est une leçon que le robot explore en dernier, ou jamais.
+  const pointe = new Map();
+  const sources = [["/", "index.html"], ...CATALOGUE.map(p => ["/" + p.slug + "/", p.slug + "/index.html"])];
+  const connus = new Set(["/", ...CATALOGUE.map(p => "/" + p.slug + "/")]);
+
+  for (const [depuis, chemin] of sources) {
+    if (!existsSync(chemin)) continue;
+    const h = readFileSync(chemin, "utf8");
+    for (const m of h.matchAll(/href="(\/[^"#?]*)(?:[#?][^"]*)?"/g)) {
+      const cible = m[1];
+      if (cible === depuis) continue;                       // un lien vers soi-même n'ouvre rien
+      if (/\.(svg|png|jpe?g|webp|ico|xml|txt|json|webmanifest|css|js)$/.test(cible)) {
+        dire(existsSync(cible.replace(/^\//, "")), "lien vers un fichier qui existe", depuis + " → " + cible);
+        continue;
+      }
+      dire(connus.has(cible), "lien interne vers une page du catalogue", depuis + " → " + cible);
+      if (!pointe.has(cible)) pointe.set(cible, new Set());
+      pointe.get(cible).add(depuis);
+    }
+  }
+
+  for (const p of CATALOGUE) {
+    const chemin = p.slug + "/index.html";
+    if (!existsSync(chemin)) continue;
+    const h = readFileSync(chemin, "utf8");
+    const url = "https://wisehand21.com/" + p.slug + "/";
+
+    // Le titre : présent, court assez pour être lu en entier, et unique. Deux pages au
+    // même titre, c'est une page qui prend la place de l'autre.
+    const titre = attr(h, /<title>([\s\S]*?)<\/title>/);
+    dire(!!titre, "titre présent", p.slug);
+    if (titre) {
+      const nu = texteNu(titre);
+      // Le suffixe « — WiseHand » est ajouté par la coquille : ce qu'on plafonne, c'est
+      // ce que l'auteur écrit dans le catalogue, sinon la règle punirait la marque.
+      const propre = nu.replace(/\s*[—–-]\s*WiseHand\s*$/, "");
+      dire(propre.length <= TITRE_MAX, `titre ≤ ${TITRE_MAX} caractères (au-delà, il est coupé dans les résultats)`, `${p.slug} — ${propre.length}`);
+      const deja = vus.titre.get(propre);
+      dire(!deja, "titre unique sur le site", deja ? `${p.slug} et ${deja}` : "");
+      vus.titre.set(propre, p.slug);
+    }
+
+    // La description : c'est la phrase que le lecteur lit AVANT de cliquer. Trop courte
+    // elle ne vend rien, trop longue elle est tronquée au milieu d'un mot, dupliquée
+    // elle dit au moteur que les deux pages traitent le même sujet.
+    const desc = attr(h, /<meta name="description" content="([^"]*)"/);
+    dire(!!desc, "description présente", p.slug);
+    if (desc) {
+      const n = texteNu(desc).length;
+      dire(n >= DESC_MIN && n <= DESC_MAX, `description entre ${DESC_MIN} et ${DESC_MAX} caractères`, `${p.slug} — ${n}`);
+      const deja = vus.desc.get(desc);
+      dire(!deja, "description unique sur le site", deja ? `${p.slug} et ${deja}` : "");
+      vus.desc.set(desc, p.slug);
+    }
+
+    // Un seul h1. Deux titres de premier niveau, c'est deux sujets annoncés pour une page.
+    const h1 = [...h.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/g)];
+    dire(h1.length === 1, "exactement un <h1>", `${p.slug} — ${h1.length}`);
+    if (h1.length === 1) dire(texteNu(h1[0][1]).length > 0, "le <h1> n'est pas vide", p.slug);
+
+    // La canonique se désigne elle-même. Une canonique qui pointe ailleurs efface la page.
+    dire(attr(h, /<link rel="canonical" href="([^"]*)"/) === url, "canonique auto-référencée", p.slug);
+    dire(attr(h, /<meta property="og:url" content="([^"]*)"/) === url, "og:url = canonique", p.slug);
+
+    // Les deux langues se citent MUTUELLEMENT. Un hreflang qui ne revient pas est ignoré
+    // par Google — c'est la faute classique, et elle est silencieuse.
+    if (p.alt) {
+      const cible = "https://wisehand21.com/" + p.alt + "/";
+      dire(h.includes(`href="${cible}"`), "la page cite sa jumelle dans l'autre langue", `${p.slug} → ${p.alt}`);
+      const jum = p.alt + "/index.html";
+      if (existsSync(jum)) dire(readFileSync(jum, "utf8").includes(`href="${url}"`), "la jumelle cite la page en retour (hreflang réciproque)", `${p.alt} → ${p.slug}`);
+    }
+  }
+
+  // Aucune page orpheline : chacune est atteignable en cliquant depuis une autre.
+  for (const p of CATALOGUE) {
+    const qui = pointe.get("/" + p.slug + "/");
+    dire(qui && qui.size > 0, "page atteignable par un lien depuis une autre page (pas seulement par le plan de site)", p.slug);
+  }
+}
+
 console.log(`\n${ok} contrôles passés, ${ko} échecs`);
 process.exit(ko ? 1 : 0);

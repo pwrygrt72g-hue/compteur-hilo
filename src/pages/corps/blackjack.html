@@ -38,13 +38,13 @@ une table honnête.</p>
 <p>Deux tables de blackjack ne sont pas le même jeu. Quatre paramètres pèsent bien plus
 que tous les autres, et ils sont affichés sur le tapis ou lisibles en une minute :</p>
 <ul>
-  <li><strong>Le paiement du blackjack.</strong> 3:2 est la norme honnête. <span class="mauvais">6:5
-      coûte à lui seul environ 1,4 point d'avantage</span> — c'est la pire modification du jeu.</li>
+  <li><strong>Le paiement du blackjack.</strong> 3:2 est la norme honnête. <span class="mauvais"><a href="/academie/blackjack-6-5/">6:5
+      coûte à lui seul environ 1,4 point d'avantage</a></span> — c'est la pire modification du jeu.</li>
   <li><strong>Le nombre de jeux dans le sabot.</strong> Moins il y en a, mieux c'est pour
       le joueur — mais jamais assez pour compenser un 6:5.</li>
-  <li><strong>Le croupier tire ou non sur 17 souple</strong> (« H17 » contre « S17 »).
+  <li><strong>Le croupier <a href="/academie/s17-h17/">tire ou non sur 17 souple</a></strong> (« H17 » contre « S17 »).
       S17 est meilleur pour vous, d'environ deux dixièmes de point.</li>
-  <li><strong>La position de la carte de coupe</strong> — la « pénétration ». Elle ne change
+  <li><strong>La position de la carte de coupe</strong> — la <a href="/academie/penetration-du-sabot/">pénétration</a>. Elle ne change
       rien à la stratégie de base, et absolument tout au comptage.</li>
 </ul>
 </div>
@@ -99,10 +99,15 @@ plusieurs décisions changent — et jouer le tableau de la table d'à côté vo
 l'argent. WiseHand résout donc la stratégie de chaque table séparément plutôt que d'en
 recopier une seule.</p>
 
+<p><strong><a href="/strategie-de-base-blackjack/">Le tableau complet est sur sa propre
+page</a></strong>&#8239;: les 290 cases résolues pour une table américaine à six jeux, celles
+d'une table européenne sans carte cachée, et les trente et une qui changent de l'une à
+l'autre.</p>
+
 <p>Quelques repères qui survivent à presque toutes les tables :</p>
 <ul>
-  <li>Ne prenez <strong>jamais</strong> l'assurance sans compter les cartes. C'est un
-      pari séparé, et il est perdant.</li>
+  <li>Ne prenez <strong>jamais</strong> <a href="/academie/assurance/">l'assurance</a> sans
+      compter les cartes. C'est un pari séparé, et il est perdant.</li>
   <li>Séparez toujours les as et les 8. Ne séparez jamais les 10 ni les 5.</li>
   <li>Entre 13 et 16 face à une carte faible du croupier (2 à 6), restez : c'est lui
       qui a le plus de chances de dépasser. Le 12 fait exception — contre un 2 ou un
@@ -120,7 +125,8 @@ dépasser plus souvent le croupier, qui n'a pas le droit de s'arrêter.</p>
 
 <h3>Le système Hi-Lo</h3>
 <p>Le standard, et celui pour lequel tous les écarts publiés existent. Chaque carte vue
-vaut un point :</p>
+vaut un point — <a href="/academie/valeurs-des-cartes-hi-lo/">le tableau des valeurs est
+expliqué en détail dans l'Académie</a> :</p>
 <div class="tableau">
 <table>
 <thead><tr><th>Cartes</th><th class="n">Valeur</th></tr></thead>
@@ -135,13 +141,13 @@ vaut un point :</p>
 <p>Vous partez de zéro et vous ajoutez ces valeurs à mesure que les cartes tombent. Le
 total obtenu s'appelle le <strong>compte courant</strong>.</p>
 
-<h3>Le compte vrai, l'étape que tout le monde saute</h3>
+<h3><a href="/academie/compte-vrai/">Le compte vrai</a>, l'étape que tout le monde saute</h3>
 <p>Un compte courant de +6 ne veut pas dire la même chose selon qu'il reste un jeu ou six
 dans le sabot. On divise donc le compte courant par le nombre de jeux restants, estimé à
 vue :</p>
 <p style="text-align:center;font-size:19px;margin:18px 0"><strong>compte vrai = compte courant &divide; jeux restants</strong></p>
-<p>C'est le compte vrai, et lui seul, qui pilote la mise et les écarts à la stratégie de
-base. <strong>Un compteur qui oublie de diviser mise gros au mauvais moment</strong> : c'est
+<p>C'est le compte vrai, et lui seul, qui pilote la mise et les
+<a href="/academie/illustrious-18/">écarts à la stratégie de base</a>. <strong>Un compteur qui oublie de diviser mise gros au mauvais moment</strong> : c'est
 l'erreur la plus fréquente, et la plus chère.</p>
 
 <h2 id="verite">Ce que le comptage ne fait pas</h2>
@@ -157,15 +163,17 @@ de pour cent à la maison, sur des milliers de mains, à condition de ne jamais 
 <dt>Le gain est minuscule, et la variance est énorme.</dt>
 <dd>Un comptage parfait — la rampe de mise de référence de WiseHand, deux unités par
 point de compte vrai au-dessus de +1, l'assurance et les écarts au compte — rapporte
-environ <strong>0,008 unité par main</strong>, mesuré au Boulevard, une table à six jeux.
+environ <strong>0,008 unité par main</strong>, mesuré au Boulevard, une table à six jeux —
+<a href="/academie/combien-rapporte-le-comptage/">le détail de cette mesure, et ce qu'elle
+coûte en écart-type, tient dans une leçon</a>.
 À 10 € l'unité, cela fait de l'ordre de huit centimes par main. Une session de trois heures qui finit dans le rouge est le résultat le
 plus banal du monde.</dd>
 
 <dt>Sur beaucoup de tables, compter ne rapporte rien du tout.</dt>
 <dd>Sur trois des dix tables ci-dessus, le comptage est sans objet : deux paient le
 blackjack 6:5, ce qui place le point d'équilibre hors de portée, et une utilise une
-mélangeuse continue, qui détruit l'information. Ce sont les deux seules règles qui
-l'annulent. Une pénétration médiocre, elle, affaiblit une table sans la tuer. <strong>La compétence la plus
+<a href="/academie/melangeuse-continue/">mélangeuse continue</a>, qui détruit l'information.
+Ce sont les deux seules règles qui l'annulent. Une pénétration médiocre, elle, affaiblit une table sans la tuer. <strong>La compétence la plus
 rentable au blackjack est de savoir se lever de table.</strong></dd>
 
 <dt>Une rampe de mise mal réglée annule tout.</dt>
@@ -181,9 +189,37 @@ pour chacune, et le compte affiché à la demande.</p>
 <a class="btn" href="/">Ouvrir l'entraîneur</a>
 </div>
 
+<h2 id="suite">Pour aller plus loin</h2>
+
+<p>Chacune des questions ouvertes ici a sa page, et chacune s'appuie sur une mesure du
+dépôt plutôt que sur une phrase recopiée&#8239;:</p>
+
+<ul>
+  <li><a href="/strategie-de-base-blackjack/">Le tableau de stratégie de base</a> — les
+      290 cases, résolues pour deux jeux de règles.</li>
+  <li><a href="/academie/">L'Académie</a> — le cours complet en dix leçons, du système
+      Hi-Lo au choix d'une table.</li>
+  <li><a href="/academie/compte-vrai/">Le compte vrai</a> et
+      <a href="/academie/penetration-du-sabot/">la pénétration du sabot</a> — les deux
+      étapes que la plupart des explications sautent.</li>
+  <li><a href="/academie/illustrious-18/">Les dix-huit écarts au compte</a> et
+      <a href="/academie/assurance/">l'assurance à +3</a> — ce qu'on fait du compte une
+      fois qu'on le tient.</li>
+  <li><a href="/academie/blackjack-6-5/">Le blackjack payé 6:5</a>,
+      <a href="/academie/s17-h17/">S17 contre H17</a> et
+      <a href="/academie/melangeuse-continue/">la mélangeuse continue</a> — les règles
+      qui décident si une table vaut la peine.</li>
+  <li><a href="/academie/combien-rapporte-le-comptage/">Combien rapporte le comptage</a> et
+      <a href="/academie/compter-les-cartes-est-ce-legal/">est-ce légal</a> — les deux
+      questions que tout le monde pose.</li>
+  <li><a href="/histoire-du-blackjack/">L'histoire du blackjack</a> et
+      <a href="/films-comptage-de-cartes/">les films sur le comptage</a> — d'où vient
+      tout ça, et ce que le cinéma en a fait.</li>
+</ul>
+
 <h2 id="faq">Questions fréquentes</h2>
 
-<h3>Compter les cartes est-il illégal&nbsp;?</h3>
+<h3><a href="/academie/compter-les-cartes-est-ce-legal/">Compter les cartes est-il illégal</a>&nbsp;?</h3>
 <p>Non. Compter les cartes, c'est se souvenir de ce qu'on a vu : aucune loi ne l'interdit,
 en France comme aux États-Unis, tant qu'aucun appareil n'est utilisé. En revanche, un
 casino est un établissement privé et reste libre de refuser un joueur ou de lui interdire

@@ -1,0 +1,130 @@
+<h1>D'où viennent les chiffres de ce site</h1>
+
+<p class="chapo">Tous les sites qui parlent de blackjack citent les mêmes nombres, et
+personne ne dit d'où ils sortent. Ceux de WiseHand sortent de deux programmes qui vivent
+dans le dépôt du site, et un troisième vérifie qu'aucune page ne s'en écarte. Cette page
+explique comment, et surtout ce que la méthode ne permet pas de dire.</p>
+
+<h2 id="pourquoi">Pourquoi cette page existe</h2>
+
+<p>Le 7 septembre 2026, deux pages de ce site sont parties en ligne sans relecture. Elles
+portaient une stratégie de base <strong>fausse</strong> — «&nbsp;12 contre 2, restez&nbsp;»,
+quand le solveur du dépôt dit de tirer, sur les dix tables —, un volume de simulation
+emprunté à une autre mesure, et un décompte de tables qui ne correspondait à rien. Toutes
+ces fautes étaient vérifiables contre le dépôt lui-même. Aucune ne l'avait été.</p>
+
+<p>La règle qui en découle tient en une phrase&#8239;: <strong>une page qui se vend sur
+«&nbsp;nos chiffres sont mesurés, pas recopiés&nbsp;» doit prouver chacun de ses chiffres
+contre la source qui les mesure.</strong> Le reste de cette page décrit l'outillage qui
+rend cette règle exécutable plutôt que déclarative.</p>
+
+<h2 id="solveur">Le solveur&#8239;: les décisions</h2>
+
+<p>Un solveur exact prend en entrée les <em>règles</em> d'une table — nombre de jeux,
+croupier qui tire ou non sur 17 souple, paiement du blackjack, doublement autorisé ou
+bridé, abandon, carte cachée — et rend, pour chaque main possible face à chaque carte
+visible du croupier, la décision d'espérance maximale. Il ne consulte aucune grille
+publiée&#8239;: il calcule.</p>
+
+<p>C'est ce qui permet de publier <a href="/strategie-de-base-blackjack/">plusieurs
+tableaux de stratégie de base</a> au lieu d'un seul, et de montrer que trente et une des
+290 cases changent entre une table américaine à six jeux et une table européenne sans
+carte cachée. Une grille recopiée ne peut pas faire ça&#8239;: elle appartient à une table
+et se tait sur les autres.</p>
+
+<p>Le même solveur produit les <a href="/academie/illustrious-18/">écarts au compte</a> —
+les seuils à partir desquels une décision change parce que le sabot s'est appauvri — par
+dichotomie sur la composition du sabot, table par table. La liste classique de 1980 est
+une liste&#8239;; celle-ci est un calcul refait pour chaque règlement.</p>
+
+<h2 id="simulateur">Le simulateur&#8239;: les montants</h2>
+
+<p>Une décision se calcule&#8239;; un avantage se mesure. Chaque avantage maison cité sur
+ce site est obtenu en jouant <strong>trois millions de mains</strong> par jeu de règles,
+avec un joueur qui applique la stratégie résolue pour ces règles-là — pas une grille
+générique. La graine du générateur est fixe&#8239;: le même code rejoué rend le même
+nombre, à la décimale près. C'est ce qui rend le résultat <em>reproductible</em> plutôt que
+simplement <em>affirmé</em>.</p>
+
+<p>Le gain du comptage, lui, demande beaucoup plus&#8239;: il est de l'ordre de quelques
+millièmes d'unité par main, noyé dans un écart-type deux ou trois cents fois plus grand.
+Le mesurer exige des dizaines de millions de mains pour que l'intervalle de confiance
+devienne plus petit que la quantité mesurée. C'est la raison pour laquelle
+<a href="/academie/combien-rapporte-le-comptage/">la leçon qui en parle</a> publie ses
+intervalles au lieu d'annoncer un chiffre rond.</p>
+
+<h2 id="verificateur">Le vérificateur&#8239;: le garde-fou</h2>
+
+<p>Les deux programmes ci-dessus produisent des nombres. Rien ne garantit qu'une page les
+recopie correctement, ni qu'elle continue de dire vrai après une retouche du moteur. Un
+troisième programme relit donc <strong>chaque chiffre publié</strong> et le compare à la
+source qui le mesure&#8239;: les avantages maison, les seuils, les gains par main, les
+écarts-types, les volumes de simulation annoncés, et jusqu'aux 290 cases de chaque tableau
+de stratégie, une par une.</p>
+
+<p><strong>Il fait échouer la construction du site au premier écart.</strong> Ce n'est pas
+une formalité&#8239;: c'est ce qui distingue une méthode d'une intention. Une page dont un
+chiffre ne correspond plus ne part pas en ligne — elle casse le build, et il faut soit
+corriger la page, soit expliquer pourquoi la mesure a changé.</p>
+
+<p>Le même contrôle vérifie des choses moins savantes et tout aussi faciles à rater&#8239;:
+qu'aucune page n'est orpheline, qu'aucun lien interne ne pointe dans le vide, qu'aucun
+titre ne dépasse la longueur au-delà de laquelle il est coupé, et que deux pages ne portent
+pas la même description.</p>
+
+<h2 id="limites">Ce que la méthode ne permet pas de dire</h2>
+
+<p>Un simulateur ne connaît que les règles qu'on lui donne. Il ne sait rien des pratiques
+d'un casino réel, de la tolérance d'un directeur de salle, de la jurisprudence, ni de ce
+qui se passe quand un croupier se trompe. <strong>Quand une donnée n'est pas mesurable dans
+le dépôt, la page écrit qu'elle ne l'est pas</strong>, au lieu d'avancer un chiffre qui
+aurait l'air d'en être un. C'est le cas de la
+<a href="/academie/compter-les-cartes-est-ce-legal/">question juridique</a>, qui se traite
+par des textes et pas par une simulation.</p>
+
+<p>Deux autres limites méritent d'être dites. Les tables de ce site sont des
+<em>règlements</em> réalistes, pas le relevé d'un établissement précis&#8239;: les chiffres
+décrivent le jeu tel qu'il est défini, pas la salle où vous entrerez. Et une mesure faite
+sur des millions de mains ne dit rien de votre soirée&#8239;: c'est justement l'objet de la
+leçon sur ce que le comptage rapporte, où l'écart-type compte davantage que la moyenne.</p>
+
+<h2 id="argent">Ce que ce site ne fera jamais</h2>
+
+<p>WiseHand est gratuit, sans compte, sans publicité et sans argent réel. Il ne contient
+<strong>aucun lien vers un opérateur de jeu</strong>, aucun lien d'affiliation, aucun code
+promotionnel, et n'en contiendra pas&#8239;: c'est ce qui permet d'écrire qu'une table est
+mauvaise sans avoir à ménager qui que ce soit. La quasi-totalité des pages françaises sur
+ce sujet sont écrites par des affiliés de casinos, dont le revenu dépend du clic qu'ils
+vous demandent. La nôtre dépend de rien.</p>
+
+<p>Le code de l'application et des pages est ouvert sous licence MIT&#8239;: les chiffres
+peuvent être régénérés à partir de lui par n'importe qui, ce qui est la seule forme de
+preuve qui vaille sur un sujet où tout le monde s'auto-cite.</p>
+
+<h2 id="questions">Questions fréquentes</h2>
+
+<h3>Les chiffres de ce site sont-ils vérifiables&#8239;?</h3>
+<p>Oui, de deux façons. À la lecture d'abord&#8239;: chaque page indique le volume de
+simulation et la date du dernier calcul. Par le code ensuite&#8239;: le solveur, le
+simulateur et le vérificateur vivent dans le dépôt du site, sous licence MIT, et la graine
+du générateur est fixe — rejouer le calcul rend le même nombre.</p>
+
+<h3>Pourquoi vos chiffres diffèrent-ils de ceux d'autres sites&#8239;?</h3>
+<p>Le plus souvent parce qu'ils ne décrivent pas la même table. Un avantage maison n'existe
+pas dans l'absolu&#8239;: il dépend du nombre de jeux, du paiement du blackjack, du
+comportement du croupier sur 17 souple et de quelques règles de plus. Beaucoup de pages
+citent une valeur unique sans dire à quel règlement elle correspond, ce qui la rend
+invérifiable — et souvent fausse pour la table où vous êtes assis.</p>
+
+<h3>Qui écrit ce site&#8239;?</h3>
+<p>Léo Lejeau, qui a écrit l'application, les pages et l'outillage de mesure. Ce n'est pas
+un site d'affiliation et il n'a pas de rédaction&#8239;: quand une phrase avance un
+chiffre, ce chiffre vient du dépôt, et le vérificateur casse la construction s'il cesse de
+correspondre.</p>
+
+<h3>Ce site conseille-t-il de jouer&#8239;?</h3>
+<p>Non. Le blackjack reste un jeu d'argent, et un jeu d'argent se perd à long terme&#8239;:
+même jouée parfaitement, la stratégie de base laisse l'avantage à la maison, et le comptage
+ne le retourne que de quelques dixièmes de point, sur des milliers de mains, et seulement
+sur une table qui s'y prête. Ici, les jetons ne valent rien et le tapis se rachète d'un
+clic&#8239;; dehors, c'est autre chose.</p>

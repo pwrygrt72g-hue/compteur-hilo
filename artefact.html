@@ -1,5 +1,5 @@
-<title>WiseHand — compter les cartes au blackjack, pour de vrai</title>
-<meta name="description" content="Entraînement au comptage de cartes au blackjack : dix tables réelles, stratégie et écarts calculés, hasard prouvable, multijoueur sans serveur.">
+<title>WiseHand — blackjack gratuit, entraînement au comptage</title>
+<meta name="description" content="Un blackjack gratuit, sans compte et sans argent, jouable tout de suite : dix tables de casino, la stratégie résolue pour chacune, et l'entraînement au comptage.">
 <meta name="theme-color" content="#070D0C">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -3511,7 +3511,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
   <div class="hall-heros" id="hallHeros" data-photo="hall">
     <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async" sizes="100vw">
     <div class="hall-int hall-heros-int">
-      <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
+      <span class="grave hall-kicker">Entraînement au comptage de cartes au blackjack</span>
       <h1 class="hall-titre">Le compte est masqué.<br>À toi de le tenir.</h1>
       <!-- « Neuf tables » pour dix, et « Neuf salles » juste en dessous, pendant que le
            JSON-LD de la MÊME page annonçait « Dix » : un moteur qui trouve deux chiffres
@@ -3519,7 +3519,7 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
            site. Le correctif n'est pas d'écrire « Dix » — c'est de ne plus jamais écrire
            un compte à la main. [data-nb-tables] est rempli depuis DONNEES.catalogue.length,
            comme [data-nb-sieges] l'est depuis TR.NB_SIEGES. -->
-      <p class="hall-phrase">Chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. <span data-nb-tables="cap">Dix</span> tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
+      <p class="hall-phrase">Au blackjack, chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. <span data-nb-tables="cap">Dix</span> tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
       <div class="hall-entree">
         <!-- Mesuré : primaire 153 px, secondaire 331 px — le bouton qu'on veut voir pressé
              était 2,16 × plus petit que celui d'à côté. Le libellé long descend dans title=. -->
@@ -3674,8 +3674,16 @@ body.a-table main, body.a-table .tete{ max-width:min(1900px, 100% - 2*var(--gap)
 <li><a href="/academie/melangeuse-continue/"><span class="no">08</span><b>La mélangeuse continue</b><span>pourquoi elle peut faire une excellente table pour un joueur de stratégie de base et une table sans le moindre intérêt pour un compteur</span></a></li>
 <li><a href="/academie/combien-rapporte-le-comptage/"><span class="no">09</span><b>Ce que ça rapporte</b><span>le gain mesuré, en unités par main, la variance qui l'écrase sur une session, et le nombre de mains qu'il faudrait pour que la moyenne l'emporte</span></a></li>
 <li><a href="/academie/compter-les-cartes-est-ce-legal/"><span class="no">10</span><b>Est-ce légal ?</b><span>ce que dit la loi, ce qu'un casino a le droit de faire malgré elle, et où passe exactement la ligne entre compter et tricher</span></a></li></ol>
+      <!-- 🚨 Ces liens sont la SEULE porte du hall vers les pages qu'un moteur peut lire.
+           Mesuré le 09/09 : /blackjack/ — la page qui répond « comment jouer au blackjack » —
+           ne recevait AUCUN lien depuis la racine, ni ici ni dans la barre du haut, qui n'est
+           faite que de boutons JavaScript. Une page que rien ne pointe depuis l'accueil est
+           explorée en dernier, ou jamais, quelle que soit sa qualité. -->
       <div class="academie-pied">
         <a class="btn" href="/academie/">Ouvrir le cours</a>
+        <a class="lien-doux" href="/blackjack/">Les règles du blackjack</a>
+        <a class="lien-doux" href="/strategie-de-base-blackjack/">Le tableau de stratégie de base</a>
+        <a class="lien-doux" href="/methode/">D'où viennent ces chiffres</a>
         <a class="lien-doux" href="/histoire-du-blackjack/">L'histoire du blackjack</a>
         <a class="lien-doux" href="/films-comptage-de-cartes/">Les films sur le comptage</a>
       </div>

@@ -31,6 +31,16 @@ const CSS = readFileSync("src/pages/style.css", "utf8");
 // le jour où MAINS change, c'est la phrase qui prouve les chiffres qui devient fausse.
 const MAINS = +(process.env.MAINS || 3_000_000);
 const PRE = JSON.parse(readFileSync("src/precalcul.json", "utf8")).donnees;
+
+// ── UNE SEULE FEUILLE DE POLICES POUR TOUT LE SITE ───────────────────────────
+// 🚨 Mesuré le 09/09 : l'application demandait « Instrument+Serif:ital@0;1 … 300..800 »
+// et les pages éditoriales « Instrument+Serif … 300..700 ». Deux URL différentes, donc
+// deux entrées de cache : passer de l'accueil à une leçon RETÉLÉCHARGEAIT une feuille de
+// polices qu'on avait déjà. On lit celle de l'application — la plus complète — plutôt que
+// d'en recopier une seconde ici, qui divergerait de nouveau à la première retouche.
+const POLICES = (readFileSync("src/app/tete.html", "utf8")
+  .match(/<link rel="stylesheet" href="(https:\/\/fonts\.googleapis\.com\/[^"]+)"/) || [])[1];
+if (!POLICES) throw new Error("src/app/tete.html : la feuille de polices est introuvable — les pages éditoriales ne peuvent plus la partager");
 const MARQUE = readFileSync("icon.svg", "utf8").replace(/<\?xml[^>]*\?>/, "").trim()
   .replace('<svg ', '<svg aria-hidden="true" focusable="false" ');
 
@@ -53,6 +63,10 @@ const texteNu = h => h.replace(/<script[\s\S]*?<\/script>/g, " ").replace(/<styl
 const L = {
   fr: {
     accueil: "Accueil", cours: "L'Académie", guide: "Le blackjack", app: "L'entraîneur",
+    // 🚨 Le texte de remplacement de l'image sociale suit la LANGUE de la page : la version
+    // anglaise servait une description française, à un lecteur d'écran anglophone comme aux
+    // moteurs. L'image elle-même reste la même — c'est sa légende qui change.
+    alt_image: "Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».",
     lecture: n => `${n} min de lecture`, publie: "Publié le", modifie: "Mis à jour le",
     avant: "Leçon précédente", apres: "Leçon suivante", autre: "English", 
     mois: ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"],
@@ -62,15 +76,16 @@ d'argent se perd à long terme. Rien sur cette page n'est un conseil de jouer.</
     aide: `<p>Si le jeu a cessé d'être un jeu&#8239;: <strong>Joueurs Info Service, 09 74 75 13 13</strong>
 — anonyme et non surtaxé, tous les jours de 8&nbsp;h à 2&nbsp;h.</p>`,
     pied: `Jeu interdit aux mineurs.`,
-    methode: n => `<p class="meta"><strong>D'où viennent ces chiffres.</strong> Chaque avantage maison
+    methode: (n, slug) => `<p class="meta"><strong>D'où viennent ces chiffres.</strong> Chaque avantage maison
 cité sur ce site est produit en simulant <strong>${n} mains</strong> par jeu de règles, avec un
 joueur qui applique la stratégie de base résolue pour ces règles-là — pas une grille recopiée.
 Les grilles sont calculées par un solveur exact&#8239;; les index de comptage sont obtenus par
 dichotomie sur la composition du sabot. La graine est fixe, donc le résultat est reproductible.
 Dernier calcul&#8239;: ${PRE.genere}. Le code est ouvert&#8239;: les chiffres peuvent être
-régénérés à partir de lui.</p>`,
+régénérés à partir de lui.${slug === "methode" ? "" : ` <a href="/methode/">Comment ces chiffres sont produits</a>.`}</p>`,
   },
   en: {
+    alt_image: "A close-up jack of spades, with the title « Compter les cartes, pour de vrai ».",
     accueil: "Home", cours: "The Academy", guide: "Blackjack", app: "The trainer",
     lecture: n => `${n} min read`, publie: "Published", modifie: "Updated",
     avant: "Previous lesson", apres: "Next lesson", autre: "Français",
@@ -97,12 +112,83 @@ const dateLisible = (iso, lang) => {
   return lang === "fr" ? `${j} ${L.fr.mois[m - 1]} ${a}` : `${L.en.mois[m - 1]} ${j}, ${a}`;
 };
 
+// ── LA GRILLE DE STRATÉGIE DE BASE, ÉCRITE PAR LE SOLVEUR ────────────────────
+// 09/09/2026. Une grille, c'est 340 cellules. Recopiées à la main, elles sont justes
+// le jour où on les écrit et fausses le jour où le solveur change d'avis — sans que
+// personne ne le voie : une case sur trois cents ne se remarque pas à la lecture.
+// C'est exactement la faute du 07/09 (« 12 contre 2, restez »). Un fragment écrit donc
+// __GRILLE:<table>:<dur|souple|paires>__ et cette fonction pose les cellules depuis
+// src/precalcul.json. outils/verifier-pages.mjs les recompare ensuite au solveur : la
+// génération et le contrôle sont deux chemins indépendants vers la même source.
+//
+// Le solveur range les colonnes croupier dans l'ordre A,2,3…10 ; la grille les écrit
+// dans l'ordre qui se lit, 2…10 puis A. Les lettres restent celles de la convention
+// internationale (H/S/D/P/U) dans les deux langues — une page française qui inventerait
+// « R pour rester » et « S pour séparer » piégerait tout lecteur qui a déjà vu une grille.
+const G_MOTS = {
+  fr: { main: "Votre main", dur: "Mains dures", souple: "Mains souples", paires: "Paires",
+        col: "Les colonnes sont la carte visible du croupier.", jeu: "jeu", jeux: "jeux",
+        das: "doublement après séparation", abandon: "abandon tardif", pays: "blackjack payé" },
+  en: { main: "Your hand", dur: "Hard totals", souple: "Soft totals", paires: "Pair splitting",
+        col: "Columns are the dealer's up-card.", jeu: "deck", jeux: "decks",
+        das: "DAS", abandon: "late surrender", pays: "blackjack pays" },
+};
+function grilleRegles(id, lang) {
+  const t = PRE.catalogue.find(x => x.id === id);
+  if (!t) throw new Error(`__GRILLE__ : table inconnue « ${id} »`);
+  const m = G_MOTS[lang];
+  const bouts = [`${t.jeux} ${t.jeux > 1 ? m.jeux : m.jeu}`, t.h17 ? "H17" : "S17",
+    `${m.pays} ${t.blackjackPays === 1.5 ? "3:2" : "6:5"}`];
+  if (t.das) bouts.push(m.das);
+  if (t.surrender === "late") bouts.push(m.abandon);   // le champ du catalogue s'appelle « surrender »
+  return bouts.join(", ");
+}
+function grilleStrategie(id, famille, lang) {
+  const ch = PRE.tables[id];
+  if (!ch) throw new Error(`__GRILLE__ : pas de stratégie précalculée pour « ${id} »`);
+  const m = G_MOTS[lang], regles = grilleRegles(id, lang);
+  const ordre = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];          // 2,3…10 puis l'as
+  const etiquettes = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "A"];
+  const lignes = [];
+  if (famille === "dur") {
+    lignes.push([lang === "fr" ? "8 et moins" : "8 or less", ch.chart.hard["8"]]);
+    for (let v = 9; v <= 17; v++) lignes.push([String(v), ch.chart.hard[String(v)]]);
+    lignes.push(["18+", ch.chart.hard["18"]]);
+  } else if (famille === "souple") {
+    for (let d = 9; d >= 2; d--) lignes.push([`A,${d}`, ch.chart.soft[String(11 + d)]]);
+  } else if (famille === "paires") {
+    lignes.push(["A,A", ch.chart.pair["0"]]);
+    for (let r = 9; r >= 1; r--) lignes.push([`${r + 1},${r + 1}`, ch.chart.pair[String(r)]]);
+  } else throw new Error(`__GRILLE__ : famille inconnue « ${famille} »`);
+  // 🚨 Une ligne absente du précalcul donnerait une rangée vide qui aurait l'air d'une
+  // grille : on échoue plutôt que de publier un tableau à trous.
+  for (const [lib, cellules] of lignes)
+    if (!Array.isArray(cellules) || cellules.length !== 10)
+      throw new Error(`__GRILLE__ ${id}/${famille} : la ligne « ${lib} » n'a pas dix décisions`);
+  const corps = lignes.map(([lib, c]) =>
+    `  <tr><th scope="row">${ech(lib)}</th>${ordre.map(i => `<td class="a-${c[i]}">${c[i]}</td>`).join("")}</tr>`).join("\n");
+  return `<div class="tableau">
+<table class="chart" data-table="${id}">
+<caption>${m[famille]} — ${regles}. ${m.col}</caption>
+<thead>
+<tr><th scope="col">${m.main}</th>${etiquettes.map(e => `<th scope="col">${e}</th>`).join("")}</tr>
+</thead>
+<tbody>
+${corps}
+</tbody>
+</table>
+</div>`;
+}
+
 // ── Une page ─────────────────────────────────────────────────────────────────
 function construire(p, index) {
   const t = L[p.lang];
   const chemin = `src/pages/corps/${p.fichier}`;
   if (!existsSync(chemin)) throw new Error(`corps manquant : ${chemin} (page « ${p.slug || "/"} »)`);
-  const corps = readFileSync(chemin, "utf8").trim();
+  let corps = readFileSync(chemin, "utf8").trim();
+  // __GRILLE:<table>:<famille>__ → les cellules, écrites par le solveur (voir plus haut).
+  corps = corps.replace(/__GRILLE:([a-z]+):(dur|souple|paires)__/g,
+    (_, id, fam) => grilleStrategie(id, fam, p.lang));
 
   // 🚨 Un fragment qui réintroduit une balise de document produit une page à deux <head>
   // que le navigateur répare en silence, et qu'aucun test ne regarde. On échoue ici.
@@ -155,11 +241,22 @@ function construire(p, index) {
 
   // ── Les données structurées ────────────────────────────────────────────────
   const graphe = [];
+  // ── L'ÉDITEUR, UNE SEULE FOIS ──────────────────────────────────────────────
+  // 09/09/2026. Chaque page portait trois « Organization » anonymes recopiées (provider,
+  // publisher, et une par leçon dans hasPart) : aucune n'avait d'@id, donc aucune ne
+  // décrivait la MÊME entité aux yeux d'un moteur — le graphe n'était pas un graphe, mais
+  // une poignée de nœuds détachés. Ici : un nœud, un identifiant stable, et des renvois.
+  const EDITEUR = { "@id": RACINE + "/#editeur" };
+  graphe.push({
+    "@type": "Organization", "@id": RACINE + "/#editeur",
+    name: "WiseHand", url: url(""),
+    logo: { "@type": "ImageObject", url: RACINE + "/icon-180.png", width: 180, height: 180 },
+  });
   if (p.type === "Course") {
     graphe.push({
       "@type": "Course", "@id": url(p.slug) + "#cours", name: p.titre, description: p.desc,
       url: url(p.slug), inLanguage: p.lang, isAccessibleForFree: true,
-      provider: { "@type": "Organization", name: "WiseHand", url: url("") },
+      provider: EDITEUR,
       author: { "@type": "Person", name: "Léo Lejeau" },
       // La charge de travail est la SOMME des temps de lecture réels des leçons, pas une
       // estimation de confort : elle se recalcule à chaque construction.
@@ -173,7 +270,7 @@ function construire(p, index) {
       hasPart: ORDRE_ACADEMIE.slice(1).map(s => {
         const q = PAGES.find(x => x.slug === s);
         return q ? { "@type": "Course", name: q.titre, url: url(q.slug),
-          provider: { "@type": "Organization", name: "WiseHand", url: url("") } } : null;
+          provider: EDITEUR } : null;
       }).filter(Boolean),
     });
   } else {
@@ -182,7 +279,7 @@ function construire(p, index) {
       headline: texteNu(h1), description: p.desc, inLanguage: p.lang,
       datePublished: p.publie, dateModified: p.modifie || p.publie,
       author: { "@type": "Person", name: "Léo Lejeau" },
-      publisher: { "@type": "Organization", name: "WiseHand", url: url("") },
+      publisher: EDITEUR,
       mainEntityOfPage: { "@id": url(p.slug) },
       image: RACINE + "/static/og.jpg",
       wordCount: mots,
@@ -231,18 +328,18 @@ ${hreflang}
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta property="og:image:alt" content="${ech(t.alt_image)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${ech(p.titre)}">
 <meta name="twitter:description" content="${ech(p.desc)}">
 <meta name="twitter:image" content="${RACINE}/static/og.jpg">
-<meta name="twitter:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="twitter:image:alt" content="${ech(t.alt_image)}">
 <meta name="theme-color" content="#070D0C">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Instrument+Serif&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap">
+<link rel="stylesheet" href="${POLICES}">
 <script type="application/ld+json">${js({ "@context": "https://schema.org", "@graph": graphe })}</script>
 <style>
 ${CSS}</style>
@@ -277,7 +374,7 @@ ${suite}
   ${p.modifie && p.modifie !== p.publie ? `<span class="pt">·</span><span>${t.modifie} <time datetime="${p.modifie}">${dateLisible(p.modifie, p.lang)}</time></span>` : ""}
   <span class="pt">·</span><span>${t.lecture(minutes)}</span>
 </p>
-${t.methode(MAINS.toLocaleString(p.lang === "fr" ? "fr-FR" : "en-US"))}
+${t.methode(MAINS.toLocaleString(p.lang === "fr" ? "fr-FR" : "en-US"), p.slug)}
 ${t.ours}
 <div class="aide">${t.aide}</div>
 <p>${t.pied} · <a href="/">WiseHand</a>${alt ? ` · <a href="/${alt.slug}/" hreflang="${alt.lang}" lang="${alt.lang}">${t.autre}</a>` : ""}</p>

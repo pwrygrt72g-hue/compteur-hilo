@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tableau de stratégie de base au blackjack, calculé — WiseHand</title>
+<meta name="description" content="Le tableau complet de stratégie de base au blackjack, calculé par un solveur pour deux jeux de règles — et les 31 cases qui changent d'une table à l'autre.">
+<link rel="canonical" href="https://wisehand21.com/strategie-de-base-blackjack/">
+<link rel="alternate" hreflang="fr" href="https://wisehand21.com/strategie-de-base-blackjack/">
+<link rel="alternate" hreflang="x-default" href="https://wisehand21.com/strategie-de-base-blackjack/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="WiseHand">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="https://wisehand21.com/strategie-de-base-blackjack/">
+<meta property="og:title" content="Tableau de stratégie de base au blackjack, calculé">
+<meta property="og:description" content="Le tableau complet de stratégie de base au blackjack, calculé par un solveur pour deux jeux de règles — et les 31 cases qui changent d'une table à l'autre.">
+<meta property="og:image" content="https://wisehand21.com/static/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tableau de stratégie de base au blackjack, calculé">
+<meta name="twitter:description" content="Le tableau complet de stratégie de base au blackjack, calculé par un solveur pour deux jeux de règles — et les 31 cases qui changent d'une table à l'autre.">
+<meta name="twitter:image" content="https://wisehand21.com/static/og.jpg">
+<meta name="twitter:image:alt" content="Un valet de pique en gros plan, et le titre « Compter les cartes, pour de vrai ».">
+<meta name="theme-color" content="#070D0C">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Instrument+Serif:ital@0;1&family=Martian+Mono:wdth,wght@75..112.5,300..800&display=swap">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://wisehand21.com/#editeur","name":"WiseHand","url":"https://wisehand21.com/","logo":{"@type":"ImageObject","url":"https://wisehand21.com/icon-180.png","width":180,"height":180}},{"@type":"Article","@id":"https://wisehand21.com/strategie-de-base-blackjack/#article","headline":"Le tableau de stratégie de base au blackjack","description":"Le tableau complet de stratégie de base au blackjack, calculé par un solveur pour deux jeux de règles — et les 31 cases qui changent d'une table à l'autre.","inLanguage":"fr","datePublished":"2026-09-09","dateModified":"2026-09-09","author":{"@type":"Person","name":"Léo Lejeau"},"publisher":{"@id":"https://wisehand21.com/#editeur"},"mainEntityOfPage":{"@id":"https://wisehand21.com/strategie-de-base-blackjack/"},"image":"https://wisehand21.com/static/og.jpg","wordCount":2381,"isAccessibleForFree":true,"about":[{"@type":"Thing","name":"Blackjack"},{"@type":"Thing","name":"Stratégie de base"}]},{"@type":"BreadcrumbList","@id":"https://wisehand21.com/strategie-de-base-blackjack/#fil","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://wisehand21.com/"},{"@type":"ListItem","position":2,"name":"Le tableau"}]},{"@type":"FAQPage","@id":"https://wisehand21.com/strategie-de-base-blackjack/#faq","mainEntity":[{"@type":"Question","name":"Qu'est-ce que la stratégie de base au blackjack ?","acceptedAnswer":{"@type":"Answer","text":"C'est la décision qui perd le moins pour chaque combinaison possible entre votre main et la carte visible du croupier : tirer, rester, doubler, séparer ou abandonner. Elle ne se discute pas et ne s'improvise pas — elle se calcule à partir des règles exactes de la table. Jouée sans faute, elle ramène l'avantage de la maison à quelques dixièmes de pour cent, ce qui en fait le meilleur tarif de l'établissement."}},{"@type":"Question","name":"Existe-t-il un seul tableau de stratégie de base ?","acceptedAnswer":{"@type":"Answer","text":"Non, et c'est l'erreur la plus répandue. Un tableau est celui d'une table. Entre une table américaine à six jeux et une table européenne sans carte cachée, au doublement limité et sans abandon, trente et une des 290 cases changent. Jouer le mauvais tableau coûte de l'argent sur chacune de ces cases."}},{"@type":"Question","name":"Faut-il apprendre le tableau par cœur ?","acceptedAnswer":{"@type":"Answer","text":"Pas case par case. Les décisions se rangent en blocs — 17 et plus on reste, 13 à 16 on reste contre une carte faible du croupier, 11 se double presque partout, on sépare toujours les as et les 8 et jamais les 10 ni les 5. Une poignée de règles couvre la grande majorité des mains, et le reste s'apprend par les exceptions, en jouant."}},{"@type":"Question","name":"La stratégie de base permet-elle de gagner au blackjack ?","acceptedAnswer":{"@type":"Answer","text":"Non. Elle ramène l'avantage de la maison au minimum que les règles autorisent, elle ne le renverse pas : sur la table étalon de ce site, il reste 0,583 % en faveur du casino. Joué parfaitement, le blackjack se perd lentement au lieu de se perdre vite. Seul le comptage des cartes retourne l'avantage, de quelques dixièmes de point, et seulement sur une table qui s'y prête."}},{"@type":"Question","name":"Que veut dire « D » quand on ne peut pas doubler ?","acceptedAnswer":{"@type":"Answer","text":"Le doublement n'est possible qu'à deux cartes, et certaines tables le limitent à certains totaux. Là où il est impossible, un « D » se joue comme un tirage. De même, un « U » sur une table sans abandon se joue comme un tirage — à l'exception de 17 contre as, où l'on reste."}}]}]}</script>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   Les pages éditoriales — « Laque & filament », version lecture.
+
+   🚨 POURQUOI CE FICHIER EXISTE (08/09/2026). Les deux pages du guide étaient
+   DEUX DESSINS DIFFÉRENTS : la française en sombre seul (Archivo, Instrument
+   Serif, palette --encre/--os), l'anglaise en clair/sombre avec un corps en
+   serif système et un vocabulaire de classes qui n'existait nulle part ailleurs
+   (.art, .lede, .scroll, .chart, .cta). Deux sœurs qui ne se ressemblaient pas,
+   et aucune des deux ne ressemblait à l'application. En ajouter douze de plus à
+   la main aurait fait douze dessins.
+   Une seule feuille, inlinée dans chaque page par outils/pages.mjs.
+
+   Les NOMS DE JETONS sont ceux de src/app/style.css, à l'identique, et le
+   système de thème aussi (trois états : la préférence du système, et les deux
+   forçages [data-theme]). Ce n'est pas de la coquetterie : le lecteur qui passe
+   d'une leçon à l'application ne doit pas avoir l'impression de changer de site.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  color-scheme:light dark;
+  --encre:#DBD7CB; --laque:#F6F4EE; --relief:#FCFBF7;
+  --os:#131C1A; --os-eteint:#55605C;
+  --jade:#0D735F; --cinabre:#B33F22;
+  --or-base:#8A5C0B; --or-lumiere:#6F4A08;
+  --bord:#C3BEB0; --trait:#D2CDBF;
+  --btn-or:linear-gradient(180deg,#F5D67E,#DBAB40 58%,#A97C1E); --btn-encre:#1A1206;
+  --colonne:min(68ch, 100% - 2.5rem);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="clair"]){
+    --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+    --os:#EDE7D9; --os-eteint:#A3AAA4;
+    --jade:#4FD8C0; --cinabre:#F4876C;
+    --or-base:#D9B45B; --or-lumiere:#F3C866;
+    --bord:#3A4A45; --trait:#243230;
+  }
+}
+:root[data-theme="sombre"]{
+  --encre:#070D0C; --laque:#0E1817; --relief:#16221F;
+  --os:#EDE7D9; --os-eteint:#A3AAA4;
+  --jade:#4FD8C0; --cinabre:#F4876C;
+  --or-base:#D9B45B; --or-lumiere:#F3C866;
+  --bord:#3A4A45; --trait:#243230;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--encre);color:var(--os);
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.65}
+::selection{background:color-mix(in oklab, var(--jade) 30%, transparent)}
+
+/* ── L'enseigne ──────────────────────────────────────────────────────── */
+.enseigne{border-bottom:1px solid var(--trait);background:var(--laque)}
+.enseigne .dedans{width:var(--colonne);margin:0 auto;display:flex;align-items:center;
+  gap:14px;min-height:56px}
+.marque{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--os);
+  font-family:"Martian Mono",ui-monospace,monospace;font-size:12px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase}
+.marque svg{width:20px;height:20px;flex:none;color:var(--or-base)}
+.enseigne nav{margin-left:auto;display:flex;gap:16px;font-size:14px}
+.enseigne nav a{color:var(--os-eteint);text-decoration:none}
+.enseigne nav a:hover,.enseigne nav a:focus-visible{color:var(--jade)}
+
+.enveloppe{width:var(--colonne);margin:0 auto;padding:26px 0 76px}
+
+/* ── Le texte ────────────────────────────────────────────────────────── */
+a{color:var(--jade);text-underline-offset:.16em}
+a:hover{color:var(--os)}
+h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;line-height:1.14;
+  margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,50px);margin:18px 0 10px;letter-spacing:-.01em}
+h2{font-size:clamp(24px,4vw,34px);margin:52px 0 12px;scroll-margin-top:70px}
+h3{font-size:21px;margin:30px 0 6px;color:var(--or-lumiere);scroll-margin-top:70px}
+p{margin:0 0 15px}
+strong{font-weight:700}
+.chapo{font-size:19.5px;line-height:1.55;color:var(--os-eteint);margin-bottom:8px}
+ul,ol{margin:0 0 15px;padding-left:22px}
+li{margin-bottom:7px}
+dt{font-weight:700;margin-top:16px}
+dd{margin:2px 0 0 18px}
+hr{border:0;border-top:1px solid var(--trait);margin:44px 0 30px}
+code,.chiffre{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.9em;font-variant-numeric:tabular-nums}
+
+/* ── Le fil d'Ariane et l'ours ───────────────────────────────────────── */
+.fil{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--os-eteint);margin:0}
+.fil a{color:var(--os-eteint);text-decoration:none}
+.fil a:hover{color:var(--jade)}
+.fil .sep{opacity:.5;padding:0 6px}
+.ours{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:13.5px;
+  color:var(--os-eteint);margin:0 0 30px;padding-bottom:18px;border-bottom:1px solid var(--trait)}
+.ours .pt{opacity:.45}
+
+/* ── Les blocs ───────────────────────────────────────────────────────── */
+.panneau{background:var(--laque);border:1px solid var(--trait);border-radius:12px;
+  padding:18px 20px;margin:26px 0}
+.panneau>:last-child{margin-bottom:0}
+.panneau h3{margin-top:0}
+.avert{border-left:3px solid var(--cinabre);padding:2px 0 2px 16px;margin:26px 0;
+  color:var(--os-eteint)}
+.avert>:last-child{margin-bottom:0}
+.appel{background:var(--relief);border:1px solid var(--bord);border-radius:14px;
+  padding:24px;margin:38px 0;text-align:center}
+.appel>:last-child{margin-bottom:0}
+.appel .btn{display:inline-block;margin-top:12px;background:var(--btn-or);color:var(--btn-encre);
+  font-weight:700;text-decoration:none;padding:13px 24px;border-radius:10px;
+  transition:transform .12s cubic-bezier(.22,.72,.24,1), filter .15s}
+.appel .btn:hover{filter:brightness(1.06);color:var(--btn-encre)}
+.appel .btn:active{transform:translateY(1px) scale(.985)}
+
+/* ── Les tableaux : le défilement est CONFINÉ, la page ne bouge jamais ─ */
+.tableau{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:20px 0;
+  border:1px solid var(--trait);border-radius:10px;
+  /* Ombres de défilement, en CSS pur (ces pages n'ont pas une ligne de JS) : les deux
+     premiers dégradés couvrent la couleur du fond et sont ANCRÉS AU CONTENU
+     (background-attachment:local), les deux ombres restent collées au cadre. Résultat :
+     l'ombre n'apparaît que du côté où il reste quelque chose à voir. Sans elle, un
+     tableau plus large que l'écran a l'air simplement tronqué — personne ne devine
+     qu'il faut le faire glisser. */
+  background-image:
+    linear-gradient(to right, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    linear-gradient(to left, var(--encre), color-mix(in oklab, var(--encre) 0%, transparent)),
+    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent),
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--os) 20%, transparent), transparent);
+  background-position:0 0, 100% 0, 0 0, 100% 0;
+  background-repeat:no-repeat;
+  background-size:28px 100%, 28px 100%, 12px 100%, 12px 100%;
+  background-attachment:local, local, scroll, scroll}
+/* 🚨 min(32rem, 100%) et pas 32rem : à 375 px, un min-width fixe poussait TOUTES les
+   colonnes de chiffres hors de l'écran — les cinq tableaux d'une leçon ne montraient
+   que leurs libellés, et il fallait deviner qu'on pouvait les faire défiler du doigt
+   (mesuré le 09/09 : table de 512 px dans une boîte de 335). Hors écran = inexistant. */
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:min(32rem,100%)}
+@media (max-width:560px){ th,td{padding:8px 6px} table{font-size:13.5px} caption{padding:9px 10px} }
+caption{caption-side:top;text-align:left;padding:11px 13px;font-size:13px;
+  color:var(--os-eteint);border-bottom:1px solid var(--trait)}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--trait)}
+tr:last-child>*{border-bottom:0}
+th{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--os-eteint);font-weight:600}
+/* Un NOMBRE ne se coupe pas ; un EN-TÊTE, si. « Avantage maison » et « Gain du compteur »
+   en nowrap imposaient 540 px à un tableau de dix lignes sur un écran de 375. */
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.n{white-space:nowrap}
+.bon{color:var(--jade)} .mauvais{color:var(--cinabre)}
+
+/* ── Le sommaire de l'Académie ───────────────────────────────────────── */
+.lecons{list-style:none;margin:22px 0;padding:0;display:grid;gap:10px}
+.lecons li{margin:0}
+.lecons a{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;
+  text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, transform .18s cubic-bezier(.22,.72,.24,1), background .18s}
+.lecons a:hover,.lecons a:focus-visible{border-color:var(--or-base);transform:translateX(3px);
+  background:var(--relief);color:var(--os)}
+.lecons .no{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;
+  color:var(--or-base);letter-spacing:.1em;grid-row:span 2}
+.lecons b{font-weight:600;font-size:17px}
+.lecons span{color:var(--os-eteint);font-size:14.5px;line-height:1.5}
+
+/* ── Leçon précédente / suivante ─────────────────────────────────────── */
+.suite{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:44px 0 0}
+.suite a{display:block;text-decoration:none;color:var(--os);background:var(--laque);
+  border:1px solid var(--trait);border-radius:12px;padding:14px 16px;
+  transition:border-color .18s, background .18s}
+.suite a:hover,.suite a:focus-visible{border-color:var(--or-base);background:var(--relief);color:var(--os)}
+.suite .sens{display:block;font-family:"Martian Mono",ui-monospace,monospace;font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--os-eteint);margin-bottom:3px}
+.suite .apres{text-align:right;grid-column:2}
+@media(max-width:560px){.suite{grid-template-columns:1fr}.suite .apres{grid-column:1;text-align:left}}
+
+/* ── L'ours de pied de page ──────────────────────────────────────────── */
+footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--trait);
+  font-size:14px;color:var(--os-eteint);line-height:1.6}
+footer a{color:var(--os-eteint)}
+footer a:hover{color:var(--jade)}
+footer .aide{background:var(--laque);border:1px solid var(--trait);border-radius:10px;
+  padding:14px 16px;margin:0 0 16px}
+footer .aide strong{color:var(--os)}
+footer .meta{font-size:13.5px;line-height:1.6;margin:0 0 16px}
+footer .meta strong{color:var(--os)}
+
+
+/* ── Le sommaire d'une page longue ───────────────────────────────────── */
+.toc{border:1px solid var(--trait);border-radius:12px;padding:6px 22px 16px;margin:30px 0;
+  background:var(--laque)}
+.toc h2{font-family:"Martian Mono",ui-monospace,monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.1em;margin:16px 0 8px;color:var(--os-eteint)}
+.toc ol{margin:0;padding-left:20px;font-size:15.5px}
+.toc li{margin:3px 0}
+
+/* ── Une note en marge, plus légère qu'un panneau ─────────────────────── */
+.note{border-left:3px solid var(--or-base);padding:.6rem 0 .6rem 1rem;margin:24px 0;
+  font-size:15.5px;color:var(--os-eteint);
+  background:color-mix(in oklab, var(--or-base) 6%, transparent)}
+.note>:last-child{margin-bottom:0}
+
+/* ── Un calcul posé ──────────────────────────────────────────────────── */
+.math{font-family:"Martian Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14.5px;
+  background:color-mix(in oklab, var(--os) 6%, transparent);padding:12px 14px;border-radius:8px;
+  overflow-x:auto}
+
+/* ── La grille de stratégie de base ───────────────────────────────────
+   Le GLYPHE porte l'information ; la couleur ne fait que la doubler. En
+   deutéranopie le jade et le cinabre s'effondrent à des luminances voisines :
+   une grille qui ne se lirait qu'en couleur serait illisible pour 8 % des hommes.
+   La première colonne reste collée à gauche quand on fait défiler — sans elle,
+   sur un téléphone, on lit « U » sans savoir si c'est la ligne 15 ou la 16.
+   Le fond de cette colonne doit être OPAQUE : une teinte translucide laisserait
+   passer les cellules qui glissent dessous. */
+table.chart, table.rules{font-family:Archivo,"Helvetica Neue",Arial,sans-serif}
+table.chart th, table.chart td{text-align:center;padding:6px 5px}
+table.chart tbody th[scope=row]{text-align:left;padding-left:12px;white-space:nowrap;font-weight:600;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:13px;letter-spacing:0;text-transform:none;
+  color:var(--os)}
+.chart tbody th[scope=row], .chart thead th:first-child{position:sticky;left:0;z-index:2;
+  background:var(--encre)}
+.chart thead th:first-child{z-index:3}
+.chart tbody th[scope=row]::after{content:"";position:absolute;inset:0 -1px 0 auto;width:1px;
+  background:var(--trait)}
+.chart td{font-weight:700;font-variant-numeric:tabular-nums;min-width:2.1rem}
+.rules{font-size:14px}
+.rules th[scope=row]{font-weight:400;text-transform:none;letter-spacing:0;
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:14px;color:var(--os)}
+.rules td{text-align:center;font-variant-numeric:tabular-nums}
+.a-H{background:color-mix(in oklab, var(--cinabre) 15%, transparent);color:var(--cinabre)}
+.a-S{background:color-mix(in oklab, var(--jade) 15%, transparent);color:var(--jade)}
+.a-D{background:color-mix(in oklab, var(--or-base) 18%, transparent);color:var(--or-lumiere)}
+.a-P{background:color-mix(in oklab, #2f6296 20%, transparent);color:#2f6296}
+.a-U{background:color-mix(in oklab, var(--os) 12%, transparent);color:var(--os-eteint)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="clair"]) .a-P{color:#7fb3e8}}
+:root[data-theme="sombre"] .a-P{color:#7fb3e8}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;margin:16px 0;
+  color:var(--os-eteint)}
+.legend b{display:inline-block;width:1.6rem;text-align:center;border-radius:5px;margin-right:5px;
+  font-weight:700}
+.moyen{color:var(--or-lumiere);font-weight:700}
+td.bon,td.mauvais,td.moyen{font-weight:700}
+
+/* Le focus doit se VOIR : ces pages se lisent aussi au clavier. */
+a:focus-visible,button:focus-visible{outline:2px solid var(--or-base);outline-offset:3px;border-radius:4px}
+
+/* ── L'arrivée au défilement, comme dans le hall ──────────────────────
+   Même doctrine qu'à l'application : @supports pour qu'un moteur qui l'ignore
+   ne crée jamais l'animation, `no-preference` pour que la réduction du mouvement
+   gagne, et rien qui parte d'une opacité nulle sans timeline (une page d'article
+   doit rester lisible même si l'animation ne se déclenche jamais). */
+@supports (animation-timeline: view()){
+@media (prefers-reduced-motion: no-preference){
+  .enveloppe h2, .enveloppe .panneau, .enveloppe .tableau,
+  .enveloppe .appel, .enveloppe .avert, .enveloppe .lecons li{
+    animation:arrive linear both; animation-timeline:view();
+    animation-range:entry 4% entry 34%;
+  }
+  @keyframes arrive{ from{opacity:0;translate:0 14px} to{opacity:1;translate:0 0} }
+}}
+</style>
+</head>
+<body>
+
+<header class="enseigne">
+  <div class="dedans">
+    <a class="marque" href="/"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#082b1e"/><g fill="#f1e9d2"><path d="M256 63.5 425.9 292.7 86.1 292.7Z"/><circle cx="200.4" cy="279" r="84.5"/><circle cx="311.6" cy="279" r="84.5"/><path d="M256 287c2 46 8 84 34 130H222c26-46 32-84 34-130Z"/></g></svg>WiseHand</a>
+    <nav aria-label="Principale">
+      <a href="/">L'entraîneur</a>
+      <a href="/academie/">L'Académie</a>
+      
+    </nav>
+  </div>
+</header>
+
+<div class="enveloppe">
+
+<nav class="fil" aria-label="Fil d'Ariane"><a href="/">Accueil</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Le tableau</span></nav>
+
+<main>
+<article>
+<h1>Le tableau de stratégie de base au blackjack</h1>
+
+<p class="chapo">La stratégie de base est la liste complète des meilleures décisions
+quand on ne sait rien des cartes qui restent dans le sabot. Ce n'est ni un système, ni
+une martingale, ni une opinion&#8239;: c'est la réponse calculée. Jouée sans faute, elle
+ramène l'avantage de la maison à quelques dixièmes de pour cent — le meilleur tarif de
+l'établissement.</p>
+
+<p><strong>Le tableau ci-dessous n'est recopié de nulle part.</strong> Chacune de ses
+290&nbsp;cases sort du solveur qui vit dans le dépôt de WiseHand&#8239;: on lui donne les
+règles exactes d'une table, il rend la décision d'espérance maximale, case par case. C'est
+aussi ce qui permet d'en publier plusieurs — un tableau, c'est le tableau <em>d'une</em>
+table, et changer une règle change le tableau.</p>
+
+<h2 id="tableau">Le tableau, pour une table à six jeux</h2>
+
+<p>Celui-ci est résolu pour <strong>Le Boulevard</strong>, la table étalon du site et le
+jeu le plus répandu à Las Vegas&#8239;: six jeux, le croupier tire sur 17 souple, blackjack
+payé 3:2, doublement sur n'importe quelles deux cartes, doublement après séparation,
+abandon tardif. Avantage de la maison mesuré sur ce jeu de règles, stratégie de base
+parfaite&#8239;: <strong>0,583 %</strong>.</p>
+
+<div class="legend">
+  <span><b class="a-H">H</b> Tirer</span>
+  <span><b class="a-S">S</b> Rester</span>
+  <span><b class="a-D">D</b> Doubler si c'est permis, sinon tirer</span>
+  <span><b class="a-P">P</b> Séparer</span>
+  <span><b class="a-U">U</b> Abandonner si c'est permis, sinon tirer</span>
+</div>
+
+<p class="note">Les lettres sont celles de la convention internationale&#8239;: elles sont
+les mêmes sur tous les tableaux que vous croiserez ailleurs. Une page française qui
+inventerait « R pour rester » et « S pour séparer » piégerait quiconque a déjà vu une
+grille.</p>
+
+<h3>Mains dures</h3>
+<div class="tableau">
+<table class="chart" data-table="boulevard">
+<caption>Mains dures — 6 jeux, H17, blackjack payé 3:2, doublement après séparation, abandon tardif. Les colonnes sont la carte visible du croupier.</caption>
+<thead>
+<tr><th scope="col">Votre main</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th><th scope="col">A</th></tr>
+</thead>
+<tbody>
+  <tr><th scope="row">8 et moins</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">9</th><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">10</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">11</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td></tr>
+  <tr><th scope="row">12</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">13</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">14</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">15</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-U">U</td><td class="a-U">U</td></tr>
+  <tr><th scope="row">16</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-U">U</td><td class="a-U">U</td><td class="a-U">U</td></tr>
+  <tr><th scope="row">17</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-U">U</td></tr>
+  <tr><th scope="row">18+</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Mains souples (celles où un as compte 11)</h3>
+<div class="tableau">
+<table class="chart" data-table="boulevard">
+<caption>Mains souples — 6 jeux, H17, blackjack payé 3:2, doublement après séparation, abandon tardif. Les colonnes sont la carte visible du croupier.</caption>
+<thead>
+<tr><th scope="col">Votre main</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th><th scope="col">A</th></tr>
+</thead>
+<tbody>
+  <tr><th scope="row">A,9</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">A,8</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-D">D</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">A,7</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,6</th><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,5</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,4</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,3</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,2</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Paires</h3>
+<div class="tableau">
+<table class="chart" data-table="boulevard">
+<caption>Paires — 6 jeux, H17, blackjack payé 3:2, doublement après séparation, abandon tardif. Les colonnes sont la carte visible du croupier.</caption>
+<thead>
+<tr><th scope="col">Votre main</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th><th scope="col">A</th></tr>
+</thead>
+<tbody>
+  <tr><th scope="row">A,A</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td></tr>
+  <tr><th scope="row">10,10</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">9,9</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-S">S</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">8,8</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-U">U</td></tr>
+  <tr><th scope="row">7,7</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">6,6</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">5,5</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">4,4</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">3,3</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">2,2</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="lire">Comment lire le tableau</h2>
+
+<p>Trois tableaux, et un ordre de lecture qui ne varie jamais&#8239;:</p>
+
+<ol>
+  <li><strong>Ai-je une paire&#8239;?</strong> Si oui, le tableau des paires répond en
+      premier — et s'il dit de ne pas séparer, on retombe sur les deux autres.</li>
+  <li><strong>Ai-je un as qui compte 11 sans dépasser 21&#8239;?</strong> C'est une main
+      souple&#8239;: A,7 se lit sur le tableau des mains souples, pas sur la ligne 18 des
+      mains dures. Les deux disent des choses différentes, et c'est l'erreur la plus
+      fréquente du débutant.</li>
+  <li><strong>Sinon, main dure</strong>&#8239;: on additionne, on cherche la ligne, on
+      croise la carte visible du croupier.</li>
+</ol>
+
+<p>Les colonnes sont toujours la carte visible du croupier, du 2 à l'as. La ligne est
+votre main. La case à l'intersection est la décision — il n'y en a jamais deux.</p>
+
+<p><strong>Le «&nbsp;D&nbsp;» et le «&nbsp;U&nbsp;» sont des vœux, pas des ordres.</strong>
+On ne peut doubler qu'à deux cartes&#8239;: si vous avez déjà tiré, un D se joue comme un
+tirage. De même, l'abandon n'existe pas sur toutes les tables&#8239;: là où il n'existe
+pas, un U se joue comme un tirage — sauf 17 contre as, où l'on reste.</p>
+
+<h2 id="regles">Le même jeu, d'autres règles, un autre tableau</h2>
+
+<p>C'est le point que les tableaux imprimés escamotent presque tous. Voici le tableau
+résolu pour <strong>Le Cercle</strong>, une table européenne à six jeux&#8239;: le croupier
+ne prend <strong>pas de carte cachée</strong> et emporte les mises doublées quand il finit
+par se faire blackjack, le doublement est limité aux totaux de 9, 10 et 11, il n'y a pas
+d'abandon, et le croupier reste sur 17 souple. Avantage de la maison&#8239;:
+<strong>0,601 %</strong>.</p>
+
+<p><strong>Trente et une des 290 cases changent.</strong> Ce n'est pas un détail de
+présentation&#8239;: jouer ici le tableau de la page précédente coûte de l'argent à chaque
+main concernée.</p>
+
+<h3>Mains dures — sans carte cachée</h3>
+<div class="tableau">
+<table class="chart" data-table="cercle">
+<caption>Mains dures — 6 jeux, S17, blackjack payé 3:2, doublement après séparation. Les colonnes sont la carte visible du croupier.</caption>
+<thead>
+<tr><th scope="col">Votre main</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th><th scope="col">A</th></tr>
+</thead>
+<tbody>
+  <tr><th scope="row">8 et moins</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">9</th><td class="a-H">H</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">10</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">11</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">12</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">13</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">14</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">15</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">16</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">17</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">18+</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Mains souples — sans carte cachée</h3>
+<div class="tableau">
+<table class="chart" data-table="cercle">
+<caption>Mains souples — 6 jeux, S17, blackjack payé 3:2, doublement après séparation. Les colonnes sont la carte visible du croupier.</caption>
+<thead>
+<tr><th scope="col">Votre main</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th><th scope="col">A</th></tr>
+</thead>
+<tbody>
+  <tr><th scope="row">A,9</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">A,8</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">A,7</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,6</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,5</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,4</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,3</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">A,2</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Paires — sans carte cachée</h3>
+<div class="tableau">
+<table class="chart" data-table="cercle">
+<caption>Paires — 6 jeux, S17, blackjack payé 3:2, doublement après séparation. Les colonnes sont la carte visible du croupier.</caption>
+<thead>
+<tr><th scope="col">Votre main</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th><th scope="col">7</th><th scope="col">8</th><th scope="col">9</th><th scope="col">10</th><th scope="col">A</th></tr>
+</thead>
+<tbody>
+  <tr><th scope="row">A,A</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">10,10</th><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">9,9</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-S">S</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-S">S</td><td class="a-S">S</td></tr>
+  <tr><th scope="row">8,8</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">7,7</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">6,6</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">5,5</th><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-D">D</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">4,4</th><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">3,3</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+  <tr><th scope="row">2,2</th><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-P">P</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td><td class="a-H">H</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Les écarts se rangent en trois causes, et aucune n'est mystérieuse&#8239;:</p>
+
+<ul>
+  <li><strong>Pas d'abandon&#8239;: les sept «&nbsp;U&nbsp;» disparaissent.</strong> Ils
+      redeviennent des tirages, sauf 17 contre as où l'on reste.</li>
+  <li><strong>Doublement limité à 9, 10 et 11&#8239;: tous les doublements souples
+      tombent.</strong> A,2 à A,7 se contentent de tirer ou de rester.</li>
+  <li><strong>Pas de carte cachée&#8239;: on cesse de s'exposer contre les cartes
+      fortes.</strong> On ne double plus 11 contre 10 ni contre un as, on ne sépare plus
+      les 8 contre un 10, ni les as contre un as. La raison est celle que la table elle-même
+      énonce&#8239;: vous doublez, le croupier tire sa deuxième carte à la fin et se
+      découvre un blackjack — vous perdez deux unités, pas une.</li>
+</ul>
+
+<p>Les dix tables de WiseHand sont résolues séparément, chacune sur ses propres règles.
+Leur avantage maison va de 0,359 % à 2,07 %&#8239;: le détail table par table est dans
+le <a href="/blackjack/#avantage">guide du blackjack</a>.</p>
+
+<h2 id="retenir">Retenir 290 cases sans les apprendre</h2>
+
+<p>Personne n'apprend un tableau case par case, et ce n'est pas nécessaire&#8239;: les
+décisions se rangent en blocs. Une poignée de règles couvre l'immense majorité des mains,
+et le reste s'apprend par les exceptions.</p>
+
+<ul>
+  <li><strong>17 et plus&#8239;: on reste.</strong> Toujours, sur une main dure.</li>
+  <li><strong>De 13 à 16 contre une carte faible (2 à 6)&#8239;: on reste</strong> — c'est
+      le croupier qui a le plus de chances de dépasser. Contre 7 ou plus&#8239;: on tire.</li>
+  <li><strong>Le 12 est l'exception&#8239;:</strong> on ne reste que contre 4, 5 et 6.</li>
+  <li><strong>11 se double</strong> presque partout, <strong>10 se double</strong> sauf
+      contre 10 et as, <strong>9 se double</strong> contre 3 à 6.</li>
+  <li><strong>8 et moins&#8239;: on tire</strong>, sans réfléchir.</li>
+  <li><strong>A,8 et A,9&#8239;: on reste. A,7 est la main souple difficile</strong>&#8239;:
+      on double contre les cartes faibles, on reste contre 7 et 8, on tire contre 9, 10 et
+      as.</li>
+  <li><strong>Toujours séparer les as et les 8. Jamais les 10 ni les 5.</strong> Un 5,5
+      est un 10&#8239;: on le double.</li>
+</ul>
+
+<p>Ces raccourcis valent pour la première table. Sur une table aux autres règles, ce sont
+les mêmes blocs avec d'autres bords — d'où l'intérêt de s'entraîner sur la table où l'on
+compte réellement jouer, plutôt que de mémoriser une grille anonyme.
+<a href="/">L'entraîneur de WiseHand</a> affiche la grille résolue de la table où vous êtes
+assis et vous reprend quand vous vous en écartez.</p>
+
+<h2 id="vaut">Ce que la stratégie de base fait, et ce qu'elle ne fait pas</h2>
+
+<p>Elle fait une chose, et elle la fait complètement&#8239;: <strong>elle ramène
+l'avantage de la maison au minimum que les règles autorisent</strong>. Sur une bonne
+table, ce minimum vaut quelques dixièmes de pour cent. Toutes les valeurs citées ici sont
+obtenues en simulant <strong>trois millions de mains</strong> par jeu de règles, avec un
+joueur qui applique la stratégie résolue pour ces règles-là.</p>
+
+<p>Elle ne fait pas de vous un gagnant. <strong>Un avantage de 0,583 % pour la maison
+reste un avantage pour la maison</strong>&#8239;: joué parfaitement, ce jeu se perd
+lentement au lieu de se perdre vite. La seule chose qui retourne l'avantage est le
+comptage des cartes, et il ne le retourne que de quelques dixièmes de point, à condition
+de jouer une table qui s'y prête — c'est le sujet de
+<a href="/academie/">l'Académie</a> et, chiffres mesurés à l'appui, de la leçon
+<a href="/academie/combien-rapporte-le-comptage/">combien rapporte le comptage</a>.</p>
+
+<h2 id="questions">Questions fréquentes</h2>
+
+<h3>Qu'est-ce que la stratégie de base au blackjack&#8239;?</h3>
+<p>C'est la décision qui perd le moins pour chaque combinaison possible entre votre main
+et la carte visible du croupier&#8239;: tirer, rester, doubler, séparer ou abandonner.
+Elle ne se discute pas et ne s'improvise pas — elle se calcule à partir des règles exactes
+de la table. Jouée sans faute, elle ramène l'avantage de la maison à quelques dixièmes de
+pour cent, ce qui en fait le meilleur tarif de l'établissement.</p>
+
+<h3>Existe-t-il un seul tableau de stratégie de base&#8239;?</h3>
+<p>Non, et c'est l'erreur la plus répandue. Un tableau est celui d'une table. Entre une
+table américaine à six jeux et une table européenne sans carte cachée, au doublement
+limité et sans abandon, trente et une des 290 cases changent. Jouer le mauvais tableau
+coûte de l'argent sur chacune de ces cases.</p>
+
+<h3>Faut-il apprendre le tableau par cœur&#8239;?</h3>
+<p>Pas case par case. Les décisions se rangent en blocs — 17 et plus on reste, 13 à 16
+on reste contre une carte faible du croupier, 11 se double presque partout, on sépare
+toujours les as et les 8 et jamais les 10 ni les 5. Une poignée de règles couvre la grande
+majorité des mains, et le reste s'apprend par les exceptions, en jouant.</p>
+
+<h3>La stratégie de base permet-elle de gagner au blackjack&#8239;?</h3>
+<p>Non. Elle ramène l'avantage de la maison au minimum que les règles autorisent, elle ne
+le renverse pas&#8239;: sur la table étalon de ce site, il reste 0,583 % en faveur du
+casino. Joué parfaitement, le blackjack se perd lentement au lieu de se perdre vite. Seul
+le comptage des cartes retourne l'avantage, de quelques dixièmes de point, et seulement
+sur une table qui s'y prête.</p>
+
+<h3>Que veut dire «&nbsp;D&nbsp;» quand on ne peut pas doubler&#8239;?</h3>
+<p>Le doublement n'est possible qu'à deux cartes, et certaines tables le limitent à
+certains totaux. Là où il est impossible, un «&nbsp;D&nbsp;» se joue comme un tirage.
+De même, un «&nbsp;U&nbsp;» sur une table sans abandon se joue comme un tirage — à
+l'exception de 17 contre as, où l'on reste.</p>
+</article>
+
+</main>
+
+<footer>
+<p class="ours" style="border:0;padding:0;margin:0 0 14px">
+  <span>Publié le <time datetime="2026-09-09">9 septembre 2026</time></span>
+  
+  <span class="pt">·</span><span>12 min de lecture</span>
+</p>
+<p class="meta"><strong>D'où viennent ces chiffres.</strong> Chaque avantage maison
+cité sur ce site est produit en simulant <strong>3 000 000 mains</strong> par jeu de règles, avec un
+joueur qui applique la stratégie de base résolue pour ces règles-là — pas une grille recopiée.
+Les grilles sont calculées par un solveur exact&#8239;; les index de comptage sont obtenus par
+dichotomie sur la composition du sabot. La graine est fixe, donc le résultat est reproductible.
+Dernier calcul&#8239;: 2026-09-09. Le code est ouvert&#8239;: les chiffres peuvent être
+régénérés à partir de lui. <a href="/methode/">Comment ces chiffres sont produits</a>.</p>
+<p><strong>Ici, personne ne perd d'argent&#8239;: les jetons ne valent rien et le tapis se rachète
+d'un clic. Dehors, c'est autre chose.</strong> Le blackjack reste un jeu d'argent, et un jeu
+d'argent se perd à long terme. Rien sur cette page n'est un conseil de jouer.</p>
+<div class="aide"><p>Si le jeu a cessé d'être un jeu&#8239;: <strong>Joueurs Info Service, 09 74 75 13 13</strong>
+— anonyme et non surtaxé, tous les jours de 8&nbsp;h à 2&nbsp;h.</p></div>
+<p>Jeu interdit aux mineurs. · <a href="/">WiseHand</a></p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -26,7 +26,7 @@ export const PAGES = [
       "priorite": "0.9",
       "titre": "Comment jouer au blackjack : règles, stratégie et comptage",
       "court": "Le blackjack",
-      "desc": "Les règles du blackjack, la stratégie de base, et ce que le comptage des cartes fait vraiment — avec l’avantage maison de dix tables, mesuré par simulation et non recopié.",
+      "desc": "Les règles du blackjack, la stratégie de base, et ce que le comptage des cartes fait vraiment — avec l’avantage de dix tables, mesuré et non recopié.",
       "publie": "2026-09-07",
       "modifie": "2026-09-08",
       "fil": [
@@ -69,6 +69,92 @@ export const PAGES = [
     ]
   },
   {
+      "slug": "strategie-de-base-blackjack",
+      "fichier": "strategie-de-base.html",
+      "lang": "fr",
+      "type": "Article",
+      "priorite": "0.9",
+      "titre": "Tableau de stratégie de base au blackjack, calculé",
+      "court": "Le tableau",
+      "sous": "Les 290 cases, calculées — et les 31 qui changent de table en table",
+      "desc": "Le tableau complet de stratégie de base au blackjack, calculé par un solveur pour deux jeux de règles — et les 31 cases qui changent d'une table à l'autre.",
+      "publie": "2026-09-09",
+      "modifie": "2026-09-09",
+      "fil": [
+          [
+              "Accueil",
+              "/"
+          ]
+      ],
+      "apropos": [
+          "Blackjack",
+          "Stratégie de base"
+      ],
+      "faq": [
+        {
+            "q": "Qu'est-ce que la stratégie de base au blackjack ?",
+            "r": "C'est la décision qui perd le moins pour chaque combinaison possible entre votre main et la carte visible du croupier : tirer, rester, doubler, séparer ou abandonner. Elle ne se discute pas et ne s'improvise pas — elle se calcule à partir des règles exactes de la table. Jouée sans faute, elle ramène l'avantage de la maison à quelques dixièmes de pour cent, ce qui en fait le meilleur tarif de l'établissement."
+        },
+        {
+            "q": "Existe-t-il un seul tableau de stratégie de base ?",
+            "r": "Non, et c'est l'erreur la plus répandue. Un tableau est celui d'une table. Entre une table américaine à six jeux et une table européenne sans carte cachée, au doublement limité et sans abandon, trente et une des 290 cases changent. Jouer le mauvais tableau coûte de l'argent sur chacune de ces cases."
+        },
+        {
+            "q": "Faut-il apprendre le tableau par cœur ?",
+            "r": "Pas case par case. Les décisions se rangent en blocs — 17 et plus on reste, 13 à 16 on reste contre une carte faible du croupier, 11 se double presque partout, on sépare toujours les as et les 8 et jamais les 10 ni les 5. Une poignée de règles couvre la grande majorité des mains, et le reste s'apprend par les exceptions, en jouant."
+        },
+        {
+            "q": "La stratégie de base permet-elle de gagner au blackjack ?",
+            "r": "Non. Elle ramène l'avantage de la maison au minimum que les règles autorisent, elle ne le renverse pas : sur la table étalon de ce site, il reste 0,583 % en faveur du casino. Joué parfaitement, le blackjack se perd lentement au lieu de se perdre vite. Seul le comptage des cartes retourne l'avantage, de quelques dixièmes de point, et seulement sur une table qui s'y prête."
+        },
+        {
+            "q": "Que veut dire « D » quand on ne peut pas doubler ?",
+            "r": "Le doublement n'est possible qu'à deux cartes, et certaines tables le limitent à certains totaux. Là où il est impossible, un « D » se joue comme un tirage. De même, un « U » sur une table sans abandon se joue comme un tirage — à l'exception de 17 contre as, où l'on reste."
+        }
+    ]
+  },
+  {
+      "slug": "methode",
+      "fichier": "methode.html",
+      "lang": "fr",
+      "type": "Article",
+      "priorite": "0.7",
+      "titre": "D'où viennent les chiffres de ce site — la méthode",
+      "court": "La méthode",
+      "sous": "Le solveur, le simulateur, le vérificateur — et ce qu'ils ne savent pas dire",
+      "desc": "Un solveur calcule les décisions, un simulateur mesure les avantages sur trois millions de mains, un vérificateur casse la construction au premier écart.",
+      "publie": "2026-09-09",
+      "modifie": "2026-09-09",
+      "fil": [
+          [
+              "Accueil",
+              "/"
+          ]
+      ],
+      "apropos": [
+          "Blackjack",
+          "Méthode de mesure"
+      ],
+      "faq": [
+        {
+            "q": "Les chiffres de ce site sont-ils vérifiables ?",
+            "r": "Oui, de deux façons. À la lecture d'abord : chaque page indique le volume de simulation et la date du dernier calcul. Par le code ensuite : le solveur, le simulateur et le vérificateur vivent dans le dépôt du site, sous licence MIT, et la graine du générateur est fixe — rejouer le calcul rend le même nombre."
+        },
+        {
+            "q": "Pourquoi vos chiffres diffèrent-ils de ceux d'autres sites ?",
+            "r": "Le plus souvent parce qu'ils ne décrivent pas la même table. Un avantage maison n'existe pas dans l'absolu : il dépend du nombre de jeux, du paiement du blackjack, du comportement du croupier sur 17 souple et de quelques règles de plus. Beaucoup de pages citent une valeur unique sans dire à quel règlement elle correspond, ce qui la rend invérifiable — et souvent fausse pour la table où vous êtes assis."
+        },
+        {
+            "q": "Qui écrit ce site ?",
+            "r": "Léo Lejeau, qui a écrit l'application, les pages et l'outillage de mesure. Ce n'est pas un site d'affiliation et il n'a pas de rédaction : quand une phrase avance un chiffre, ce chiffre vient du dépôt, et le vérificateur casse la construction s'il cesse de correspondre."
+        },
+        {
+            "q": "Ce site conseille-t-il de jouer ?",
+            "r": "Non. Le blackjack reste un jeu d'argent, et un jeu d'argent se perd à long terme : même jouée parfaitement, la stratégie de base laisse l'avantage à la maison, et le comptage ne le retourne que de quelques dixièmes de point, sur des milliers de mains, et seulement sur une table qui s'y prête. Ici, les jetons ne valent rien et le tapis se rachète d'un clic ; dehors, c'est autre chose."
+        }
+    ]
+  },
+  {
       "slug": "en/blackjack",
       "fichier": "en-blackjack.html",
       "lang": "en",
@@ -76,7 +162,7 @@ export const PAGES = [
       "priorite": "0.9",
       "titre": "How to Play Blackjack: Rules, Basic Strategy and Card Counting",
       "court": "Blackjack",
-      "desc": "The rules of blackjack, the full basic strategy chart, and what card counting actually does — with the house edge of ten tables, measured by simulation rather than copied.",
+      "desc": "The rules of blackjack, the full basic strategy chart, and what card counting really does — with the house edge of ten tables, measured, not copied.",
       "publie": "2026-09-07",
       "modifie": "2026-09-08",
       "fil": [
@@ -614,7 +700,7 @@ export const PAGES = [
       "lang": "fr",
       "type": "Article",
       "priorite": "0.7",
-      "titre": "L'histoire du blackjack : des origines à l'invention du comptage",
+      "titre": "Histoire du blackjack : des origines à l'invention du comptage",
       "court": "L'histoire du blackjack",
       "desc": "L'histoire du blackjack, de la veintiuna espagnole au 6:5 moderne : les dates et les noms vérifiés, et qui a réellement inventé le comptage des cartes.",
       "publie": "2026-09-09",

@@ -42,13 +42,15 @@ Index d'assurance calculé : compte vrai **+3** (identique sur les dix tables).
 
 ## Les pages de fond
 
-- [Comment jouer au blackjack : règles, stratégie et comptage](https://wisehand21.com/blackjack/) : Les règles du blackjack, la stratégie de base, et ce que le comptage des cartes fait vraiment — avec l’avantage maison de dix tables, mesuré par simulation et non recopié.
-- [L'histoire du blackjack : des origines à l'invention du comptage](https://wisehand21.com/histoire-du-blackjack/) : L'histoire du blackjack, de la veintiuna espagnole au 6:5 moderne : les dates et les noms vérifiés, et qui a réellement inventé le comptage des cartes.
+- [Comment jouer au blackjack : règles, stratégie et comptage](https://wisehand21.com/blackjack/) : Les règles du blackjack, la stratégie de base, et ce que le comptage des cartes fait vraiment — avec l’avantage de dix tables, mesuré et non recopié.
+- [Tableau de stratégie de base au blackjack, calculé](https://wisehand21.com/strategie-de-base-blackjack/) : Le tableau complet de stratégie de base au blackjack, calculé par un solveur pour deux jeux de règles — et les 31 cases qui changent d'une table à l'autre.
+- [D'où viennent les chiffres de ce site — la méthode](https://wisehand21.com/methode/) : Un solveur calcule les décisions, un simulateur mesure les avantages sur trois millions de mains, un vérificateur casse la construction au premier écart.
+- [Histoire du blackjack : des origines à l'invention du comptage](https://wisehand21.com/histoire-du-blackjack/) : L'histoire du blackjack, de la veintiuna espagnole au 6:5 moderne : les dates et les noms vérifiés, et qui a réellement inventé le comptage des cartes.
 - [Les films sur le comptage des cartes : le vrai du faux](https://wisehand21.com/films-comptage-de-cartes/) : Rain Man, Las Vegas 21, Very Bad Trip : pour chaque film, ce qu'il montre du comptage des cartes et ce qui est vrai, confronté à des chiffres mesurés.
 
 ## En anglais
 
-- [How to Play Blackjack: Rules, Basic Strategy and Card Counting](https://wisehand21.com/en/blackjack/) : The rules of blackjack, the full basic strategy chart, and what card counting actually does — with the house edge of ten tables, measured by simulation rather than copied.
+- [How to Play Blackjack: Rules, Basic Strategy and Card Counting](https://wisehand21.com/en/blackjack/) : The rules of blackjack, the full basic strategy chart, and what card counting really does — with the house edge of ten tables, measured, not copied.
 
 ## Ce que ce site ne dit pas
 

@@ -3,7 +3,7 @@
 // Le nom du cache PORTE LA VERSION. Le monter est ce qui purge l'ancien (voir « activate ») :
 // une retouche de cette liste sans montée de version ne changerait rien chez ceux qui ont
 // déjà installé l'application, et personne ne le verrait.
-const C = "wisehand-v10";
+const C = "wisehand-v12";
 
 // La coquille : le document, le manifeste, les icônes.
 // ⚠️ Les deux pages du guide (/blackjack/) sont DANS la coquille, et pas par confort :
@@ -19,7 +19,8 @@ const COQUILLE = ["./", "./index.html", "./manifest.json", "./icon.svg", "./icon
   "./academie/", "./academie/valeurs-des-cartes-hi-lo/", "./academie/compte-vrai/", "./academie/penetration-du-sabot/",
   "./academie/assurance/", "./academie/illustrious-18/", "./academie/blackjack-6-5/", "./academie/s17-h17/",
   "./academie/melangeuse-continue/", "./academie/combien-rapporte-le-comptage/", "./academie/compter-les-cartes-est-ce-legal/",
-  "./histoire-du-blackjack/", "./films-comptage-de-cartes/"];
+  "./histoire-du-blackjack/", "./films-comptage-de-cartes/",
+  "./strategie-de-base-blackjack/", "./methode/"];
 
 // Les photos du hall, en version RÉDUITE (640 px, 642 Ko en tout). Le hall en affiche
 // dix-huit — les dix tables, le héros, et les sept portes des salles (mesuré le 07/09 :

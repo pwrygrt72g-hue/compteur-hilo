@@ -94,7 +94,7 @@
   <div class="hall-heros" id="hallHeros" data-photo="hall">
     <img class="photo" alt="" aria-hidden="true" fetchpriority="high" decoding="async" sizes="100vw">
     <div class="hall-int hall-heros-int">
-      <span class="grave hall-kicker">Entraînement au comptage de cartes</span>
+      <span class="grave hall-kicker">Entraînement au comptage de cartes au blackjack</span>
       <h1 class="hall-titre">Le compte est masqué.<br>À toi de le tenir.</h1>
       <!-- « Neuf tables » pour dix, et « Neuf salles » juste en dessous, pendant que le
            JSON-LD de la MÊME page annonçait « Dix » : un moteur qui trouve deux chiffres
@@ -102,7 +102,7 @@
            site. Le correctif n'est pas d'écrire « Dix » — c'est de ne plus jamais écrire
            un compte à la main. [data-nb-tables] est rempli depuis DONNEES.catalogue.length,
            comme [data-nb-sieges] l'est depuis TR.NB_SIEGES. -->
-      <p class="hall-phrase">Chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. <span data-nb-tables="cap">Dix</span> tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
+      <p class="hall-phrase">Au blackjack, chaque carte qui sort vaut <b>+1</b>, <b>0</b> ou <b>−1</b>. Tu les additionnes de tête : c'est le compte. <span data-nb-tables="cap">Dix</span> tables de casino, une salle d'entraînement, une table entre amis — et un croupier qui te regarde miser.</p>
       <div class="hall-entree">
         <!-- Mesuré : primaire 153 px, secondaire 331 px — le bouton qu'on veut voir pressé
              était 2,16 × plus petit que celui d'à côté. Le libellé long descend dans title=. -->
@@ -248,8 +248,16 @@
         <p class="etage-chapo">L'entraîneur montre ce qu'il faut faire. Le cours explique pourquoi — une question par leçon, et des chiffres qui sortent d'un calcul, pas d'un livre.</p>
       </div>
       <ol class="lecons-hall" id="leconsHall">__LECONS_ACADEMIE__</ol>
+      <!-- 🚨 Ces liens sont la SEULE porte du hall vers les pages qu'un moteur peut lire.
+           Mesuré le 09/09 : /blackjack/ — la page qui répond « comment jouer au blackjack » —
+           ne recevait AUCUN lien depuis la racine, ni ici ni dans la barre du haut, qui n'est
+           faite que de boutons JavaScript. Une page que rien ne pointe depuis l'accueil est
+           explorée en dernier, ou jamais, quelle que soit sa qualité. -->
       <div class="academie-pied">
         <a class="btn" href="/academie/">Ouvrir le cours</a>
+        <a class="lien-doux" href="/blackjack/">Les règles du blackjack</a>
+        <a class="lien-doux" href="/strategie-de-base-blackjack/">Le tableau de stratégie de base</a>
+        <a class="lien-doux" href="/methode/">D'où viennent ces chiffres</a>
         <a class="lien-doux" href="/histoire-du-blackjack/">L'histoire du blackjack</a>
         <a class="lien-doux" href="/films-comptage-de-cartes/">Les films sur le comptage</a>
       </div>

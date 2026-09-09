@@ -1,0 +1,183 @@
+<h1>Le tableau de stratégie de base au blackjack</h1>
+
+<p class="chapo">La stratégie de base est la liste complète des meilleures décisions
+quand on ne sait rien des cartes qui restent dans le sabot. Ce n'est ni un système, ni
+une martingale, ni une opinion&#8239;: c'est la réponse calculée. Jouée sans faute, elle
+ramène l'avantage de la maison à quelques dixièmes de pour cent — le meilleur tarif de
+l'établissement.</p>
+
+<p><strong>Le tableau ci-dessous n'est recopié de nulle part.</strong> Chacune de ses
+290&nbsp;cases sort du solveur qui vit dans le dépôt de WiseHand&#8239;: on lui donne les
+règles exactes d'une table, il rend la décision d'espérance maximale, case par case. C'est
+aussi ce qui permet d'en publier plusieurs — un tableau, c'est le tableau <em>d'une</em>
+table, et changer une règle change le tableau.</p>
+
+<h2 id="tableau">Le tableau, pour une table à six jeux</h2>
+
+<p>Celui-ci est résolu pour <strong>Le Boulevard</strong>, la table étalon du site et le
+jeu le plus répandu à Las Vegas&#8239;: six jeux, le croupier tire sur 17 souple, blackjack
+payé 3:2, doublement sur n'importe quelles deux cartes, doublement après séparation,
+abandon tardif. Avantage de la maison mesuré sur ce jeu de règles, stratégie de base
+parfaite&#8239;: <strong>0,583 %</strong>.</p>
+
+<div class="legend">
+  <span><b class="a-H">H</b> Tirer</span>
+  <span><b class="a-S">S</b> Rester</span>
+  <span><b class="a-D">D</b> Doubler si c'est permis, sinon tirer</span>
+  <span><b class="a-P">P</b> Séparer</span>
+  <span><b class="a-U">U</b> Abandonner si c'est permis, sinon tirer</span>
+</div>
+
+<p class="note">Les lettres sont celles de la convention internationale&#8239;: elles sont
+les mêmes sur tous les tableaux que vous croiserez ailleurs. Une page française qui
+inventerait « R pour rester » et « S pour séparer » piégerait quiconque a déjà vu une
+grille.</p>
+
+<h3>Mains dures</h3>
+__GRILLE:boulevard:dur__
+
+<h3>Mains souples (celles où un as compte 11)</h3>
+__GRILLE:boulevard:souple__
+
+<h3>Paires</h3>
+__GRILLE:boulevard:paires__
+
+<h2 id="lire">Comment lire le tableau</h2>
+
+<p>Trois tableaux, et un ordre de lecture qui ne varie jamais&#8239;:</p>
+
+<ol>
+  <li><strong>Ai-je une paire&#8239;?</strong> Si oui, le tableau des paires répond en
+      premier — et s'il dit de ne pas séparer, on retombe sur les deux autres.</li>
+  <li><strong>Ai-je un as qui compte 11 sans dépasser 21&#8239;?</strong> C'est une main
+      souple&#8239;: A,7 se lit sur le tableau des mains souples, pas sur la ligne 18 des
+      mains dures. Les deux disent des choses différentes, et c'est l'erreur la plus
+      fréquente du débutant.</li>
+  <li><strong>Sinon, main dure</strong>&#8239;: on additionne, on cherche la ligne, on
+      croise la carte visible du croupier.</li>
+</ol>
+
+<p>Les colonnes sont toujours la carte visible du croupier, du 2 à l'as. La ligne est
+votre main. La case à l'intersection est la décision — il n'y en a jamais deux.</p>
+
+<p><strong>Le «&nbsp;D&nbsp;» et le «&nbsp;U&nbsp;» sont des vœux, pas des ordres.</strong>
+On ne peut doubler qu'à deux cartes&#8239;: si vous avez déjà tiré, un D se joue comme un
+tirage. De même, l'abandon n'existe pas sur toutes les tables&#8239;: là où il n'existe
+pas, un U se joue comme un tirage — sauf 17 contre as, où l'on reste.</p>
+
+<h2 id="regles">Le même jeu, d'autres règles, un autre tableau</h2>
+
+<p>C'est le point que les tableaux imprimés escamotent presque tous. Voici le tableau
+résolu pour <strong>Le Cercle</strong>, une table européenne à six jeux&#8239;: le croupier
+ne prend <strong>pas de carte cachée</strong> et emporte les mises doublées quand il finit
+par se faire blackjack, le doublement est limité aux totaux de 9, 10 et 11, il n'y a pas
+d'abandon, et le croupier reste sur 17 souple. Avantage de la maison&#8239;:
+<strong>0,601 %</strong>.</p>
+
+<p><strong>Trente et une des 290 cases changent.</strong> Ce n'est pas un détail de
+présentation&#8239;: jouer ici le tableau de la page précédente coûte de l'argent à chaque
+main concernée.</p>
+
+<h3>Mains dures — sans carte cachée</h3>
+__GRILLE:cercle:dur__
+
+<h3>Mains souples — sans carte cachée</h3>
+__GRILLE:cercle:souple__
+
+<h3>Paires — sans carte cachée</h3>
+__GRILLE:cercle:paires__
+
+<p>Les écarts se rangent en trois causes, et aucune n'est mystérieuse&#8239;:</p>
+
+<ul>
+  <li><strong>Pas d'abandon&#8239;: les sept «&nbsp;U&nbsp;» disparaissent.</strong> Ils
+      redeviennent des tirages, sauf 17 contre as où l'on reste.</li>
+  <li><strong>Doublement limité à 9, 10 et 11&#8239;: tous les doublements souples
+      tombent.</strong> A,2 à A,7 se contentent de tirer ou de rester.</li>
+  <li><strong>Pas de carte cachée&#8239;: on cesse de s'exposer contre les cartes
+      fortes.</strong> On ne double plus 11 contre 10 ni contre un as, on ne sépare plus
+      les 8 contre un 10, ni les as contre un as. La raison est celle que la table elle-même
+      énonce&#8239;: vous doublez, le croupier tire sa deuxième carte à la fin et se
+      découvre un blackjack — vous perdez deux unités, pas une.</li>
+</ul>
+
+<p>Les dix tables de WiseHand sont résolues séparément, chacune sur ses propres règles.
+Leur avantage maison va de 0,359 % à 2,07 %&#8239;: le détail table par table est dans
+le <a href="/blackjack/#avantage">guide du blackjack</a>.</p>
+
+<h2 id="retenir">Retenir 290 cases sans les apprendre</h2>
+
+<p>Personne n'apprend un tableau case par case, et ce n'est pas nécessaire&#8239;: les
+décisions se rangent en blocs. Une poignée de règles couvre l'immense majorité des mains,
+et le reste s'apprend par les exceptions.</p>
+
+<ul>
+  <li><strong>17 et plus&#8239;: on reste.</strong> Toujours, sur une main dure.</li>
+  <li><strong>De 13 à 16 contre une carte faible (2 à 6)&#8239;: on reste</strong> — c'est
+      le croupier qui a le plus de chances de dépasser. Contre 7 ou plus&#8239;: on tire.</li>
+  <li><strong>Le 12 est l'exception&#8239;:</strong> on ne reste que contre 4, 5 et 6.</li>
+  <li><strong>11 se double</strong> presque partout, <strong>10 se double</strong> sauf
+      contre 10 et as, <strong>9 se double</strong> contre 3 à 6.</li>
+  <li><strong>8 et moins&#8239;: on tire</strong>, sans réfléchir.</li>
+  <li><strong>A,8 et A,9&#8239;: on reste. A,7 est la main souple difficile</strong>&#8239;:
+      on double contre les cartes faibles, on reste contre 7 et 8, on tire contre 9, 10 et
+      as.</li>
+  <li><strong>Toujours séparer les as et les 8. Jamais les 10 ni les 5.</strong> Un 5,5
+      est un 10&#8239;: on le double.</li>
+</ul>
+
+<p>Ces raccourcis valent pour la première table. Sur une table aux autres règles, ce sont
+les mêmes blocs avec d'autres bords — d'où l'intérêt de s'entraîner sur la table où l'on
+compte réellement jouer, plutôt que de mémoriser une grille anonyme.
+<a href="/">L'entraîneur de WiseHand</a> affiche la grille résolue de la table où vous êtes
+assis et vous reprend quand vous vous en écartez.</p>
+
+<h2 id="vaut">Ce que la stratégie de base fait, et ce qu'elle ne fait pas</h2>
+
+<p>Elle fait une chose, et elle la fait complètement&#8239;: <strong>elle ramène
+l'avantage de la maison au minimum que les règles autorisent</strong>. Sur une bonne
+table, ce minimum vaut quelques dixièmes de pour cent. Toutes les valeurs citées ici sont
+obtenues en simulant <strong>trois millions de mains</strong> par jeu de règles, avec un
+joueur qui applique la stratégie résolue pour ces règles-là.</p>
+
+<p>Elle ne fait pas de vous un gagnant. <strong>Un avantage de 0,583 % pour la maison
+reste un avantage pour la maison</strong>&#8239;: joué parfaitement, ce jeu se perd
+lentement au lieu de se perdre vite. La seule chose qui retourne l'avantage est le
+comptage des cartes, et il ne le retourne que de quelques dixièmes de point, à condition
+de jouer une table qui s'y prête — c'est le sujet de
+<a href="/academie/">l'Académie</a> et, chiffres mesurés à l'appui, de la leçon
+<a href="/academie/combien-rapporte-le-comptage/">combien rapporte le comptage</a>.</p>
+
+<h2 id="questions">Questions fréquentes</h2>
+
+<h3>Qu'est-ce que la stratégie de base au blackjack&#8239;?</h3>
+<p>C'est la décision qui perd le moins pour chaque combinaison possible entre votre main
+et la carte visible du croupier&#8239;: tirer, rester, doubler, séparer ou abandonner.
+Elle ne se discute pas et ne s'improvise pas — elle se calcule à partir des règles exactes
+de la table. Jouée sans faute, elle ramène l'avantage de la maison à quelques dixièmes de
+pour cent, ce qui en fait le meilleur tarif de l'établissement.</p>
+
+<h3>Existe-t-il un seul tableau de stratégie de base&#8239;?</h3>
+<p>Non, et c'est l'erreur la plus répandue. Un tableau est celui d'une table. Entre une
+table américaine à six jeux et une table européenne sans carte cachée, au doublement
+limité et sans abandon, trente et une des 290 cases changent. Jouer le mauvais tableau
+coûte de l'argent sur chacune de ces cases.</p>
+
+<h3>Faut-il apprendre le tableau par cœur&#8239;?</h3>
+<p>Pas case par case. Les décisions se rangent en blocs — 17 et plus on reste, 13 à 16
+on reste contre une carte faible du croupier, 11 se double presque partout, on sépare
+toujours les as et les 8 et jamais les 10 ni les 5. Une poignée de règles couvre la grande
+majorité des mains, et le reste s'apprend par les exceptions, en jouant.</p>
+
+<h3>La stratégie de base permet-elle de gagner au blackjack&#8239;?</h3>
+<p>Non. Elle ramène l'avantage de la maison au minimum que les règles autorisent, elle ne
+le renverse pas&#8239;: sur la table étalon de ce site, il reste 0,583 % en faveur du
+casino. Joué parfaitement, le blackjack se perd lentement au lieu de se perdre vite. Seul
+le comptage des cartes retourne l'avantage, de quelques dixièmes de point, et seulement
+sur une table qui s'y prête.</p>
+
+<h3>Que veut dire «&nbsp;D&nbsp;» quand on ne peut pas doubler&#8239;?</h3>
+<p>Le doublement n'est possible qu'à deux cartes, et certaines tables le limitent à
+certains totaux. Là où il est impossible, un «&nbsp;D&nbsp;» se joue comme un tirage.
+De même, un «&nbsp;U&nbsp;» sur une table sans abandon se joue comme un tirage — à
+l'exception de 17 contre as, où l'on reste.</p>
