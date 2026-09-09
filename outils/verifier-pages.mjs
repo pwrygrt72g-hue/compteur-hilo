@@ -14,7 +14,7 @@
 // La règle qui en découle : une page qui se vend sur « nos chiffres sont mesurés, pas
 // recopiés » doit prouver CHACUN de ses chiffres contre la source qui les mesure. Ce
 // fichier le fait. Il sort 1 au premier écart.
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { PAGES as CATALOGUE } from "../src/pages/catalogue.mjs";
 import { empreinteSources } from "./mesurer-compteur.mjs";
 
@@ -663,6 +663,19 @@ const GRILLES = { "en/blackjack/index.html": "boulevard" };
     dire(h.includes('href="https://github.com/pwrygrt72g-hue/compteur-hilo"'),
       "…et donne le lien qui permet d'aller le vérifier");
   }
+}
+
+// ── LA CLÉ INDEXNOW EST SERVIE, ET CONFORME ─────────────────────────────────
+// Sans ce fichier, chaque annonce d'URL repart en 403 : on croirait avoir prévenu
+// les moteurs alors que rien ne serait parti — un échec qui ne se voit nulle part.
+// Le protocole exige que le fichier porte la clé pour NOM et la contienne pour
+// unique CONTENU ; une seule de ces deux moitiés suffit à tout casser en silence.
+{
+  const cles = readdirSync(".").filter(f => /^[0-9a-f]{8,128}\.txt$/.test(f));
+  dire(cles.length === 1, "exactement un fichier de clé IndexNow à la racine", `${cles.length} trouvé(s)`);
+  for (const f of cles)
+    dire(readFileSync(f, "utf8").trim() === f.replace(/\.txt$/, ""),
+      "le fichier de clé IndexNow contient exactement sa clé", f);
 }
 
 console.log(`\n${ok} contrôles passés, ${ko} échecs`);
